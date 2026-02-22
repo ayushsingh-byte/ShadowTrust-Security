@@ -1,0 +1,856 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>DEFCON 1 | SentinelHive Command</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/dashboard.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        /* Custom Map Styles for Tactical Look */
+        #geoMap {
+            cursor: crosshair; /* Tactical cursor */
+            height: 480px;
+            width: 100%;
+            background: #050a0f;
+            z-index: 1;
+        }
+
+        .leaflet-container {
+            background: #050a0f !important;
+        }
+
+        /* Radar Sweep Animation */
+        .radar-sweep {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: conic-gradient(from 0deg, transparent 0deg, rgba(164, 232, 46, 0.1) 60deg, transparent 60deg);
+            border-radius: 50%;
+            animation: radar-spin 4s linear infinite;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        @keyframes radar-spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Blinking Marker Animation */
+        .blinking-marker-css {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* Tactical Overlay */
+        .map-overlay {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(11, 16, 21, 0.9);
+            border: 1px solid var(--accent-primary);
+            padding: 15px;
+            z-index: 500;
+            width: 280px;
+            backdrop-filter: blur(5px);
+            font-family: 'JetBrains Mono', monospace;
+            clip-path: polygon(0 0, 100% 0, 100% calc(100% - 15px), calc(100% - 15px) 100%, 0 100%);
+        }
+
+        .overlay-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+
+        .status-dot {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            background: var(--accent-primary);
+        }
+
+        .blink-red {
+            background: var(--accent-critical);
+            box-shadow: 0 0 5px var(--accent-critical);
+            animation: pulse-red 1s infinite;
+        }
+
+        @keyframes pulse-red {
+            0% { opacity: 1; box-shadow: 0 0 5px var(--accent-critical); }
+            50% { opacity: 0.5; box-shadow: 0 0 15px var(--accent-critical); }
+            100% { opacity: 1; box-shadow: 0 0 5px var(--accent-critical); }
+        }
+    </style>
+    <!-- Leaflet for Map -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+</head>
+
+<body class="dashboard-page">
+
+    <div class="app-container">
+
+        <!-- SIDEBAR -->
+        <aside class="sidebar" id="sidebar">
+            <div class="logo-area" onclick="document.getElementById('sidebar').classList.toggle('collapsed')">
+                <div class="logo-icon"></div>
+                <div class="logo-text">
+                    <div class="logo-title">SENTINEL</div>
+                    <div class="logo-sub">DEFENSE GRID // V2</div>
+                </div>
+                <i class="fas fa-chevron-left toggle-btn"
+                    style="margin-left: auto; cursor: pointer;"></i>
+            </div>
+
+            <div class="nav-group">
+                <div class="nav-group-label">Command Center</div>
+                <a href="dashboard.html" class="nav-item active"><i class="fas fa-radar"></i> <span
+                        class="nav-text">Tactical Overview</span></a>
+                <a href="events.html" class="nav-item"><i class="fas fa-list-alt"></i> <span class="nav-text">Event
+                        Log</span></a>
+            </div>
+
+            <div class="nav-group">
+                <div class="nav-group-label">Grid Monitoring</div>
+                <a href="nodes.html" class="nav-item"><i class="fas fa-server"></i> <span class="nav-text">Honeypot
+                        Nodes</span></a>
+                <a href="sectors.html" class="nav-item"><i class="fas fa-network-wired"></i> <span
+                        class="nav-text">Sector Monitors</span></a>
+                <a href="geo.html" class="nav-item"><i class="fas fa-globe-americas"></i> <span class="nav-text">Geo
+                        Intelligence</span></a>
+            </div>
+
+            <div class="nav-group">
+                <div class="nav-group-label">Intelligence</div>
+                <a href="mitre.html" class="nav-item"><i class="fas fa-chess-board"></i> <span
+                        class="nav-text">MITRE Matrix</span></a>
+                <a href="graphs.html" class="nav-item"><i class="fas fa-chart-area"></i> <span class="nav-text">Attack
+                        Analytics</span></a>
+                <a href="credentials.html" class="nav-item"><i class="fas fa-key"></i> <span
+                        class="nav-text">Credentials Vault</span></a>
+                <a href="behavior.html" class="nav-item"><i class="fas fa-user-secret"></i> <span
+                        class="nav-text">Behavior Profiling</span></a>
+                <a href="simulation.html" class="nav-item"><i class="fas fa-crosshairs"></i> <span class="nav-text">Attack
+                        Sim</span></a>
+            </div>
+
+            <div class="nav-group">
+                <div class="nav-group-label">Tools Suite</div>
+                <a href="malware.html" class="nav-item"><i class="fas fa-biohazard"></i> <span class="nav-text">Binary
+                        Analysis</span></a>
+                <a href="urlscan.html" class="nav-item"><i class="fas fa-search-location"></i> <span
+                        class="nav-text">URL Scanner</span></a>
+                <a href="apk.html" class="nav-item"><i class="fas fa-mobile"></i> <span class="nav-text">APK
+                        Inspector</span></a>
+                <a href="vm_lab.html" class="nav-item"><i class="fas fa-laptop-code"></i> <span class="nav-text">Virtual
+                        Lab</span></a>
+            </div>
+
+            <div class="nav-group">
+                <div class="nav-group-label">System</div>
+                <a href="admin_login.html" class="nav-item"><i class="fas fa-id-badge"></i> <span
+                        class="nav-text">Admin Access</span></a>
+                <a href="config.html" class="nav-item"><i class="fas fa-cogs"></i> <span
+                        class="nav-text">Global Config</span></a>
+                <a href="profile.html" class="nav-item"><i class="fas fa-user-circle"></i> <span
+                        class="nav-text">Officer Profile</span></a>
+            </div>
+
+            <div class="build-info">
+                <div>UNIT: <span class="text-green">CYBER-01</span></div>
+                <div>SECURE: <span class="text-green">ENCRYPTED</span></div>
+            </div>
+        </aside>
+
+        <!-- MAIN CONTENT -->
+        <main class="main-content">
+
+            <div class="top-bar">
+                <div class="page-header">
+                    <h2>TACTICAL COMMAND</h2>
+                    <p>THREAT LEVEL: <span class="text-yellow">ELEVATED</span> // AUTH: <span class="text-green">SECURE</span></p>
+                </div>
+                <div class="filters-bar">
+                    <div style="text-align:right; margin-right:15px;">
+                        <div class="text-mono" style="font-size:0.7rem; color:#64748b;">ZULU TIME</div>
+                        <div class="text-mono" id="clock" style="font-size:1.1rem; color:#fff; font-weight:700;">
+                            00:00:00</div>
+                    </div>
+                    <button class="soc-btn soc-btn-primary"><i class="fas fa-sync-alt"></i> REFRESH INTEL</button>
+                    <button class="soc-btn soc-btn-danger"><i class="fas fa-lock"></i> LOCKDOWN</button>
+                </div>
+            </div>
+
+            <!-- ROW 1: 8 HIGH DENSITY METRICS -->
+            <div class="dashboard-grid grid-4">
+
+                <div class="soc-card metric-tile">
+                    <div class="metric-header">
+                        <span>TOTAL EVENTS</span>
+                        <i class="fas fa-bolt text-yellow"></i>
+                    </div>
+                    <div id="totalScansValue" class="metric-value">0</div>
+                    <div id="totalScansSub" class="metric-sub text-green">APK Scans Logged</div>
+                </div>
+
+                <div class="soc-card metric-tile">
+                    <div class="metric-header">
+                        <span>UNIQUE ATTACKERS</span>
+                        <i class="fas fa-globe text-cyan"></i>
+                    </div>
+                    <div id="uniquePackagesValue" class="metric-value">0</div>
+                    <div id="uniquePackagesSub" class="metric-sub">Unique APK Packages</div>
+                </div>
+
+                <div class="soc-card metric-tile">
+                    <div class="metric-header">
+                        <span>MALWARE CAPTURED</span>
+                        <i class="fas fa-bug text-red"></i>
+                    </div>
+                    <div id="malwareCapturedCount" class="metric-value">1,042</div>
+                    <div id="malwareCapturedSub" class="metric-sub">Artifacts Secured</div>
+                </div>
+
+                <div class="soc-card metric-tile">
+                    <div class="metric-header">
+                        <span>SECURITY SCORE</span>
+                        <i class="fas fa-key text-green"></i>
+                    </div>
+                    <div id="avgScoreValue" class="metric-value">0.0</div>
+                    <div id="avgScoreSub" class="metric-sub">Average APK Security Score</div>
+                </div>
+
+                <!-- ROW 1b -->
+                <div class="soc-card metric-tile">
+                    <div class="metric-header">
+                        <span>NETWORK FLOW</span>
+                        <i class="fas fa-network-wired text-cyan"></i>
+                    </div>
+                    <div class="metric-value text-cyan">1.2 GB/s</div>
+                    <div class="metric-sub">Peak Bandwidth</div>
+                </div>
+
+                <div class="soc-card metric-tile">
+                    <div class="metric-header">
+                        <span>BLACKLISTED IPs</span>
+                        <i class="fas fa-ban text-red"></i>
+                    </div>
+                    <div id="criticalVulnCount" class="metric-value text-red">142</div>
+                    <div id="criticalVulnSub" class="metric-sub">Auto-Mitigation Active</div>
+                </div>
+
+                <div class="soc-card metric-tile">
+                    <div class="metric-header">
+                        <span>SYSTEM UPTIME</span>
+                        <i class="fas fa-server text-green"></i>
+                    </div>
+                    <div class="metric-value text-green">99.9%</div>
+                    <div class="metric-sub">Last Reboot: 14d</div>
+                </div>
+
+                <div class="soc-card metric-tile">
+                    <div class="metric-header">
+                        <span>ACTIVE SENSORS</span>
+                        <i class="fas fa-satellite-dish text-yellow"></i>
+                    </div>
+                    <div id="activeNodes" class="metric-value" style="color:#d97706;">- / -</div>
+                    <div class="metric-sub">Sensor Grid Status</div>
+                </div>
+
+            </div>
+
+            <!-- ROW 1.5: OPERATIONAL STATUS BAR -->
+            <div class="dashboard-grid grid-6" style="margin-bottom: 20px;">
+                <div class="micro-metric">
+                    <div class="label">AI ENGINE</div>
+                    <div class="value text-cyan">ONLINE</div>
+                    <div style="height:2px; background:#334155; margin-top:5px;">
+                        <div style="width:100%; height:100%; background:var(--accent-info);"></div>
+                    </div>
+                </div>
+                <div class="micro-metric">
+                    <div class="label">THREAT LEVEL</div>
+                    <div id="threatLevelValue" class="value text-red">CRITICAL</div>
+                    <div style="height:2px; background:#334155; margin-top:5px;">
+                        <div style="width:90%; height:100%; background:var(--accent-critical);"></div>
+                    </div>
+                </div>
+                <div class="micro-metric">
+                    <div class="label">DECEPTION</div>
+                    <div class="value text-yellow">ACTIVE</div>
+                    <div style="height:2px; background:#334155; margin-top:5px;">
+                        <div style="width:100%; height:100%; background:var(--accent-secondary);"></div>
+                    </div>
+                </div>
+                <div class="micro-metric">
+                    <div class="label">LURES TRIPPED</div>
+                    <div id="luresTrippedValue" class="value text-yellow">128</div>
+                    <div style="height:2px; background:#334155; margin-top:5px;">
+                        <div style="width:40%; height:100%; background:var(--accent-secondary);"></div>
+                    </div>
+                </div>
+                <div class="micro-metric">
+                    <div class="label">ZERO-DAYS</div>
+                    <div id="zeroDaysValue" class="value text-red">—</div>
+                    <div style="height:2px; background:#334155; margin-top:5px;">
+                        <div style="width:15%; height:100%; background:var(--accent-critical);"></div>
+                    </div>
+                </div>
+                <div class="micro-metric">
+                    <div class="label">DEFENSE MATRIX</div>
+                    <div class="value text-green">OPTIMIZED</div>
+                    <div style="height:2px; background:#334155; margin-top:5px;">
+                        <div style="width:100%; height:100%; background:var(--accent-primary);"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ROW 1.8: GEO MAP (FULL WIDTH) -->
+            <div class="soc-card" style="padding: 0; overflow: hidden; margin-bottom: 2rem; position: relative; border-color: var(--accent-secondary);">
+                <div class="soc-card-header"
+                    style="position:absolute; top:10px; left:10px; z-index:400; background:rgba(11, 16, 21, 0.9); padding:8px 15px; border: 1px solid var(--accent-secondary);">
+                    <span class="card-title text-yellow"><i class="fas fa-globe-americas"></i> GLOBAL THREAT MAP</span>
+                </div>
+                <div id="geoMap"></div>
+
+                <!-- LIVE STATS OVERLAY -->
+                <div class="map-overlay" onclick="window.location.href='geo.html'" style="cursor: pointer;">
+                    <div style="border-bottom:1px solid #334155; margin-bottom:10px; padding-bottom:5px;">
+                        <span class="text-cyan">LIVE INTERCEPTIONS</span>
+                    </div>
+                    <div class="overlay-row">
+                        <span class="text-muted">HOSTILE SOURCES</span>
+                        <span class="text-red" id="activeSrc">0</span>
+                    </div>
+                    <div class="overlay-row">
+                        <span class="text-muted">TARGETED SECTORS</span>
+                        <span class="text-yellow">0</span>
+                    </div>
+                    <div class="overlay-row" style="margin-top:10px;">
+                        <span class="text-xs text-green">LAST CONTACT:</span>
+                    </div>
+                    <div id="lastDetect" class="text-mono text-xs text-white">—</div>
+                </div>
+            </div>
+
+
+            <!-- ROW 2: MAIN VISUAL & LIVE FEED -->
+            <div class="dashboard-grid grid-2-1">
+                <div class="soc-card" style="height: 400px; display:flex; flex-direction:column;">
+                    <div class="soc-card-header">
+                        <span class="card-title">ATTACK TRAFFIC VOLUME</span>
+                        <div>
+                            <span class="badge badge-blue">SSH</span>
+                            <span class="badge badge-green">HTTP</span>
+                            <span class="badge badge-red">MALWARE</span>
+                        </div>
+                    </div>
+                    <div style="flex:1; position:relative;">
+                        <canvas id="trafficChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="soc-card" style="height: 400px; display:flex; flex-direction:column; padding:0;">
+                    <div class="soc-card-header" style="padding:15px;">
+                        <span class="card-title">APK ANALYSIS FEED</span>
+                        <span class="badge badge-blue animate-pulse">LIVE</span>
+                    </div>
+                    <div id="liveFeed"
+                        style="flex:1; overflow:hidden; background:rgba(0,0,0,0.2); padding:10px; font-family:'JetBrains Mono', monospace; font-size:0.75rem;">
+                        <!-- JS Feed -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- ROW 3: DETAILED TABLES -->
+            <div class="dashboard-grid grid-3">
+
+                <!-- TOP ASNs -->
+                <div class="soc-card" style="padding:0;">
+                    <div style="padding:10px 15px; border-bottom:1px solid #334155;">
+                        <span class="card-title">TOP ATTACKER NETWORKS (ASN)</span>
+                    </div>
+                    <table class="terminal-table">
+                        <thead>
+                            <tr>
+                                <th>ASN</th>
+                                <th>ORG</th>
+                                <th>HITS</th>
+                                <th>RISK</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td colspan="4" class="text-muted">No data yet</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- RECENT MALWARE -->
+                <div class="soc-card" style="padding:0;">
+                    <div style="padding:10px 15px; border-bottom:1px solid #334155;">
+                        <span class="card-title">RECENT MALWARE ARTIFACTS</span>
+                    </div>
+                    <table class="terminal-table">
+                        <thead>
+                            <tr>
+                                <th>HASH (MD5)</th>
+                                <th>TYPE</th>
+                                <th>SENSOR</th>
+                                <th>STATUS</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td colspan="4" class="text-muted">No data yet</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- ATTACK VECTORS -->
+                <div class="soc-card" style="padding:0;">
+                    <div style="padding:10px 15px; border-bottom:1px solid #334155;">
+                        <span class="card-title">EXPLOIT VECTORS BY PORT</span>
+                    </div>
+                    <table class="terminal-table">
+                        <thead>
+                            <tr>
+                                <th>PORT</th>
+                                <th>SERVICE</th>
+                                <th>THREAT</th>
+                                <th>COUNT</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td colspan="4" class="text-muted">No data yet</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+            </div>
+
+            <!-- ROW 4: ADVANCED METRICS (RADAR & NODES) -->
+            <div class="dashboard-grid grid-2" style="margin-top:20px;">
+
+                <!-- PROTOCOL RADAR -->
+                <div class="soc-card" style="height:350px; display:flex; flex-direction:column;">
+                    <div class="soc-card-header">
+                        <span class="card-title">PROTOCOL ANOMALY RADAR</span>
+                        <span class="badge badge-purple">BEHAVIORAL ANALYSIS</span>
+                    </div>
+                    <div style="flex:1; position:relative; padding:10px; display:flex; justify-content:center; align-items:center;">
+                        <div class="radar-sweep"></div> <!-- Radar visual overlay -->
+                        <canvas id="protocolRadar"></canvas>
+                    </div>
+                </div>
+
+                <!-- NODE CLUSTER STATUS -->
+                <div class="soc-card" style="height:480px; display:flex; flex-direction:column;">
+                    <div class="soc-card-header">
+                        <span class="card-title">SENSOR GRID STATUS</span>
+                        <span class="badge badge-gray">—</span>
+                    </div>
+                    <div id="nodeGrid" class="node-grid"
+                        style="display:grid; grid-template-columns: 1fr 1fr; gap:15px; flex:1; padding:10px; overflow-y: auto;">
+                        <!-- JS Rendered -->
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- FOOTER SYSTEM STATUS -->
+            <div
+                style="margin-top:20px; border-top:1px solid #334155; padding-top:10px; display:flex; justify-content:space-between; color:#64748b; font-size:0.7rem; font-family:'JetBrains Mono';">
+                <div>SENTINEL DEFENSE GRID // v4.2.0-STABLE</div>
+                <div>
+                    <span style="margin-right:15px;"><i class="fas fa-circle text-green" style="font-size:0.5rem;"></i>
+                        API: —</span>
+                    <span style="margin-right:15px;"><i class="fas fa-circle text-green" style="font-size:0.5rem;"></i>
+                        DB: —</span>
+                    <span id="footerWorkers"><i class="fas fa-circle text-green" style="font-size:0.5rem;"></i> CLUSTER: Active</span>
+                </div>
+                <div>LATENCY: —</div>
+            </div>
+
+        </main>
+    </div>
+
+    <script>
+        // System Clock
+        setInterval(() => {
+            const now = new Date();
+            document.getElementById('clock').innerText = now.toISOString().replace('T', ' ').split('.')[0] + ' Z';
+        }, 1000);
+
+        // Live Feed
+        const feed = document.getElementById('liveFeed');
+        if (feed) {
+            feed.innerHTML = `<div style="color:#64748b; padding:8px;">Waiting for APK scan events...</div>`;
+        }
+
+        // Traffic Chart (Tactical Colors)
+        const ctx = document.getElementById('trafficChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: Array.from({ length: 60 }, (_, i) => i),
+                datasets: [{
+                    label: 'Traffic Volume',
+                    data: Array.from({ length: 60 }, () => 0),
+                    borderColor: '#a4e82e', // Green
+                    backgroundColor: 'rgba(164, 232, 46, 0.1)',
+                    borderWidth: 1,
+                    fill: true,
+                    pointRadius: 0,
+                    tension: 0.3
+                }, {
+                    label: 'Anomaly',
+                    data: Array.from({ length: 60 }, () => 0),
+                    borderColor: '#ff3333', // Red
+                    borderWidth: 1,
+                    pointRadius: 0,
+                    tension: 0.1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: { 
+                    x: { display: false }, 
+                    y: { 
+                        display: true, 
+                        grid: { color: '#1e293b' },
+                        ticks: { color: '#64748b', font: {family: 'JetBrains Mono'} }
+                    } 
+                },
+                animation: false
+            }
+        });
+
+        /* --- GEO MAP LOGIC --- */
+        // Initialize Map with Dark Tiles (Static & Clickable)
+        const map = L.map('geoMap', {
+            zoomControl: false,
+            attributionControl: false,
+            center: [25, -10],
+            zoom: 2,
+            dragging: false,
+            scrollWheelZoom: false,
+            doubleClickZoom: false,
+            boxZoom: false,
+            keyboard: false,
+            tap: false,
+            touchZoom: false
+        });
+
+        // Redirect to Geo Intelligence on Click
+        map.on('click', () => {
+            window.location.href = 'geo.html';
+        });
+
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+            maxZoom: 19,
+            subdomains: 'abcd'
+        }).addTo(map);
+
+        // Live geo events are loaded from the backend; no client-side fake/simulated data.
+
+        // --- DYNAMIC NODE FETCHING ---
+        const API_BASE_URL = 'http://localhost:8000/api/v1';
+
+        function formatCompactNumber(value) {
+            const num = Number(value || 0);
+            if (num >= 1_000_000) return `${(num / 1_000_000).toFixed(1)}M`;
+            if (num >= 1_000) return `${(num / 1_000).toFixed(1)}k`;
+            return `${num}`;
+        }
+
+        function applyThreatLevel(levelRaw) {
+            const threatEl = document.getElementById('threatLevelValue');
+            if (!threatEl) return;
+
+            const level = String(levelRaw || 'LOW').toUpperCase();
+            threatEl.textContent = level;
+            threatEl.classList.remove('text-green', 'text-yellow', 'text-red');
+
+            if (level === 'CRITICAL' || level === 'HIGH') {
+                threatEl.classList.add('text-red');
+            } else if (level === 'MEDIUM') {
+                threatEl.classList.add('text-yellow');
+            } else {
+                threatEl.classList.add('text-green');
+            }
+        }
+
+        async function fetchApkStats() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/malware/apk/stats`);
+                if (!response.ok) return;
+
+                const payload = await response.json();
+                const summary = payload.summary || {};
+
+                const totalScansValueEl = document.getElementById('totalScansValue');
+                const totalScansSubEl = document.getElementById('totalScansSub');
+                const uniquePackagesValueEl = document.getElementById('uniquePackagesValue');
+                const uniquePackagesSubEl = document.getElementById('uniquePackagesSub');
+                const malwareCapturedEl = document.getElementById('malwareCapturedCount');
+                const malwareSubEl = document.getElementById('malwareCapturedSub');
+                const avgScoreValueEl = document.getElementById('avgScoreValue');
+                const avgScoreSubEl = document.getElementById('avgScoreSub');
+                const criticalVulnEl = document.getElementById('criticalVulnCount');
+                const criticalVulnSubEl = document.getElementById('criticalVulnSub');
+                const luresEl = document.getElementById('luresTrippedValue');
+                const zeroDaysEl = document.getElementById('zeroDaysValue');
+
+                if (totalScansValueEl) {
+                    totalScansValueEl.textContent = formatCompactNumber(summary.total_scans || 0);
+                }
+                if (totalScansSubEl) {
+                    totalScansSubEl.textContent = 'APK Scans Logged';
+                }
+
+                if (uniquePackagesValueEl) {
+                    uniquePackagesValueEl.textContent = formatCompactNumber(summary.unique_packages || 0);
+                }
+                if (uniquePackagesSubEl) {
+                    uniquePackagesSubEl.textContent = 'Unique APK Packages';
+                }
+
+                if (malwareCapturedEl) {
+                    malwareCapturedEl.textContent = formatCompactNumber(summary.malware_captured || 0);
+                }
+                if (malwareSubEl) {
+                    malwareSubEl.textContent = `${summary.total_scans || 0} APK Scans Logged`;
+                }
+
+                if (avgScoreValueEl) {
+                    avgScoreValueEl.textContent = `${Number(summary.avg_security_score || 0).toFixed(1)}`;
+                }
+                if (avgScoreSubEl) {
+                    avgScoreSubEl.textContent = 'Average APK Security Score';
+                }
+
+                if (criticalVulnEl) {
+                    criticalVulnEl.textContent = `${summary.critical_vulnerabilities || 0}`;
+                }
+                if (criticalVulnSubEl) {
+                    criticalVulnSubEl.textContent = 'Critical Findings from APK Analysis';
+                }
+
+                if (luresEl) {
+                    luresEl.textContent = `${summary.total_vulnerabilities || 0}`;
+                }
+
+                if (zeroDaysEl) {
+                    zeroDaysEl.textContent = `${summary.high_risk_scans || 0}`;
+                }
+
+                applyThreatLevel(summary.current_threat_level || 'LOW');
+
+                const latest = summary.latest;
+                if (latest && latest.app_name) {
+                    const lastDetectEl = document.getElementById('lastDetect');
+                    if (lastDetectEl) {
+                        lastDetectEl.textContent = `${latest.app_name} // ${latest.threat_level}`;
+                    }
+                }
+            } catch (error) {
+                console.error('Failed to fetch APK stats:', error);
+            }
+        }
+
+        async function fetchApkHistory() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/malware/apk/history?limit=12`);
+                if (!response.ok || !feed) return;
+
+                const payload = await response.json();
+                const history = Array.isArray(payload.history) ? payload.history : [];
+
+                if (!history.length) {
+                    feed.innerHTML = `<div style="color:#64748b; padding:8px;">No APK scan records yet. Upload an APK from APK Inspector.</div>`;
+                    return;
+                }
+
+                feed.innerHTML = '';
+                history.forEach(item => {
+                    const div = document.createElement('div');
+                    div.style.marginBottom = '6px';
+                    div.style.borderLeft = '2px solid #334155';
+                    div.style.paddingLeft = '8px';
+
+                    const level = String(item.threat_level || 'LOW').toUpperCase();
+                    let levelColor = '#a4e82e';
+                    if (level === 'MEDIUM') levelColor = '#ffaa00';
+                    if (level === 'HIGH' || level === 'CRITICAL') levelColor = '#ff3333';
+                    div.style.color = levelColor;
+                    div.style.borderLeftColor = levelColor;
+
+                    const timeStr = item.timestamp ? new Date(item.timestamp).toLocaleTimeString() : '--:--:--';
+                    const appName = item.app_name || item.filename || 'Unknown APK';
+                    const vulnCount = Number(item.vulnerabilities_count || 0);
+
+                    div.innerHTML = `<span style="color:#64748b;">[${timeStr}]</span> [${level}] ${appName} // ${vulnCount} vulns`;
+                    feed.appendChild(div);
+                });
+            } catch (error) {
+                console.error('Failed to fetch APK history:', error);
+            }
+        }
+
+        async function fetchNodes() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/nodes/`);
+                if (!response.ok) return;
+                const nodes = await response.json();
+                renderNodes(nodes);
+            } catch (error) {
+                console.error("Failed to fetch nodes:", error);
+                document.getElementById('nodeGrid').innerHTML = `<div style="text-align:center; padding:20px; color:#ff3333;">GRID OFFLINE</div>`;
+            }
+        }
+
+        function renderNodes(nodes) {
+            const container = document.getElementById('nodeGrid');
+            container.innerHTML = '';
+
+            let onlineCount = 0;
+
+            nodes.forEach(node => {
+                if (node.status === 'ONLINE' || node.status === 'RUNNING') onlineCount++;
+
+                // Color Logic
+                let statusColor = 'text-green';
+                let dotClass = 'status-dot';
+                let cpuColor = '#a4e82e'; // Green
+                let iconClass = 'fa-server';
+
+                if (node.status === 'OFFLINE' || node.status === 'STOPPED') {
+                    statusColor = 'text-muted';
+                    dotClass = 'status-dot';
+                    cpuColor = '#334155';
+                    iconClass = 'fa-power-off';
+                } else if (node.risk_level === 'HIGH' || node.status === 'UNDER ATTACK') {
+                    statusColor = 'text-red';
+                    dotClass = 'status-dot blink-red';
+                    cpuColor = '#ff3333'; // Red
+                    iconClass = 'fa-shield-alt';
+                }
+
+                const cpu = (typeof node.cpu_percent === 'number') ? node.cpu_percent : 0;
+
+                const html = `
+                    <div class="node-item">
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <span class="text-mono ${statusColor}">${node.name || 'UNKNOWN'}</span>
+                            <i class="fas ${iconClass} text-muted"></i>
+                        </div>
+                        <div class="text-xs text-muted">${node.type || 'Generic Sensor'}</div>
+                        <div style="margin-top:10px;">
+                            <div style="display:flex; justify-content:space-between; font-size:0.7rem; margin-bottom:3px;">
+                                <span>LOAD</span>
+                                <span class="${statusColor}">${cpu}%</span>
+                            </div>
+                            <div style="width:100%; height:4px; background:#334155;">
+                                <div style="width:${cpu}%; height:100%; background:${cpuColor};"></div>
+                            </div>
+                        </div>
+                        <div style="text-align:right; margin-top:5px;">
+                            ${node.status === 'OFFLINE' ?
+                        `<span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:#444;"></span>` :
+                        `<span class="${dotClass}"></span>`
+                    } 
+                            <span class="text-xs ${statusColor}">${node.status}</span>
+                        </div>
+                    </div>
+                `;
+                container.innerHTML += html;
+            });
+
+            // Update Footer
+            const footerWorkers = document.getElementById('footerWorkers');
+            if (footerWorkers) footerWorkers.innerHTML = `WORKERS: ${onlineCount}/${nodes.length}`;
+
+            // Update Active Nodes Metric Tile
+            const activeNodesTile = document.getElementById('activeNodes');
+            if (activeNodesTile) {
+                activeNodesTile.innerText = `${onlineCount} / ${nodes.length}`;
+                if (onlineCount < nodes.length) {
+                    activeNodesTile.style.color = '#ffaa00'; // Amber warning
+                } else {
+                    activeNodesTile.style.color = '#a4e82e'; // Green
+                }
+            }
+        }
+
+        // Fetch initially and loop
+        fetchNodes();
+        setInterval(fetchNodes, 5000);
+        fetchApkStats();
+        setInterval(fetchApkStats, 10000);
+        fetchApkHistory();
+        setInterval(fetchApkHistory, 10000);
+
+        // Protocol Radar Chart (Tactical)
+        const radarCtx = document.getElementById('protocolRadar').getContext('2d');
+        new Chart(radarCtx, {
+            type: 'radar',
+            data: {
+                labels: ['SSH', 'HTTP', 'RDP', 'SMB', 'TELNET', 'FTP'],
+                datasets: [{
+                    label: 'TRAFFIC SIGNATURE',
+                    data: [0, 0, 0, 0, 0, 0],
+                    backgroundColor: 'rgba(164, 232, 46, 0.2)', // Green fill
+                    borderColor: '#a4e82e', // Green line
+                    borderWidth: 2,
+                    pointBackgroundColor: '#a4e82e'
+                }, {
+                    label: 'NORMAL PROFILE',
+                    data: [0, 0, 0, 0, 0, 0],
+                    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                    borderColor: '#64748b',
+                    borderDash: [5, 5],
+                    borderWidth: 1,
+                    pointRadius: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    r: {
+                        angleLines: { color: '#334155' },
+                        grid: { color: '#1e293b' },
+                        pointLabels: { color: '#94a3b8', font: { family: 'JetBrains Mono' } },
+                        ticks: { display: false, backdropColor: 'transparent' }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        labels: { color: '#e2e8f0', font: { family: 'JetBrains Mono', size: 10 } }
+                    }
+                },
+                animation: {
+                    duration: 2000,
+                    easing: 'easeOutQuart'
+                }
+            }
+        });
+    </script>
+    <script src="js/sidebar.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,938 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Honeynet Nodes | SentinelHive</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/dashboard.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        /* RACK UNIT STYLES */
+        .rack-unit {
+            height: 40px;
+            border-bottom: 1px solid #333;
+            background: #111;
+            display: flex;
+            align-items: center;
+            padding: 0 10px;
+            font-family: 'JetBrains Mono';
+            font-size: 0.7rem;
+            color: #666;
+        }
+
+        .rack-light {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #333;
+            margin-right: 5px;
+            display: inline-block;
+        }
+
+
+        .rack-light.blink {
+            animation: blink 0.5s infinite alternate;
+        }
+
+        @keyframes blink {
+            from {
+                opacity: 0.2;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        /* MODAL STYLES (Copied from Sectors) */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(8px);
+            z-index: 9999;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+            opacity: 1;
+        }
+
+        .modal-content {
+            background: #050507;
+            border: 1px solid var(--neon-cyan);
+            width: 95vw;
+            height: 95vh;
+            display: flex;
+            flex-direction: column;
+            padding: 2rem;
+            box-shadow: 0 0 80px rgba(0, 0, 0, 0.8);
+            position: relative;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid #222;
+            padding-bottom: 1rem;
+            margin-bottom: 1rem;
+            flex-shrink: 0;
+        }
+
+        .modal-body {
+            flex: 1;
+            overflow-y: auto;
+            padding-right: 10px;
+        }
+
+        .stat-grid-compact {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat-box {
+            background: var(--bg-card);
+            border: 1px solid #333;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .terminal-log-container {
+            height: 250px;
+            background: #000;
+            border: 1px solid #333;
+            padding: 10px;
+            overflow-y: auto;
+            font-family: 'JetBrains Mono';
+            font-size: 0.75rem;
+            color: #ccc;
+        }
+
+        .log-entry {
+            margin-bottom: 4px;
+            border-bottom: 1px solid #111;
+            padding-bottom: 2px;
+            display: flex;
+            gap: 10px;
+        }
+
+        .log-time {
+            color: #666;
+            width: 70px;
+        }
+
+        .log-ip {
+            color: var(--neon-cyan);
+            width: 110px;
+        }
+
+        .log-type {
+            color: var(--neon-purple);
+            width: 100px;
+        }
+
+        .log-payload {
+            color: #aaa;
+            flex: 1;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .terminal-table th {
+            color: #666;
+            font-size: 0.7rem;
+            text-align: left;
+            padding: 5px;
+        }
+
+        .terminal-table td {
+            padding: 5px;
+            border-bottom: 1px solid #222;
+            font-size: 0.8rem;
+        }
+
+        .ioc-tag {
+            background: #111;
+            border: 1px solid #333;
+            padding: 2px 6px;
+            font-size: 0.7rem;
+            color: var(--neon-cyan);
+            margin-right: 5px;
+            font-family: 'JetBrains Mono';
+            display: inline-block;
+            margin-bottom: 5px;
+            cursor: pointer;
+        }
+
+        .alert-item {
+            padding: 10px;
+            border-bottom: 1px solid #222;
+        }
+
+        .alert-item.sev-high {
+            border-left: 3px solid var(--neon-red);
+            background: rgba(255, 0, 0, 0.05);
+        }
+
+        .alert-item.sev-med {
+            border-left: 3px solid var(--neon-yellow);
+            background: rgba(255, 255, 0, 0.05);
+        }
+
+        .country-bar {
+            height: 4px;
+            background: #222;
+            width: 100%;
+            margin-top: 5px;
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        /* RBAC Styles */
+        .soc-card.restricted {
+            filter: grayscale(1) opacity(0.4);
+            cursor: not-allowed !important;
+        }
+
+        .soc-card.restricted:hover {
+            transform: none;
+            box-shadow: none;
+            border-color: #333 !important;
+        }
+
+        .rbac-lock-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.4);
+            z-index: 10;
+        }
+
+        .soc-card.restricted .rbac-lock-overlay {
+            display: flex;
+        }
+
+        /* TOAST NOTIFICATION STYLES */
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 10000;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .toast {
+            background: rgba(0, 0, 0, 0.9);
+            border: 1px solid #333;
+            color: #fff;
+            padding: 15px 20px;
+            min-width: 300px;
+            border-left: 4px solid var(--neon-cyan);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+            animation: slideIn 0.3s ease-out forwards;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .toast.error {
+            border-left-color: var(--neon-red);
+        }
+
+        .toast.warning {
+            border-left-color: var(--neon-yellow);
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes fadeOut {
+            to {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="app-container">
+
+        <!-- TOAST CONTAINER -->
+        <div id="toastContainer" class="toast-container"></div>
+
+        <!-- SIDEBAR -->
+        <!-- SIDEBAR -->
+        <aside class="sidebar" id="sidebar">
+            <div class="logo-area" onclick="document.getElementById('sidebar').classList.toggle('collapsed')">
+                <div class="logo-icon"></div>
+                <div class="logo-text">
+                    <div class="logo-title">SENTINEL</div>
+                    <div class="logo-sub">DECEPTION GRID // V1</div>
+                </div>
+                <i class="fas fa-arrow-left toggle-btn"
+                    style="margin-left: auto; cursor: pointer; color: #555; transition:0.3s;"></i>
+            </div>
+
+            <div class="nav-group">
+                <div class="nav-group-label">Mission Control</div>
+                <a href="dashboard.html" class="nav-item"><i class="fas fa-th-large"></i> <span class="nav-text">Threat
+                        Overview</span></a>
+                <a href="events.html" class="nav-item"><i class="fas fa-stream"></i> <span class="nav-text">Event
+                        Stream</span></a>
+                <a href="alerts.html" class="nav-item"><i class="fas fa-bell"></i> <span class="nav-text">Alerts &
+                        Findings</span></a>
+            </div>
+
+            <div class="nav-group">
+                <div class="nav-group-label">Grid Monitoring</div>
+                <a href="nodes.html" class="nav-item active"><i class="fas fa-server"></i> <span
+                        class="nav-text">Honeypot Nodes</span></a>
+                <a href="sectors.html" class="nav-item"><i class="fas fa-network-wired"></i> <span
+                        class="nav-text">Sector Monitors</span></a>
+                <a href="geo.html" class="nav-item"><i class="fas fa-globe-americas"></i> <span class="nav-text">Geo
+                        Intelligence</span></a>
+            </div>
+
+            <div class="nav-group">
+                <div class="nav-group-label">Intelligence</div>
+                <a href="mitre.html" class="nav-item"><i class="fas fa-project-diagram"></i> <span
+                        class="nav-text">MITRE Matrix</span></a>
+                <a href="graphs.html" class="nav-item"><i class="fas fa-chart-pie"></i> <span class="nav-text">Analytics
+                        Graphs</span></a>
+                <a href="credentials.html" class="nav-item"><i class="fas fa-key"></i> <span
+                        class="nav-text">Credentials Vault</span></a>
+                <a href="behavior.html" class="nav-item"><i class="fas fa-fingerprint"></i> <span
+                        class="nav-text">Behaviour Profiling</span></a>
+                <a href="simulation.html" class="nav-item"><i class="fas fa-dragon"></i> <span class="nav-text">Attack
+                        Simulation</span></a>
+            </div>
+
+            <div class="nav-group">
+                <div class="nav-group-label">Tools Suite</div>
+                <a href="malware.html" class="nav-item"><i class="fas fa-bug"></i> <span class="nav-text">Malware
+                        Sandbox</span></a>
+                <a href="urlscan.html" class="nav-item"><i class="fas fa-search-location"></i> <span
+                        class="nav-text">URL Scanner</span></a>
+                <a href="apk.html" class="nav-item"><i class="fas fa-mobile-alt"></i> <span class="nav-text">APK
+                        Analyzer</span></a>
+                <a href="vm_lab.html" class="nav-item"><i class="fas fa-desktop"></i> <span class="nav-text">Virtual
+                        Lab</span></a>
+            </div>
+
+            <div class="nav-group">
+                <div class="nav-group-label">System</div>
+                <a href="admin.html" class="nav-item"><i class="fas fa-user-shield"></i> <span class="nav-text">Admin
+                        Panel</span></a>
+                <a href="config.html" class="nav-item"><i class="fas fa-cog"></i> <span
+                        class="nav-text">Configuration</span></a>
+                <a href="profile.html" class="nav-item"><i class="fas fa-id-card"></i> <span
+                        class="nav-text">Profile</span></a>
+                <a href="#" class="nav-item" id="logoutBtn" style="color: #ff4444;"><i class="fas fa-sign-out-alt"></i>
+                    <span class="nav-text">Logout</span></a>
+            </div>
+
+            <div class="build-info">
+                <div>DEPLOYMENT: <span class="text-cyan">PROD-01</span></div>
+                <div>STATUS: <span class="text-green">ONLINE</span></div>
+            </div>
+        </aside>
+
+        <main class="main-content">
+
+            <div class="top-bar">
+                <div class="page-header">
+                    <h2>HONEYNET NODES</h2>
+                    <p>SECTOR DEPLOYMENT // <span class="text-green">ALL SYSTEMS OPERATIONAL</span></p>
+                </div>
+                <div class="filters-bar" style="display: flex; gap: 10px; align-items: center;">
+                    <div style="color: #888; font-size: 0.8rem; letter-spacing: 1px;">CLEARANCE LEVEL:</div>
+                    <select id="roleSelector" class="soc-btn"
+                        style="background: #111; color: #fff; border: 1px solid #333; padding: 5px 10px;"
+                        onchange="updateUserRole(this.value)">
+                        <option value="1">TIER 1 — OPERATIVE</option>
+                        <option value="2">TIER 2 — SPECIALIST</option>
+                        <option value="3" selected>TIER 3 — OVERSEER</option>
+                    </select>
+                    <button class="soc-btn soc-btn-primary" style="margin-left: 10px;">+ DEPLOY VM</button>
+                </div>
+            </div>
+
+            <div class="dashboard-grid" style="grid-template-columns: 3fr 1fr; gap:20px;">
+
+                <!-- LEFT COL: DYNAMIC NODE LIST -->
+                <div id="nodeListContainer">
+                    <!-- JS Injected Nodes will go here -->
+                </div>
+
+                <!-- RIGHT COL: RACK VIEW -->
+                <div>
+                    <div class="soc-card" style="padding:0; height:100%; min-height: 500px;">
+                        <div class="soc-card-header" style="padding:15px;">
+                            <span class="card-title">SERVER RACK A-1</span>
+                        </div>
+                        <div style="background:#000; height:100%; border-top:1px solid #333; padding-bottom: 20px;">
+                            <div class="rack-unit">
+                                <span class="text-mono" style="width:30px;">42U</span>
+                                <span style="flex:1;">SWITCH-TOP-OF-RACK</span>
+                                <span class="rack-light blink" style="background:#0f0;"></span>
+                                <span class="rack-light blink" style="background:#0f0;"></span>
+                            </div>
+                            <div class="rack-unit">
+                                <span class="text-mono" style="width:30px;">41U</span>
+                                <span style="flex:1;">FIREWALL-CORE</span>
+                                <span class="rack-light blink" style="background:#f00;"></span>
+                            </div>
+                            <div class="rack-unit"><span class="text-mono" style="width:30px;">40U</span> [EMPTY]</div>
+
+                            <!-- NODES - UPDATED LIST -->
+                            <div class="rack-unit">
+                                <span class="text-mono" style="width:30px;">39U</span>
+                                <span style="flex:1;">EDU-01 (Ubuntu)</span>
+                                <span class="rack-light" style="background:#f59e0b;"></span>
+                            </div>
+                            <div class="rack-unit">
+                                <span class="text-mono" style="width:30px;">38U</span>
+                                <span style="flex:1;">DEF-09 (Kali)</span>
+                                <span class="rack-light blink" style="background:#ef4444;"></span>
+                            </div>
+                            <div class="rack-unit">
+                                <span class="text-mono" style="width:30px;">37U</span>
+                                <span style="flex:1;">MED-04 (WinServ)</span>
+                                <span class="rack-light" style="background:#06b6d4;"></span>
+                            </div>
+                            <div class="rack-unit">
+                                <span class="text-mono" style="width:30px;">36U</span>
+                                <span style="flex:1;">COM-02 (CentOS)</span>
+                                <span class="rack-light" style="background:#10b981;"></span>
+                            </div>
+                            <div class="rack-unit">
+                                <span class="text-mono" style="width:30px;">35U</span>
+                                <span style="flex:1;">FIN-05 (RHEL)</span>
+                                <span class="rack-light blink" style="background:#d946ef;"></span>
+                            </div>
+                            <div class="rack-unit">
+                                <span class="text-mono" style="width:30px;">34U</span>
+                                <span style="flex:1;">GOV-06 (Debian)</span>
+                                <span class="rack-light" style="background:#a0a0a0;"></span>
+                            </div>
+
+                            <div class="rack-unit"><span class="text-mono" style="width:30px;">33U</span> [RESERVED]
+                            </div>
+                            <div class="rack-unit"><span class="text-mono" style="width:30px;">32U</span> [RESERVED]
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- FOOTER SYSTEM STATUS -->
+            <div
+                style="margin-top:20px; border-top:1px solid #222; padding-top:10px; display:flex; justify-content:space-between; color:#666; font-size:0.7rem; font-family:'JetBrains Mono';">
+                <div>SENTINEL NODE CLUSTER // v4.2.0-STABLE</div>
+                <div>
+                    <span style="margin-right:15px;"><i class="fas fa-circle text-green" style="font-size:0.5rem;"></i>
+                        API: ONLINE</span>
+                    <span style="margin-right:15px;"><i class="fas fa-circle text-green" style="font-size:0.5rem;"></i>
+                        DB: ONLINE</span>
+                    <span><i class="fas fa-circle text-green" style="font-size:0.5rem;"></i> WORKERS: 12/12</span>
+                </div>
+                <div>LATENCY: 12ms</div>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- SOC INVESTIGATION MODAL (COPIED FROM SECTORS.HTML) -->
+    <div id="sectorModal" class="modal-overlay" onclick="closeModal(event)">
+        <div class="modal-content" onclick="event.stopPropagation()">
+
+            <!-- Header -->
+            <div class="modal-header">
+                <div>
+                    <div style="font-size:0.7rem; color:#888; letter-spacing:2px;">SECTOR ID: <span id="modalSectorId"
+                            class="text-white">SEC-001</span></div>
+                    <h2 id="modalTitle" style="font-size:2rem; margin-top:5px; text-shadow:0 0 15px currentColor;">
+                        EDUCATION SECTOR</h2>
+                </div>
+                <div style="display:flex; gap:20px; align-items:center;">
+                    <button class="soc-btn" onclick="closeModal()">CLOSE PANEL</button>
+                    <div class="text-mono" style="color:#888;">RISK: <span class="text-red">CRITICAL</span></div>
+                </div>
+            </div>
+
+            <!-- Scrollable Body (SOC Dashboard) -->
+            <div class="modal-body">
+
+                <!-- ATTACK SUMMARY -->
+                <div class="stat-grid-compact">
+                    <div class="stat-box">
+                        <div class="text-xs text-muted">TOTAL ATTACKS (24H)</div>
+                        <div class="text-xl text-white font-bold" id="statAttacks">--</div>
+                        <div class="text-xs text-red">↑ 12% vs Avg</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="text-xs text-muted">UNIQUE ATTACKERS</div>
+                        <div class="text-xl text-cyan font-bold" id="statAttackers">--</div>
+                        <div class="text-xs text-muted">Source IPs</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="text-xs text-muted">TOP ATTACK TYPE</div>
+                        <div class="text-xl text-purple font-bold">Brute Force</div>
+                        <div class="text-xs text-muted">SSH Dictionary</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="text-xs text-muted">LAST ACTIVITY</div>
+                        <div class="text-xl text-green font-bold">2s ago</div>
+                        <div class="text-xs text-muted">Real-time</div>
+                    </div>
+                </div>
+
+                <!-- MAIN DASHBOARD GRID -->
+                <div class="dashboard-grid grid-3">
+
+                    <!-- COL 1: ATTACKERS & GEO -->
+                    <div style="display: flex; flex-direction: column; gap: 20px;">
+
+                        <!-- TOP ATTACKERS -->
+                        <div class="soc-card" style="padding: 0;">
+                            <div class="soc-card-header" style="padding: 15px;">
+                                <span class="card-title">TOP ATTACKERS (24H)</span>
+                            </div>
+                            <table class="terminal-table" style="width:100%;">
+                                <thead>
+                                    <tr>
+                                        <th>IP</th>
+                                        <th>CN</th>
+                                        <th>ATTEMPTS</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="attackersTable">
+                                    <!-- JS populated -->
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- GEO INTELLIGENCE -->
+                        <div class="soc-card">
+                            <div class="soc-card-header"><span class="card-title">GEO ORIGINS</span></div>
+                            <div id="geoContainer">
+                                <!-- JS populated -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- COL 2: CHARTS & LOGS -->
+                    <div style="display: flex; flex-direction: column; gap: 20px;">
+
+                        <!-- ATTACK BREAKDOWN -->
+                        <div class="soc-card" style="height: 250px;">
+                            <div class="soc-card-header"><span class="card-title">ATTACK VECTORS</span></div>
+                            <div style="height: 180px; width: 100%;">
+                                <canvas id="attackChart"></canvas>
+                            </div>
+                        </div>
+
+                        <!-- LIVE EVENT FEED -->
+                        <div class="soc-card" style="padding: 0;">
+                            <div class="soc-card-header" style="padding: 15px;">
+                                <span class="card-title">LIVE EVENT FEED</span>
+                                <span class="badge badge-green animate-pulse">LIVE</span>
+                            </div>
+                            <div class="terminal-log-container" id="liveLog"></div>
+                        </div>
+                    </div>
+
+                    <!-- COL 3: PAYLOADS & IOCs -->
+                    <div style="display: flex; flex-direction: column; gap: 20px;">
+                        <!-- IOCs -->
+                        <div class="soc-card">
+                            <div class="soc-card-header"><span class="card-title">EXTRACTED IOCs</span></div>
+                            <div style="display: flex; flex-wrap: wrap; gap: 5px;" id="iocContainer"></div>
+                        </div>
+
+                        <!-- CAPTURED COMMANDS -->
+                        <div class="soc-card" style="padding: 0; flex: 1;">
+                            <div class="soc-card-header" style="padding: 15px;">
+                                <span class="card-title">CAPTURED COMMANDS</span>
+                            </div>
+                            <table class="terminal-table" style="width:100%;">
+                                <tbody id="commandsTable"></tbody>
+                            </table>
+                        </div>
+
+                        <!-- ALERTS -->
+                        <div class="soc-card" style="padding: 0;">
+                            <div class="soc-card-header" style="padding: 10px 15px; border-bottom: 1px solid #333;">
+                                <span class="card-title">ACTIVE ALERTS</span>
+                            </div>
+                            <div id="alertsContainer"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TIMELINE -->
+                <div class="soc-card" style="margin-top: 20px;">
+                    <div class="soc-card-header"><span class="card-title">ATTACK TIMELINE (24H)</span></div>
+                    <div style="height: 200px; width: 100%;">
+                        <canvas id="timelineChart"></canvas>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <script src="js/sidebar.js"></script>
+    <script type="module">
+        import { authService } from './js/auth.js';
+        import { apiService } from './js/api.js';
+
+        // Check Auth
+        if (!authService.isAuthenticated()) {
+            window.location.href = 'login.html';
+        }
+
+        let currentUserLevel = 3;
+        window.updateUserRole = function (level) {
+            currentUserLevel = parseInt(level);
+            console.log("User role updated to Level " + level);
+            // In the future, we can re-render nodes with filtering here
+        };
+
+        // RENDER NODES
+        async function renderNodes() {
+            const container = document.getElementById('nodeListContainer');
+            container.innerHTML = '<div style="color:#666; padding:20px;">Loading Nodes...</div>';
+
+            try {
+                const nodes = await apiService.get('/nodes/');
+                container.innerHTML = '';
+
+                if (nodes.length === 0) {
+                    container.innerHTML = '<div style="color:#666; padding:20px;">No Nodes Deployed.</div>';
+                    return;
+                }
+
+                nodes.forEach(node => {
+                    const isOffline = node.status === 'OFFLINE';
+                    let color = '#555';
+                    let icon = 'fa-server';
+                    if (node.type === 'honeypot') { color = '#f59e0b'; icon = 'fa-graduation-cap'; }
+                    if (node.name.includes('DEF')) { color = '#ef4444'; icon = 'fa-shield-alt'; }
+
+                    const cardStyle = `margin-bottom: 20px; border-left: 4px solid ${color}; position: relative; cursor: pointer; opacity: ${isOffline ? 0.6 : 1}`;
+
+                    let html = `
+                        <div class="soc-card" style="${cardStyle}">
+                            <div style="display:flex; justify-content:space-between; margin-bottom:15px;">
+                                <div style="display:flex; gap:15px; align-items:center;">
+                                    <i class="fas ${icon}" style="font-size:2rem; color:${color};"></i>
+                                    <div>
+                                        <div style="font-size:1.2rem; font-weight:700; color:#fff;">${node.name} <span style="font-size:0.8rem; font-weight:400; color:#666;">(${node.type})</span></div>
+                                        <div class="text-mono" style="font-size:0.8rem; color:#888;">IP: ${node.ip_address} | Region: ${node.region || 'Local'}</div>
+                                    </div>
+                                </div>
+                                <div style="text-align:right;">
+                                    ${isOffline ? '<div class="badge badge-gray">OFFLINE</div>' : '<div class="badge badge-green">ONLINE</div>'}
+                                    <div style="margin-top:5px; font-size:0.7rem; color:#666;">Uptime: ${node.uptime_seconds || 0}s</div>
+                                </div>
+                            </div>
+                    `;
+
+                    if (!isOffline) {
+                        html += `
+                            <div style="display:flex; gap:10px; margin-top:10px;">
+                                <button class="soc-btn" onclick="window.stopNode('${node.node_id}')" style="border-color:var(--neon-pink); color:var(--neon-pink);">STOP SERVICE</button>
+                            </div>
+                        `;
+                    } else {
+                        html += `
+                            <div style="display:flex; gap:10px; margin-top:10px;">
+                                <button class="soc-btn" onclick="window.startNode('${node.node_id}')" style="border-color:var(--neon-green); color:var(--neon-green);">START SERVICE</button>
+                            </div>
+                        `;
+                    }
+
+                    html += `</div>`;
+                    container.innerHTML += html;
+                });
+
+            } catch (error) {
+                console.error("Failed to load nodes:", error);
+                container.innerHTML = '<div style="color:var(--neon-red); padding:20px;">Failed to load nodes. Backend might be offline.</div>';
+            }
+        }
+        window.renderNodes = renderNodes;
+
+        // DEPLOY NODE
+        window.deployNode = async function () {
+            const name = prompt("Enter Node Name (e.g., KALI-01):", "HNY-NODE-" + Math.floor(Math.random() * 100));
+            if (!name) return;
+            const type = prompt("Enter Type (honeypot, firewall, server):", "honeypot");
+
+            try {
+                showToast("Deploying Node...", "info");
+                await apiService.post('/nodes/launch', { name, type, sector: "General" });
+                showToast("Node Deployed Successfully!", "success");
+                renderNodes();
+            } catch (e) {
+                showToast("Deployment Failed: " + e.message, "error");
+            }
+        }
+
+        // STOP NODE
+        window.stopNode = async function (id) {
+            if (!confirm("Stop this node? Service will be interrupted.")) return;
+            try {
+                await apiService.post(`/nodes/${id}/stop`);
+                renderNodes();
+            } catch (e) { alert(e.message); }
+        }
+
+        // START NODE
+        window.startNode = async function (id) {
+            try {
+                await apiService.post(`/nodes/${id}/start`);
+                renderNodes();
+            } catch (e) { alert(e.message); }
+        }
+
+        // Add event listener to Deploy Button
+        document.querySelector('.filters-bar .soc-btn-primary').onclick = window.deployNode;
+
+        // Initial Load
+        renderNodes();
+
+    </script>
+    <script>
+        // CONFIGURATION
+        const sectorConfig = {
+            'edu': {
+                title: 'EDUCATION SECTOR', nodeName: 'EDU-01', nodeDesc: 'University Portal Decoy',
+                id: 'SEC-EDU-01', color: '#f59e0b', icon: 'fa-graduation-cap',
+                apiEndpoint: '/sectors/edu/stats', minLevel: 1
+            },
+            'defence': {
+                title: 'DEFENCE SECTOR', nodeName: 'DEF-09', nodeDesc: 'Military SatCom Decoy',
+                id: 'SEC-DEF-09', color: '#ef4444', icon: 'fa-shield-alt',
+                apiEndpoint: '/sectors/defence/stats', minLevel: 3
+            },
+            'medicare': {
+                title: 'MEDICARE SECTOR', nodeName: 'MED-04', nodeDesc: 'Hospital Backend Decoy',
+                id: 'SEC-MED-04', color: '#06b6d4', icon: 'fa-heartbeat',
+                apiEndpoint: '/sectors/medicare/stats', minLevel: 2
+            },
+            'commerce': {
+                title: 'COMMERCE SECTOR', nodeName: 'COM-02', nodeDesc: 'E-commerce DB Decoy',
+                id: 'SEC-COM-02', color: '#10b981', icon: 'fa-shopping-cart',
+                apiEndpoint: '/sectors/commerce/stats', minLevel: 1
+            },
+            'finance': {
+                title: 'FINANCE SECTOR', nodeName: 'FIN-05', nodeDesc: 'Banking & Crypto Node',
+                id: 'SEC-FIN-05', color: '#d946ef', icon: 'fa-university',
+                apiEndpoint: '/sectors/finance/stats', minLevel: 2
+            },
+            'gov': {
+                title: 'GOVERNMENT SECTOR', nodeName: 'GOV-06', nodeDesc: 'Diplomatic Archives',
+                id: 'SEC-GOV-06', color: '#a0a0a0', icon: 'fa-building-columns',
+                apiEndpoint: '/sectors/gov/stats', minLevel: 3
+            },
+            'energy': {
+                title: 'ENERGY GRID', nodeName: 'NRG-03',
+                id: 'SEC-NRG-03', color: '#555', icon: 'fa-bolt', minLevel: 3, isComingSoon: true
+            },
+            'telecom': {
+                title: 'TELECOM SECTOR', nodeName: 'TEL-07',
+                id: 'SEC-TEL-07', color: '#555', icon: 'fa-broadcast-tower', minLevel: 2, isComingSoon: true
+            },
+            'transport': {
+                title: 'TRANSPORT SECTOR', nodeName: 'TRA-08',
+                id: 'SEC-TRA-08', color: '#555', icon: 'fa-plane', minLevel: 2, isComingSoon: true
+            }
+        };
+
+        let attackChartInst = null;
+        let timelineChartInst = null;
+        let logInterval = null;
+
+
+
+        // SHOW DISMISSABLE TOAST
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            let icon = 'fa-info-circle';
+            let title = 'System Notification';
+            if (type === 'error') { icon = 'fa-exclamation-triangle'; title = 'ACCESS DENIED'; }
+            if (type === 'warning') { icon = 'fa-lock'; title = 'SYSTEM OFFLINE'; }
+            toast.innerHTML = `
+                <div class="toast-icon"><i class="fas ${icon}"></i></div>
+                <div class="toast-content"><div class="toast-title">${title}</div><div class="toast-msg">${message}</div></div>
+            `;
+            container.appendChild(toast);
+            setTimeout(() => { toast.style.animation = 'fadeOut 0.3s ease-out forwards'; setTimeout(() => toast.remove(), 300); }, 3000);
+        }
+
+        // OPEN MODAL
+        async function openSector(type) {
+            const config = sectorConfig[type];
+            if (!config) return;
+
+            if (config.isComingSoon) {
+                showToast(`Connection to ${config.title} is currently pending system integration.`, 'warning');
+                return;
+            }
+
+            if (currentUserLevel < config.minLevel) {
+                showToast(`Insufficient clearance level for ${config.title}. Requires Level ${config.minLevel}.`, 'error');
+                return;
+            }
+
+            // Fill Header
+            document.getElementById('modalTitle').innerText = config.title;
+            document.getElementById('modalTitle').style.color = config.color;
+            document.getElementById('modalSectorId').innerText = config.id;
+
+            // Open Modal
+            document.getElementById('sectorModal').classList.add('active');
+
+            // Fetch Data
+            try {
+                const data = await fetchSectorData(config.apiEndpoint);
+                updateDashboardUI(data, config.color);
+            } catch (error) {
+                console.error("Failed to load data", error);
+                showToast('No data yet for this sector.', 'warning');
+                updateDashboardUI(null, config.color);
+            }
+
+            startLiveLog();
+        }
+
+        function closeModal() {
+            document.getElementById('sectorModal').classList.remove('active');
+            if (logInterval) clearInterval(logInterval);
+        }
+
+        async function fetchSectorData(endpoint) {
+            return apiService.get(endpoint);
+        }
+
+        function updateDashboardUI(data, color) {
+            const safe = data || {};
+            const statAttacks = safe.attacks ?? safe.total_attacks ?? '—';
+            const statAttackers = safe.attackers ?? safe.unique_attackers ?? '—';
+
+            document.getElementById('statAttacks').innerText = (typeof statAttacks === 'number') ? statAttacks.toLocaleString() : statAttacks;
+            document.getElementById('statAttackers').innerText = (typeof statAttackers === 'number') ? statAttackers.toLocaleString() : statAttackers;
+
+            const topAttackers = Array.isArray(safe.topAttackers) ? safe.topAttackers : (Array.isArray(safe.top_attackers) ? safe.top_attackers : []);
+            document.getElementById('attackersTable').innerHTML = topAttackers.length
+                ? topAttackers.map(a => `<tr><td class="text-mono text-cyan">${a.ip ?? '—'}</td><td>${a.cn ?? a.country ?? '—'}</td><td class="text-red">${(typeof a.count === 'number' ? a.count.toLocaleString() : (a.count ?? '—'))}</td></tr>`).join('')
+                : '<tr><td colspan="3" class="text-muted">No data yet</td></tr>';
+
+            const geo = Array.isArray(safe.geo) ? safe.geo : (Array.isArray(safe.geo_origins) ? safe.geo_origins : []);
+            document.getElementById('geoContainer').innerHTML = geo.length
+                ? geo.map(g => {
+                    const name = g.name ?? g.country ?? '—';
+                    const pct = g.pct ?? g.percent ?? null;
+                    const pctText = (typeof pct === 'number') ? `${pct}%` : (pct ?? '—');
+                    const barWidth = (typeof pct === 'number') ? `${Math.max(0, Math.min(100, pct))}%` : '0%';
+                    const barColor = g.color ?? color;
+                    return `<div style="margin-bottom: 15px;"><div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: #ccc;"><span>${name}</span><span>${pctText}</span></div><div class="country-bar"><div style="width: ${barWidth}; height: 100%; background: ${barColor};"></div></div></div>`;
+                }).join('')
+                : '<div class="text-muted" style="font-size:0.75rem;">No data yet</div>';
+
+            const iocs = Array.isArray(safe.iocs) ? safe.iocs : (Array.isArray(safe.extracted_iocs) ? safe.extracted_iocs : []);
+            document.getElementById('iocContainer').innerHTML = iocs.length
+                ? iocs.map(i => `<div class="ioc-tag"><i class="fas ${i.icon ?? 'fa-circle'}"></i> ${i.val ?? i.value ?? '—'}</div>`).join('')
+                : '<div class="text-muted" style="font-size:0.75rem;">No data yet</div>';
+
+            const commands = Array.isArray(safe.commands) ? safe.commands : (Array.isArray(safe.captured_commands) ? safe.captured_commands : []);
+            document.getElementById('commandsTable').innerHTML = commands.length
+                ? commands.map(c => `<tr><td class="text-mono text-pink" style="font-size: 0.7rem;">${c.cmd ?? c.command ?? c}</td></tr>`).join('')
+                : '<tr><td class="text-muted">No data yet</td></tr>';
+
+            const alerts = Array.isArray(safe.alerts) ? safe.alerts : (Array.isArray(safe.active_alerts) ? safe.active_alerts : []);
+            document.getElementById('alertsContainer').innerHTML = alerts.length
+                ? alerts.map(a => `<div class="alert-item sev-${a.sev ?? a.severity ?? 'low'}"><div style="font-weight: 700; color: #fff;">${a.title ?? 'ALERT'}</div><div style="font-size: 0.65rem;">${a.desc ?? a.description ?? '—'}</div></div>`).join('')
+                : '<div class="text-muted" style="padding:10px 15px;">No data yet</div>';
+
+            // Charts are rendered only when the backend provides real breakdown/timeline data.
+            if (attackChartInst) { attackChartInst.destroy(); attackChartInst = null; }
+            if (timelineChartInst) { timelineChartInst.destroy(); timelineChartInst = null; }
+
+            const breakdown = safe.attack_breakdown;
+            if (breakdown && Array.isArray(breakdown.labels) && Array.isArray(breakdown.values)) {
+                const ctxAttack = document.getElementById('attackChart').getContext('2d');
+                attackChartInst = new Chart(ctxAttack, {
+                    type: 'doughnut',
+                    data: {
+                        labels: breakdown.labels,
+                        datasets: [{ data: breakdown.values, backgroundColor: breakdown.colors || [color], borderWidth: 0 }]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { color: '#ccc', font: { family: 'JetBrains Mono', size: 10 }, boxWidth: 10 } } } }
+                });
+            }
+
+            const timeline = safe.timeline;
+            if (timeline && Array.isArray(timeline.labels) && Array.isArray(timeline.values)) {
+                const ctxTimeline = document.getElementById('timelineChart').getContext('2d');
+                timelineChartInst = new Chart(ctxTimeline, {
+                    type: 'line',
+                    data: {
+                        labels: timeline.labels,
+                        datasets: [{ label: timeline.label || 'Attacks', data: timeline.values, borderColor: color, backgroundColor: color + '22', fill: true, tension: 0.4, pointRadius: 2 }]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false, scales: { y: { grid: { color: '#333' } }, x: { display: false } }, plugins: { legend: { display: false } } }
+                });
+            }
+        }
+
+        function startLiveLog() {
+            const container = document.getElementById('liveLog');
+            container.innerHTML = '<div style="color:#666; padding:10px;">No live data yet.</div>';
+        }
+
+        // Init
+
+
+    </script>
+</body>
+
+</html>

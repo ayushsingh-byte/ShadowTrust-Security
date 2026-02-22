@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SentialHive | Access Terminal</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Landing Specific Styles */
+        .landing-container {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: radial-gradient(circle at top, #111830 0%, #020408 100%);
+            padding: 2rem;
+            text-align: center;
+        }
+
+        .hero-logo {
+            width: 100px;
+            height: 100px;
+            background: url('https://upload.wikimedia.org/wikipedia/commons/thumb/6/6f/Octicons-shield.svg/1200px-Octicons-shield.svg.png');
+            background-size: cover;
+            filter: drop-shadow(0 0 20px rgba(37, 99, 235, 0.4)) invert(1);
+            margin-bottom: 2rem;
+            animation: pulse 3s infinite ease-in-out;
+        }
+
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.5rem;
+            max-width: 1000px;
+            width: 100%;
+            margin: 4rem 0;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 0.8;
+                transform: scale(1);
+            }
+
+            50% {
+                opacity: 1;
+                transform: scale(1.05);
+            }
+        }
+
+        @media(max-width: 768px) {
+            .feature-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="landing-container">
+
+        <div class="hero-logo"></div>
+
+        <h1 style="font-size: 3rem; margin-bottom: 0.5rem;">SENTINEL<span class="text-blue">HIVE</span></h1>
+        <p class="text-muted" style="max-width: 600px; line-height: 1.6;">
+            Distributed Intelligent Honeypot & Threat Intelligence Platform.<br>
+            Secure your infrastructure with real-time attack visualization.
+        </p>
+
+        <div style="margin-top: 2rem; display: flex; gap: 1rem;">
+            <a href="dashboard.html" class="soc-btn soc-btn-primary" style="padding: 12px 24px; font-size: 1rem;">
+                <i class="fas fa-terminal"></i> INITIALIZE CONSOLE
+            </a>
+            <a href="https://github.com/sentinelhive" class="soc-btn" style="padding: 12px 24px; font-size: 1rem;">
+                <i class="fab fa-github"></i> DOCUMENTATION
+            </a>
+        </div>
+
+        <div class="feature-grid">
+            <div class="soc-card text-left">
+                <div class="soc-card-header">
+                    <span class="card-title text-blue"><i class="fas fa-globe-americas"></i> Global Threat Map</span>
+                </div>
+                <p class="text-muted text-sm">Visualize attacks in real-time on an interactive 3D-style geolocation map.
+                    Track origins and targets instantly.</p>
+            </div>
+
+            <div class="soc-card text-left">
+                <div class="soc-card-header">
+                    <span class="card-title text-green"><i class="fas fa-brain"></i> AI Analytics</span>
+                </div>
+                <p class="text-muted text-sm">Advanced machine learning models analyze malware signatures, URL patterns,
+                    and behavioral anomalies.</p>
+            </div>
+
+            <div class="soc-card text-left">
+                <div class="soc-card-header">
+                    <span class="card-title text-red"><i class="fas fa-bug"></i> Malware Sandbox</span>
+                </div>
+                <p class="text-muted text-sm">Safe execution environment for analyzing suspicious files and Android APKs
+                    with detailed reporting.</p>
+            </div>
+        </div>
+
+        <footer class="text-muted text-xs">
+            <p>&copy; 2026 SentinelHive Project. All access monitored and logged.</p>
+            <div style="margin-top:0.5rem;">
+                v1.0.0-beta <span style="margin:0 10px;">|</span> System Status: <span class="text-green">Go</span>
+            </div>
+        </footer>
+
+    </div>
+
+</body>
+
+</html>

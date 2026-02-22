@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign In | SentinelHive</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body,
+        html {
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            width: 100vw;
+            display: flex;
+            background: #020408;
+            font-family: 'Outfit', sans-serif;
+            overflow: hidden;
+        }
+
+        /* LEFT SIDE: VISUAL */
+        .visual-pane {
+            flex: 1;
+            /* High-quality abstract tech background */
+            background: url('https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=2072&auto=format&fit=crop');
+            background-size: cover;
+            background-position: center;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            padding: 80px;
+        }
+
+        .visual-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            /* Gradient overlay for text readability */
+            background: linear-gradient(to top, rgba(2, 4, 8, 0.95) 0%, rgba(2, 4, 8, 0.3) 100%);
+        }
+
+        .visual-content {
+            position: relative;
+            z-index: 2;
+            color: #fff;
+            max-width: 600px;
+        }
+
+        .visual-badge {
+            display: inline-block;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(5px);
+            padding: 8px 16px;
+            border-radius: 100px;
+            font-size: 0.8rem;
+            margin-bottom: 20px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .visual-title {
+            font-size: 3.5rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+            line-height: 1.1;
+            background: linear-gradient(90deg, #fff 0%, #a0a0b0 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .visual-text {
+            font-size: 1.1rem;
+            line-height: 1.6;
+            color: #a0a0b0;
+            font-weight: 300;
+        }
+
+        /* RIGHT SIDE: LOGIN FORM */
+        .login-pane {
+            width: 35%;
+            min-width: 500px;
+            background: #030406;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 80px;
+            border-left: 1px solid rgba(255, 255, 255, 0.05);
+            position: relative;
+        }
+
+        .logo-area {
+            margin-bottom: 50px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .logo-mark {
+            width: 40px;
+            height: 40px;
+            background: #fff;
+            mask: url('data:image/svg+xml;utf8,<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>') no-repeat center;
+            -webkit-mask: url('data:image/svg+xml;utf8,<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>') no-repeat center;
+        }
+
+        .logo-text {
+            font-size: 1.2rem;
+            font-weight: 700;
+            letter-spacing: 2px;
+            color: #fff;
+        }
+
+        .login-header {
+            margin-bottom: 40px;
+        }
+
+        .login-header h1 {
+            font-size: 2rem;
+            color: #fff;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        .login-header p {
+            color: #666;
+            font-size: 1rem;
+        }
+
+        .input-group {
+            margin-bottom: 30px;
+            position: relative;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 12px;
+            color: #ccc;
+            /* Lighter label */
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .clean-input {
+            width: 100%;
+            padding: 16px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 6px;
+            color: #fff;
+            font-size: 1rem;
+            outline: none;
+            transition: 0.3s;
+            font-family: 'Outfit', sans-serif;
+        }
+
+        .clean-input:focus {
+            border-color: #fff;
+            background: rgba(255, 255, 255, 0.05);
+            box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.05);
+        }
+
+        .btn-clean {
+            width: 100%;
+            padding: 18px;
+            background: #fff;
+            color: #000;
+            border: none;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.3s;
+            margin-top: 10px;
+            border-radius: 6px;
+        }
+
+        .btn-clean:hover {
+            background: #f0f0f0;
+            transform: translateY(-1px);
+        }
+
+        .helper-links {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 25px;
+            font-size: 0.9rem;
+        }
+
+        .custom-checkbox {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            color: #888;
+        }
+
+        .custom-checkbox input {
+            accent-color: #fff;
+            width: 16px;
+            height: 16px;
+        }
+
+        .helper-links a {
+            color: #666;
+            text-decoration: none;
+            transition: 0.3s;
+        }
+
+        .helper-links a:hover {
+            color: #fff;
+        }
+
+        /* Footer in Login Pane */
+        .login-footer {
+            margin-top: auto;
+            text-align: center;
+            font-size: 0.8rem;
+            color: #444;
+            padding-top: 40px;
+        }
+
+        .login-footer a {
+            color: #fff;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        @media (max-width: 1000px) {
+            .visual-pane {
+                display: none;
+            }
+
+            .login-pane {
+                width: 100%;
+                min-width: auto;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- LEFT: BRAND VISUAL -->
+    <div class="visual-pane">
+        <div class="visual-overlay"></div>
+        <div class="visual-content">
+            <div class="visual-badge"><i class="fas fa-shield-alt"></i> &nbsp; SENTINEL ENTERPRISE</div>
+            <div class="visual-title">Global Security<br>Infrastructure</div>
+            <div class="visual-text">
+                The centralized command center for threat intelligence, network defense, and honeypot orchestration.
+                Securing 142 nodes across 9 critical sectors.
+            </div>
+        </div>
+    </div>
+
+    <!-- RIGHT: LOGIN FORM -->
+    <div class="login-pane">
+
+        <div class="logo-area">
+            <div class="logo-mark"></div>
+            <div class="logo-text">SENTINEL</div>
+        </div>
+
+        <div class="login-header">
+            <h1>Welcome back</h1>
+            <p>Please enter your credentials to access the console.</p>
+        </div>
+
+        <form action="dashboard.html">
+            <div class="input-group">
+                <label>Email Address</label>
+                <input type="email" class="clean-input" placeholder="Enter email" required>
+            </div>
+
+            <div class="input-group">
+                <label>Password</label>
+                <input type="password" class="clean-input" placeholder="••••••••••••" required>
+            </div>
+
+            <button type="submit" class="btn-clean">Sign in to Console</button>
+
+            <div class="helper-links">
+                <label class="custom-checkbox">
+                    <input type="checkbox"> Remember me
+                </label>
+                <a href="#">Forgot password?</a>
+            </div>
+        </form>
+
+        <div class="login-footer">
+            <p>Don't have an account? <a href="register.html">Request Access</a></p>
+            <p style="margin-top: 10px; opacity: 0.5;">&copy; 2026 Sentinel Defense Systems</p>
+        </div>
+    </div>
+
+</body>
+
+
+</html>

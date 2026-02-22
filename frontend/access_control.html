@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Access Control Console | SentinelHive</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/dashboard.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+
+<body class="bg-dark text-white">
+
+    <div class="app-container">
+        <!-- Sidebar (Reuse existing logic or simplified version) -->
+        <aside class="sidebar" id="sidebar">
+            <div class="logo-area">
+                <div class="logo-icon" style="filter: hue-rotate(280deg);"></div>
+                <div class="logo-text">
+                    <div class="logo-title">ROOT GRID</div>
+                    <div class="logo-sub text-purple">ACCESS CONTROL</div>
+                </div>
+            </div>
+            <div class="nav-group">
+                <a href="admin.html" class="nav-item">
+                    <i class="fas fa-arrow-left"></i> <span class="nav-text">Back to Admin</span>
+                </a>
+                <a href="#" class="nav-item active" onclick="switchTab('tab-requests', this)">
+                    <i class="fas fa-user-clock"></i> <span class="nav-text">Access Requests</span>
+                </a>
+                <a href="#" class="nav-item" onclick="switchTab('tab-logs', this)">
+                    <i class="fas fa-history"></i> <span class="nav-text">Audit Logs</span>
+                </a>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <div class="top-bar">
+                <div class="page-header">
+                    <h2>ADVANCED ACCESS CONTROL</h2>
+                    <p>SUPER ADMIN CONSOLE // <span class="text-purple">LEVEL 5 CLEARANCE</span></p>
+                </div>
+            </div>
+
+            <!-- Tab: Access Requests -->
+            <div id="tab-requests">
+                <div class="soc-card">
+                    <div class="soc-card-header">
+                        <span class="card-title">PENDING ACCESS REQUESTS</span>
+                        <button class="soc-btn" onclick="loadPendingUsers()"><i class="fas fa-sync"></i>
+                            Refresh</button>
+                    </div>
+                    <table class="terminal-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>EMAIL</th>
+                                <th>NAME</th>
+                                <th>REQUESTED ROLE</th>
+                                <th>ACTIONS</th>
+                            </tr>
+                        </thead>
+                        <tbody id="pendingUsersTable">
+                            <!-- Populated by JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Tab: Audit Logs -->
+            <div id="tab-logs" style="display:none;">
+                <div class="soc-card">
+                    <div class="soc-card-header">
+                        <span class="card-title">ACCESS CONTROL AUDIT LOGS</span>
+                        <button class="soc-btn" onclick="loadLogs()"><i class="fas fa-sync"></i> Refresh</button>
+                    </div>
+                    <table class="terminal-table">
+                        <thead>
+                            <tr>
+                                <th>TIME</th>
+                                <th>ADMIN</th>
+                                <th>TARGET USER</th>
+                                <th>ACTION</th>
+                                <th>DETAILS</th>
+                            </tr>
+                        </thead>
+                        <tbody id="accessLogsTable">
+                            <!-- Populated by JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- Approval Modal -->
+    <div id="approveModal" class="modal"
+        style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:1000;">
+        <div class="modal-content"
+            style="background:#111; border:1px solid #333; width:400px; margin:100px auto; padding:20px; border-radius:5px;">
+            <h3 class="text-white">APPROVE USER ACCESS</h3>
+            <input type="hidden" id="approveUserId">
+            <div class="form-group" style="margin-top:15px;">
+                <label class="form-label text-muted">ASSIGN ROLE</label>
+                <select id="approveRole" class="form-select"
+                    style="width:100%; padding:8px; background:#000; color:#fff; border:1px solid #333;">
+                    <option value="ANALYST">ANALYST</option>
+                    <option value="AUDITOR">AUDITOR</option>
+                    <option value="ADMIN">ADMIN</option>
+                    <option value="SUPER_ADMIN">SUPER ADMIN</option>
+                </select>
+            </div>
+            <div class="form-group" style="margin-top:15px;">
+                <label class="form-label text-muted">CLEARANCE LEVEL (1-5)</label>
+                <input type="number" id="approveLevel" class="form-input" min="1" max="5" value="1"
+                    style="width:100%; padding:8px; background:#000; color:#fff; border:1px solid #333;">
+            </div>
+            <div style="text-align:right; margin-top:20px;">
+                <button class="soc-btn" onclick="closeModal('approveModal')">CANCEL</button>
+                <button class="soc-btn" style="border-color:#00ff41; color:#00ff41;" onclick="submitApproval()">CONFIRM
+                    APPROVAL</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Denial Modal -->
+    <div id="denyModal" class="modal"
+        style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:1000;">
+        <div class="modal-content"
+            style="background:#111; border:1px solid #333; width:400px; margin:100px auto; padding:20px; border-radius:5px;">
+            <h3 class="text-red">DENY ACCESS REQUEST</h3>
+            <input type="hidden" id="denyUserId">
+            <div class="form-group" style="margin-top:15px;">
+                <label class="form-label text-muted">REASON FOR REJECTION</label>
+                <textarea id="denyReason" class="form-input" rows="3"
+                    style="width:100%; padding:8px; background:#000; color:#fff; border:1px solid #333;"></textarea>
+            </div>
+            <div style="text-align:right; margin-top:20px;">
+                <button class="soc-btn" onclick="closeModal('denyModal')">CANCEL</button>
+                <button class="soc-btn" style="border-color:#ff0055; color:#ff0055;" onclick="submitDenial()">REJECT
+                    REQUEST</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="js/access_control.js"></script>
+    <script src="js/sidebar.js"></script>
+    <script>
+        // Simple Tab Switcher
+        function switchTab(tabId, navItem) {
+            document.querySelectorAll('main > div[id^="tab-"]').forEach(el => el.style.display = 'none');
+            document.getElementById(tabId).style.display = 'block';
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+            if (navItem) navItem.classList.add('active');
+        }
+
+        window.openModal = (id) => document.getElementById(id).style.display = 'block';
+        window.closeModal = (id) => document.getElementById(id).style.display = 'none';
+        window.switchTab = switchTab;
+    </script>
+</body>
+
+</html>

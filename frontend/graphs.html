@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Analytics | SentinelHive</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/dashboard.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body>
+
+    <div class="app-container">
+
+        <!-- SIDEBAR -->
+        <!-- VOID NEON SIDEBAR (FROM GEO INTEL) -->
+        <aside class="sidebar" id="sidebar">
+            <div class="logo-area" onclick="document.getElementById('sidebar').classList.toggle('collapsed')">
+                <div class="logo-icon"></div>
+                <div class="logo-text">
+                    <div class="logo-title">SENTINEL</div>
+                    <div class="logo-sub">DECEPTION GRID // V1</div>
+                </div>
+                <i class="fas fa-arrow-left toggle-btn"
+                    style="margin-left: auto; cursor: pointer; color: #555; transition:0.3s;"></i>
+            </div>
+
+            <div class="nav-group">
+                <div class="nav-group-label">Mission Control</div>
+                <a href="dashboard.html" class="nav-item"><i class="fas fa-th-large"></i> <span class="nav-text">Threat
+                        Overview</span></a>
+                <a href="events.html" class="nav-item"><i class="fas fa-stream"></i> <span class="nav-text">Event
+                        Stream</span></a>
+            </div>
+
+            <div class="nav-group">
+                <div class="nav-group-label">Grid Monitoring</div>
+                <a href="nodes.html" class="nav-item"><i class="fas fa-server"></i> <span class="nav-text">Honeypot
+                        Nodes</span></a>
+                <a href="sectors.html" class="nav-item"><i class="fas fa-network-wired"></i> <span
+                        class="nav-text">Sector Monitors</span></a>
+                <a href="geo.html" class="nav-item"><i class="fas fa-globe-americas"></i> <span class="nav-text">Geo
+                        Intelligence</span></a>
+            </div>
+
+            <div class="nav-group">
+                <div class="nav-group-label">Intelligence</div>
+                <a href="mitre.html" class="nav-item"><i class="fas fa-project-diagram"></i> <span
+                        class="nav-text">MITRE Matrix</span></a>
+                <a href="graphs.html" class="nav-item active"><i class="fas fa-chart-pie"></i> <span
+                        class="nav-text">Analytics Graphs</span></a>
+                <a href="credentials.html" class="nav-item"><i class="fas fa-key"></i> <span
+                        class="nav-text">Credentials Vault</span></a>
+                <a href="behavior.html" class="nav-item"><i class="fas fa-fingerprint"></i> <span
+                        class="nav-text">Behaviour Profiling</span></a>
+                <a href="simulation.html" class="nav-item"><i class="fas fa-dragon"></i> <span class="nav-text">Attack
+                        Simulation</span></a>
+            </div>
+
+            <div class="nav-group">
+                <div class="nav-group-label">Tools Suite</div>
+                <a href="malware.html" class="nav-item"><i class="fas fa-bug"></i> <span class="nav-text">Malware
+                        Sandbox</span></a>
+                <a href="urlscan.html" class="nav-item"><i class="fas fa-search-location"></i> <span
+                        class="nav-text">URL Scanner</span></a>
+                <a href="apk.html" class="nav-item"><i class="fas fa-mobile-alt"></i> <span class="nav-text">APK
+                        Analyzer</span></a>
+                <a href="vm_lab.html" class="nav-item"><i class="fas fa-desktop"></i> <span class="nav-text">Virtual
+                        Lab</span></a>
+            </div>
+
+            <div class="nav-group">
+                <div class="nav-group-label">System</div>
+                <a href="admin.html" class="nav-item"><i class="fas fa-user-shield"></i> <span class="nav-text">Admin
+                        Panel</span></a>
+                <a href="config.html" class="nav-item"><i class="fas fa-cog"></i> <span
+                        class="nav-text">Configuration</span></a>
+                <a href="profile.html" class="nav-item"><i class="fas fa-id-card"></i> <span
+                        class="nav-text">Profile</span></a>
+            </div>
+
+            <div class="build-info">
+                <div>DEPLOYMENT: <span class="text-cyan">PROD-01</span></div>
+                <div>STATUS: <span class="text-green">ONLINE</span></div>
+            </div>
+        </aside>
+
+        <main class="main-content">
+
+            <div class="top-bar">
+                <div class="page-header">
+                    <h2>DEEP ANALYTICS</h2>
+                    <p>DATA VISUALIZATION // <span class="text-purple">120-DAY RETENTION</span></p>
+                </div>
+                <div class="filters-bar">
+                    <button class="soc-btn">Past 24H</button>
+                    <button class="soc-btn soc-btn-primary">Past 7 Days</button>
+                    <button class="soc-btn">Past 30 Days</button>
+                </div>
+            </div>
+
+            <!-- ROW 1: 4 KPI CARDS -->
+            <div class="dashboard-grid" style="grid-template-columns: repeat(4, 1fr); margin-bottom: 2rem;">
+                <div class="soc-card metric-tile">
+                    <div class="metric-header"><span class="card-title">DATA PROCESSED</span></div>
+                    <div class="metric-value text-cyan">42.5 TB</div>
+                    <div class="metric-sub">Total Ingest Volume</div>
+                </div>
+                <div class="soc-card metric-tile">
+                    <div class="metric-header"><span class="card-title">THREAT INTEL</span></div>
+                    <div class="metric-value text-purple">142K</div>
+                    <div class="metric-sub">Indicators of Compromise</div>
+                </div>
+                <div class="soc-card metric-tile">
+                    <div class="metric-header"><span class="card-title">FALSE POSITIVES</span></div>
+                    <div class="metric-value text-pink">0.4%</div>
+                    <div class="metric-sub">Accuracy Rate</div>
+                </div>
+                <div class="soc-card metric-tile">
+                    <div class="metric-header"><span class="card-title">DECRYPTION RATE</span></div>
+                    <div class="metric-value text-green">100%</div>
+                    <div class="metric-sub">SSL/TLS Inspection</div>
+                </div>
+            </div>
+
+            <!-- ROW 2: MAIN CHARTS -->
+            <div class="dashboard-grid" style="grid-template-columns: 2fr 1fr; margin-bottom: 2rem;">
+                <!-- MAIN TRAFFIC -->
+                <div class="soc-card" style="height:350px;">
+                    <div class="soc-card-header"><span class="card-title">CROSS-SECTOR ATTACK VOLUME</span></div>
+                    <div style="height:300px;"><canvas id="mainChart"></canvas></div>
+                </div>
+                <!-- ATTACK VECTORS RADAR -->
+                <div class="soc-card" style="height:350px;">
+                    <div class="soc-card-header"><span class="card-title">ATTACK VECTOR LANDSCAPE</span></div>
+                    <div style="height:300px;"><canvas id="radarChart"></canvas></div>
+                </div>
+            </div>
+
+            <!-- ROW 3: DETAILED SPLITS -->
+            <div class="dashboard-grid" style="grid-template-columns: 1fr 1fr 1fr; margin-bottom: 2rem;">
+                <div class="soc-card" style="height:300px;">
+                    <div class="soc-card-header"><span class="card-title">PROTOCOL DISTRIBUTION</span></div>
+                    <div style="height:250px;"><canvas id="pieChart"></canvas></div>
+                </div>
+                <div class="soc-card" style="height:300px;">
+                    <div class="soc-card-header"><span class="card-title">HOURLY ANOMALIES</span></div>
+                    <div style="height:250px;"><canvas id="barChart"></canvas></div>
+                </div>
+                <div class="soc-card" style="height:300px;">
+                    <div class="soc-card-header"><span class="card-title">GEO-ORIGIN HEATMAP</span></div>
+                    <div style="height:250px;"><canvas id="polarChart"></canvas></div>
+                </div>
+            </div>
+
+            <!-- ROW 4: ADVANCED CORRELATION (NEW) -->
+            <div class="dashboard-grid" style="grid-template-columns: 1fr 1fr; margin-bottom: 2rem;">
+                <div class="soc-card" style="height:350px;">
+                    <div class="soc-card-header"><span class="card-title">TTD VS TTR CORRELATION (Efficiency)</span>
+                    </div>
+                    <div style="height:300px;"><canvas id="scatterChart"></canvas></div>
+                </div>
+                <div class="soc-card" style="height:350px;">
+                    <div class="soc-card-header"><span class="card-title">MALWARE FAMILY TRENDS (Volume vs Sev)</span>
+                    </div>
+                    <div style="height:300px;"><canvas id="mixedChart"></canvas></div>
+                </div>
+            </div>
+
+            <!-- ROW 5: MICRO ANALYTICS (NEW) -->
+            <div class="dashboard-grid" style="grid-template-columns: 1fr 1fr 1fr;">
+                <div class="soc-card" style="height:300px;">
+                    <div class="soc-card-header"><span class="card-title">TARGETED PORT USAGE</span></div>
+                    <div style="height:250px;"><canvas id="portsChart"></canvas></div>
+                </div>
+                <div class="soc-card" style="height:300px;">
+                    <div class="soc-card-header"><span class="card-title">INSIDER THREAT MATRIX</span></div>
+                    <div style="height:250px;"><canvas id="bubbleChart"></canvas></div>
+                </div>
+                <div class="soc-card" style="height:300px;">
+                    <div class="soc-card-header"><span class="card-title">NODE LOAD AVERAGES</span></div>
+                    <div style="height:250px;"><canvas id="systemChart"></canvas></div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <script>
+        Chart.defaults.color = '#666';
+        Chart.defaults.borderColor = 'rgba(255,255,255,0.05)';
+        Chart.defaults.font.family = "'JetBrains Mono', monospace";
+
+        // 1. Main Line Chart
+        new Chart(document.getElementById('mainChart'), {
+            type: 'line',
+            data: {
+                labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                datasets: [{
+                    label: 'Education Sector',
+                    data: [120, 190, 300, 500, 200, 300, 450],
+                    borderColor: '#bc13fe',
+                    tension: 0.4
+                },
+                {
+                    label: 'Defence Sector',
+                    data: [400, 200, 100, 600, 800, 100, 50],
+                    borderColor: '#ff0055',
+                    tension: 0.4
+                }]
+            },
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: "#fff" } } } }
+        });
+
+        // 2. Radar Chart
+        new Chart(document.getElementById('radarChart'), {
+            type: 'radar',
+            data: {
+                labels: ['Brute Force', 'SQLi', 'XSS', 'DDoS', 'Malware', 'Phishing'],
+                datasets: [{
+                    label: 'Risk Score',
+                    data: [85, 90, 60, 40, 95, 70],
+                    backgroundColor: 'rgba(0, 243, 255, 0.2)',
+                    borderColor: '#00f3ff',
+                    pointBackgroundColor: '#fff'
+                }]
+            },
+            options: { responsive: true, maintainAspectRatio: false, scales: { r: { grid: { color: '#333' } } } }
+        });
+
+        // 3. Pie Chart
+        new Chart(document.getElementById('pieChart'), {
+            type: 'doughnut',
+            data: {
+                labels: ['SSH', 'HTTP', 'RDP', 'FTP', 'DNS'],
+                datasets: [{
+                    data: [45, 25, 15, 10, 5],
+                    backgroundColor: ['#bc13fe', '#00f3ff', '#ff0055', '#ffee00', '#00ff41'],
+                    borderWidth: 0
+                }]
+            },
+            options: { responsive: true, maintainAspectRatio: false }
+        });
+
+        // 4. Bar Chart
+        new Chart(document.getElementById('barChart'), {
+            type: 'bar',
+            data: {
+                labels: ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00'],
+                datasets: [{
+                    label: 'Anomalies',
+                    data: [12, 19, 3, 5, 22, 30],
+                    backgroundColor: '#ef4444'
+                }]
+            },
+            options: { responsive: true, maintainAspectRatio: false }
+        });
+
+        // 5. Polar Chart
+        new Chart(document.getElementById('polarChart'), {
+            type: 'polarArea',
+            data: {
+                labels: ['CN', 'RU', 'US', 'BR', 'IR'],
+                datasets: [{
+                    data: [11, 16, 7, 3, 14],
+                    backgroundColor: ['#ff0055', '#bc13fe', '#00f3ff', '#00ff41', '#ffee00']
+                }]
+            },
+            options: { responsive: true, maintainAspectRatio: false, scales: { r: { grid: { display: false } } } }
+        });
+
+        // 6. Scatter Chart (TTD vs TTR)
+        new Chart(document.getElementById('scatterChart'), {
+            type: 'scatter',
+            data: {
+                datasets: [{
+                    label: 'Crit Incidents',
+                    data: [
+                        { x: 10, y: 120 }, { x: 15, y: 100 }, { x: 30, y: 200 }, { x: 45, y: 300 }, { x: 5, y: 60 }
+                    ],
+                    backgroundColor: '#ff0055'
+                }, {
+                    label: 'Minor Incidents',
+                    data: [
+                        { x: 60, y: 30 }, { x: 90, y: 20 }, { x: 120, y: 10 }, { x: 70, y: 40 }
+                    ],
+                    backgroundColor: '#00ff41'
+                }]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                scales: {
+                    x: { title: { display: true, text: 'Time To Detect (min)', color: '#666' } },
+                    y: { title: { display: true, text: 'Time To Respond (min)', color: '#666' } }
+                }
+            }
+        });
+
+        // 7. Mixed Chart (Malware Trends)
+        new Chart(document.getElementById('mixedChart'), {
+            type: 'bar',
+            data: {
+                labels: ['Wk1', 'Wk2', 'Wk3', 'Wk4', 'Wk5'],
+                datasets: [{
+                    label: 'Volume',
+                    data: [300, 450, 320, 500, 600],
+                    backgroundColor: 'rgba(6, 182, 212, 0.5)',
+                    order: 2
+                }, {
+                    label: 'Avg Severity',
+                    data: [2, 3, 2.5, 4.5, 4],
+                    type: 'line',
+                    borderColor: '#ffee00',
+                    tension: 0.4,
+                    yAxisID: 'y1',
+                    order: 1
+                }]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                scales: {
+                    y: { position: 'left' },
+                    y1: { position: 'right', min: 0, max: 5, grid: { drawOnChartArea: false } }
+                }
+            }
+        });
+
+        // 8. Horizontal Bar (Ports)
+        new Chart(document.getElementById('portsChart'), {
+            type: 'bar',
+            indexAxis: 'y',
+            data: {
+                labels: ['Port 445 (SMB)', 'Port 22 (SSH)', 'Port 80 (HTTP)', 'Port 3389 (RDP)'],
+                datasets: [{
+                    label: 'Hits',
+                    data: [1240, 980, 750, 450],
+                    backgroundColor: '#bc13fe'
+                }]
+            },
+            options: { responsive: true, maintainAspectRatio: false }
+        });
+
+        // 9. Bubble Chart (Insider Threat)
+        new Chart(document.getElementById('bubbleChart'), {
+            type: 'bubble',
+            data: {
+                datasets: [{
+                    label: 'Users',
+                    data: [
+                        { x: 20, y: 30, r: 15 }, // Safe
+                        { x: 40, y: 10, r: 10 }, // Safe
+                        { x: 90, y: 80, r: 40 }, // DANGEROUS
+                        { x: 35, y: 90, r: 12 }  // Suspicious
+                    ],
+                    backgroundColor: function (context) {
+                        const v = context.raw;
+                        if (v && v.r > 20) return '#ef4444'; // Red
+                        return '#00f3ff'; // Cyan
+                    }
+                }]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                scales: {
+                    x: { title: { display: true, text: 'Login Ops', color: '#666' } },
+                    y: { title: { display: true, text: 'Data Exfil (MB)', color: '#666' } }
+                }
+            }
+        });
+
+        // 10. System Chart (Area)
+        new Chart(document.getElementById('systemChart'), {
+            type: 'line',
+            data: {
+                labels: ['10m', '8m', '6m', '4m', '2m', 'Now'],
+                datasets: [{
+                    label: 'CPU Load',
+                    data: [40, 45, 60, 55, 80, 85],
+                    fill: true,
+                    borderColor: '#ff0055',
+                    backgroundColor: 'rgba(255, 0, 85, 0.2)',
+                    tension: 0.4
+                }]
+            },
+            options: { responsive: true, maintainAspectRatio: false, scales: { y: { min: 0, max: 100 } } }
+        });
+
+    </script>
+
+    <script src="js/sidebar.js"></script>
+</body>
+
+</html>

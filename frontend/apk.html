@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>APK Analyzer | SentinelHive</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/dashboard.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/jquery.dataTables.min.css" />
+    <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+    <style>
+        /* Terminal style overrides for datatables */
+        .dataTables_wrapper .dataTables_length,
+        .dataTables_wrapper .dataTables_filter {
+            color: #888;
+            margin-bottom: 20px;
+        }
+
+        .dataTables_wrapper input,
+        .dataTables_wrapper select {
+            background: #111;
+            border: 1px solid #333;
+            color: var(--neon-cyan);
+            padding: 5px;
+            outline: none;
+            font-family: 'JetBrains Mono';
+        }
+
+        table.dataTable {
+            border-collapse: collapse;
+            width: 100%;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+        }
+
+        table.dataTable thead th {
+            border-bottom: 2px solid #333;
+            color: var(--neon-cyan);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        table.dataTable tbody td {
+            border-bottom: 1px solid #111;
+            padding: 12px 10px;
+            color: #ccc;
+        }
+
+        .dataTables_info,
+        .dataTables_paginate {
+            color: #666 !important;
+            font-family: 'JetBrains Mono';
+            font-size: 0.8rem;
+            margin-top: 20px;
+        }
+
+        .paginate_button.current {
+            background: #333 !important;
+            border: 1px solid #555 !important;
+            color: #fff !important;
+        }
+
+        .code-block {
+            background: #000;
+            color: #0f0;
+            font-family: 'JetBrains Mono', monospace;
+            padding: 10px;
+            font-size: 0.7rem;
+            height: 150px;
+            overflow-y: scroll;
+            border: 1px solid #333;
+        }
+
+        .mobsf-launch-panel {
+            min-height: 260px;
+            padding: 28px;
+            border-top: 1px solid #1e293b;
+            background: rgba(11, 16, 21, 0.95);
+            color: var(--text-secondary);
+            text-align: center;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="app-container">
+
+        <!-- SIDEBAR -->
+        <!-- VOID NEON SIDEBAR (FROM GEO INTEL) -->
+        <!-- SIDEBAR -->
+        <aside class="sidebar" id="sidebar">
+            <div class="logo-area" onclick="document.getElementById('sidebar').classList.toggle('collapsed')">
+                <div class="logo-icon"></div>
+                <div class="logo-text">
+                    <div class="logo-title">SENTINEL</div>
+                    <div class="logo-sub">DECEPTION GRID // V1</div>
+                </div>
+                <i class="fas fa-arrow-left toggle-btn"
+                    style="margin-left: auto; cursor: pointer; color: #555; transition:0.3s;"></i>
+            </div>
+
+            <div class="nav-group">
+                <div class="nav-group-label">Mission Control</div>
+                <a href="dashboard.html" class="nav-item"><i class="fas fa-th-large"></i> <span class="nav-text">Threat
+                        Overview</span></a>
+                <a href="events.html" class="nav-item"><i class="fas fa-stream"></i> <span class="nav-text">Event
+                        Stream</span></a>
+                <a href="alerts.html" class="nav-item"><i class="fas fa-bell"></i> <span class="nav-text">Alerts &
+                        Findings</span></a>
+            </div>
+
+            <div class="nav-group">
+                <div class="nav-group-label">Grid Monitoring</div>
+                <a href="nodes.html" class="nav-item"><i class="fas fa-server"></i> <span class="nav-text">Honeypot
+                        Nodes</span></a>
+                <a href="sectors.html" class="nav-item"><i class="fas fa-network-wired"></i> <span
+                        class="nav-text">Sector Monitors</span></a>
+                <a href="geo.html" class="nav-item"><i class="fas fa-globe-americas"></i> <span class="nav-text">Geo
+                        Intelligence</span></a>
+            </div>
+
+            <div class="nav-group">
+                <div class="nav-group-label">Intelligence</div>
+                <a href="mitre.html" class="nav-item"><i class="fas fa-project-diagram"></i> <span
+                        class="nav-text">MITRE Matrix</span></a>
+                <a href="graphs.html" class="nav-item"><i class="fas fa-chart-pie"></i> <span class="nav-text">Analytics
+                        Graphs</span></a>
+                <a href="credentials.html" class="nav-item"><i class="fas fa-key"></i> <span
+                        class="nav-text">Credentials Vault</span></a>
+                <a href="behavior.html" class="nav-item"><i class="fas fa-fingerprint"></i> <span
+                        class="nav-text">Behaviour Profiling</span></a>
+                <a href="simulation.html" class="nav-item"><i class="fas fa-dragon"></i> <span class="nav-text">Attack
+                        Simulation</span></a>
+            </div>
+
+            <div class="nav-group">
+                <div class="nav-group-label">Tools Suite</div>
+                <a href="malware.html" class="nav-item"><i class="fas fa-bug"></i> <span class="nav-text">Malware
+                        Sandbox</span></a>
+                <a href="urlscan.html" class="nav-item"><i class="fas fa-search-location"></i> <span
+                        class="nav-text">URL Scanner</span></a>
+                <a href="apk.html" class="nav-item active"><i class="fas fa-mobile-alt"></i> <span class="nav-text">APK
+                        Analyzer</span></a>
+                <a href="vm_lab.html" class="nav-item"><i class="fas fa-desktop"></i> <span class="nav-text">Virtual
+                        Lab</span></a>
+            </div>
+
+            <div class="nav-group">
+                <div class="nav-group-label">System</div>
+                <a href="admin.html" class="nav-item"><i class="fas fa-user-shield"></i> <span class="nav-text">Admin
+                        Panel</span></a>
+                <a href="config.html" class="nav-item"><i class="fas fa-cog"></i> <span
+                        class="nav-text">Configuration</span></a>
+                <a href="profile.html" class="nav-item"><i class="fas fa-id-card"></i> <span
+                        class="nav-text">Profile</span></a>
+                <a href="#" class="nav-item" id="logoutBtn" style="color: #ff4444;"><i class="fas fa-sign-out-alt"></i>
+                    <span class="nav-text">Logout</span></a>
+            </div>
+
+            <div class="build-info">
+                <div>DEPLOYMENT: <span class="text-cyan">PROD-01</span></div>
+                <div>STATUS: <span class="text-green">ONLINE</span></div>
+            </div>
+        </aside>
+
+        <main class="main-content">
+
+            <div class="top-bar">
+                <div class="page-header">
+                    <h2>ANDROID FORENSICS</h2>
+                    <p>STATIC ANALYSIS ENGINE // <span class="text-cyan">JADX DECOMPILER</span></p>
+                </div>
+                <div class="filters-bar">
+                    <button id="openMobSFBt" class="soc-btn soc-btn-primary"><i class="fab fa-android"></i> OPEN MOBSF WORKFLOW</button>
+                </div>
+            </div>
+
+            <!-- ROW 1: HEADER INFO & UPLOAD -->
+            <div class="dashboard-grid" style="grid-template-columns: 2fr 1fr;">
+                <!-- REPORT CARD -->
+                <div class="soc-card" style="padding:0;">
+                    <div class="soc-card-header" style="padding:15px;">
+                        <span class="card-title">LATEST ANALYSIS: <span id="latestAppName"
+                            class="text-white">No scans yet</span></span>
+                        <span id="latestThreatBadge" class="badge">N/A</span>
+                    </div>
+                    <div id="latestAnalysisDetails" style="padding:15px; display:grid; grid-template-columns: 1fr 1fr; gap:20px;">
+                        <div>
+                            <div class="resource-row"><span>Package Name</span> <span
+                                class="text-mono text-cyan">N/A</span></div>
+                            <div class="resource-row"><span>Version</span> <span class="text-mono">N/A</span></div>
+                            <div class="resource-row"><span>SHA256</span> <span class="text-mono text-xs">N/A</span>
+                            </div>
+                            <div class="resource-row"><span>Last Scan</span> <span class="text-mono">N/A</span></div>
+                        </div>
+                        <div>
+                            <div class="resource-row"><span>Vulnerabilities</span> <span class="text-mono text-pink">0
+                                Detected</span></div>
+                            <div class="resource-row"><span>Permissions</span> <span
+                                class="text-mono text-purple">N/A</span></div>
+                            <div class="resource-row"><span>Score</span> <span class="text-mono">0/100</span></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PERMISSIONS CHART -->
+                <div class="soc-card">
+                    <div class="soc-card-header"><span class="card-title">DANGEROUS PERMISSIONS</span></div>
+                    <div style="display:flex; flex-direction:column; gap:5px;">
+                        <div class="text-xs text-muted">READ_SMS (Critical)</div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width:100%; background:#ff0055;"></div>
+                        </div>
+
+                        <div class="text-xs text-muted" style="margin-top:5px;">ACCESS_FINE_LOCATION (High)</div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width:80%; background:#ef4444;"></div>
+                        </div>
+
+                        <div class="text-xs text-muted" style="margin-top:5px;">RECORD_AUDIO (High)</div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width:60%; background:#ef4444;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ROW 2: ANALYSIS TABS -->
+            <div class="dashboard-grid" style="grid-template-columns: 1fr 1fr; margin-top:20px;">
+
+                <!-- MANIFEST VIEW -->
+                <div class="soc-card" style="padding:0;">
+                    <div class="soc-card-header" style="padding:15px;">
+                        <span class="card-title">AndroidManifest.xml</span>
+                    </div>
+                    <div class="code-block" style="border:none;">
+                        No APK loaded
+                    </div>
+                </div>
+
+                <!-- VULNERABILITY TABLE -->
+                <div class="soc-card" style="padding:0;">
+                    <div class="soc-card-header" style="padding:15px;">
+                        <span class="card-title">DETECTED VULNERABILITIES</span>
+                    </div>
+                    <table class="terminal-table" style="margin:0;">
+                        <tbody>
+                            <tr>
+                                <td colspan="2" class="text-muted">No data yet</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- ROW 3: RECENT ANALYSIS TABLE -->
+            <div class="soc-card" style="margin-top:20px; padding:0;">
+                <div class="soc-card-header" style="padding:15px;">
+                    <span class="card-title">ANALYSIS HISTORY</span>
+                </div>
+                <table id="apkTable" class="display" style="width:100%">
+                    <thead>
+                        <tr>
+                            <th>APP NAME</th>
+                            <th>PACKAGE</th>
+                            <th>VER</th>
+                            <th>THREAT SCORE</th>
+                            <th>FINDINGS</th>
+                            <th>STATUS</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- JS Populated -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- ROW 4: MOBSF LIVE PREVIEW -->
+            <div class="soc-card" style="margin-top:20px; padding:0; overflow:hidden;">
+                <div class="soc-card-header" style="padding:15px;">
+                    <span class="card-title">MOBSF LIVE PREVIEW</span>
+                    <a href="http://localhost:8000/api/v1/mobsf-proxy/" target="_blank" rel="noopener noreferrer" class="soc-btn"
+                        style="padding:6px 14px; font-size:0.75rem;">
+                        <i class="fas fa-up-right-from-square"></i> OPEN IN NEW TAB
+                    </a>
+                </div>
+                <div style="padding:15px; border-top:1px solid #1e293b; color:var(--text-secondary); font-size:0.78rem;">
+                    Embedded target: <span class="text-cyan text-mono">/api/v1/mobsf-proxy/</span>
+                </div>
+                <div class="mobsf-launch-panel" style="display:block; padding:0; min-height:760px;">
+                    <iframe
+                        id="mobsfFrame"
+                        src="http://localhost:8000/api/v1/mobsf-proxy/"
+                        title="MobSF Workflow"
+                        style="width:100%; min-height:760px; border:0; background:#0b0f15;"
+                        loading="lazy"
+                        referrerpolicy="no-referrer"
+                    ></iframe>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <script type="module">
+        import { apiService } from './js/api.js';
+
+        const mobsfProxyUrl = `${apiService.baseUrl}/mobsf-proxy/`;
+        const openMobSFBt = document.getElementById('openMobSFBt');
+        const mobsfFrame = document.getElementById('mobsfFrame');
+
+        if (mobsfFrame) {
+            mobsfFrame.src = mobsfProxyUrl;
+        }
+
+        if (openMobSFBt) {
+            openMobSFBt.addEventListener('click', () => {
+                window.open(mobsfProxyUrl, '_blank', 'noopener,noreferrer');
+            });
+        }
+
+        function formatTimestamp(isoString) {
+            if (!isoString) return 'N/A';
+            const parsed = new Date(isoString);
+            if (Number.isNaN(parsed.getTime())) return 'N/A';
+            return parsed.toLocaleString();
+        }
+
+        function badgeForThreatLevel(level) {
+            const normalized = String(level || '').toUpperCase();
+            if (normalized === 'CRITICAL' || normalized === 'HIGH' || normalized === 'MALICIOUS') {
+                return 'badge-red';
+            }
+            if (normalized === 'MEDIUM') {
+                return 'badge-yellow';
+            }
+            return 'badge-green';
+        }
+
+        function renderLatestScan(latest) {
+            if (!latest) return;
+
+            const latestAppNameEl = document.getElementById('latestAppName');
+            const latestThreatBadgeEl = document.getElementById('latestThreatBadge');
+            const latestAnalysisDetailsEl = document.getElementById('latestAnalysisDetails');
+
+            if (latestAppNameEl) latestAppNameEl.textContent = latest.app_name || latest.filename || 'Unknown App';
+
+            if (latestThreatBadgeEl) {
+                latestThreatBadgeEl.textContent = String(latest.threat_level || 'UNKNOWN').toUpperCase();
+                latestThreatBadgeEl.className = `badge ${badgeForThreatLevel(latest.threat_level)}`;
+            }
+
+            if (latestAnalysisDetailsEl) {
+                latestAnalysisDetailsEl.innerHTML = `
+                    <div>
+                        <div class="resource-row"><span>Package Name</span> <span class="text-mono text-cyan">${latest.package_name || 'N/A'}</span></div>
+                        <div class="resource-row"><span>Filename</span> <span class="text-mono">${latest.filename || 'N/A'}</span></div>
+                        <div class="resource-row"><span>Last Scan</span> <span class="text-mono text-xs">${formatTimestamp(latest.timestamp)}</span></div>
+                        <div class="resource-row"><span>Threat Level</span> <span class="text-mono">${String(latest.threat_level || 'N/A').toUpperCase()}</span></div>
+                    </div>
+                    <div>
+                        <div class="resource-row"><span>Vulnerabilities</span> <span class="text-mono text-pink">${latest.vulnerabilities_count || 0} Detected</span></div>
+                        <div class="resource-row"><span>Critical / High</span> <span class="text-mono text-purple">${latest.critical_vulnerabilities || 0}</span></div>
+                        <div class="resource-row"><span>Permissions</span> <span class="text-mono">${latest.permissions_count || 0} Requested</span></div>
+                        <div class="resource-row"><span>Score</span> <span class="text-mono">${latest.security_score || 0}/100</span></div>
+                    </div>
+                `;
+            }
+        }
+
+        function renderHistory(history) {
+            const tbody = document.querySelector('#apkTable tbody');
+            if (!tbody) return;
+
+            tbody.innerHTML = '';
+
+            if (!Array.isArray(history) || history.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td style="color:#fff;">No scans yet</td>
+                        <td class="text-mono" style="color:#666;">-</td>
+                        <td class="text-mono">-</td>
+                        <td style="font-weight:bold; color:#fff;">-</td>
+                        <td class="text-muted">Run a scan in MobSF workflow</td>
+                        <td><span class="badge">N/A</span></td>
+                    </tr>
+                `;
+                return;
+            }
+
+            history.forEach((item) => {
+                const level = String(item.threat_level || 'UNKNOWN').toUpperCase();
+                const badgeClass = badgeForThreatLevel(level);
+
+                const row = `
+                    <tr>
+                        <td style="color:#fff;">${item.app_name || item.filename || 'Unknown App'}</td>
+                        <td class="text-mono" style="color:#666;">${item.package_name || 'unknown'}</td>
+                        <td class="text-mono">-</td>
+                        <td style="font-weight:bold; color:#fff;">${item.security_score || 0}/100</td>
+                        <td class="text-muted">${item.vulnerabilities_count || 0} vulns, ${item.permissions_count || 0} permissions</td>
+                        <td><span class="badge ${badgeClass}">${level}</span></td>
+                    </tr>
+                `;
+                tbody.insertAdjacentHTML('beforeend', row);
+            });
+        }
+
+        async function loadHistory() {
+            try {
+                const response = await apiService.get('/malware/apk/history?limit=50');
+                const history = response?.history || [];
+
+                renderHistory(history);
+                renderLatestScan(history[0]);
+
+                if ($.fn.DataTable.isDataTable('#apkTable')) {
+                    $('#apkTable').DataTable().destroy();
+                }
+
+                $('#apkTable').DataTable({
+                    pageLength: 5,
+                    ordering: true,
+                    lengthChange: false
+                });
+            } catch (error) {
+                console.error('Failed to load APK history:', error);
+                renderHistory([]);
+            }
+        }
+
+        loadHistory();
+    </script>
+
+    <script src="js/sidebar.js"></script>
+</body>
+
+</html>

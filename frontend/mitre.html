@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>MITRE ATT&CK Matrix | SentinelHive</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/dashboard.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .mitre-grid {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            /* 12 tactics is too wide, split into 2 rows or scroll */
+            gap: 10px;
+            overflow-x: auto;
+            padding-bottom: 20px;
+        }
+
+        .tactic-column {
+            background: #050507;
+            border: 1px solid #333;
+            min-width: 200px;
+        }
+
+        .tactic-header {
+            background: #111;
+            padding: 10px;
+            text-align: center;
+            font-weight: bold;
+            border-bottom: 1px solid #333;
+            color: #fff;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+        }
+
+        .technique-card {
+            background: #0a0a0a;
+            border: 1px solid #222;
+            margin: 8px;
+            padding: 10px;
+            font-size: 0.8rem;
+            color: #aaa;
+            cursor: pointer;
+            transition: 0.2s;
+            position: relative;
+        }
+
+        .technique-card:hover {
+            border-color: var(--neon-cyan);
+            color: #fff;
+        }
+
+        .technique-card.active {
+            background: rgba(255, 0, 0, 0.1);
+            border-color: var(--neon-red);
+            color: #fff;
+        }
+
+        .count-badge {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background: var(--neon-red);
+            color: #000;
+            font-size: 0.6rem;
+            padding: 2px 5px;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="app-container">
+
+        <!-- SIDEBAR (Placeholder - Will refer to main sidebar) -->
+        <aside class="sidebar" id="sidebar">
+            <div class="logo-area" onclick="document.getElementById('sidebar').classList.toggle('collapsed')">
+                <div class="logo-icon"></div>
+                <div class="logo-text">
+                    <div class="logo-title">SENTINEL</div>
+                    <div class="logo-sub">DECEPTION GRID // V1</div>
+                </div>
+                <i class="fas fa-arrow-left toggle-btn"
+                    style="margin-left: auto; cursor: pointer; color: #555; transition:0.3s;"></i>
+            </div>
+
+            <div class="nav-group">
+                <div class="nav-group-label">Mission Control</div>
+                <a href="dashboard.html" class="nav-item"><i class="fas fa-th-large"></i> <span class="nav-text">Threat
+                        Overview</span></a>
+                <a href="events.html" class="nav-item"><i class="fas fa-stream"></i> <span class="nav-text">Event
+                        Stream</span></a>
+            </div>
+
+            <div class="nav-group">
+                <div class="nav-group-label">Grid Monitoring</div>
+                <a href="nodes.html" class="nav-item"><i class="fas fa-server"></i> <span class="nav-text">Honeypot
+                        Nodes</span></a>
+                <a href="sectors.html" class="nav-item"><i class="fas fa-network-wired"></i> <span
+                        class="nav-text">Sector Monitors</span></a>
+                <a href="geo.html" class="nav-item"><i class="fas fa-globe-americas"></i> <span class="nav-text">Geo
+                        Intelligence</span></a>
+            </div>
+
+            <div class="nav-group">
+                <div class="nav-group-label">Intelligence</div>
+                <a href="mitre.html" class="nav-item active"><i class="fas fa-project-diagram"></i> <span
+                        class="nav-text">MITRE Matrix</span></a>
+                <a href="graphs.html" class="nav-item"><i class="fas fa-chart-pie"></i> <span class="nav-text">Analytics
+                        Graphs</span></a>
+                <a href="credentials.html" class="nav-item"><i class="fas fa-key"></i> <span
+                        class="nav-text">Credentials Vault</span></a>
+                <a href="behavior.html" class="nav-item"><i class="fas fa-fingerprint"></i> <span
+                        class="nav-text">Behaviour Profiling</span></a>
+                <a href="simulation.html" class="nav-item"><i class="fas fa-dragon"></i> <span class="nav-text">Attack
+                        Simulation</span></a>
+            </div>
+
+            <div class="nav-group">
+                <div class="nav-group-label">Tools Suite</div>
+                <a href="malware.html" class="nav-item"><i class="fas fa-bug"></i> <span class="nav-text">Malware
+                        Sandbox</span></a>
+                <a href="urlscan.html" class="nav-item"><i class="fas fa-search-location"></i> <span
+                        class="nav-text">URL Scanner</span></a>
+                <a href="apk.html" class="nav-item"><i class="fas fa-mobile-alt"></i> <span class="nav-text">APK
+                        Analyzer</span></a>
+                <a href="vm_lab.html" class="nav-item"><i class="fas fa-desktop"></i> <span class="nav-text">Virtual
+                        Lab</span></a>
+            </div>
+
+            <div class="nav-group">
+                <div class="nav-group-label">System</div>
+                <a href="admin.html" class="nav-item"><i class="fas fa-user-shield"></i> <span class="nav-text">Admin
+                        Panel</span></a>
+                <a href="config.html" class="nav-item"><i class="fas fa-cog"></i> <span
+                        class="nav-text">Configuration</span></a>
+                <a href="profile.html" class="nav-item"><i class="fas fa-id-card"></i> <span
+                        class="nav-text">Profile</span></a>
+            </div>
+
+            <div class="build-info">
+                <div>DEPLOYMENT: <span class="text-cyan">PROD-01</span></div>
+                <div>STATUS: <span class="text-green">ONLINE</span></div>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <div class="top-bar">
+                <div class="page-header">
+                    <h2>MITRE ATT&CK MATRIX</h2>
+                    <p>REAL-TIME TACTIC MAPPING // <span class="text-red" id="activeThreatsCount">0 ACTIVE
+                            THREATS</span></p>
+                </div>
+                <div class="filters-bar">
+                    <button class="soc-btn" onclick="toggleView('local')">LIVE MATRIX</button>
+                    <button class="soc-btn" onclick="toggleView('external')">EXTERNAL LIBRARY</button>
+                    <button class="soc-btn soc-btn-primary" onclick="loadMatrix()"><i class="fas fa-sync"></i>
+                        REFRESH</button>
+                </div>
+            </div>
+
+            <!-- LOCAL VIEW -->
+            <div id="localView" class="dashboard-grid" style="display: block;"> <!-- Full width for Matrix -->
+
+                <div class="soc-card" style="margin-bottom: 20px;">
+                    <div class="soc-card-header">
+                        <span class="card-title">ACTIVE TACTICS (LIVE)</span>
+                        <span class="badge badge-green">UPDATED: JUST NOW</span>
+                    </div>
+
+                    <div class="mitre-grid" id="matrixContainer">
+                        <!-- Matrix columns injected here -->
+                    </div>
+                </div>
+
+                <div class="soc-card">
+                    <div class="soc-card-header"><span class="card-title">RECENT MAPPED EVENTS</span></div>
+                    <table class="terminal-table" style="width: 100%;">
+                        <thead>
+                            <tr>
+                                <th>TIMESTAMP</th>
+                                <th>TACTIC</th>
+                                <th>TECHNIQUE ID</th>
+                                <th>SEVERITY</th>
+                            </tr>
+                        </thead>
+                        <tbody id="eventsTable">
+                            <!-- JS Populated -->
+                        </tbody>
+                    </table>
+                </div>
+
+            </div>
+
+            <!-- EXTERNAL VIEW -->
+            <div id="externalView" style="display: none; height: calc(100vh - 180px);">
+                <div class="soc-card" style="height: 100%; padding: 0; overflow: hidden;">
+                    <iframe src="https://attack.mitre.org/" style="width: 100%; height: 100%; border: none;"></iframe>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="js/sidebar.js"></script>
+    <script type="module">
+        import { apiService } from './js/api.js';
+
+        async function loadMatrix() {
+            try {
+                // Check auth (assuming api.js handles basic auth checks or we add here)
+                if (!localStorage.getItem('access_token')) window.location.href = 'login.html';
+
+                const container = document.getElementById('matrixContainer');
+                container.innerHTML = '<div style="padding:20px; color:#666;">Loading Application Matrix...</div>';
+
+                // Fetch Data
+                // Note: We need to register this endpoint in backend router first!
+                const response = await apiService.get('/mitre/');
+
+                if (response.status === 'success') {
+                    renderMatrix(response.matrix);
+                } else {
+                    container.innerHTML = `<div style="padding:20px; color:var(--neon-red);">Failed: ${response.detail}</div>`;
+                }
+
+            } catch (e) {
+                console.error(e);
+                const container = document.getElementById('matrixContainer');
+                container.innerHTML = '<div style="padding:20px; color:#666;">No data yet.</div>';
+                const tableBody = document.getElementById('eventsTable');
+                tableBody.innerHTML = '<tr><td colspan="4" class="text-muted">No data yet</td></tr>';
+                document.getElementById('activeThreatsCount').innerText = '—';
+            }
+        }
+
+        function renderMatrix(matrix) {
+            const container = document.getElementById('matrixContainer');
+            container.innerHTML = '';
+            const tableBody = document.getElementById('eventsTable');
+            tableBody.innerHTML = '';
+
+            let totalThreats = 0;
+
+            // Order tactics logically (Kill Chain order)
+            const order = [
+                "Reconnaissance", "Resource Development", "Initial Access", "Execution",
+                "Persistence", "Privilege Escalation", "Defense Evasion", "Credential Access",
+                "Discovery", "Lateral Movement", "Collection", "Command and Control",
+                "Exfiltration", "Impact"
+            ];
+
+            // Filter matrix to exclude empty if we want compact, or show standard set
+            // Let's show the standard set from our order list
+            order.forEach(tactic => {
+                const events = matrix[tactic] || [];
+
+                // Determine if tactic column should be highlighted
+                const hasEvents = events.length > 0;
+                totalThreats += events.length;
+
+                let colHtml = `
+                <div class="tactic-column">
+                    <div class="tactic-header" style="${hasEvents ? 'color:var(--neon-red); border-bottom-color:var(--neon-red);' : ''}">
+                        ${tactic}
+                    </div>
+            `;
+
+                if (hasEvents) {
+                    // Group by technique ID to avoid duplicates
+                    const techniques = {};
+                    events.forEach(e => {
+                        if (!techniques[e.id]) techniques[e.id] = { ...e, count: 0 };
+                        techniques[e.id].count++;
+
+                        // Add to table
+                        const row = `<tr>
+                        <td class="text-mono text-muted">${new Date(e.timestamp).toLocaleTimeString()}</td>
+                        <td class="text-cyan">${tactic}</td>
+                        <td class="text-mono">${e.id}</td>
+                        <td class="${e.severity === 'CRITICAL' ? 'text-red' : 'text-yellow'}">${e.severity}</td>
+                    </tr>`;
+                        tableBody.innerHTML += row;
+                    });
+
+                    Object.values(techniques).forEach(tech => {
+                        colHtml += `
+                        <div class="technique-card active" onclick="openTechnique('${tech.id}')" title="View details on MITRE ATT&CK">
+                            <div class="count-badge">${tech.count}</div>
+                            <div style="font-weight:bold; margin-bottom:2px;">${tech.id}</div>
+                            <div>${tech.technique}</div>
+                        </div>
+                    `;
+                    });
+                } else {
+                    colHtml += `<div style="padding:10px; color:#333; font-style:italic; font-size:0.7rem; text-align:center;">No Activity</div>`;
+                }
+
+                colHtml += `</div>`;
+                container.innerHTML += colHtml;
+            });
+
+            document.getElementById('activeThreatsCount').innerText = `${totalThreats} ACTIVE THREATS`;
+        }
+
+        // Init
+        window.addEventListener('scroll', () => { }); // placeholder
+        loadMatrix();
+        // Auto refresh every 10s
+        setInterval(loadMatrix, 10000);
+
+        // View Toggle Logic
+        // View Toggle Logic
+        window.toggleView = function (view) {
+            const local = document.getElementById('localView');
+            const external = document.getElementById('externalView');
+
+            if (view === 'local') {
+                local.style.display = 'block';
+                external.style.display = 'none';
+            } else {
+                local.style.display = 'none';
+                external.style.display = 'block';
+            }
+        };
+
+        // Open MITRE Technique Documentation
+        window.openTechnique = function (id) {
+            // Parse ID (e.g., T1595.001 -> T1595/001)
+            let url = 'https://attack.mitre.org/techniques/';
+            if (id.includes('.')) {
+                const parts = id.split('.');
+                url += `${parts[0]}/${parts[1]}/`;
+            } else {
+                url += `${id}/`;
+            }
+            window.open(url, '_blank');
+        };
+
+    </script>
+</body>
+
+</html>

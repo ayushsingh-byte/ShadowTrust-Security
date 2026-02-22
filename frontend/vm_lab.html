@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Virtual Lab | SentinelHive</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/dashboard.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .vm-card {
+            background: #0a0a0f;
+            border: 1px solid #333;
+            height: 100%;
+            transition: 0.2s;
+        }
+
+        .vm-card:hover {
+            border-color: var(--neon-cyan);
+        }
+
+        .vm-status-dot {
+            width: 8px;
+            height: 8px;
+            background: #555;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 5px;
+        }
+
+        .vm-status-dot.running {
+            background: #00ff41;
+            box-shadow: 0 0 5px #00ff41;
+        }
+
+        .vm-status-dot.stopped {
+            background: #ff0055;
+        }
+
+        .resource-bar-bg {
+            background: #222;
+            height: 4px;
+            width: 100%;
+            margin: 5px 0 10px 0;
+            border-radius: 2px;
+        }
+
+        .resource-bar-fill {
+            height: 100%;
+            width: 0%;
+            border-radius: 2px;
+            transition: width 0.5s;
+        }
+
+        .topology-node {
+            display: inline-block;
+            padding: 10px;
+            border: 1px dashed #444;
+            margin: 10px;
+            border-radius: 4px;
+            text-align: center;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="app-container">
+
+        <!-- SIDEBAR -->
+        <!-- VOID NEON SIDEBAR (FROM GEO INTEL) -->
+        <!-- SIDEBAR -->
+        <aside class="sidebar" id="sidebar">
+            <div class="logo-area" onclick="document.getElementById('sidebar').classList.toggle('collapsed')">
+                <div class="logo-icon"></div>
+                <div class="logo-text">
+                    <div class="logo-title">SENTINEL</div>
+                    <div class="logo-sub">DECEPTION GRID // V1</div>
+                </div>
+                <i class="fas fa-arrow-left toggle-btn"
+                    style="margin-left: auto; cursor: pointer; color: #555; transition:0.3s;"></i>
+            </div>
+
+            <div class="nav-group">
+                <div class="nav-group-label">Mission Control</div>
+                <a href="dashboard.html" class="nav-item"><i class="fas fa-th-large"></i> <span class="nav-text">Threat
+                        Overview</span></a>
+                <a href="events.html" class="nav-item"><i class="fas fa-stream"></i> <span class="nav-text">Event
+                        Stream</span></a>
+                <a href="alerts.html" class="nav-item"><i class="fas fa-bell"></i> <span class="nav-text">Alerts &
+                        Findings</span></a>
+            </div>
+
+            <div class="nav-group">
+                <div class="nav-group-label">Grid Monitoring</div>
+                <a href="nodes.html" class="nav-item"><i class="fas fa-server"></i> <span class="nav-text">Honeypot
+                        Nodes</span></a>
+                <a href="sectors.html" class="nav-item"><i class="fas fa-network-wired"></i> <span
+                        class="nav-text">Sector Monitors</span></a>
+                <a href="geo.html" class="nav-item"><i class="fas fa-globe-americas"></i> <span class="nav-text">Geo
+                        Intelligence</span></a>
+            </div>
+
+            <div class="nav-group">
+                <div class="nav-group-label">Intelligence</div>
+                <a href="mitre.html" class="nav-item"><i class="fas fa-project-diagram"></i> <span
+                        class="nav-text">MITRE Matrix</span></a>
+                <a href="graphs.html" class="nav-item"><i class="fas fa-chart-pie"></i> <span class="nav-text">Analytics
+                        Graphs</span></a>
+                <a href="credentials.html" class="nav-item"><i class="fas fa-key"></i> <span
+                        class="nav-text">Credentials Vault</span></a>
+                <a href="behavior.html" class="nav-item"><i class="fas fa-fingerprint"></i> <span
+                        class="nav-text">Behaviour Profiling</span></a>
+                <a href="simulation.html" class="nav-item"><i class="fas fa-dragon"></i> <span class="nav-text">Attack
+                        Simulation</span></a>
+            </div>
+
+            <div class="nav-group">
+                <div class="nav-group-label">Tools Suite</div>
+                <a href="malware.html" class="nav-item"><i class="fas fa-bug"></i> <span class="nav-text">Malware
+                        Sandbox</span></a>
+                <a href="urlscan.html" class="nav-item"><i class="fas fa-search-location"></i> <span
+                        class="nav-text">URL Scanner</span></a>
+                <a href="apk.html" class="nav-item"><i class="fas fa-mobile-alt"></i> <span class="nav-text">APK
+                        Analyzer</span></a>
+                <a href="vm_lab.html" class="nav-item active"><i class="fas fa-desktop"></i> <span
+                        class="nav-text">Virtual Lab</span></a>
+            </div>
+
+            <div class="nav-group">
+                <div class="nav-group-label">System</div>
+                <a href="admin.html" class="nav-item"><i class="fas fa-user-shield"></i> <span class="nav-text">Admin
+                        Panel</span></a>
+                <a href="config.html" class="nav-item"><i class="fas fa-cog"></i> <span
+                        class="nav-text">Configuration</span></a>
+                <a href="profile.html" class="nav-item"><i class="fas fa-id-card"></i> <span
+                        class="nav-text">Profile</span></a>
+                <a href="#" class="nav-item" id="logoutBtn" style="color: #ff4444;"><i class="fas fa-sign-out-alt"></i>
+                    <span class="nav-text">Logout</span></a>
+            </div>
+
+            <div class="build-info">
+                <div>DEPLOYMENT: <span class="text-cyan">PROD-01</span></div>
+                <div>STATUS: <span class="text-green">ONLINE</span></div>
+            </div>
+        </aside>
+
+        <main class="main-content">
+
+            <div class="top-bar">
+                <div class="page-header">
+                    <h2>Cyber Range Virtual Lab</h2>
+                    <p>Deploy and manage isolated honeypot environments.</p>
+                </div>
+                <div class="filters-bar">
+                    <a href="admin_login.html" class="soc-btn"
+                        style="color:var(--neon-red); border-color:var(--neon-red);"><i class="fas fa-user-shield"></i>
+                        ADMIN PANEL</a>
+                    <button class="soc-btn soc-btn-primary"><i class="fas fa-plus"></i> Launch Instance</button>
+                </div>
+            </div>
+
+            <!-- ROW 1: RESOURCES & TOPOLOGY -->
+            <div class="dashboard-grid" style="grid-template-columns: 1fr 1fr 1fr;">
+
+                <div class="soc-card">
+                    <div class="soc-card-header"><span class="card-title">LAB RESOURCES</span></div>
+                    <div style="margin-top:20px;">
+                        <div style="display:flex; justify-content:space-between; font-size:0.8rem; color:#888;">
+                            <span>vCPU Allocation</span>
+                            <span class="text-white">12 / 20</span>
+                        </div>
+                        <div class="resource-bar-bg">
+                            <div class="resource-bar-fill" style="width:60%; background:var(--neon-cyan);"></div>
+                        </div>
+
+                        <div style="display:flex; justify-content:space-between; font-size:0.8rem; color:#888;">
+                            <span>Memory Usage</span>
+                            <span class="text-white">32 / 64 GB</span>
+                        </div>
+                        <div class="resource-bar-bg">
+                            <div class="resource-bar-fill" style="width:50%; background:var(--neon-purple);"></div>
+                        </div>
+
+                        <div style="display:flex; justify-content:space-between; font-size:0.8rem; color:#888;">
+                            <span>Storage (NVMe)</span>
+                            <span class="text-white">1.2 / 5 TB</span>
+                        </div>
+                        <div class="resource-bar-bg">
+                            <div class="resource-bar-fill" style="width:25%; background:var(--neon-pink);"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="soc-card">
+                    <div class="soc-card-header"><span class="card-title">NETWORK GATEWAY</span></div>
+                    <div style="margin-top:10px; text-align:center;">
+                        <div class="text-xl text-green" style="margin-bottom:5px;">ASIA-SOUTH1-A</div>
+                        <div class="text-xs text-muted">12ms Latency • Standard Tier</div>
+                        <div style="margin-top:20px; font-size:2rem;"><i class="fas fa-network-wired text-cyan"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="soc-card">
+                    <div class="soc-card-header"><span class="card-title">ACTIVE DEPLOYMENTS</span></div>
+                    <div style="margin-top:10px; text-align:center;">
+                        <div class="text-xl text-white" style="margin-bottom:5px;">—</div>
+                        <div class="text-xs text-muted">Running Instances</div>
+                        <div style="margin-top:20px; font-size:2rem;"><i class="fas fa-server text-purple"></i></div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- ROW 2: ACTIVE VMS -->
+            <div
+                style="margin-bottom:1rem; margin-top:1rem; font-size:0.9rem; color:var(--text-muted); font-family:'JetBrains Mono';">
+                VIRTUAL MACHINES</div>
+            <div class="dashboard-grid" style="grid-template-columns: repeat(3, 1fr);">
+
+                <!-- VM 1 (Empty) -->
+                <div class="vm-card" style="padding:20px; display:flex; align-items:center; justify-content:center;">
+                    <div class="text-muted">No VM deployed</div>
+                </div>
+
+                <!-- VM 2 (Empty) -->
+                <div class="vm-card" style="padding:20px; display:flex; align-items:center; justify-content:center;">
+                    <div class="text-muted">No VM deployed</div>
+                </div>
+
+                <!-- VM 3 Removed and replaced with Deploy Button -->
+                <div class="vm-card"
+                    style="padding:20px; border:1px dashed #333; display:flex; align-items:center; justify-content:center; flex-direction:column; cursor:pointer;">
+                    <i class="fas fa-plus" style="font-size:2rem; color:#333; margin-bottom:10px;"></i>
+                    <div class="text-muted">Deploy New Node</div>
+                </div>
+
+            </div>
+
+            <div class="soc-card" style="margin-top:20px; padding:0; display:flex; align-items:center;">
+                <div style="padding:30px; flex:1;">
+                    <div style="font-size:1.2rem; margin-bottom:10px;">—</div>
+                    <div class="text-muted text-sm">—</div>
+                </div>
+                <div style="background:linear-gradient(90deg, transparent, rgba(0,0,0,0.8)); width:50%; height:100px;">
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <script type="module" src="js/vm_lab.js"></script>
+    <script src="js/sidebar.js"></script>
+</body>
+
+</html>
