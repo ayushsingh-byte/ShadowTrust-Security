@@ -40,8 +40,20 @@ htmlcov/
 *.log
 logs/
 
+# Common runtime scratch
+*.pid
+*.pid.lock
+
 # --- Databases / local state ---
 # NOTE: database files are NOT ignored (user requested to commit them).
+
+# Ignore SQLite sidecar files (generated at runtime)
+*.sqlite-journal
+*.sqlite-wal
+*.sqlite-shm
+*.db-journal
+*.db-wal
+*.db-shm
 
 # Local scan outputs (runtime)
 scans/*.json
@@ -51,6 +63,13 @@ backend/scans/
 
 # --- Frontend / Node ---
 node_modules/
+
+# TypeScript / Node build caches
+*.tsbuildinfo
+.eslintcache
+.parcel-cache/
+.turbo/
+.next/
 
 # --- OS / Editor ---
 .DS_Store
