@@ -80,6 +80,112 @@
             align-items: center;
             gap: 10px;
         }
+
+        /* Emergency Modal Styling */
+        @keyframes pulse-red-overlay {
+            0% {
+                background: rgba(255, 0, 85, 0.1);
+            }
+
+            50% {
+                background: rgba(255, 0, 85, 0.3);
+            }
+
+            100% {
+                background: rgba(255, 0, 85, 0.1);
+            }
+        }
+
+        #emergency-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(20, 0, 0, 0.85);
+            backdrop-filter: blur(8px);
+            z-index: 9999;
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            animation: pulse-red-overlay 2s infinite;
+        }
+
+        .emergency-card {
+            background: #0a0a0f;
+            border: 2px solid var(--neon-red);
+            padding: 40px;
+            border-radius: 8px;
+            text-align: center;
+            box-shadow: 0 0 40px rgba(255, 0, 85, 0.4);
+            max-width: 600px;
+        }
+
+        /* Lockdown Shutters (from dashboard) */
+        #shutter-top {
+            position: fixed;
+            top: -50vh;
+            left: 0;
+            width: 100%;
+            height: 50vh;
+            background: #050505;
+            z-index: 10000;
+            border-bottom: 4px solid var(--neon-red);
+            transition: top 0.8s cubic-bezier(0.8, 0, 0.2, 1);
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        #shutter-bottom {
+            position: fixed;
+            bottom: -50vh;
+            left: 0;
+            width: 100%;
+            height: 50vh;
+            background: #050505;
+            z-index: 10000;
+            border-top: 4px solid var(--neon-red);
+            transition: bottom 0.8s cubic-bezier(0.8, 0, 0.2, 1);
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        #lockdown-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(20, 0, 0, 0.9);
+            z-index: 10001;
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* Safe Green Screen */
+        #safe-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 20, 5, 0.9);
+            z-index: 10001;
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            backdrop-filter: blur(10px);
+            color: var(--neon-green);
+            font-family: 'JetBrains Mono';
+        }
     </style>
 </head>
 
@@ -280,6 +386,55 @@
         </main>
     </div>
 
+    <!-- LOCKDOWN SHUTTERS -->
+    <div id="shutter-top">
+        <div style="color:#333; font-size:10rem; font-family:'JetBrains Mono'; opacity:0.1; line-height:0.8;">RESTRICTED
+        </div>
+    </div>
+    <div id="shutter-bottom">
+        <div style="color:#333; font-size:10rem; font-family:'JetBrains Mono'; opacity:0.1; line-height:0.8;">AREA</div>
+    </div>
+
+    <div id="lockdown-screen">
+        <i class="fas fa-biohazard text-red animate-pulse" style="font-size: 8rem; margin-bottom: 30px;"></i>
+        <h1
+            style="color: var(--neon-red); font-size: 4rem; letter-spacing: 10px; text-shadow: 0 0 20px rgba(255,0,85,0.8); margin-bottom: 10px;">
+            SYSTEM SECURED</h1>
+        <p style="color: #ff8888; font-family: 'JetBrains Mono', monospace; font-size: 1.2rem; letter-spacing: 2px;">ALL
+            NON-ESSENTIAL PROCESSES TERMINATED</p>
+        <button class="soc-btn" onclick="liftLockdown()"
+            style="margin-top: 30px; border-color: var(--neon-red); color: var(--neon-red); background: rgba(255,0,85,0.1);">LIFT
+            LOCKDOWN</button>
+    </div>
+
+    <!-- SAFE SCREEN -->
+    <div id="safe-screen">
+        <i class="fas fa-shield-alt" style="font-size: 6rem; margin-bottom: 20px; color: var(--neon-green);"></i>
+        <h2 style="font-size: 2.5rem; margin-bottom: 10px; color: var(--neon-green);">ENVIRONMENT SECURED</h2>
+        <p style="margin-bottom: 20px;">Refreshing simulation parameters...</p>
+        <i class="fas fa-circle-notch fa-spin" style="font-size: 2rem; color: var(--neon-green);"></i>
+    </div>
+
+    <!-- EMERGENCY OVERLAY -->
+    <div id="emergency-overlay">
+        <div class="emergency-card">
+            <i class="fas fa-exclamation-triangle text-red animate-pulse"
+                style="font-size: 4rem; margin-bottom: 20px;"></i>
+            <h2 style="color: var(--neon-red); font-size: 2rem; margin-bottom: 10px; letter-spacing: 2px;">EMERGENCY
+                STOP ACTIVATED</h2>
+            <p style="color: #ccc; margin-bottom: 30px; font-family: 'JetBrains Mono'; font-size: 0.9rem;">Live fire
+                simulation halted. Please select environmental response.</p>
+            <div style="display: flex; gap: 15px; justify-content: center;">
+                <button class="soc-btn" onclick="triggerSafeMode()"
+                    style="background: rgba(0,255,65,0.1); border-color: var(--neon-green); color: var(--neon-green);">BACK
+                    TO NORMAL</button>
+                <button class="soc-btn" onclick="triggerLockdown()"
+                    style="background: rgba(255,0,85,0.1); border-color: var(--neon-red); color: var(--neon-red);">SWITCH
+                    TO LOCKDOWN</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         const consoleDiv = document.getElementById('console');
         let isRunning = false;
@@ -347,10 +502,44 @@
         }
 
         function stopSim() {
+            if (!isRunning && document.querySelector('.status-dot').className !== 'status-dot busy') {
+                // Allow triggering emergency UI even if not running, for visual effect
+            }
             log("!!! EMERGENCY STOP TRIGGERED !!!", 'text-red');
             isRunning = false;
             if (simInterval) clearInterval(simInterval);
             document.querySelector('.status-dot').className = 'status-dot active';
+
+            // Trigger emergency visual sequence
+            document.getElementById('emergency-overlay').style.display = 'flex';
+        }
+
+        function triggerLockdown() {
+            document.getElementById('emergency-overlay').style.display = 'none';
+            document.getElementById('shutter-top').style.top = '0';
+            document.getElementById('shutter-bottom').style.bottom = '0';
+            log("> Initiating site-wide Lockdown Sequence...", 'text-red');
+
+            setTimeout(() => {
+                document.getElementById('lockdown-screen').style.display = 'flex';
+            }, 800);
+        }
+
+        function liftLockdown() {
+            document.getElementById('lockdown-screen').style.display = 'none';
+            document.getElementById('shutter-top').style.top = '-50vh';
+            document.getElementById('shutter-bottom').style.bottom = '-50vh';
+            log("> Lockdown lifted. System returning to stand-by.", 'text-green');
+        }
+
+        function triggerSafeMode() {
+            document.getElementById('emergency-overlay').style.display = 'none';
+            document.getElementById('safe-screen').style.display = 'flex';
+
+            setTimeout(() => {
+                document.getElementById('safe-screen').style.display = 'none';
+                log("> Environment secured. Simulation parameters refreshed.", 'text-green');
+            }, 2000);
         }
     </script>
 

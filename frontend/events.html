@@ -80,204 +80,393 @@
     </style>
 </head>
 
-<body>
+<!-- Custom Modal styles & container -->
+<style>
+    .export-progress-bar {
+        width: 0%;
+        height: 100%;
+        background: var(--accent-primary);
+        transition: width 2s linear;
+    }
 
-    <div class="app-container">
+    @keyframes scrollData {
+        0% {
+            transform: translateY(0);
+        }
 
-        <!-- SIDEBAR -->
-        <!-- VOID NEON SIDEBAR (FROM GEO INTEL) -->
-        <aside class="sidebar" id="sidebar">
-            <div class="logo-area" onclick="document.getElementById('sidebar').classList.toggle('collapsed')">
-                <div class="logo-icon"></div>
-                <div class="logo-text">
-                    <div class="logo-title">SENTINEL</div>
-                    <div class="logo-sub">DECEPTION GRID // V1</div>
-                </div>
-                <i class="fas fa-arrow-left toggle-btn"
-                    style="margin-left: auto; cursor: pointer; color: #555; transition:0.3s;"></i>
-            </div>
+        100% {
+            transform: translateY(-50%);
+        }
+    }
 
-            <div class="nav-group">
-                <div class="nav-group-label">Mission Control</div>
-                <a href="dashboard.html" class="nav-item"><i class="fas fa-th-large"></i> <span class="nav-text">Threat
-                        Overview</span></a>
-                <a href="events.html" class="nav-item active"><i class="fas fa-stream"></i> <span class="nav-text">Event
-                        Stream</span></a>
-            </div>
+    .data-stream-bg {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 200%;
+        pointer-events: none;
+        opacity: 0.1;
+        z-index: -1;
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 0.5rem;
+        line-height: 1;
+        color: var(--accent-primary);
+        word-wrap: break-word;
+        overflow: hidden;
+        animation: scrollData 10s linear infinite;
+    }
+</style>
 
-            <div class="nav-group">
-                <div class="nav-group-label">Grid Monitoring</div>
-                <a href="nodes.html" class="nav-item"><i class="fas fa-server"></i> <span class="nav-text">Honeypot
-                        Nodes</span></a>
-                <a href="sectors.html" class="nav-item"><i class="fas fa-network-wired"></i> <span
-                        class="nav-text">Sector Monitors</span></a>
-                <a href="geo.html" class="nav-item"><i class="fas fa-globe-americas"></i> <span class="nav-text">Geo
-                        Intelligence</span></a>
-            </div>
+<!-- Custom Modal -->
+<div id="custom-modal"
+    style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(5, 10, 15, 0.85); z-index:10000; justify-content:center; align-items:center; backdrop-filter:blur(5px);">
+    <div class="soc-card"
+        style="width: 400px; max-width: 90%; border-color: var(--accent-primary); box-shadow: 0 0 20px rgba(0, 0, 0, 0.5); position: relative; overflow: hidden;">
+        <div id="modal-data-stream" class="data-stream-bg" style="display:none;"></div>
 
-            <div class="nav-group">
-                <div class="nav-group-label">Intelligence</div>
-                <a href="mitre.html" class="nav-item"><i class="fas fa-project-diagram"></i> <span
-                        class="nav-text">MITRE Matrix</span></a>
-                <a href="graphs.html" class="nav-item"><i class="fas fa-chart-pie"></i> <span class="nav-text">Analytics
-                        Graphs</span></a>
-                <a href="credentials.html" class="nav-item"><i class="fas fa-key"></i> <span
-                        class="nav-text">Credentials Vault</span></a>
-                <a href="behavior.html" class="nav-item"><i class="fas fa-fingerprint"></i> <span
-                        class="nav-text">Behaviour Profiling</span></a>
-                <a href="simulation.html" class="nav-item"><i class="fas fa-dragon"></i> <span class="nav-text">Attack
-                        Simulation</span></a>
-            </div>
+        <div class="soc-card-header"
+            style="border-bottom: 1px solid #334155; padding-bottom: 10px; margin-bottom: 15px; position:relative;">
+            <span id="modal-title" class="card-title text-yellow"><i class="fas fa-exclamation-triangle"></i>
+                AUTHORIZATION REQUIRED</span>
+        </div>
 
-            <div class="nav-group">
-                <div class="nav-group-label">Tools Suite</div>
-                <a href="malware.html" class="nav-item"><i class="fas fa-bug"></i> <span class="nav-text">Malware
-                        Sandbox</span></a>
-                <a href="urlscan.html" class="nav-item"><i class="fas fa-search-location"></i> <span
-                        class="nav-text">URL Scanner</span></a>
-                <a href="apk.html" class="nav-item"><i class="fas fa-mobile-alt"></i> <span class="nav-text">APK
-                        Analyzer</span></a>
-                <a href="vm_lab.html" class="nav-item"><i class="fas fa-desktop"></i> <span class="nav-text">Virtual
-                        Lab</span></a>
-            </div>
+        <div id="modal-message"
+            style="color: #e2e8f0; font-family: 'JetBrains Mono', monospace; font-size: 0.9rem; margin-bottom: 15px; line-height: 1.5; position:relative;">
+            Please confirm action.
+        </div>
 
-            <div class="nav-group">
-                <div class="nav-group-label">System</div>
-                <a href="admin.html" class="nav-item"><i class="fas fa-user-shield"></i> <span class="nav-text">Admin
-                        Panel</span></a>
-                <a href="config.html" class="nav-item"><i class="fas fa-cog"></i> <span
-                        class="nav-text">Configuration</span></a>
-                <a href="profile.html" class="nav-item"><i class="fas fa-id-card"></i> <span
-                        class="nav-text">Profile</span></a>
-            </div>
+        <!-- Progress Bar Container -->
+        <div id="modal-progress-container"
+            style="display:none; width: 100%; height: 6px; background: #1e293b; margin-bottom: 25px; border-radius: 3px; overflow: hidden; position:relative;">
+            <div id="modal-progress-bar" class="export-progress-bar"></div>
+        </div>
 
-            <div class="build-info">
-                <div>DEPLOYMENT: <span class="text-cyan">PROD-01</span></div>
-                <div>STATUS: <span class="text-green">ONLINE</span></div>
-            </div>
-        </aside>
-
-        <main class="main-content">
-
-            <div class="top-bar">
-                <div class="page-header">
-                    <h2>EVENT TELEMETRY</h2>
-                    <p>FULL RETENTION LOGS // <span class="text-cyan">ELASTICSEARCH INDEX</span></p>
-                </div>
-                <div class="filters-bar">
-                    <span style="font-size:0.8rem; color:#666; margin-right:10px;">BUFFER SIZE:</span>
-                    <span class="text-mono text-cyan" style="margin-right:20px;">—</span>
-                    <button class="soc-btn SOC-btn-sm"><i class="fas fa-save"></i> SAVE QUERY</button>
-                    <button class="soc-btn soc-btn-primary"><i class="fas fa-download"></i> DUMP CSV</button>
-                </div>
-            </div>
-
-            <!-- STATISTICS HEADER -->
-            <div class="dashboard-grid" style="grid-template-columns: repeat(6, 1fr); margin-bottom: 20px;">
-                <div style="background:#0a0a0f; border:1px solid #222; padding:10px; text-align:center;">
-                    <div class="text-purple" style="font-size:1.4rem; font-weight:700;">—</div>
-                    <div style="font-size:0.6rem; color:#666;">INGEST RATE</div>
-                </div>
-                <div style="background:#0a0a0f; border:1px solid #222; padding:10px; text-align:center;">
-                    <div class="text-pink" style="font-size:1.4rem; font-weight:700;">—</div>
-                    <div style="font-size:0.6rem; color:#666;">CRITICAL ALERTS</div>
-                </div>
-                <div style="background:#0a0a0f; border:1px solid #222; padding:10px; text-align:center;">
-                    <div class="text-cyan" style="font-size:1.4rem; font-weight:700;">—</div>
-                    <div style="font-size:0.6rem; color:#666;">TOTAL LOGS (24H)</div>
-                </div>
-                <div style="background:#0a0a0f; border:1px solid #222; padding:10px; text-align:center;">
-                    <div class="text-green" style="font-size:1.4rem; font-weight:700;">—</div>
-                    <div style="font-size:0.6rem; color:#666;">INDEX STATUS</div>
-                </div>
-                <div style="background:#0a0a0f; border:1px solid #222; padding:10px; text-align:center;">
-                    <div style="font-size:1.4rem; font-weight:700; color:#fff;">—</div>
-                    <div style="font-size:0.6rem; color:#666;">QUERY LATENCY</div>
-                </div>
-                <div style="background:#0a0a0f; border:1px solid #222; padding:10px; text-align:center;">
-                    <div class="text-white" style="font-size:1.4rem; font-weight:700;">—</div>
-                    <div style="font-size:0.6rem; color:#666;">CACHE HIT RATIO</div>
-                </div>
-            </div>
-
-            <!-- SEARCH BAR -->
-            <div class="query-builder">
-                <span class="text-green">root@elastic:~$</span>
-                <span style="color:#aaa;">SEARCH index="honeypot-*" | WHERE</span>
-                <span class="query-tag">severity="CRITICAL"</span>
-                <span style="color:#aaa;">AND</span>
-                <span class="query-tag">protocol="SSH"</span>
-                <span class="blink-cursor"
-                    style="background:#0f0; width:8px; height:15px; display:inline-block;"></span>
-            </div>
-
-            <!-- VISUALIZATION ROW -->
-            <div class="dashboard-grid" style="grid-template-columns: 3fr 1fr; margin-bottom: 20px;">
-                <div class="soc-card" style="height:200px; padding:10px;">
-                    <div class="text-xs text-muted" style="margin-bottom:10px;">EVENT VOLUME (LAST 1 HOUR)</div>
-                    <canvas id="volumeChart"></canvas>
-                </div>
-                <div class="soc-card" style="padding:15px;">
-                    <div class="card-title">TOP SOURCES</div>
-                    <div style="margin-top:10px; font-size:0.8rem;">
-                        <div class="text-muted">No data yet</div>
-                    </div>
-                </div>
-            </div>
-
-
-            <!-- MAIN TABLE CARD -->
-            <div class="soc-card">
-                <table id="logTable">
-                    <thead>
-                        <tr>
-                            <th>TIME (UTC)</th>
-                            <th>SEV</th>
-                            <th>SOURCE</th>
-                            <th>GEO</th>
-                            <th>TARGET</th>
-                            <th>PROTOCOL</th>
-                            <th>EVENT SIGNATURE / PAYLOAD</th>
-                            <th>ACTION</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <!-- JS Populated -->
-                    </tbody>
-                </table>
-            </div>
-
-            <!-- FOOTER SYSTEM STATUS -->
-            <div
-                style="margin-top:20px; border-top:1px solid #222; padding-top:10px; display:flex; justify-content:space-between; color:#666; font-size:0.7rem; font-family:'JetBrains Mono';">
-                <div>SENTINEL NODE CLUSTER // v4.2.0-STABLE</div>
-                <div>
-                    <span style="margin-right:15px;"><i class="fas fa-circle text-green" style="font-size:0.5rem;"></i>
-                        API: —</span>
-                    <span style="margin-right:15px;"><i class="fas fa-circle text-green" style="font-size:0.5rem;"></i>
-                        DB: —</span>
-                    <span><i class="fas fa-circle text-green" style="font-size:0.5rem;"></i> WORKERS: —</span>
-                </div>
-                <div>LATENCY: —</div>
-            </div>
-
-        </main>
+        <div id="modal-buttons" style="display: flex; justify-content: flex-end; gap: 10px; position:relative;">
+            <button id="modal-btn-cancel" class="soc-btn"
+                style="background: transparent; border: 1px solid #334155; color: #94a3b8;">CANCEL</button>
+            <button id="modal-btn-confirm" class="soc-btn soc-btn-primary">PROCEED</button>
+        </div>
     </div>
+</div>
 
-    <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
-    <script>
-        $(document).ready(function () {
-            $('#logTable').DataTable({
-                data: [],
-                pageLength: 25,
-                lengthChange: false,
-                ordering: true,
-                order: [[0, "desc"]]
-            });
+<div class="app-container">
+
+    <!-- SIDEBAR -->
+    <!-- VOID NEON SIDEBAR (FROM GEO INTEL) -->
+    <aside class="sidebar" id="sidebar">
+        <div class="logo-area" onclick="document.getElementById('sidebar').classList.toggle('collapsed')">
+            <div class="logo-icon"></div>
+            <div class="logo-text">
+                <div class="logo-title">SENTINEL</div>
+                <div class="logo-sub">DECEPTION GRID // V1</div>
+            </div>
+            <i class="fas fa-arrow-left toggle-btn"
+                style="margin-left: auto; cursor: pointer; color: #555; transition:0.3s;"></i>
+        </div>
+
+        <div class="nav-group">
+            <div class="nav-group-label">Mission Control</div>
+            <a href="dashboard.html" class="nav-item"><i class="fas fa-th-large"></i> <span class="nav-text">Threat
+                    Overview</span></a>
+            <a href="events.html" class="nav-item active"><i class="fas fa-stream"></i> <span class="nav-text">Event
+                    Stream</span></a>
+        </div>
+
+        <div class="nav-group">
+            <div class="nav-group-label">Grid Monitoring</div>
+            <a href="nodes.html" class="nav-item"><i class="fas fa-server"></i> <span class="nav-text">Honeypot
+                    Nodes</span></a>
+            <a href="sectors.html" class="nav-item"><i class="fas fa-network-wired"></i> <span class="nav-text">Sector
+                    Monitors</span></a>
+            <a href="geo.html" class="nav-item"><i class="fas fa-globe-americas"></i> <span class="nav-text">Geo
+                    Intelligence</span></a>
+        </div>
+
+        <div class="nav-group">
+            <div class="nav-group-label">Intelligence</div>
+            <a href="mitre.html" class="nav-item"><i class="fas fa-project-diagram"></i> <span class="nav-text">MITRE
+                    Matrix</span></a>
+            <a href="graphs.html" class="nav-item"><i class="fas fa-chart-pie"></i> <span class="nav-text">Analytics
+                    Graphs</span></a>
+            <a href="credentials.html" class="nav-item"><i class="fas fa-key"></i> <span class="nav-text">Credentials
+                    Vault</span></a>
+            <a href="behavior.html" class="nav-item"><i class="fas fa-fingerprint"></i> <span class="nav-text">Behaviour
+                    Profiling</span></a>
+            <a href="simulation.html" class="nav-item"><i class="fas fa-dragon"></i> <span class="nav-text">Attack
+                    Simulation</span></a>
+        </div>
+
+        <div class="nav-group">
+            <div class="nav-group-label">Tools Suite</div>
+            <a href="malware.html" class="nav-item"><i class="fas fa-bug"></i> <span class="nav-text">Malware
+                    Sandbox</span></a>
+            <a href="urlscan.html" class="nav-item"><i class="fas fa-search-location"></i> <span class="nav-text">URL
+                    Scanner</span></a>
+            <a href="apk.html" class="nav-item"><i class="fas fa-mobile-alt"></i> <span class="nav-text">APK
+                    Analyzer</span></a>
+            <a href="vm_lab.html" class="nav-item"><i class="fas fa-desktop"></i> <span class="nav-text">Virtual
+                    Lab</span></a>
+        </div>
+
+        <div class="nav-group">
+            <div class="nav-group-label">System</div>
+            <a href="admin.html" class="nav-item"><i class="fas fa-user-shield"></i> <span class="nav-text">Admin
+                    Panel</span></a>
+            <a href="config.html" class="nav-item"><i class="fas fa-cog"></i> <span
+                    class="nav-text">Configuration</span></a>
+            <a href="profile.html" class="nav-item"><i class="fas fa-id-card"></i> <span
+                    class="nav-text">Profile</span></a>
+        </div>
+
+        <div class="build-info">
+            <div>DEPLOYMENT: <span class="text-cyan">PROD-01</span></div>
+            <div>STATUS: <span class="text-green">ONLINE</span></div>
+        </div>
+    </aside>
+
+    <main class="main-content">
+
+        <div class="top-bar">
+            <div class="page-header">
+                <h2>EVENT TELEMETRY</h2>
+                <p>FULL RETENTION LOGS // <span class="text-cyan">ELASTICSEARCH INDEX</span></p>
+            </div>
+            <div class="filters-bar">
+                <span style="font-size:0.8rem; color:#666; margin-right:10px;">BUFFER SIZE:</span>
+                <span class="text-mono text-cyan" style="margin-right:20px;">—</span>
+                <button id="btn-save-query" class="soc-btn SOC-btn-sm"><i class="fas fa-save"></i> SAVE QUERY</button>
+                <button id="btn-dump-csv" class="soc-btn soc-btn-primary"><i class="fas fa-download"></i> DUMP
+                    CSV</button>
+            </div>
+        </div>
+
+        <!-- STATISTICS HEADER -->
+        <div class="dashboard-grid" style="grid-template-columns: repeat(6, 1fr); margin-bottom: 20px;">
+            <div style="background:#0a0a0f; border:1px solid #222; padding:10px; text-align:center;">
+                <div class="text-purple" style="font-size:1.4rem; font-weight:700;">—</div>
+                <div style="font-size:0.6rem; color:#666;">INGEST RATE</div>
+            </div>
+            <div style="background:#0a0a0f; border:1px solid #222; padding:10px; text-align:center;">
+                <div class="text-pink" style="font-size:1.4rem; font-weight:700;">—</div>
+                <div style="font-size:0.6rem; color:#666;">CRITICAL ALERTS</div>
+            </div>
+            <div style="background:#0a0a0f; border:1px solid #222; padding:10px; text-align:center;">
+                <div class="text-cyan" style="font-size:1.4rem; font-weight:700;">—</div>
+                <div style="font-size:0.6rem; color:#666;">TOTAL LOGS (24H)</div>
+            </div>
+            <div style="background:#0a0a0f; border:1px solid #222; padding:10px; text-align:center;">
+                <div class="text-green" style="font-size:1.4rem; font-weight:700;">—</div>
+                <div style="font-size:0.6rem; color:#666;">INDEX STATUS</div>
+            </div>
+            <div style="background:#0a0a0f; border:1px solid #222; padding:10px; text-align:center;">
+                <div style="font-size:1.4rem; font-weight:700; color:#fff;">—</div>
+                <div style="font-size:0.6rem; color:#666;">QUERY LATENCY</div>
+            </div>
+            <div style="background:#0a0a0f; border:1px solid #222; padding:10px; text-align:center;">
+                <div class="text-white" style="font-size:1.4rem; font-weight:700;">—</div>
+                <div style="font-size:0.6rem; color:#666;">CACHE HIT RATIO</div>
+            </div>
+        </div>
+
+        <!-- SEARCH BAR -->
+        <div class="query-builder">
+            <span class="text-green">root@elastic:~$</span>
+            <span style="color:#aaa;">SEARCH index="honeypot-*" | WHERE</span>
+            <span class="query-tag">severity="CRITICAL"</span>
+            <span style="color:#aaa;">AND</span>
+            <span class="query-tag">protocol="SSH"</span>
+            <span class="blink-cursor" style="background:#0f0; width:8px; height:15px; display:inline-block;"></span>
+        </div>
+
+        <!-- VISUALIZATION ROW -->
+        <div class="dashboard-grid" style="grid-template-columns: 3fr 1fr; margin-bottom: 20px;">
+            <div class="soc-card" style="height:200px; padding:10px;">
+                <div class="text-xs text-muted" style="margin-bottom:10px;">EVENT VOLUME (LAST 1 HOUR)</div>
+                <canvas id="volumeChart"></canvas>
+            </div>
+            <div class="soc-card" style="padding:15px;">
+                <div class="card-title">TOP SOURCES</div>
+                <div style="margin-top:10px; font-size:0.8rem;">
+                    <div class="text-muted">No data yet</div>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- MAIN TABLE CARD -->
+        <div class="soc-card">
+            <table id="logTable">
+                <thead>
+                    <tr>
+                        <th>TIME (UTC)</th>
+                        <th>SEV</th>
+                        <th>SOURCE</th>
+                        <th>GEO</th>
+                        <th>TARGET</th>
+                        <th>PROTOCOL</th>
+                        <th>EVENT SIGNATURE / PAYLOAD</th>
+                        <th>ACTION</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- JS Populated -->
+                </tbody>
+            </table>
+        </div>
+
+        <!-- FOOTER SYSTEM STATUS -->
+        <div
+            style="margin-top:20px; border-top:1px solid #222; padding-top:10px; display:flex; justify-content:space-between; color:#666; font-size:0.7rem; font-family:'JetBrains Mono';">
+            <div>SENTINEL NODE CLUSTER // v4.2.0-STABLE</div>
+            <div>
+                <span style="margin-right:15px;"><i class="fas fa-circle text-green" style="font-size:0.5rem;"></i>
+                    API: —</span>
+                <span style="margin-right:15px;"><i class="fas fa-circle text-green" style="font-size:0.5rem;"></i>
+                    DB: —</span>
+                <span><i class="fas fa-circle text-green" style="font-size:0.5rem;"></i> WORKERS: —</span>
+            </div>
+            <div>LATENCY: —</div>
+        </div>
+
+    </main>
+</div>
+
+<script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+<script>
+    $(document).ready(function () {
+        $('#logTable').DataTable({
+            data: [],
+            pageLength: 25,
+            lengthChange: false,
+            ordering: true,
+            order: [[0, "desc"]]
         });
-    </script>
+    });
 
-    <script src="js/sidebar.js"></script>
+    // --- CUSTOM MODAL LOGIC ---
+    const topModal = document.getElementById('custom-modal');
+    const modalTitle = document.getElementById('modal-title');
+    const modalMessage = document.getElementById('modal-message');
+    const btnConfirm = document.getElementById('modal-btn-confirm');
+    const btnCancel = document.getElementById('modal-btn-cancel');
+    const modalButtons = document.getElementById('modal-buttons');
+    const progressContainer = document.getElementById('modal-progress-container');
+    const progressBar = document.getElementById('modal-progress-bar');
+    const dataStream = document.getElementById('modal-data-stream');
+
+    let modalConfirmCallback = null;
+
+    // Generate some fake hex data for the animation
+    function generateDataStream() {
+        let str = '';
+        const hexChars = '0123456789ABCDEF01 00FF AA55 ';
+        for (let i = 0; i < 2000; i++) {
+            str += hexChars.charAt(Math.floor(Math.random() * hexChars.length));
+            if (i % 64 === 0) str += '<br>';
+        }
+        return str;
+    }
+
+    function showModal(title, message, isDanger, callback, isAlert = false) {
+        modalTitle.innerHTML = title;
+        modalMessage.innerHTML = message;
+
+        // Reset modal states
+        progressContainer.style.display = 'none';
+        progressBar.style.width = '0%';
+        dataStream.style.display = 'none';
+        modalButtons.style.display = 'flex';
+
+        if (isDanger) {
+            modalTitle.className = 'card-title text-red';
+            btnConfirm.className = 'soc-btn soc-btn-danger';
+            btnConfirm.innerText = isAlert ? 'ACKNOWLEDGE' : 'INITIATE';
+            topModal.querySelector('.soc-card').style.borderColor = 'var(--accent-critical)';
+        } else {
+            modalTitle.className = 'card-title text-cyan';
+            btnConfirm.className = 'soc-btn soc-btn-primary';
+            btnConfirm.innerText = isAlert ? 'ACKNOWLEDGE' : 'PROCEED';
+            topModal.querySelector('.soc-card').style.borderColor = 'var(--accent-primary)';
+        }
+
+        btnCancel.style.display = isAlert ? 'none' : 'block';
+
+        modalConfirmCallback = callback;
+        topModal.style.display = 'flex';
+    }
+
+    function hideModal() {
+        topModal.style.display = 'none';
+        modalConfirmCallback = null;
+    }
+
+    btnCancel.addEventListener('click', hideModal);
+    btnConfirm.addEventListener('click', () => {
+        if (modalConfirmCallback) modalConfirmCallback();
+        else hideModal();
+    });
+
+    // --- BUTTON HANDLERS ---
+    document.getElementById('btn-save-query').addEventListener('click', () => {
+        showModal(
+            '<i class="fas fa-save"></i> SAVE QUERY PARAMETERS',
+            'Store current search parameters to the central index?',
+            false,
+            () => {
+                // Start saving animation
+                modalButtons.style.display = 'none';
+                modalMessage.innerHTML = '<span class="text-cyan animate-pulse">Hashing query pattern...</span>';
+
+                setTimeout(() => {
+                    modalMessage.innerHTML = '<span class="text-green"><i class="fas fa-check-circle"></i> QUERY SUCCESSFULLY SAVED</span>';
+                    modalTitle.className = 'card-title text-green';
+                    topModal.querySelector('.soc-card').style.borderColor = 'var(--accent-primary)';
+
+                    setTimeout(() => { hideModal(); }, 1500);
+                }, 1000);
+            }
+        );
+    });
+
+    document.getElementById('btn-dump-csv').addEventListener('click', () => {
+        showModal(
+            '<i class="fas fa-download"></i> DATA EXTRACTION PROTOCOL',
+            'WARNING: You are about to extract highly sensitive telemetry data. Proceed with extraction?',
+            true,
+            () => {
+                // Start extraction animation
+                modalButtons.style.display = 'none';
+                progressContainer.style.display = 'block';
+                dataStream.style.display = 'block';
+                dataStream.innerHTML = generateDataStream();
+
+                modalMessage.innerHTML = '<span class="text-yellow animate-pulse">Compiling telemetry logs into CSV bundle...</span>';
+
+                // Trigger CSS width transition
+                setTimeout(() => {
+                    progressBar.style.width = '100%';
+                }, 50);
+
+                setTimeout(() => {
+                    // Extraction complete
+                    dataStream.style.display = 'none';
+                    progressContainer.style.display = 'none';
+                    modalMessage.innerHTML = '<span class="text-green"><i class="fas fa-check-circle"></i> EXTRACTION COMPLETED SECURELY</span><br><br><span style="color:#64748b; font-size:0.75rem;">Download will commence automatically.</span>';
+                    modalTitle.className = 'card-title text-green';
+                    topModal.querySelector('.soc-card').style.borderColor = 'var(--accent-primary)';
+
+                    setTimeout(() => {
+                        hideModal();
+                        // Simulate actual download logic completion here if necessary
+                    }, 2500);
+                }, 2050); // wait for 2s transiton
+            }
+        );
+    });
+</script>
+
+<script src="js/sidebar.js"></script>
 </body>
 
 </html>

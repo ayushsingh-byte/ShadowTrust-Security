@@ -11,7 +11,8 @@
     <style>
         /* Custom Map Styles for Tactical Look */
         #geoMap {
-            cursor: crosshair; /* Tactical cursor */
+            cursor: crosshair;
+            /* Tactical cursor */
             height: 480px;
             width: 100%;
             background: #050a0f;
@@ -25,8 +26,10 @@
         /* Radar Sweep Animation */
         .radar-sweep {
             position: absolute;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
             background: conic-gradient(from 0deg, transparent 0deg, rgba(164, 232, 46, 0.1) 60deg, transparent 60deg);
             border-radius: 50%;
             animation: radar-spin 4s linear infinite;
@@ -35,8 +38,13 @@
         }
 
         @keyframes radar-spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
         }
 
         /* Blinking Marker Animation */
@@ -83,9 +91,20 @@
         }
 
         @keyframes pulse-red {
-            0% { opacity: 1; box-shadow: 0 0 5px var(--accent-critical); }
-            50% { opacity: 0.5; box-shadow: 0 0 15px var(--accent-critical); }
-            100% { opacity: 1; box-shadow: 0 0 5px var(--accent-critical); }
+            0% {
+                opacity: 1;
+                box-shadow: 0 0 5px var(--accent-critical);
+            }
+
+            50% {
+                opacity: 0.5;
+                box-shadow: 0 0 15px var(--accent-critical);
+            }
+
+            100% {
+                opacity: 1;
+                box-shadow: 0 0 5px var(--accent-critical);
+            }
         }
     </style>
     <!-- Leaflet for Map -->
@@ -94,6 +113,87 @@
 </head>
 
 <body class="dashboard-page">
+
+    <!-- Loading Overlay -->
+    <div id="full-page-loading"
+        style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(5, 10, 15, 0.8); z-index:9999; justify-content:center; align-items:center; flex-direction:column; backdrop-filter:blur(5px);">
+        <i class="fas fa-circle-notch fa-spin" style="font-size:3rem; color:#a4e82e; margin-bottom:15px;"></i>
+        <div style="color:#ffffff; font-family:'JetBrains Mono', monospace; font-size:1.2rem;" class="animate-pulse">
+            REFRESHING INTELLIGENCE GRID...</div>
+    </div>
+
+    <!-- Custom Modal -->
+    <div id="custom-modal"
+        style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(5, 10, 15, 0.85); z-index:10002; justify-content:center; align-items:center; backdrop-filter:blur(5px);">
+        <div class="soc-card"
+            style="width: 400px; max-width: 90%; border-color: var(--accent-primary); box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);">
+            <div class="soc-card-header"
+                style="border-bottom: 1px solid #334155; padding-bottom: 10px; margin-bottom: 15px;">
+                <span id="modal-title" class="card-title text-yellow"><i class="fas fa-exclamation-triangle"></i>
+                    AUTHORIZATION REQUIRED</span>
+            </div>
+            <div id="modal-message"
+                style="color: #e2e8f0; font-family: 'JetBrains Mono', monospace; font-size: 0.9rem; margin-bottom: 25px; line-height: 1.5;">
+                Please confirm action.
+            </div>
+            <div style="display: flex; justify-content: flex-end; gap: 10px;">
+                <button id="modal-btn-cancel" class="soc-btn"
+                    style="background: transparent; border: 1px solid #334155; color: #94a3b8;">CANCEL</button>
+                <button id="modal-btn-confirm" class="soc-btn soc-btn-primary">PROCEED</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Lockdown Shutters & Overlay -->
+    <style>
+        @keyframes heartbeat {
+            0% {
+                transform: scale(1);
+            }
+
+            14% {
+                transform: scale(1.1);
+            }
+
+            28% {
+                transform: scale(1);
+            }
+
+            42% {
+                transform: scale(1.1);
+            }
+
+            70% {
+                transform: scale(1);
+            }
+        }
+
+        .heartbeat {
+            animation: heartbeat 1.5s infinite;
+        }
+    </style>
+    <div id="shutter-top"
+        style="position:fixed; top:0; left:0; width:100%; height:50vh; background:#050a0f; z-index:9998; border-bottom:4px solid var(--accent-critical); transform:translateY(-100%); transition:transform 0.5s ease-in-out; display:flex; justify-content:center; align-items:flex-end; overflow:hidden;">
+        <div style="font-family:'JetBrains Mono', monospace; color:var(--accent-critical); font-size:2rem; padding-bottom:20px; opacity:0; transition:opacity 0.2s 0.5s;"
+            class="shutter-text">LOCKDOWN SEQUENCE INITIATED</div>
+    </div>
+    <div id="shutter-bottom"
+        style="position:fixed; bottom:0; left:0; width:100%; height:50vh; background:#050a0f; z-index:9998; border-top:4px solid var(--accent-critical); transform:translateY(100%); transition:transform 0.5s ease-in-out; display:flex; justify-content:center; align-items:flex-start; overflow:hidden;">
+        <div style="font-family:'JetBrains Mono', monospace; color:var(--accent-critical); font-size:2rem; padding-top:20px; opacity:0; transition:opacity 0.2s 0.5s;"
+            class="shutter-text">ACCESS RESTRICTED</div>
+    </div>
+
+    <div id="lockdown-overlay"
+        style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(40, 0, 0, 0.5); backdrop-filter:blur(10px); z-index:9997; justify-content:center; align-items:center; flex-direction:column;">
+        <i class="fas fa-biohazard heartbeat"
+            style="font-size:6rem; color:var(--accent-critical); margin-bottom:20px;"></i>
+        <h1
+            style="color:var(--accent-critical); font-family:'JetBrains Mono', monospace; font-size:3rem; letter-spacing:5px; text-shadow:0 0 20px rgba(255, 51, 51, 0.7); margin-bottom: 5px;">
+            SYSTEM SECURED</h1>
+        <div
+            style="color:#ffffff; font-family:'JetBrains Mono', monospace; font-size:1.5rem; margin-top: 10px; background:rgba(0,0,0,0.7); padding:15px 30px; border:1px solid var(--accent-critical); box-shadow: 0 0 15px rgba(255,51,51,0.3);">
+            Administrator locked all pages</div>
+    </div>
 
     <div class="app-container">
 
@@ -105,8 +205,7 @@
                     <div class="logo-title">SENTINEL</div>
                     <div class="logo-sub">DEFENSE GRID // V2</div>
                 </div>
-                <i class="fas fa-chevron-left toggle-btn"
-                    style="margin-left: auto; cursor: pointer;"></i>
+                <i class="fas fa-chevron-left toggle-btn" style="margin-left: auto; cursor: pointer;"></i>
             </div>
 
             <div class="nav-group">
@@ -129,15 +228,16 @@
 
             <div class="nav-group">
                 <div class="nav-group-label">Intelligence</div>
-                <a href="mitre.html" class="nav-item"><i class="fas fa-chess-board"></i> <span
-                        class="nav-text">MITRE Matrix</span></a>
+                <a href="mitre.html" class="nav-item"><i class="fas fa-chess-board"></i> <span class="nav-text">MITRE
+                        Matrix</span></a>
                 <a href="graphs.html" class="nav-item"><i class="fas fa-chart-area"></i> <span class="nav-text">Attack
                         Analytics</span></a>
                 <a href="credentials.html" class="nav-item"><i class="fas fa-key"></i> <span
                         class="nav-text">Credentials Vault</span></a>
                 <a href="behavior.html" class="nav-item"><i class="fas fa-user-secret"></i> <span
                         class="nav-text">Behavior Profiling</span></a>
-                <a href="simulation.html" class="nav-item"><i class="fas fa-crosshairs"></i> <span class="nav-text">Attack
+                <a href="simulation.html" class="nav-item"><i class="fas fa-crosshairs"></i> <span
+                        class="nav-text">Attack
                         Sim</span></a>
             </div>
 
@@ -155,10 +255,10 @@
 
             <div class="nav-group">
                 <div class="nav-group-label">System</div>
-                <a href="admin_login.html" class="nav-item"><i class="fas fa-id-badge"></i> <span
-                        class="nav-text">Admin Access</span></a>
-                <a href="config.html" class="nav-item"><i class="fas fa-cogs"></i> <span
-                        class="nav-text">Global Config</span></a>
+                <a href="admin_login.html" class="nav-item"><i class="fas fa-id-badge"></i> <span class="nav-text">Admin
+                        Access</span></a>
+                <a href="config.html" class="nav-item"><i class="fas fa-cogs"></i> <span class="nav-text">Global
+                        Config</span></a>
                 <a href="profile.html" class="nav-item"><i class="fas fa-user-circle"></i> <span
                         class="nav-text">Officer Profile</span></a>
             </div>
@@ -175,7 +275,8 @@
             <div class="top-bar">
                 <div class="page-header">
                     <h2>TACTICAL COMMAND</h2>
-                    <p>THREAT LEVEL: <span class="text-yellow">ELEVATED</span> // AUTH: <span class="text-green">SECURE</span></p>
+                    <p>THREAT LEVEL: <span class="text-yellow">ELEVATED</span> // AUTH: <span
+                            class="text-green">SECURE</span></p>
                 </div>
                 <div class="filters-bar">
                     <div style="text-align:right; margin-right:15px;">
@@ -183,8 +284,10 @@
                         <div class="text-mono" id="clock" style="font-size:1.1rem; color:#fff; font-weight:700;">
                             00:00:00</div>
                     </div>
-                    <button class="soc-btn soc-btn-primary"><i class="fas fa-sync-alt"></i> REFRESH INTEL</button>
-                    <button class="soc-btn soc-btn-danger"><i class="fas fa-lock"></i> LOCKDOWN</button>
+                    <button id="btn-refresh-intel" class="soc-btn soc-btn-primary"><i class="fas fa-sync-alt"></i>
+                        REFRESH INTEL</button>
+                    <button id="btn-lockdown" class="soc-btn soc-btn-danger"><i class="fas fa-lock"></i>
+                        LOCKDOWN</button>
                 </div>
             </div>
 
@@ -313,7 +416,8 @@
             </div>
 
             <!-- ROW 1.8: GEO MAP (FULL WIDTH) -->
-            <div class="soc-card" style="padding: 0; overflow: hidden; margin-bottom: 2rem; position: relative; border-color: var(--accent-secondary);">
+            <div class="soc-card"
+                style="padding: 0; overflow: hidden; margin-bottom: 2rem; position: relative; border-color: var(--accent-secondary);">
                 <div class="soc-card-header"
                     style="position:absolute; top:10px; left:10px; z-index:400; background:rgba(11, 16, 21, 0.9); padding:8px 15px; border: 1px solid var(--accent-secondary);">
                     <span class="card-title text-yellow"><i class="fas fa-globe-americas"></i> GLOBAL THREAT MAP</span>
@@ -449,7 +553,8 @@
                         <span class="card-title">PROTOCOL ANOMALY RADAR</span>
                         <span class="badge badge-purple">BEHAVIORAL ANALYSIS</span>
                     </div>
-                    <div style="flex:1; position:relative; padding:10px; display:flex; justify-content:center; align-items:center;">
+                    <div
+                        style="flex:1; position:relative; padding:10px; display:flex; justify-content:center; align-items:center;">
                         <div class="radar-sweep"></div> <!-- Radar visual overlay -->
                         <canvas id="protocolRadar"></canvas>
                     </div>
@@ -478,7 +583,8 @@
                         API: —</span>
                     <span style="margin-right:15px;"><i class="fas fa-circle text-green" style="font-size:0.5rem;"></i>
                         DB: —</span>
-                    <span id="footerWorkers"><i class="fas fa-circle text-green" style="font-size:0.5rem;"></i> CLUSTER: Active</span>
+                    <span id="footerWorkers"><i class="fas fa-circle text-green" style="font-size:0.5rem;"></i> CLUSTER:
+                        Active</span>
                 </div>
                 <div>LATENCY: —</div>
             </div>
@@ -527,13 +633,13 @@
                 responsive: true,
                 maintainAspectRatio: false,
                 plugins: { legend: { display: false } },
-                scales: { 
-                    x: { display: false }, 
-                    y: { 
-                        display: true, 
+                scales: {
+                    x: { display: false },
+                    y: {
+                        display: true,
                         grid: { color: '#1e293b' },
-                        ticks: { color: '#64748b', font: {family: 'JetBrains Mono'} }
-                    } 
+                        ticks: { color: '#64748b', font: { family: 'JetBrains Mono' } }
+                    }
                 },
                 animation: false
             }
@@ -847,6 +953,132 @@
                     duration: 2000,
                     easing: 'easeOutQuart'
                 }
+            }
+        });
+
+        // Modal & Interactive Button Logic
+        const topModal = document.getElementById('custom-modal');
+        const modalTitle = document.getElementById('modal-title');
+        const modalMessage = document.getElementById('modal-message');
+        const btnConfirm = document.getElementById('modal-btn-confirm');
+        const btnCancel = document.getElementById('modal-btn-cancel');
+
+        let modalConfirmCallback = null;
+
+        function showModal(title, message, isDanger, callback, isAlert = false) {
+            modalTitle.innerHTML = title;
+            modalMessage.innerHTML = message;
+
+            if (isDanger) {
+                modalTitle.className = 'card-title text-red';
+                btnConfirm.className = 'soc-btn soc-btn-danger';
+                btnConfirm.innerText = isAlert ? 'ACKNOWLEDGE' : 'INITIATE';
+                topModal.querySelector('.soc-card').style.borderColor = 'var(--accent-critical)';
+            } else {
+                modalTitle.className = 'card-title text-yellow';
+                btnConfirm.className = 'soc-btn soc-btn-primary';
+                btnConfirm.innerText = isAlert ? 'ACKNOWLEDGE' : 'PROCEED';
+                topModal.querySelector('.soc-card').style.borderColor = 'var(--accent-primary)';
+            }
+
+            btnCancel.style.display = isAlert ? 'none' : 'block';
+
+            modalConfirmCallback = callback;
+            topModal.style.display = 'flex';
+        }
+
+        function hideModal() {
+            topModal.style.display = 'none';
+            modalConfirmCallback = null;
+        }
+
+        btnCancel.addEventListener('click', hideModal);
+        btnConfirm.addEventListener('click', () => {
+            if (modalConfirmCallback) modalConfirmCallback();
+            hideModal();
+        });
+
+        document.getElementById('btn-refresh-intel').addEventListener('click', () => {
+            showModal(
+                '<i class="fas fa-sync-alt"></i> REFRESH INTELLIGENCE',
+                'Initiate global intelligence refresh? This will synchronize all nodes and sensor feeds.',
+                false,
+                async () => {
+                    const loader = document.getElementById('full-page-loading');
+                    if (loader) loader.style.display = 'flex';
+
+                    // Fetch updated data from endpoints
+                    await Promise.allSettled([
+                        fetchNodes(),
+                        fetchApkStats(),
+                        fetchApkHistory()
+                    ]);
+
+                    setTimeout(() => {
+                        if (loader) loader.style.display = 'none';
+                    }, 800);
+                }
+            );
+        });
+
+        let isLockedDown = false;
+        const topShutter = document.getElementById('shutter-top');
+        const bottomShutter = document.getElementById('shutter-bottom');
+        const lockdownOverlay = document.getElementById('lockdown-overlay');
+        const btnLockdown = document.getElementById('btn-lockdown');
+
+        btnLockdown.addEventListener('click', () => {
+            if (!isLockedDown) {
+                showModal(
+                    '<i class="fas fa-biohazard"></i> SYSTEM LOCKDOWN',
+                    'WARNING: Are you sure you want to initiate system lockdown? All external connections will be severed.',
+                    true,
+                    () => {
+                        isLockedDown = true;
+                        btnLockdown.style.position = 'relative';
+                        btnLockdown.style.zIndex = '10001';
+
+                        topShutter.style.transform = 'translateY(0)';
+                        bottomShutter.style.transform = 'translateY(0)';
+                        document.querySelectorAll('.shutter-text').forEach(el => el.style.opacity = '1');
+
+                        setTimeout(() => {
+                            lockdownOverlay.style.display = 'flex';
+                            btnLockdown.className = 'soc-btn soc-btn-primary';
+                            btnLockdown.innerHTML = '<i class="fas fa-unlock"></i> NORMAL MODE';
+
+                            setTimeout(() => {
+                                topShutter.style.transform = 'translateY(-100%)';
+                                bottomShutter.style.transform = 'translateY(100%)';
+                                document.querySelectorAll('.shutter-text').forEach(el => el.style.opacity = '0');
+                            }, 500);
+                        }, 600);
+                    }
+                );
+            } else {
+                showModal(
+                    '<i class="fas fa-unlock"></i> RESTORE NORMAL MODE',
+                    'Confirm restoration of normal system operations?',
+                    false,
+                    () => {
+                        topShutter.style.transform = 'translateY(0)';
+                        bottomShutter.style.transform = 'translateY(0)';
+                        document.querySelectorAll('.shutter-text').forEach(el => el.style.opacity = '0'); // Optional: change visual text on unlock
+
+                        setTimeout(() => {
+                            lockdownOverlay.style.display = 'none';
+                            btnLockdown.className = 'soc-btn soc-btn-danger';
+                            btnLockdown.innerHTML = '<i class="fas fa-lock"></i> LOCKDOWN';
+                            btnLockdown.style.zIndex = 'auto'; // restore
+                            isLockedDown = false;
+
+                            setTimeout(() => {
+                                topShutter.style.transform = 'translateY(-100%)';
+                                bottomShutter.style.transform = 'translateY(100%)';
+                            }, 500);
+                        }, 600);
+                    }
+                );
             }
         });
     </script>

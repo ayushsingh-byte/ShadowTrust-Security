@@ -125,10 +125,132 @@
             font-size: 0.7rem;
             color: #aaa;
         }
+
+        /* Cyberpunk Modal Specific Animations for Behavior Profiling */
+        .export-progress-bar {
+            width: 0%;
+            height: 100%;
+            background: var(--neon-purple);
+            /* Default, overridden in JS */
+            transition: width 2.5s cubic-bezier(0.2, 0.8, 0.2, 1);
+        }
+
+        /* Hex-Dump Animation for STIX Export */
+        @keyframes scroll-hex {
+            0% {
+                transform: translateY(0);
+            }
+
+            100% {
+                transform: translateY(-50%);
+            }
+        }
+
+        .hex-dump-bg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 200%;
+            pointer-events: none;
+            opacity: 0.2;
+            z-index: -1;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.6rem;
+            color: #ff9900;
+            /* Amber */
+            overflow: hidden;
+            animation: scroll-hex 10s linear infinite;
+            display: none;
+            white-space: pre-wrap;
+            line-height: 1.1;
+        }
+
+        /* Fingerprint Scan Animation for Forensics Report */
+        @keyframes scan-fingerprint {
+            0% {
+                top: 0%;
+                box-shadow: 0 5px 15px rgba(0, 243, 255, 0.5);
+            }
+
+            50% {
+                top: 100%;
+                box-shadow: 0 -5px 15px rgba(0, 243, 255, 0.5);
+            }
+
+            100% {
+                top: 0%;
+                box-shadow: 0 5px 15px rgba(0, 243, 255, 0.5);
+            }
+        }
+
+        .fingerprint-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: -1;
+            display: none;
+            background-image: radial-gradient(circle at center, rgba(0, 243, 255, 0.1) 0%, transparent 70%);
+            border: 1px solid var(--neon-cyan);
+            overflow: hidden;
+        }
+
+        .fingerprint-overlay::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: var(--neon-cyan);
+            animation: scan-fingerprint 1.5s ease-in-out infinite;
+        }
     </style>
 </head>
 
 <body>
+
+    <!-- Custom Modal -->
+    <div id="custom-modal"
+        style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(5, 10, 15, 0.85); z-index:10000; justify-content:center; align-items:center; backdrop-filter:blur(5px);">
+        <div class="soc-card"
+            style="width: 450px; max-width: 90%; border-color: var(--accent-primary); box-shadow: 0 0 20px rgba(0, 0, 0, 0.5); position: relative; overflow: hidden;">
+
+            <!-- Animation Background Layers -->
+            <div id="modal-hex-dump" class="hex-dump-bg"></div>
+            <div id="modal-fingerprint" class="fingerprint-overlay">
+                <div
+                    style="position: absolute; top:50%; left:50%; transform:translate(-50%, -50%); opacity:0.1; font-size:120px; color:var(--neon-cyan);">
+                    <i class="fas fa-fingerprint"></i>
+                </div>
+            </div>
+
+            <div class="soc-card-header"
+                style="border-bottom: 1px solid #334155; padding-bottom: 10px; margin-bottom: 15px; position:relative;">
+                <span id="modal-title" class="card-title text-yellow"><i class="fas fa-exclamation-triangle"></i>
+                    AUTHORIZATION REQUIRED</span>
+            </div>
+
+            <div id="modal-message"
+                style="color: #e2e8f0; font-family: 'JetBrains Mono', monospace; font-size: 0.9rem; margin-bottom: 15px; line-height: 1.5; position:relative;">
+                Please confirm action.
+            </div>
+
+            <!-- Progress Bar Container -->
+            <div id="modal-progress-container"
+                style="display:none; width: 100%; height: 6px; background: #1e293b; margin-bottom: 25px; border-radius: 3px; overflow: hidden; position:relative;">
+                <div id="modal-progress-bar" class="export-progress-bar"></div>
+            </div>
+
+            <div id="modal-buttons" style="display: flex; justify-content: flex-end; gap: 10px; position:relative;">
+                <button id="modal-btn-cancel" class="soc-btn"
+                    style="background: transparent; border: 1px solid #334155; color: #94a3b8;">CANCEL</button>
+                <button id="modal-btn-confirm" class="soc-btn soc-btn-primary">PROCEED</button>
+            </div>
+        </div>
+    </div>
 
     <div class="app-container">
 
@@ -211,8 +333,11 @@
                     <p>REAL-TIME FINGERPRINTING // <span class="text-purple">AI MODEL v9.2 ACTIVE</span></p>
                 </div>
                 <div class="filters-bar">
-                    <button class="soc-btn">Export STIX 2.1</button>
-                    <button class="soc-btn soc-btn-primary">Generate Forensics Report</button>
+                    <button id="btn-export-stix" class="soc-btn" style="border-color: #ff9900; color: #ff9900;"><i
+                            class="fas fa-share-alt"></i> Export STIX 2.1</button>
+                    <button id="btn-forensics" class="soc-btn soc-btn-primary"
+                        style="background: rgba(0,243,255,0.1); border-color: var(--neon-cyan); color: var(--neon-cyan);"><i
+                            class="fas fa-search"></i> Generate Forensics Report</button>
                 </div>
             </div>
 
@@ -432,8 +557,175 @@
                 // Force a fit
                 network.fit();
             }, 300); // Small delay to allow DOM to settle
+
+            // --- CUSTOM MODAL LOGIC FOR BEHAVIOR PROFILING ---
+            const topModal = document.getElementById('custom-modal');
+            const modalTitle = document.getElementById('modal-title');
+            const modalMessage = document.getElementById('modal-message');
+            const btnConfirm = document.getElementById('modal-btn-confirm');
+            const btnCancel = document.getElementById('modal-btn-cancel');
+            const modalButtons = document.getElementById('modal-buttons');
+            const progressContainer = document.getElementById('modal-progress-container');
+            const progressBar = document.getElementById('modal-progress-bar');
+
+            const hexDumpBg = document.getElementById('modal-hex-dump');
+            const fingerprintBg = document.getElementById('modal-fingerprint');
+
+            let modalConfirmCallback = null;
+
+            function generateHexDump() {
+                let str = '';
+                for (let i = 0; i < 40; i++) {
+                    const addr = i.toString(16).padStart(4, '0').toUpperCase();
+                    let hex = '';
+                    let ascii = '';
+                    for (let j = 0; j < 8; j++) {
+                        const val = Math.floor(Math.random() * 256);
+                        hex += val.toString(16).padStart(2, '0').toUpperCase() + ' ';
+                        ascii += (val > 32 && val < 127) ? String.fromCharCode(val) : '.';
+                    }
+                    str += `[0x${addr}] ${hex} | ${ascii}\n`;
+                }
+                str += str; // double length for smooth scroll
+                return str;
+            }
+
+            function showModal(title, message, themeColor, callback, isAlert = false) {
+                modalTitle.innerHTML = title;
+                modalMessage.innerHTML = message;
+
+                // Reset all states
+                progressContainer.style.display = 'none';
+                progressBar.style.width = '0%';
+                progressBar.style.transition = 'none'; // skip transition on reset
+                progressBar.offsetHeight; // force reflow
+                progressBar.style.transition = 'width 2.5s cubic-bezier(0.2, 0.8, 0.2, 1)';
+                progressBar.style.background = themeColor;
+
+                hexDumpBg.style.display = 'none';
+                fingerprintBg.style.display = 'none';
+                modalButtons.style.display = 'flex';
+
+                modalTitle.style.color = themeColor;
+                btnConfirm.style.background = `rgba(${themeColor === '#ff9900' ? '255,153,0' : '0,243,255'}, 0.2)`;
+                btnConfirm.style.borderColor = themeColor;
+                btnConfirm.style.color = themeColor;
+                btnConfirm.innerText = isAlert ? 'ACKNOWLEDGE' : 'PROCEED';
+                topModal.querySelector('.soc-card').style.borderColor = themeColor;
+                btnConfirm.className = 'soc-btn'; // Strip dangerous classes
+
+                btnCancel.style.display = isAlert ? 'none' : 'block';
+                modalConfirmCallback = callback;
+                topModal.style.display = 'flex';
+            }
+
+            function hideModal() {
+                topModal.style.display = 'none';
+                modalConfirmCallback = null;
+            }
+
+            btnCancel.addEventListener('click', hideModal);
+            btnConfirm.addEventListener('click', () => {
+                if (modalConfirmCallback) modalConfirmCallback();
+                else hideModal();
+            });
+
+            // STIX Export Event
+            document.getElementById('btn-export-stix').addEventListener('click', () => {
+                showModal(
+                    '<i class="fas fa-code-branch"></i> EXPORT STIX 2.1 BUNDLE',
+                    'Compile current behavioral threat intelligence into a standardized STIX 2.1 JSON bundle?',
+                    '#ff9900', // Amber color
+                    () => {
+                        modalButtons.style.display = 'none';
+                        progressContainer.style.display = 'block';
+
+                        hexDumpBg.style.display = 'block';
+                        hexDumpBg.innerHTML = generateHexDump();
+
+                        const messages = [
+                            "Serializing TTP correlations...",
+                            "Encoding Indicator of Compromise (IoC) objects...",
+                            "Generating Observed Data constructs...",
+                            "Validating STIX 2.1 syntax..."
+                        ];
+
+                        let msgIndex = 0;
+                        modalMessage.innerHTML = `<span style="color:#ff9900" class="animate-pulse">${messages[0]}</span>`;
+
+                        const sysInt = setInterval(() => {
+                            msgIndex++;
+                            if (msgIndex < messages.length) {
+                                modalMessage.innerHTML = `<span style="color:#ff9900" class="animate-pulse">${messages[msgIndex]}</span>`;
+                            } else {
+                                clearInterval(sysInt);
+                            }
+                        }, 600);
+
+                        setTimeout(() => { progressBar.style.width = '100%'; }, 50);
+
+                        setTimeout(() => {
+                            hexDumpBg.style.display = 'none';
+                            progressContainer.style.display = 'none';
+                            modalMessage.innerHTML = '<span class="text-green"><i class="fas fa-check-circle"></i> STIX 2.1 BUNDLE READY</span><br><br><span style="color:#64748b; font-size:0.75rem;">Download automatically initiated.</span>';
+                            modalTitle.style.color = '#a4e82e';
+                            topModal.querySelector('.soc-card').style.borderColor = '#a4e82e';
+
+                            setTimeout(() => { hideModal(); }, 2000);
+                        }, 2550);
+                    }
+                );
+            });
+
+            // Generics Forensics Event
+            document.getElementById('btn-forensics').addEventListener('click', () => {
+                showModal(
+                    '<i class="fas fa-search-plus"></i> GENERATE FORENSICS REPORT',
+                    'Initiate deep behavioral scanning to compile a comprehensive digital forensics report (DFIR)?',
+                    'var(--neon-cyan)',
+                    () => {
+                        modalButtons.style.display = 'none';
+                        progressContainer.style.display = 'block';
+
+                        fingerprintBg.style.display = 'block';
+
+                        const messages = [
+                            "Scanning kernel-level event logs...",
+                            "Parsing memory dump anomalies...",
+                            "Reconstructing lateral movement paths...",
+                            "Finalizing Forensics Audit Trail..."
+                        ];
+
+                        let msgIndex = 0;
+                        modalMessage.innerHTML = `<span class="text-cyan animate-pulse">${messages[0]}</span>`;
+
+                        const sysInt = setInterval(() => {
+                            msgIndex++;
+                            if (msgIndex < messages.length) {
+                                modalMessage.innerHTML = `<span class="text-cyan animate-pulse">${messages[msgIndex]}</span>`;
+                            } else {
+                                clearInterval(sysInt);
+                            }
+                        }, 600);
+
+                        setTimeout(() => { progressBar.style.width = '100%'; }, 50);
+
+                        setTimeout(() => {
+                            fingerprintBg.style.display = 'none';
+                            progressContainer.style.display = 'none';
+                            modalMessage.innerHTML = '<span class="text-green"><i class="fas fa-file-pdf"></i> FORENSICS REPORT GENERATED</span><br><br><span style="color:#64748b; font-size:0.75rem;">Saving to local disk...</span>';
+                            modalTitle.style.color = '#a4e82e';
+                            topModal.querySelector('.soc-card').style.borderColor = '#a4e82e';
+
+                            setTimeout(() => { hideModal(); }, 2000);
+                        }, 2550);
+                    }
+                );
+            });
+
         });
     </script>
-    <script src="js/sidebar.js"></script></body>
+    <script src="js/sidebar.js"></script>
+</body>
 
 </html>

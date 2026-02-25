@@ -231,6 +231,76 @@
             vertical-align: middle;
             margin-right: 8px;
         }
+
+        /* Error Modal Glitch Animation */
+        @keyframes glitch-anim {
+            0% {
+                transform: translate(0);
+            }
+
+            20% {
+                transform: translate(-2px, 2px);
+            }
+
+            40% {
+                transform: translate(-2px, -2px);
+            }
+
+            60% {
+                transform: translate(2px, 2px);
+            }
+
+            80% {
+                transform: translate(2px, -2px);
+            }
+
+            100% {
+                transform: translate(0);
+            }
+        }
+
+        /* Inline Error Animation (Cross Loading from sides) */
+        .inline-error-container {
+            display: none;
+            justify-content: center;
+            align-items: center;
+            gap: 15px;
+            margin-top: 20px;
+            color: var(--neon-red);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1rem;
+            font-weight: 800;
+            text-shadow: 0 0 10px rgba(255, 0, 85, 0.5);
+            overflow: hidden;
+            position: relative;
+            z-index: 2;
+        }
+
+        .error-side-left {
+            transform: translateX(-150%);
+            opacity: 0;
+            animation: slideInLeft 0.5s forwards cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .error-side-right {
+            transform: translateX(150%);
+            opacity: 0;
+            animation: slideInRight 0.5s forwards cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        @keyframes slideInLeft {
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideInRight {
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
     </style>
 </head>
 
@@ -338,13 +408,21 @@
 
             <!-- SEARCH HERO -->
             <div class="url-search-container">
-                <div style="display: flex; justify-content: center; align-items: center;">
+                <div
+                    style="display: flex; justify-content: center; align-items: center; position: relative; z-index: 2;">
                     <i class="fas fa-globe text-muted" style="font-size: 1.5rem; margin-right: 15px;"></i>
                     <input type="text" class="big-input"
                         placeholder="ENTER SUSPICIOUS URL (e.g. http://login-secure-check.net)...">
                     <button class="scan-btn-large">INITIATE SCAN</button>
                 </div>
-                <div class="text-xs text-muted" style="margin-top: 15px; font-family: 'JetBrains Mono';">
+
+                <!-- ADD INLINE ERROR HERE -->
+                <div id="inline-error" class="inline-error-container">
+                    <!-- Populated via JS -->
+                </div>
+
+                <div class="text-xs text-muted"
+                    style="margin-top: 15px; font-family: 'JetBrains Mono'; position: relative; z-index: 2;">
                     ENGINES: <span class="text-cyan">WHOIS</span> // <span class="text-cyan">DNS</span> // <span
                         class="text-cyan">VIRUSTOTAL</span> // <span class="text-cyan">SCREENSHOT</span>
                 </div>
@@ -438,9 +516,25 @@
         const tableBody = document.getElementById('urlTableBody');
         tableBody.innerHTML = '<tr><td colspan="5" class="text-muted">No data yet</td></tr>';
 
+        let inlineErrorTimeout;
+
+        function showError(msg) {
+            const inlineError = document.getElementById('inline-error');
+            inlineError.innerHTML = `
+                <div class="error-side-left"><i class="fas fa-times-circle"></i> TARGET ACQUISITION FAILED</div>
+                <div class="error-side-right">// ${msg.toUpperCase()} //</div>
+            `;
+            inlineError.style.display = 'flex';
+
+            clearTimeout(inlineErrorTimeout);
+            inlineErrorTimeout = setTimeout(() => {
+                inlineError.style.display = 'none';
+            }, 4000);
+        }
+
         scanBtn.addEventListener('click', async () => {
             const url = urlInput.value.trim();
-            if (!url) return alert("Please enter a URL");
+            if (!url) return showError("Please enter a valid URL to initiate scan.");
 
             // UI Feedback
             const originalText = scanBtn.innerText;
@@ -464,7 +558,7 @@
 
             } catch (error) {
                 console.error(error);
-                alert("Scan Failed: " + error.message);
+                showError("Scan Failed: " + error.message);
                 scanBtn.innerText = originalText;
                 scanBtn.disabled = false;
             }

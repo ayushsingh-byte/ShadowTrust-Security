@@ -68,10 +68,94 @@
             margin-bottom: 5px;
             font-size: 0.75rem;
         }
+
+        /* Custom Modal styles & container */
+        .export-progress-bar {
+            width: 0%;
+            height: 100%;
+            background: var(--accent-primary);
+            transition: width 2.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        @keyframes scanline {
+            0% {
+                transform: translateY(-100%);
+            }
+
+            100% {
+                transform: translateY(200%);
+            }
+        }
+
+        .radar-scan-bg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            background: linear-gradient(to bottom, transparent, rgba(164, 232, 46, 0.2) 50%, transparent);
+            animation: scanline 3s linear infinite;
+            z-index: -1;
+            display: none;
+        }
+
+        .data-stream-bg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 200%;
+            pointer-events: none;
+            opacity: 0.15;
+            z-index: -2;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.5rem;
+            line-height: 1;
+            color: var(--accent-primary);
+            word-wrap: break-word;
+            overflow: hidden;
+            animation: scanline 15s linear infinite;
+            display: none;
+        }
     </style>
 </head>
 
 <body>
+
+    <!-- Custom Modal -->
+    <div id="custom-modal"
+        style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(5, 10, 15, 0.85); z-index:10000; justify-content:center; align-items:center; backdrop-filter:blur(5px);">
+        <div class="soc-card"
+            style="width: 400px; max-width: 90%; border-color: var(--accent-primary); box-shadow: 0 0 20px rgba(0, 0, 0, 0.5); position: relative; overflow: hidden;">
+
+            <div id="modal-radar-scan" class="radar-scan-bg"></div>
+            <div id="modal-data-stream" class="data-stream-bg"></div>
+
+            <div class="soc-card-header"
+                style="border-bottom: 1px solid #334155; padding-bottom: 10px; margin-bottom: 15px; position:relative;">
+                <span id="modal-title" class="card-title text-yellow"><i class="fas fa-exclamation-triangle"></i>
+                    AUTHORIZATION REQUIRED</span>
+            </div>
+
+            <div id="modal-message"
+                style="color: #e2e8f0; font-family: 'JetBrains Mono', monospace; font-size: 0.9rem; margin-bottom: 15px; line-height: 1.5; position:relative;">
+                Please confirm action.
+            </div>
+
+            <!-- Progress Bar Container -->
+            <div id="modal-progress-container"
+                style="display:none; width: 100%; height: 6px; background: #1e293b; margin-bottom: 25px; border-radius: 3px; overflow: hidden; position:relative;">
+                <div id="modal-progress-bar" class="export-progress-bar"></div>
+            </div>
+
+            <div id="modal-buttons" style="display: flex; justify-content: flex-end; gap: 10px; position:relative;">
+                <button id="modal-btn-cancel" class="soc-btn"
+                    style="background: transparent; border: 1px solid #334155; color: #94a3b8;">CANCEL</button>
+                <button id="modal-btn-confirm" class="soc-btn soc-btn-primary">PROCEED</button>
+            </div>
+        </div>
+    </div>
 
     <div class="app-container">
 
@@ -161,7 +245,7 @@
                     <select class="soc-select">
                         <option>Last 24 hours</option>
                     </select>
-                    <button class="soc-btn soc-btn-primary">Generate SOC Report</button>
+                    <button id="btn-generate-report" class="soc-btn soc-btn-primary">Generate SOC Report</button>
                 </div>
             </div>
 
@@ -264,6 +348,118 @@
         }).addTo(map);
 
         // Live geo events are loaded from the backend; no client-side fake/simulated data.
+
+        // --- CUSTOM MODAL & BUTTON LOGIC ---
+        const topModal = document.getElementById('custom-modal');
+        const modalTitle = document.getElementById('modal-title');
+        const modalMessage = document.getElementById('modal-message');
+        const btnConfirm = document.getElementById('modal-btn-confirm');
+        const btnCancel = document.getElementById('modal-btn-cancel');
+        const modalButtons = document.getElementById('modal-buttons');
+        const progressContainer = document.getElementById('modal-progress-container');
+        const progressBar = document.getElementById('modal-progress-bar');
+        const radarScan = document.getElementById('modal-radar-scan');
+        const dataStream = document.getElementById('modal-data-stream');
+
+        let modalConfirmCallback = null;
+
+        function generateDataStream() {
+            let str = '';
+            const chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ_/';
+            for (let i = 0; i < 2000; i++) {
+                str += chars.charAt(Math.floor(Math.random() * chars.length));
+                if (i % 64 === 0) str += '<br>';
+            }
+            return str;
+        }
+
+        function showModal(title, message, isDanger, callback, isAlert = false) {
+            modalTitle.innerHTML = title;
+            modalMessage.innerHTML = message;
+
+            // Reset modal states
+            progressContainer.style.display = 'none';
+            progressBar.style.width = '0%';
+            radarScan.style.display = 'none';
+            dataStream.style.display = 'none';
+            modalButtons.style.display = 'flex';
+
+            if (isDanger) {
+                modalTitle.className = 'card-title text-red';
+                btnConfirm.className = 'soc-btn soc-btn-danger';
+                btnConfirm.innerText = isAlert ? 'ACKNOWLEDGE' : 'INITIATE';
+                topModal.querySelector('.soc-card').style.borderColor = 'var(--accent-critical)';
+            } else {
+                modalTitle.className = 'card-title text-cyan';
+                btnConfirm.className = 'soc-btn soc-btn-primary';
+                btnConfirm.innerText = isAlert ? 'ACKNOWLEDGE' : 'PROCEED';
+                topModal.querySelector('.soc-card').style.borderColor = 'var(--accent-primary)';
+            }
+
+            btnCancel.style.display = isAlert ? 'none' : 'block';
+            modalConfirmCallback = callback;
+            topModal.style.display = 'flex';
+        }
+
+        function hideModal() {
+            topModal.style.display = 'none';
+            modalConfirmCallback = null;
+        }
+
+        btnCancel.addEventListener('click', hideModal);
+        btnConfirm.addEventListener('click', () => {
+            if (modalConfirmCallback) modalConfirmCallback();
+            else hideModal();
+        });
+
+        document.getElementById('btn-generate-report').addEventListener('click', () => {
+            showModal(
+                '<i class="fas fa-file-contract"></i> GENERATE SOC REPORT',
+                'Compile automated geographic intelligence report for the selected timeframe?',
+                false,
+                () => {
+                    modalButtons.style.display = 'none';
+                    progressContainer.style.display = 'block';
+                    radarScan.style.display = 'block';
+                    dataStream.style.display = 'block';
+                    dataStream.innerHTML = generateDataStream();
+
+                    const messages = [
+                        "Aggregating ASN intelligence...",
+                        "Correlating geographic vectors...",
+                        "Compiling threat density maps...",
+                        "Finalizing PDF report bundle..."
+                    ];
+
+                    let msgIndex = 0;
+                    modalMessage.innerHTML = `<span class="text-cyan animate-pulse">${messages[0]}</span>`;
+
+                    const interval = setInterval(() => {
+                        msgIndex++;
+                        if (msgIndex < messages.length) {
+                            modalMessage.innerHTML = `<span class="text-cyan animate-pulse">${messages[msgIndex]}</span>`;
+                        } else {
+                            clearInterval(interval);
+                        }
+                    }, 600); // cycle messages
+
+                    // Trigger CSS width transition
+                    setTimeout(() => { progressBar.style.width = '100%'; }, 50);
+
+                    setTimeout(() => {
+                        // Generation complete
+                        radarScan.style.display = 'none';
+                        dataStream.style.display = 'none';
+                        progressContainer.style.display = 'none';
+                        modalMessage.innerHTML = '<span class="text-green"><i class="fas fa-check-circle"></i> REPORT GENERATED SUCCESSFULLY</span><br><br><span style="color:#64748b; font-size:0.75rem;">Download will commence automatically.</span>';
+                        modalTitle.className = 'card-title text-green';
+                        topModal.querySelector('.soc-card').style.borderColor = 'var(--accent-primary)';
+
+                        setTimeout(() => { hideModal(); }, 2500);
+                    }, 2550); // wait for 2.5s transiton
+                }
+            );
+        });
 
     </script>
     <script src="js/sidebar.js"></script>
