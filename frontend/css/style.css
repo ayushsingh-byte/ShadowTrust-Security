@@ -7,40 +7,54 @@
 
 :root {
     /* --- CORE PALETTE (TACTICAL NAVY) --- */
-    --bg-body: #0b1015;        /* Deepest Navy/Black mix */
-    --bg-sidebar: #0f171e;     /* Slightly lighter Sidebar */
-    --bg-card: #151e27;        /* Matte Navy Panel */
-    --bg-card-hover: #1c2630;  /* Hover state */
-    
+    --bg-body: #0b1015;
+    /* Deepest Navy/Black mix */
+    --bg-sidebar: #0f171e;
+    /* Slightly lighter Sidebar */
+    --bg-card: #151e27;
+    /* Matte Navy Panel */
+    --bg-card-hover: #1c2630;
+    /* Hover state */
+
     /* --- TACTICAL ACCENTS --- */
-    --accent-primary: #a4e82e;   /* Tactical Green (Success/Safe/Online) */
-    --accent-secondary: #ffaa00; /* Amber (Warning/Caution) */
-    --accent-critical: #ff3333;  /* Alert Red (Critical/Attack) */
-    --accent-info: #00d9f7;      /* Cyan (Info/Network) */
+    --accent-primary: #a4e82e;
+    /* Tactical Green (Success/Safe/Online) */
+    --accent-secondary: #ffaa00;
+    /* Amber (Warning/Caution) */
+    --accent-critical: #ff3333;
+    /* Alert Red (Critical/Attack) */
+    --accent-info: #00d9f7;
+    /* Cyan (Info/Network) */
 
     /* --- OLD VARS MAPPED TO NEW PALETTE (For Compatibility) --- */
     --neon-green: var(--accent-primary);
     --neon-yellow: var(--accent-secondary);
     --neon-red: var(--accent-critical);
     --neon-cyan: var(--accent-info);
-    --neon-purple: var(--accent-secondary); /* Remap purple to amber for consistency */
-    --neon-pink: var(--accent-critical);    /* Remap pink to red */
+    --neon-purple: var(--accent-secondary);
+    /* Remap purple to amber for consistency */
+    --neon-pink: var(--accent-critical);
+    /* Remap pink to red */
 
     /* --- UI ELEMENTS --- */
-    --border-dim: 1px solid rgba(164, 232, 46, 0.15); /* Subtle Green Border */
+    --border-dim: 1px solid rgba(164, 232, 46, 0.15);
+    /* Subtle Green Border */
     --border-bright: 1px solid rgba(164, 232, 46, 0.6);
     --border-critical: 1px solid rgba(255, 51, 51, 0.6);
 
     /* --- TEXT --- */
-    --text-primary: #e2e8f0;   /* Off-white/Silver */
-    --text-secondary: #94a3b8; /* Muted Blue-Grey */
-    --text-muted: #64748b;     /* Darker Grey */
+    --text-primary: #e2e8f0;
+    /* Off-white/Silver */
+    --text-secondary: #94a3b8;
+    /* Muted Blue-Grey */
+    --text-muted: #64748b;
+    /* Darker Grey */
     --text-accent: var(--accent-primary);
 
     /* --- FONTS --- */
-    --font-heading: 'Rajdhani', sans-serif; /* Tech/Sci-Fi but readable */
+    --font-heading: 'Arial Rounded MT Bold', 'Helvetica Rounded', Arial, sans-serif;
     --font-mono: 'JetBrains Mono', monospace;
-    --font-main: 'Rajdhani', sans-serif; /* Use Rajdhani as main for that tactical feel */
+    --font-main: 'Arial Rounded MT Bold', 'Helvetica Rounded', Arial, sans-serif;
 }
 
 * {
@@ -52,7 +66,7 @@
 body {
     background-color: var(--bg-body);
     /* Subtle hex grid pattern */
-    background-image: 
+    background-image:
         radial-gradient(circle at 50% 50%, rgba(16, 24, 32, 0) 0%, rgba(11, 16, 21, 0.8) 100%),
         linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
         linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
@@ -77,7 +91,8 @@ body {
 
 ::-webkit-scrollbar-thumb {
     background: #334155;
-    border-radius: 0; /* Square corners */
+    border-radius: 0;
+    /* Square corners */
 }
 
 ::-webkit-scrollbar-thumb:hover {
@@ -85,7 +100,12 @@ body {
 }
 
 /* --- TYPOGRAPHY --- */
-h1, h2, h3, h4, h5, h6 {
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
     font-family: var(--font-heading);
     font-weight: 700;
     letter-spacing: 2px;
@@ -100,25 +120,55 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 /* TEXT UTILITIES */
-.text-cyan { color: var(--accent-info) !important; }
-.text-purple { color: var(--accent-secondary) !important; } /* Now Amber */
-.text-pink { color: var(--accent-critical) !important; }    /* Now Red */
-.text-red { color: var(--accent-critical) !important; }
-.text-green { color: var(--accent-primary) !important; }
-.text-yellow { color: var(--accent-secondary) !important; }
-.text-blue { color: var(--accent-info) !important; }
-.text-muted { color: var(--text-muted) !important; }
-.text-white { color: #fff !important; }
+.text-cyan {
+    color: var(--accent-info) !important;
+}
+
+.text-purple {
+    color: var(--accent-secondary) !important;
+}
+
+/* Now Amber */
+.text-pink {
+    color: var(--accent-critical) !important;
+}
+
+/* Now Red */
+.text-red {
+    color: var(--accent-critical) !important;
+}
+
+.text-green {
+    color: var(--accent-primary) !important;
+}
+
+.text-yellow {
+    color: var(--accent-secondary) !important;
+}
+
+.text-blue {
+    color: var(--accent-info) !important;
+}
+
+.text-muted {
+    color: var(--text-muted) !important;
+}
+
+.text-white {
+    color: #fff !important;
+}
 
 /* --- COMPONENTS --- */
 
 /* Buttons */
 .soc-btn {
-    background: rgba(164, 232, 46, 0.05); /* Very faint green bg */
+    background: rgba(164, 232, 46, 0.05);
+    /* Very faint green bg */
     border: 1px solid var(--accent-primary);
     color: var(--accent-primary);
     padding: 8px 24px;
-    border-radius: 0; /* Sharp tactical corners */
+    border-radius: 0;
+    /* Sharp tactical corners */
     font-family: var(--font-heading);
     font-weight: 600;
     font-size: 0.9rem;
@@ -133,8 +183,10 @@ h1, h2, h3, h4, h5, h6 {
 .soc-btn::before {
     content: '';
     position: absolute;
-    top: 0; left: -100%;
-    width: 100%; height: 100%;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
     background: linear-gradient(90deg, transparent, rgba(164, 232, 46, 0.2), transparent);
     transition: left 0.5s;
 }
@@ -145,7 +197,8 @@ h1, h2, h3, h4, h5, h6 {
 
 .soc-btn:hover {
     background: var(--accent-primary);
-    color: #0b1015; /* Contrast text on green */
+    color: #0b1015;
+    /* Contrast text on green */
     box-shadow: 0 0 15px rgba(164, 232, 46, 0.4);
 }
 
@@ -169,26 +222,28 @@ h1, h2, h3, h4, h5, h6 {
 /* Cards (Tactical Panels) */
 .soc-card {
     background: var(--bg-card);
-    border: 1px solid #334155; /* Slate border */
+    border: 1px solid #334155;
+    /* Slate border */
     position: relative;
     padding: 1.5rem;
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
     /* Corner Accents using clip-path or pseudos */
-    clip-path: polygon(
-        0 0, 
-        100% 0, 
-        100% calc(100% - 15px), 
-        calc(100% - 15px) 100%, 
-        0 100%
-    ); /* Cut bottom right corner */
+    clip-path: polygon(0 0,
+            100% 0,
+            100% calc(100% - 15px),
+            calc(100% - 15px) 100%,
+            0 100%);
+    /* Cut bottom right corner */
 }
 
 /* Add a visual "bracket" effect via pseudo-element */
 .soc-card::after {
     content: '';
     position: absolute;
-    top: 0; left: 0;
-    width: 20px; height: 20px;
+    top: 0;
+    left: 0;
+    width: 20px;
+    height: 20px;
     border-top: 2px solid var(--accent-primary);
     border-left: 2px solid var(--accent-primary);
     opacity: 0.5;
@@ -227,7 +282,8 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 /* Inputs */
-.soc-select, .soc-input {
+.soc-select,
+.soc-input {
     background: #0f171e;
     border: 1px solid #334155;
     color: var(--text-primary);
@@ -239,7 +295,8 @@ h1, h2, h3, h4, h5, h6 {
     transition: border-color 0.2s;
 }
 
-.soc-select:focus, .soc-input:focus {
+.soc-select:focus,
+.soc-input:focus {
     border-color: var(--accent-primary);
 }
 
@@ -254,7 +311,7 @@ h1, h2, h3, h4, h5, h6 {
 .soc-table th {
     text-align: left;
     color: var(--text-secondary);
-    background: rgba(0,0,0,0.2);
+    background: rgba(0, 0, 0, 0.2);
     padding: 12px;
     border-bottom: 2px solid #334155;
     text-transform: uppercase;
@@ -269,13 +326,15 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .soc-table tr:hover {
-    background: rgba(164, 232, 46, 0.05); /* Slight green tint hover */
+    background: rgba(164, 232, 46, 0.05);
+    /* Slight green tint hover */
 }
 
 /* Badges */
 .badge {
     padding: 4px 8px;
-    border-radius: 0; /* Square badges */
+    border-radius: 0;
+    /* Square badges */
     font-size: 0.7rem;
     font-weight: 700;
     text-transform: uppercase;
@@ -284,19 +343,24 @@ h1, h2, h3, h4, h5, h6 {
     display: inline-block;
 }
 
-.badge-green, .badge-blue { /* Map blue to green for this theme mostly */
+.badge-green,
+.badge-blue {
+    /* Map blue to green for this theme mostly */
     background: rgba(164, 232, 46, 0.15);
     color: var(--accent-primary);
     border: 1px solid var(--accent-primary);
 }
 
-.badge-purple, .badge-yellow { /* Map purple to secondary */
+.badge-purple,
+.badge-yellow {
+    /* Map purple to secondary */
     background: rgba(255, 170, 0, 0.15);
     color: var(--accent-secondary);
     border: 1px solid var(--accent-secondary);
 }
 
-.badge-red, .badge-pink {
+.badge-red,
+.badge-pink {
     background: rgba(255, 51, 51, 0.15);
     color: var(--accent-critical);
     border: 1px solid var(--accent-critical);
@@ -307,6 +371,7 @@ h1, h2, h3, h4, h5, h6 {
     color: var(--text-secondary) !important;
     transition: 0.2s;
 }
+
 .toggle-btn:hover {
     color: var(--accent-primary) !important;
 }
@@ -317,7 +382,15 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 @keyframes pulse {
-    0% { opacity: 1; }
-    50% { opacity: 0.5; }
-    100% { opacity: 1; }
+    0% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.5;
+    }
+
+    100% {
+        opacity: 1;
+    }
 }
