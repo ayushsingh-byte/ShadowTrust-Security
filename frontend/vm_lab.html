@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>Virtual Lab | SentinelHive</title>
+    <title>Virtual Lab | Shadow Trust</title>
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/dashboard.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -74,7 +74,7 @@
             <div class="logo-area" onclick="document.getElementById('sidebar').classList.toggle('collapsed')">
                 <div class="logo-icon"></div>
                 <div class="logo-text">
-                    <div class="logo-title">SENTINEL</div>
+                    <div class="logo-title">SHADOW TRUST</div>
                     <div class="logo-sub">DECEPTION GRID // V1</div>
                 </div>
                 <i class="fas fa-arrow-left toggle-btn"
@@ -219,21 +219,97 @@
                 VIRTUAL MACHINES</div>
             <div class="dashboard-grid" style="grid-template-columns: repeat(3, 1fr);">
 
-                <!-- VM 1 (Empty) -->
-                <div class="vm-card" style="padding:20px; display:flex; align-items:center; justify-content:center;">
-                    <div class="text-muted">No VM deployed</div>
+                <!-- VM 1: Windows Default -->
+                <div class="soc-card" style="padding:0; overflow:hidden; display:flex; flex-direction:column;">
+                    <div
+                        style="padding:15px; border-bottom:1px solid #333; display:flex; justify-content:space-between; align-items:center;">
+                        <span style="font-weight:bold; color:var(--neon-cyan);"><i class="fab fa-windows"></i> Windows
+                            Default</span>
+                        <span class="badge" style="background:rgba(255,255,255,0.1); color:#aaa;">ami-win-base</span>
+                    </div>
+                    <div style="padding:15px; flex-grow:1; font-size:0.85rem; color:#888;">
+                        Standard Windows Server environment. Clean slate for baseline testing.
+                        <ul style="margin-top:10px; padding-left:20px;">
+                            <li>OS: Windows Server 2022</li>
+                            <li>Type: t3.medium</li>
+                        </ul>
+                        <div style="margin-top:15px; display:flex; align-items:center; gap:8px;">
+                            <span class="vm-status-dot stopped"></span>
+                            <span class="text-xs" style="color:var(--neon-pink);">STATUS: OFFLINE</span>
+                        </div>
+                    </div>
+                    <div style="padding:15px; background:#050507; border-top:1px solid #333; display:flex; gap:10px;">
+                        <button id="create_win_base" class="soc-btn soc-btn-primary" style="flex:1; font-size:0.8rem;"
+                            data-profile="win_base" onclick="window.vmClient.launchInstance('win_base', this)"><i
+                                class="fas fa-play"></i> CREATE</button>
+                        <button id="terminate_win_base" class="soc-btn"
+                            style="flex:1; font-size:0.8rem; color:var(--neon-pink); border-color:var(--neon-pink);"
+                            onclick="window.vmClient.terminateInstance('win_base', document.getElementById('create_win_base'), this)"><i
+                                class="fas fa-trash"></i> TERMINATE</button>
+                    </div>
                 </div>
 
-                <!-- VM 2 (Empty) -->
-                <div class="vm-card" style="padding:20px; display:flex; align-items:center; justify-content:center;">
-                    <div class="text-muted">No VM deployed</div>
+                <!-- VM 2: Linux Default -->
+                <div class="soc-card" style="padding:0; overflow:hidden; display:flex; flex-direction:column;">
+                    <div
+                        style="padding:15px; border-bottom:1px solid #333; display:flex; justify-content:space-between; align-items:center;">
+                        <span style="font-weight:bold; color:var(--neon-purple);"><i class="fab fa-linux"></i> Linux
+                            Default</span>
+                        <span class="badge" style="background:rgba(255,255,255,0.1); color:#aaa;">ami-lin-base</span>
+                    </div>
+                    <div style="padding:15px; flex-grow:1; font-size:0.85rem; color:#888;">
+                        Standard Ubuntu Linux environment. Useful for generic network monitoring.
+                        <ul style="margin-top:10px; padding-left:20px;">
+                            <li>OS: Ubuntu 24.04 LTS</li>
+                            <li>Type: t3.micro</li>
+                        </ul>
+                        <div style="margin-top:15px; display:flex; align-items:center; gap:8px;">
+                            <span class="vm-status-dot stopped"></span>
+                            <span class="text-xs" style="color:var(--neon-pink);">STATUS: OFFLINE</span>
+                        </div>
+                    </div>
+                    <div style="padding:15px; background:#050507; border-top:1px solid #333; display:flex; gap:10px;">
+                        <button id="create_kali_base" class="soc-btn soc-btn-primary" style="flex:1; font-size:0.8rem;"
+                            data-profile="kali_base" onclick="window.vmClient.launchInstance('kali_base', this)"><i
+                                class="fas fa-play"></i> CREATE</button>
+                        <button id="terminate_kali_base" class="soc-btn"
+                            style="flex:1; font-size:0.8rem; color:var(--neon-pink); border-color:var(--neon-pink);"
+                            onclick="window.vmClient.terminateInstance('kali_base', document.getElementById('create_kali_base'), this)"><i
+                                class="fas fa-trash"></i> TERMINATE</button>
+                    </div>
                 </div>
 
-                <!-- VM 3 Removed and replaced with Deploy Button -->
-                <div class="vm-card"
-                    style="padding:20px; border:1px dashed #333; display:flex; align-items:center; justify-content:center; flex-direction:column; cursor:pointer;">
-                    <i class="fas fa-plus" style="font-size:2rem; color:#333; margin-bottom:10px;"></i>
-                    <div class="text-muted">Deploy New Node</div>
+                <!-- VM 3: Windows Sec Tools -->
+                <div class="soc-card"
+                    style="padding:0; overflow:hidden; display:flex; flex-direction:column; border-color:var(--neon-red);">
+                    <div
+                        style="padding:15px; border-bottom:1px solid var(--neon-red); display:flex; justify-content:space-between; align-items:center;">
+                        <span style="font-weight:bold; color:var(--neon-red);"><i class="fas fa-shield-virus"></i>
+                            Windows Security Toolkit</span>
+                        <span class="badge"
+                            style="background:rgba(255,0,0,0.2); color:var(--neon-red);">ami-win-sec</span>
+                    </div>
+                    <div style="padding:15px; flex-grow:1; font-size:0.85rem; color:#888;">
+                        Highly vulnerable Windows machine pre-loaded with Honeypot CLI (Cowrie, Dionaea, Telnet) &
+                        analysis tools.
+                        <ul style="margin-top:10px; padding-left:20px; color:#aaa;">
+                            <li>OS: Windows Server 2022</li>
+                            <li>Type: t3.large</li>
+                        </ul>
+                        <div style="margin-top:15px; display:flex; align-items:center; gap:8px;">
+                            <span class="vm-status-dot stopped"></span>
+                            <span class="text-xs" style="color:var(--neon-pink);">STATUS: OFFLINE</span>
+                        </div>
+                    </div>
+                    <div style="padding:15px; background:#050507; border-top:1px solid #333; display:flex; gap:10px;">
+                        <button id="create_win_malware" class="soc-btn soc-btn-danger" style="flex:1; font-size:0.8rem;"
+                            data-profile="win_malware" onclick="window.vmClient.launchInstance('win_malware', this)"><i
+                                class="fas fa-play"></i> CREATE</button>
+                        <button id="terminate_win_malware" class="soc-btn"
+                            style="flex:1; font-size:0.8rem; color:var(--neon-pink); border-color:var(--neon-pink);"
+                            onclick="window.vmClient.terminateInstance('win_malware', document.getElementById('create_win_malware'), this)"><i
+                                class="fas fa-trash"></i> TERMINATE</button>
+                    </div>
                 </div>
 
             </div>
@@ -250,8 +326,8 @@
         </main>
     </div>
 
-    <script type="module" src="js/vm_lab.js"></script>
     <script src="js/sidebar.js"></script>
+    <script type="module" src="js/vm_client.js"></script>
 </body>
 
 </html>

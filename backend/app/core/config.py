@@ -4,7 +4,7 @@ from typing import Optional
 
 class Settings(BaseSettings):
     # Core
-    PROJECT_NAME: str = "SentinelHive AI Honeypot"
+    PROJECT_NAME: str = "Shadow Trust AI Honeypot"
     API_V1_STR: str = "/api/v1"
     SECRET_KEY: str
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60

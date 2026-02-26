@@ -33,6 +33,11 @@ api_router.include_router(mobsf_proxy_router, prefix="/mobsf-proxy", tags=["mobs
 from app.api.v1.endpoints.users import router as users_router
 api_router.include_router(users_router, prefix="/users", tags=["users"])
 
-# api_router.include_router(nodes.router, prefix="/nodes", tags=["nodes"])
-# api_router.include_router(events.router, prefix="/events", tags=["events"])
-# api_router.include_router(alerts.router, prefix="/alerts", tags=["alerts"])
+from app.api.v1.endpoints.session import router as session_router
+api_router.include_router(session_router, prefix="/session", tags=["session"])
+
+from app.api.v1.endpoints.events import router as events_router
+api_router.include_router(events_router, prefix="/events", tags=["events"])
+
+from app.api.v1.endpoints.aws import router as aws_router
+api_router.include_router(aws_router, prefix="/aws", tags=["aws"])

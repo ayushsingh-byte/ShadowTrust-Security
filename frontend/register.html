@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Request Access | SentinelHive</title>
+    <title>Request Access | Shadow Trust</title>
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -252,7 +252,7 @@
             <div class="visual-badge"><i class="fas fa-server"></i> &nbsp; INFRASTRUCTURE ACCESS</div>
             <div class="visual-title">Join the Defense<br>Network</div>
             <div class="visual-text">
-                Request operational clearance for the Sentinel Honeynet.
+                Request operational clearance for the Shadow Trust Honeynet.
                 All new accounts require administrator approval before accessing live sector data.
             </div>
         </div>
@@ -263,7 +263,7 @@
 
         <div class="logo-area">
             <div class="logo-mark"></div>
-            <div class="logo-text">SENTINEL</div>
+            <div class="logo-text">SHADOW TRUST</div>
         </div>
 
         <div class="login-header">
@@ -271,7 +271,7 @@
             <p>Enter your details to request system access.</p>
         </div>
 
-        <form action="dashboard.html">
+        <form id="registerForm" action="dashboard.html">
             <div class="input-row">
                 <div class="input-group">
                     <label>First Name</label>
@@ -322,7 +322,8 @@
             Already have an account? <a href="login.html">Sign In</a>
         </div>
     </div>
-
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/auth.js"></script>
 </body>
 
 </html>

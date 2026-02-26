@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>MITRE ATT&CK Matrix | SentinelHive</title>
+    <title>MITRE ATT&CK Matrix | Shadow Trust</title>
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/dashboard.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -144,7 +144,7 @@
             <div class="logo-area" onclick="document.getElementById('sidebar').classList.toggle('collapsed')">
                 <div class="logo-icon"></div>
                 <div class="logo-text">
-                    <div class="logo-title">SENTINEL</div>
+                    <div class="logo-title">SHADOW TRUST</div>
                     <div class="logo-sub">DECEPTION GRID // V1</div>
                 </div>
                 <i class="fas fa-arrow-left toggle-btn"
@@ -261,8 +261,9 @@
 
             <!-- EXTERNAL VIEW -->
             <div id="externalView" style="display: none; height: calc(100vh - 180px);">
-                <div class="soc-card" style="height: 100%; padding: 0; overflow: hidden;">
-                    <iframe src="https://attack.mitre.org/" style="width: 100%; height: 100%; border: none;"></iframe>
+                <div class="soc-card" style="height: 100%; padding: 0; overflow: hidden; background: #050507;">
+                    <iframe src="https://attack.mitre.org/"
+                        style="width: 100%; height: 100%; border: none; filter: invert(0.92) hue-rotate(180deg) contrast(1.1) brightness(0.95);"></iframe>
                 </div>
             </div>
         </main>
@@ -275,7 +276,7 @@
         async function loadMatrix() {
             try {
                 // Check auth (assuming api.js handles basic auth checks or we add here)
-                if (!localStorage.getItem('access_token')) window.location.href = 'login.html';
+                if (!localStorage.getItem('access_token') && !localStorage.getItem('authToken')) window.location.href = 'login.html';
 
                 const container = document.getElementById('matrixContainer');
                 container.innerHTML = '<div style="padding:20px; color:#666;">Loading Application Matrix...</div>';
@@ -458,43 +459,11 @@
         });
 
         document.getElementById('btn-live-matrix').addEventListener('click', () => {
-            showModal(
-                '<i class="fas fa-satellite-dish"></i> SYNC INTERNAL MATRIX',
-                'Switch view to the live internal deception grid telemetry?',
-                false,
-                () => {
-                    modalButtons.style.display = 'none';
-                    progressContainer.style.display = 'block';
-                    modalMessage.innerHTML = '<span class="text-green cyber-pulse-anim">Engaging local node correlation matrix...</span>';
-
-                    setTimeout(() => { progressBar.style.width = '100%'; }, 50);
-
-                    setTimeout(() => {
-                        toggleView('local');
-                        hideModal();
-                    }, 1500);
-                }
-            );
+            toggleView('local');
         });
 
         document.getElementById('btn-ext-lib').addEventListener('click', () => {
-            showModal(
-                '<i class="fas fa-globe"></i> ACCESS EXTERNAL DB',
-                'Establish connection to the official MITRE ATT&CK external database?',
-                true,
-                () => {
-                    modalButtons.style.display = 'none';
-                    progressContainer.style.display = 'block';
-                    modalMessage.innerHTML = '<span class="text-yellow cyber-pulse-anim">Bypassing internal firewalls... establishing link...</span>';
-
-                    setTimeout(() => { progressBar.style.width = '100%'; }, 50);
-
-                    setTimeout(() => {
-                        toggleView('external');
-                        hideModal();
-                    }, 1500);
-                }
-            );
+            toggleView('external');
         });
 
         document.getElementById('btn-refresh').addEventListener('click', () => {

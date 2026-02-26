@@ -80,7 +80,7 @@ body:has(.app-container) {
 
 .logo-icon::after {
     content: 'S';
-    /* Sentinel */
+    /* Shadow Trust */
 }
 
 .logo-text {

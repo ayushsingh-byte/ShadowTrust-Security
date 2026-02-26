@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>Global Admin Control | SentinelHive</title>
+    <title>Global Admin Control | Shadow Trust</title>
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/dashboard.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -219,23 +219,25 @@
 
             <div class="nav-group">
                 <div class="nav-group-label" style="color:#ff0055;">CORE MANAGEMENT</div>
-                <a href="#" class="nav-item active" onclick="switchTab('section-overview', this)">
-                    <i class="fas fa-tachometer-alt" style="color:#ff0055;"></i> <span class="nav-text">Global
-                        Overview</span>
+                <a href="admin.html#section-overview" class="nav-item">
+                    <i class="fas fa-tachometer-alt"></i> <span class="nav-text">Global Overview</span>
                 </a>
-                <a href="#" class="nav-item" onclick="switchTab('section-users', this)">
+                <a href="admin.html#section-users" class="nav-item">
                     <i class="fas fa-users-cog"></i> <span class="nav-text">User Management</span>
                 </a>
-                <a href="access_control.html" class="nav-item" style="border-left: 2px solid var(--neon-purple);">
-                    <i class="fas fa-user-lock text-purple"></i> <span class="nav-text">Access Control Console</span>
+                <a href="access_control.html" class="nav-item">
+                    <i class="fas fa-user-lock"></i> <span class="nav-text">Access Control Console</span>
                 </a>
-                <a href="#" class="nav-item" onclick="switchTab('section-nodes', this)">
+                <a href="aws_connection.html" class="nav-item">
+                    <i class="fab fa-aws"></i> <span class="nav-text">AWS Connection</span>
+                </a>
+                <a href="admin.html#section-nodes" class="nav-item">
                     <i class="fas fa-network-wired"></i> <span class="nav-text">Node Control</span>
                 </a>
-                <a href="#" class="nav-item" onclick="switchTab('section-settings', this)">
+                <a href="admin.html#section-settings" class="nav-item">
                     <i class="fas fa-cogs"></i> <span class="nav-text">System Settings</span>
                 </a>
-                <a href="#" class="nav-item" onclick="switchTab('section-debug', this)">
+                <a href="admin.html#section-debug" class="nav-item">
                     <i class="fas fa-microchip"></i> <span class="nav-text">System Debug</span>
                 </a>
             </div>
@@ -549,7 +551,8 @@
                             </thead>
                             <tbody>
                                 <tr>
-                                    <td colspan="6" class="text-muted" style="text-align:center; padding:20px;">No nodes yet</td>
+                                    <td colspan="6" class="text-muted" style="text-align:center; padding:20px;">No nodes
+                                        yet</td>
                                 </tr>
                             </tbody>
                         </table>
@@ -838,43 +841,52 @@
 
 
     <!-- SCRIPTS -->
-    <script src="js/sidebar.js"></script>
     <script type="module" src="js/admin.js"></script>
     <script>
         // Tab Switching Logic
-        window.switchTab = function (tabId, navItem) {
-            // Save state
-            localStorage.setItem('admin_active_tab', tabId);
-
+        window.switchTab = function (tabId) {
             // Hide all tab content
             document.querySelectorAll('main > div[id^="section-"]').forEach(el => el.style.display = 'none');
             // Show selected
             const target = document.getElementById(tabId);
             if (target) target.style.display = 'block';
 
-            // Update Nav state
-            document.querySelectorAll('.nav-item').forEach(el => {
+            // Find correct navItem
+            const navItems = document.querySelectorAll('.nav-item');
+            let matchedNavItem = null;
+            navItems.forEach(el => {
                 el.classList.remove('active');
-                if (navItem) {
-                    // specific styling reset handled by CSS class usually, but keeping inline style reset for compatibility with existing inline styles
-                    el.style.backgroundColor = '';
-                    el.style.borderRightColor = 'transparent';
-                    el.style.color = '#888';
-                    const icon = el.querySelector('i');
-                    if (icon) icon.style.color = '#888';
+                el.style.backgroundColor = '';
+                el.style.borderRightColor = 'transparent';
+                el.style.borderLeftColor = 'transparent';
+                el.style.color = '#888';
+                const icon = el.querySelector('i');
+                if (icon) icon.style.color = '#888';
+
+                if (el.getAttribute('href') && el.getAttribute('href').includes(tabId)) {
+                    matchedNavItem = el;
                 }
             });
 
-            if (navItem) {
-                navItem.classList.add('active');
-                // Re-apply inline active styles if they were used in the original
-                navItem.style.backgroundColor = 'rgba(255,0,85,0.1)';
-                navItem.style.borderRightColor = '#ff0055';
-                navItem.style.color = 'white';
-                const icon = navItem.querySelector('i');
+            if (matchedNavItem) {
+                matchedNavItem.classList.add('active');
+                matchedNavItem.style.backgroundColor = 'rgba(255,0,85,0.1)';
+                matchedNavItem.style.borderLeftColor = '#ff0055';
+                matchedNavItem.style.color = 'white';
+                const icon = matchedNavItem.querySelector('i');
                 if (icon) icon.style.color = '#ff0055';
             }
         }
+
+        function handleHash() {
+            let hash = window.location.hash.replace('#', '');
+            if (!hash || !document.getElementById(hash)) {
+                hash = 'section-overview';
+            }
+            switchTab(hash);
+        }
+
+        window.addEventListener('hashchange', handleHash);
 
         // Modal Logic
         window.openModal = function (modalId) {
@@ -893,14 +905,7 @@
 
         // Initial Load
         document.addEventListener('DOMContentLoaded', () => {
-            // Restore tab
-            const activeTab = localStorage.getItem('admin_active_tab') || 'section-overview';
-            const navLink = document.querySelector(`.nav-item[onclick*="${activeTab}"]`);
-            if (navLink) {
-                switchTab(activeTab, navLink);
-            } else {
-                switchTab('section-overview', document.querySelector('.nav-item'));
-            }
+            handleHash();
 
 
             // Initialize Charts (Placeholder logic - handled more dynamically in admin.js if needed, but keeping basic init here)

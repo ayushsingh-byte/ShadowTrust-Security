@@ -98,7 +98,51 @@ ON CONFLICT (email) DO NOTHING;
 -- Insert Mock Data for Settings
 INSERT INTO system_settings (key, value)
 VALUES 
-    ('general', '{"systemName": "SentinelHive-01", "adminEmail": "admin@honey.net", "maintenanceMode": false}'),
+    ('general', '{"systemName": "ShadowTrust-01", "adminEmail": "admin@honey.net", "maintenanceMode": false}'),
     ('security', '{"sessionTimeout": 30, "strictIpFiltering": true, "maxLoginAttempts": 5}'),
     ('honeynet', '{"simulationLevel": "high", "responseLatency": 50, "honeyPortRotation": true}')
 ON CONFLICT (key) DO NOTHING;
+
+
+-- ORCHESTRATION BACKEND ADDITIONS (VM & Session Management)
+
+CREATE TABLE IF NOT EXISTS vm_profiles (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    profile_name TEXT NOT NULL,
+    ami_id TEXT NOT NULL,
+    instance_type TEXT NOT NULL,
+    launch_template_id TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS vm_instances (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    instance_id TEXT UNIQUE NOT NULL,
+    profile_id UUID REFERENCES vm_profiles(id),
+    status TEXT NOT NULL,
+    public_ip TEXT,
+    private_ip TEXT,
+    session_id TEXT,
+    launched_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    terminated_at TIMESTAMP WITH TIME ZONE
+);
+
+CREATE TABLE IF NOT EXISTS attacker_sessions (
+    session_id TEXT PRIMARY KEY,
+    attacker_ip TEXT NOT NULL,
+    first_seen TIMESTAMP WITH TIME ZONE NOT NULL,
+    last_seen TIMESTAMP WITH TIME ZONE NOT NULL,
+    risk_level TEXT,
+    total_events INTEGER DEFAULT 0,
+    geoip_country TEXT
+);
+
+CREATE TABLE IF NOT EXISTS structured_events (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    raw_event_id TEXT UNIQUE NOT NULL,
+    session_id TEXT REFERENCES attacker_sessions(session_id),
+    timestamp TIMESTAMP WITH TIME ZONE NOT NULL,
+    honeypot_type TEXT,
+    event_type TEXT,
+    details JSONB
+);

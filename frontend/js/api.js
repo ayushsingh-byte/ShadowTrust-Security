@@ -3,12 +3,11 @@
 class ApiService {
     constructor() {
         // Automatically determine API URL based on environment
-        const isLocalDev = window.location.protocol === 'file:' ||
-            window.location.port === '5500' ||
-            window.location.port === '5501' ||
-            window.location.port === '3000';
+        const isLocalDev = window.location.hostname === '127.0.0.1' ||
+            window.location.hostname === 'localhost' ||
+            window.location.protocol === 'file:';
 
-        this.baseUrl = isLocalDev ? 'http://localhost:8000/api/v1' : '/api/v1';
+        this.baseUrl = isLocalDev ? 'http://127.0.0.1:8004/api/v1' : '/api/v1';
     }
 
     async get(endpoint) {
@@ -70,8 +69,11 @@ class ApiService {
             // Handle 401 Unauthorized (Token Expired)
             if (response.status === 401) {
                 localStorage.removeItem('access_token');
-                window.location.href = 'login.html';
-                return;
+                if (!localStorage.getItem('authToken')) {
+                    window.location.href = 'login.html';
+                }
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.detail || 'Unauthorized (Mock Token used?)');
             }
 
             if (!response.ok) {

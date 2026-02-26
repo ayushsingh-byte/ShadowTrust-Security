@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>Honeynet Nodes | SentinelHive</title>
+    <title>Honeynet Nodes | Shadow Trust</title>
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/dashboard.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -299,7 +299,7 @@
             <div class="logo-area" onclick="document.getElementById('sidebar').classList.toggle('collapsed')">
                 <div class="logo-icon"></div>
                 <div class="logo-text">
-                    <div class="logo-title">SENTINEL</div>
+                    <div class="logo-title">SHADOW TRUST</div>
                     <div class="logo-sub">DECEPTION GRID // V1</div>
                 </div>
                 <i class="fas fa-arrow-left toggle-btn"
@@ -462,7 +462,7 @@
             <!-- FOOTER SYSTEM STATUS -->
             <div
                 style="margin-top:20px; border-top:1px solid #222; padding-top:10px; display:flex; justify-content:space-between; color:#666; font-size:0.7rem; font-family:'JetBrains Mono';">
-                <div>SENTINEL NODE CLUSTER // v4.2.0-STABLE</div>
+                <div>SHADOW TRUST NODE CLUSTER // v4.2.0-STABLE</div>
                 <div>
                     <span style="margin-right:15px;"><i class="fas fa-circle text-green" style="font-size:0.5rem;"></i>
                         API: ONLINE</span>
@@ -618,11 +618,10 @@
 
     <script src="js/sidebar.js"></script>
     <script type="module">
-        import { authService } from './js/auth.js';
         import { apiService } from './js/api.js';
 
         // Check Auth
-        if (!authService.isAuthenticated()) {
+        if (!localStorage.getItem('access_token') && !localStorage.getItem('authToken')) {
             window.location.href = 'login.html';
         }
 

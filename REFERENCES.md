@@ -38,7 +38,7 @@ This file lists external references found in the repository source (HTML/JS/Pyth
 - Wikimedia (image used on landing)
   - https://upload.wikimedia.org/wikipedia/commons/thumb/6/6f/Octicons-shield.svg/1200px-Octicons-shield.svg.png
 - GitHub (linked from landing)
-  - https://github.com/sentinelhive
+  - https://github.com/shadowtrust
 
 ## Backend Integrations (Third‑Party Services)
 

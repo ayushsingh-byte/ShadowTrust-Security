@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>AWS Infrastructure | Shadow Trust</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/dashboard.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            color: #aaa;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 12px;
+            background: #111;
+            border: 1px solid #333;
+            color: #fff;
+            border-radius: 4px;
+            font-family: 'JetBrains Mono', monospace;
+            transition: 0.3s;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #ff9900;
+            /* AWS Orange */
+            box-shadow: 0 0 10px rgba(255, 153, 0, 0.2);
+        }
+
+        .aws-card {
+            border-top: 3px solid #ff9900;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #555;
+            margin-right: 8px;
+        }
+
+        .status-indicator.connected {
+            background: #00ff41;
+            box-shadow: 0 0 8px #00ff41;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="app-container">
+
+        <!-- ADMIN SIDEBAR -->
+        <aside class="sidebar" id="sidebar">
+            <div class="logo-area">
+                <div class="logo-icon" style="filter: hue-rotate(150deg);"></div>
+                <div class="logo-text">
+                    <div class="logo-title">ROOT GRID</div>
+                    <div class="logo-sub text-pink">ADMINISTRATION LAYER</div>
+                </div>
+            </div>
+
+            <div class="nav-group">
+                <div class="nav-group-label" style="color:#ff0055;">CORE MANAGEMENT</div>
+                <a href="admin.html#section-overview" class="nav-item">
+                    <i class="fas fa-tachometer-alt"></i> <span class="nav-text">Global Overview</span>
+                </a>
+                <a href="admin.html#section-users" class="nav-item">
+                    <i class="fas fa-users-cog"></i> <span class="nav-text">User Management</span>
+                </a>
+                <a href="access_control.html" class="nav-item">
+                    <i class="fas fa-user-lock"></i> <span class="nav-text">Access Control Console</span>
+                </a>
+                <a href="aws_connection.html" class="nav-item active"
+                    style="background-color:rgba(255,0,85,0.1); border-left: 2px solid #ff0055;">
+                    <i class="fab fa-aws" style="color:#ff0055;"></i> <span class="nav-text" style="color:#fff;">AWS
+                        Connection</span>
+                </a>
+                <a href="admin.html#section-nodes" class="nav-item">
+                    <i class="fas fa-network-wired"></i> <span class="nav-text">Node Control</span>
+                </a>
+                <a href="admin.html#section-settings" class="nav-item">
+                    <i class="fas fa-cogs"></i> <span class="nav-text">System Settings</span>
+                </a>
+                <a href="admin.html#section-debug" class="nav-item">
+                    <i class="fas fa-microchip"></i> <span class="nav-text">System Debug</span>
+                </a>
+            </div>
+
+            <div class="build-info">
+                <a href="dashboard.html" class="soc-btn"
+                    style="display:block; text-align:center; width:auto; font-size:0.8rem;">Exit to User View</a>
+            </div>
+        </aside>
+
+        <main class="main-content">
+
+            <div class="top-bar">
+                <div class="page-header">
+                    <h2>AWS INFRASTRUCTURE LINK</h2>
+                    <p>Configure backend connectivity for EC2 Virtual Labs and S3 Log Ingestion.</p>
+                </div>
+                <div class="filters-bar">
+                    <div
+                        style="display:flex; align-items:center; background:#111; padding:10px 20px; border-radius:4px; border:1px solid #333;">
+                        <span class="status-indicator"></span>
+                        <span style="color:#888; font-family:'JetBrains Mono'; font-size:0.9rem;"
+                            id="connStatusText">DISCONNECTED</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="dashboard-grid grid-2" style="margin-top:20px;">
+
+                <!-- AWS Credential Card -->
+                <div class="soc-card aws-card">
+                    <div class="soc-card-header">
+                        <span class="card-title"><i class="fas fa-key" style="color:#ff9900;"></i> IAM
+                            CREDENTIALS</span>
+                    </div>
+
+                    <div style="padding: 10px 0;">
+                        <p class="text-muted" style="margin-bottom: 20px; font-size: 0.9rem;">Provide an IAM user with
+                            programmatic access, EC2 provisioning rights, and S3 read capabilities.</p>
+
+                        <div class="form-group">
+                            <label class="form-label">AWS Access Key ID</label>
+                            <input type="text" class="form-input" id="awsAccessKey" placeholder="AKIAIOSFODNN7EXAMPLE">
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">AWS Secret Access Key</label>
+                            <input type="password" class="form-input" id="awsSecretKey"
+                                placeholder="wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY">
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Default Region</label>
+                            <input type="text" class="form-input" id="awsRegion" placeholder="ap-south-1"
+                                value="ap-south-1">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- S3 & Services Card -->
+                <div class="soc-card aws-card">
+                    <div class="soc-card-header"
+                        style="display:flex; justify-content:space-between; align-items:center;">
+                        <span class="card-title"><i class="fas fa-database" style="color:#ff9900;"></i> HONEYPOT
+                            TELEMETRY</span>
+                    </div>
+
+                    <div style="padding: 10px 0;">
+                        <p class="text-muted" style="margin-bottom: 20px; font-size: 0.9rem;">Configure the S3 bucket
+                            where Cowrie and Dionaea logs are synchronized via bash script.</p>
+
+                        <div class="form-group">
+                            <label class="form-label">S3 Log Bucket Name</label>
+                            <input type="text" class="form-input" id="s3Bucket" placeholder="honeynet-telemetry-logs"
+                                value="honeynet-telemetry-logs">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Physical Infrastructure Data Card -->
+                <div class="soc-card aws-card">
+                    <div class="soc-card-header"
+                        style="display:flex; justify-content:space-between; align-items:center;">
+                        <span class="card-title"><i class="fas fa-network-wired" style="color:#ff9900;"></i> PHYSICAL
+                            INFRASTRUCTURE</span>
+                    </div>
+
+                    <div style="padding: 10px 0;">
+                        <p class="text-muted" style="margin-bottom: 20px; font-size: 0.9rem;">Define the target VPC
+                            subnet and the STS IAM Profile role applied to launched honeypots.</p>
+
+                        <div class="form-group">
+                            <label class="form-label">Subnet ID</label>
+                            <input type="text" class="form-input" id="subnetId" placeholder="subnet-0123456789abcdef0">
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">IAM Profile Role Name</label>
+                            <input type="text" class="form-input" id="iamProfile"
+                                placeholder="ShadowTrust-Analysis-Role" value="ShadowTrust-Analysis-Role">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- AMI Profiles Card -->
+                <div class="soc-card aws-card">
+                    <div class="soc-card-header"
+                        style="display:flex; justify-content:space-between; align-items:center;">
+                        <span class="card-title"><i class="fas fa-compact-disc" style="color:#ff9900;"></i> AMI PROFILE
+                            MAPPING</span>
+                    </div>
+
+                    <div style="padding: 10px 0;">
+                        <p class="text-muted" style="margin-bottom: 20px; font-size: 0.9rem;">Map the specific Amazon
+                            Machine Image IDs that correspond to the Virtual Lab deployment buttons.</p>
+
+                        <div class="form-group">
+                            <label class="form-label">Windows Default AMI</label>
+                            <input type="text" class="form-input" id="amiWinBase" placeholder="ami-0dab019e2f90d9a3d"
+                                value="ami-0dab019e2f90d9a3d">
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Linux Default AMI</label>
+                            <input type="text" class="form-input" id="amiKaliBase" placeholder="ami-026489f968e64588d"
+                                value="ami-026489f968e64588d">
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Windows Security Toolkit AMI</label>
+                            <input type="text" class="form-input" id="amiWinMal" placeholder="ami-083e29ace4dd6d300"
+                                value="ami-083e29ace4dd6d300">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="soc-card" style="margin-top:20px; text-align:right;">
+                <div style="display:flex; justify-content:flex-end; gap:15px; align-items:center;">
+                    <div id="validationResult"
+                        style="color:#aaa; font-family:'JetBrains Mono'; font-size:0.9rem; margin-right:20px;"></div>
+                    <button class="soc-btn" onclick="testConnection(event)">VALIDATE KEYS</button>
+                    <button class="soc-btn soc-btn-primary" style="background:#ff9900; color:black; border:none;"
+                        onclick="saveAwsConfig(event)">SAVE HUB CONFIGURATION</button>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <script type="module">
+        import { apiService } from './js/api.js';
+
+        // Wait to attach globals so inline onclick handlers work
+        window.apiService = apiService;
+
+        // Auto-fill form from localStorage on initial load
+        document.addEventListener('DOMContentLoaded', () => {
+            const keys = ['awsAccessKey', 'awsSecretKey', 'awsRegion', 's3Bucket', 'subnetId', 'iamProfile', 'amiWinBase', 'amiKaliBase', 'amiWinMal'];
+            keys.forEach(k => {
+                const lsKey = '_st_' + k.replace(/[A-Z]/g, match => '_' + match.toLowerCase()); // snake_case
+                const val = localStorage.getItem(lsKey);
+                if (val && document.getElementById(k)) {
+                    document.getElementById(k).value = val;
+                }
+            });
+        });
+
+        window.testConnection = async function (event) {
+            const btn = event.target;
+            const originalText = btn.innerText;
+            const resDiv = document.getElementById('validationResult');
+
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> VALIDATING VIA STS...';
+            resDiv.innerHTML = '';
+
+            const accessKey = document.getElementById('awsAccessKey').value;
+            const secretKey = document.getElementById('awsSecretKey').value;
+            const region = document.getElementById('awsRegion').value || "ap-south-1";
+
+            if (!accessKey || !secretKey) {
+                resDiv.innerHTML = '<span style="color:#ff0055;"><i class="fas fa-times"></i> Missing IAM Keys</span>';
+                btn.innerHTML = originalText;
+                return;
+            }
+
+            try {
+                const response = await window.apiService.post('/aws/test', {
+                    aws_access_key: accessKey,
+                    aws_secret_key: secretKey,
+                    aws_region: region
+                });
+
+                if (response.status === 'success') {
+                    resDiv.innerHTML = `<span style="color:#00ff41;"><i class="fas fa-check"></i> Active! STS ID: ${response.account}</span>`;
+
+                    document.querySelector('.status-indicator').classList.add('connected');
+                    document.getElementById('connStatusText').innerText = 'AWS STS LINK VERIFIED';
+                    document.getElementById('connStatusText').style.color = '#00ff41';
+                }
+            } catch (error) {
+                resDiv.innerHTML = `<span style="color:#ff0055;"><i class="fas fa-exclamation-triangle"></i> ${error.message}</span>`;
+            }
+
+            btn.innerHTML = originalText;
+        }
+
+        window.saveAwsConfig = function (event) {
+            const btn = event.target;
+            const originalText = btn.innerText;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> SAVING TO VAULT...';
+
+            const map = {
+                'awsAccessKey': '_st_aws_access_key',
+                'awsSecretKey': '_st_aws_secret_key',
+                'awsRegion': '_st_aws_region',
+                's3Bucket': '_st_s3_bucket',
+                'subnetId': '_st_subnet_id',
+                'iamProfile': '_st_iam_profile',
+                'amiWinBase': '_st_ami_win_base',
+                'amiKaliBase': '_st_ami_kali_base',
+                'amiWinMal': '_st_ami_win_mal'
+            };
+
+            for (const [domId, lsKey] of Object.entries(map)) {
+                const el = document.getElementById(domId);
+                if (el && el.value) {
+                    localStorage.setItem(lsKey, el.value);
+                }
+            }
+
+            // Also keep the legacy names for vm_client compatibility
+            localStorage.setItem('_st_aws_ak', document.getElementById('awsAccessKey').value);
+            localStorage.setItem('_st_aws_sk', document.getElementById('awsSecretKey').value);
+
+            setTimeout(() => {
+                btn.innerHTML = '<i class="fas fa-check"></i> SAVED';
+                alert("Master Configuration Hub Synchronized. Virtual Lab will now deploy using these specific variables.");
+
+                setTimeout(() => {
+                    btn.innerText = originalText;
+                }, 2000);
+            }, 800);
+        }
+    </script>
+</body>
+
+</html>

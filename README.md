@@ -1,5 +1,5 @@
 
-# 🛡️ SentinelHive - AI Powered Honeypot Platform
+# 🛡️ Shadow Trust - AI Powered Honeypot Platform
 
 A complete, modular Threat Intelligence Platform with AI-based attack classification, built for a 45-day development cycle.
 

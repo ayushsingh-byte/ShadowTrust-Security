@@ -99,6 +99,29 @@ VALUES ('admin', 'admin@honey.net', 'hashed_admin123', 'SUPER_ADMIN', 3, 'ACTIVE
 -- Insert Mock Data for Settings
 INSERT OR IGNORE INTO system_settings (key, value)
 VALUES 
-    ('general', '{"systemName": "SentinelHive-01", "adminEmail": "admin@honey.net", "maintenanceMode": false}'),
+    ('general', '{"systemName": "ShadowTrust-01", "adminEmail": "admin@honey.net", "maintenanceMode": false}'),
     ('security', '{"sessionTimeout": 30, "strictIpFiltering": true, "maxLoginAttempts": 5}'),
     ('honeynet', '{"simulationLevel": "high", "responseLatency": 50, "honeyPortRotation": true}');
+
+-- High-Frequency Telemetry Ingestion Table (Master Prompt architecture)
+CREATE TABLE IF NOT EXISTS raw_events (
+    id TEXT PRIMARY KEY,
+    timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+    attacker_ip TEXT NOT NULL,
+    target_port INTEGER,
+    protocol TEXT,
+    honeypot_type TEXT,
+    session_id TEXT,
+    event_type TEXT,
+    commands TEXT,
+    uploaded_files TEXT,
+    ports_scanned TEXT,
+    geoip_data JSON,
+    risk_score REAL DEFAULT 0.0,
+    raw_payload TEXT,
+    sync_status TEXT DEFAULT 'PENDING'
+);
+
+CREATE INDEX IF NOT EXISTS idx_raw_events_status ON raw_events(sync_status);
+CREATE INDEX IF NOT EXISTS idx_raw_events_ip ON raw_events(attacker_ip);
+CREATE INDEX IF NOT EXISTS idx_raw_events_session ON raw_events(session_id);

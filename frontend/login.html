@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sign In | SentinelHive</title>
+    <title>Sign In | Shadow Trust</title>
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -251,7 +251,7 @@
     <div class="visual-pane">
         <div class="visual-overlay"></div>
         <div class="visual-content">
-            <div class="visual-badge"><i class="fas fa-shield-alt"></i> &nbsp; SENTINEL ENTERPRISE</div>
+            <div class="visual-badge"><i class="fas fa-shield-alt"></i> &nbsp; SHADOW TRUST ENTERPRISE</div>
             <div class="visual-title">Global Security<br>Infrastructure</div>
             <div class="visual-text">
                 The centralized command center for threat intelligence, network defense, and honeypot orchestration.
@@ -265,7 +265,7 @@
 
         <div class="logo-area">
             <div class="logo-mark"></div>
-            <div class="logo-text">SENTINEL</div>
+            <div class="logo-text">SHADOW TRUST</div>
         </div>
 
         <div class="login-header">
@@ -273,7 +273,7 @@
             <p>Please enter your credentials to access the console.</p>
         </div>
 
-        <form action="dashboard.html">
+        <form id="loginForm" action="dashboard.html">
             <div class="input-group">
                 <label>Email Address</label>
                 <input type="email" class="clean-input" placeholder="Enter email" required>
@@ -296,10 +296,11 @@
 
         <div class="login-footer">
             <p>Don't have an account? <a href="register.html">Request Access</a></p>
-            <p style="margin-top: 10px; opacity: 0.5;">&copy; 2026 Sentinel Defense Systems</p>
+            <p style="margin-top: 10px; opacity: 0.5;">&copy; 2026 Shadow Trust Defense Systems</p>
         </div>
     </div>
-
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/auth.js"></script>
 </body>
 
 

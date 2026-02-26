@@ -3,11 +3,50 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
 from app.api.v1.api import api_router
 
+import asyncio
+from contextlib import asynccontextmanager
+
+from app.db.sqlite_db import init_db
+from app.services.sync_manager import SyncManager
+from app.services.session_engine import SessionEngine
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    print("Initializing Database...")
+    await init_db()
+    
+    # Start background tasks
+    sync_task = asyncio.create_task(background_sync_loop())
+    session_engine_task = asyncio.create_task(background_session_loop())
+    
+    yield
+    
+    # Clean up on shutdown
+    sync_task.cancel()
+    session_engine_task.cancel()
+
+async def background_sync_loop():
+    while True:
+        try:
+            await SyncManager.run_sync_cycle()
+        except Exception as e:
+            print(f"Background Sync Error: {e}")
+        await asyncio.sleep(10) # Run every 10 seconds
+
+async def background_session_loop():
+    while True:
+        try:
+            await SessionEngine.process_unmapped_events()
+        except Exception as e:
+            print(f"Session Engine Error: {e}")
+        await asyncio.sleep(60) # Run every 60 seconds
+
 app = FastAPI(
-    title="SentinelHive AI Honeypot",
+    title="Shadow Trust AI Honeypot",
     description="AI Powered Threat Intelligence Platform",
     version="2.0.0",
     openapi_url=f"{settings.API_V1_STR}/openapi.json",
+    lifespan=lifespan
 )
 
 # CORS PROPERLY CONFIGURED

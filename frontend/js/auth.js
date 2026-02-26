@@ -1,9 +1,16 @@
-/* Authentication Logic */
+// Initialize Supabase Client
+const SUPABASE_URL = 'https://nghuctaefsoanxxujtpg.supabase.co';
+// Note: In a production environment with sensitive data, the Anon Key should be used on the frontend, not the Service Role key.
+// Using the provided key for the prototype connection.
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5naHVjdGFlZnNvYW54eHVqdHBnIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3MDcyODY2NCwiZXhwIjoyMDg2MzA0NjY0fQ.8JkbpyXTBMuOMIXskfPy8CVHjK_nBBUoFk-8CUhA5Eg';
+
+const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 document.addEventListener('DOMContentLoaded', () => {
     const loginForm = document.getElementById('loginForm');
     const registerForm = document.getElementById('registerForm');
 
+    // Handle Login Flow
     if (loginForm) {
         loginForm.addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -15,38 +22,123 @@ document.addEventListener('DOMContentLoaded', () => {
             btn.style.opacity = '0.7';
 
             try {
-                // In a real app, we would gather form data here
-                // const email = document.getElementById('email').value;
-                // const password = document.getElementById('password').value;
+                // Get email and password from standard DOM elements
+                // Assuming the first type="text" or "email" is email, and type="password" is password.
+                const inputs = loginForm.querySelectorAll('input');
+                let email = '';
+                let password = '';
 
-                // Simulating Success for Demo
-                setTimeout(() => {
-                    localStorage.setItem('authToken', 'mock_token');
+                inputs.forEach(input => {
+                    if (input.type === 'email' || (input.type === 'text' && input.placeholder.toLowerCase().includes('email'))) {
+                        email = input.value;
+                    }
+                    if (input.type === 'password') {
+                        password = input.value;
+                    }
+                });
+
+                if (!email || !password) {
+                    throw new Error("Please enter both email and password.");
+                }
+
+                // Authenticate with Supabase
+                const { data, error } = await supabaseClient.auth.signInWithPassword({
+                    email: email,
+                    password: password,
+                });
+
+                if (error) {
+                    throw error;
+                }
+
+                // Store token for backward compatibility with our custom APIs
+                if (data.session) {
+                    localStorage.setItem('access_token', data.session.access_token);
+                    localStorage.setItem('authToken', data.session.access_token); // For our old checks
+
+                    // Explicitly strip admin flag on normal login
+                    localStorage.removeItem('isAdmin');
+
                     window.location.href = 'dashboard.html';
-                }, 1500);
+                }
 
             } catch (error) {
-                alert(error.message);
+                alert("Login Failed: " + error.message);
                 btn.innerHTML = originalText;
                 btn.style.opacity = '1';
             }
         });
     }
 
+    // Handle Registration / OTP Flow
     if (registerForm) {
-        registerForm.addEventListener('submit', (e) => {
+        registerForm.addEventListener('submit', async (e) => {
             e.preventDefault();
-            // similar logic...
-            setTimeout(() => {
+            const btn = registerForm.querySelector('button');
+            const originalText = btn.innerHTML;
+
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Requesting Access...';
+            btn.style.opacity = '0.7';
+
+            try {
+                const inputs = registerForm.querySelectorAll('input');
+                let email = '';
+                let password = '';
+                let fullName = '';
+
+                inputs.forEach(input => {
+                    if (input.type === 'email' || (input.placeholder && input.placeholder.toLowerCase().includes('email'))) email = input.value;
+                    if (input.type === 'password') password = input.value;
+                    if (input.type === 'text' && input.placeholder && input.placeholder.toLowerCase().includes('name')) fullName = input.value;
+                });
+
+                if (!email || !password) {
+                    throw new Error("Please fill out all required fields.");
+                }
+
+                // Register with Supabase
+                const { data, error } = await supabaseClient.auth.signUp({
+                    email: email,
+                    password: password,
+                    options: {
+                        data: {
+                            full_name: fullName,
+                        }
+                    }
+                });
+
+                if (error) {
+                    throw error;
+                }
+
+                alert("Registration successful! Please check your email for the confirmation OPT/Link.");
                 window.location.href = 'login.html';
-            }, 1500);
+
+            } catch (error) {
+                alert("Registration Failed: " + error.message);
+                btn.innerHTML = originalText;
+                btn.style.opacity = '1';
+            }
         });
     }
 
-    // Check Auth on Dashboard pages
-    // if (window.location.pathname.includes('dashboard.html')) {
-    //     if (!localStorage.getItem('authToken')) {
-    //         window.location.href = 'login.html';
-    //     }
-    // }
+    // Auth Guard Check for protected pages
+    checkAuthGuard();
 });
+
+async function checkAuthGuard() {
+    // If not on login/register pages, enforce session existence
+    const path = window.location.pathname;
+    if (!path.includes('login.html') && !path.includes('register.html') && !path.includes('index.html') && !path.endsWith('/')) {
+        const { data: { session } } = await supabaseClient.auth.getSession();
+
+        if (!session && !localStorage.getItem('access_token')) {
+            console.warn("No active Supabase session or fallback token found. Redirecting to login.");
+            window.location.href = 'login.html';
+        } else if (session) {
+            // keep legacy token updated
+            localStorage.setItem('access_token', session.access_token);
+            localStorage.setItem('authToken', session.access_token);
+        }
+    }
+}

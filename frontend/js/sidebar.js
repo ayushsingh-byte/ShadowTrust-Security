@@ -11,7 +11,7 @@ document.addEventListener("DOMContentLoaded", function () {
             {
                 label: 'Command Center',
                 items: [
-                    { href: 'dashboard.html', icon: 'fa-radar', text: 'Tactical Overview' },
+                    { href: 'dashboard.html', icon: 'fa-th-large', text: 'Tactical Overview' },
                     { href: 'events.html', icon: 'fa-list-alt', text: 'Event Log' }
                 ]
             },
@@ -46,12 +46,20 @@ document.addEventListener("DOMContentLoaded", function () {
                 label: 'System',
                 items: [
                     { href: 'admin_login.html', icon: 'fa-id-badge', text: 'Admin Access' },
-                    { href: 'admin.html', icon: 'fa-user-shield', text: 'Admin Console' },
-                    { href: 'config.html', icon: 'fa-cogs', text: 'Global Config' },
                     { href: 'profile.html', icon: 'fa-user-circle', text: 'Officer Profile' }
                 ]
             }
         ];
+
+        // Conditional Admin Links
+        if (localStorage.getItem('isAdmin') === 'true') {
+            const systemGroup = navGroups.find(g => g.label === 'System');
+            systemGroup.items.splice(1, 0,
+                { href: 'admin.html', icon: 'fa-user-shield', text: 'Admin Console' },
+                { href: 'aws_connection.html', icon: 'fa-cloud', text: 'AWS Connection' },
+                { href: 'config.html', icon: 'fa-cogs', text: 'Global Config' }
+            );
+        }
 
         const navHtml = navGroups.map(group => {
             const itemsHtml = group.items.map(item => {
@@ -65,7 +73,7 @@ document.addEventListener("DOMContentLoaded", function () {
             <div class="logo-area" onclick="document.getElementById('sidebar').classList.toggle('collapsed')">
                 <div class="logo-icon"></div>
                 <div class="logo-text">
-                    <div class="logo-title">SENTINEL</div>
+                    <div class="logo-title">SHADOW TRUST</div>
                     <div class="logo-sub">DEFENSE GRID // V2</div>
                 </div>
                 <i class="fas fa-chevron-left toggle-btn" style="margin-left: auto; cursor: pointer;"></i>
