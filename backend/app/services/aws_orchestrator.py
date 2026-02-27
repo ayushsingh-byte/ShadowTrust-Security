@@ -1,5 +1,5 @@
 import boto3
-from botocore.exceptions import ClientError
+from botocore.exceptions import ClientError, BotoCoreError
 import logging
 from typing import Dict, Any, Optional
 
@@ -19,34 +19,57 @@ class AWSOrchestrator:
         self.ec2 = boto3.client('ec2', **client_kwargs)
         self.ssm = boto3.client('ssm', **client_kwargs)
 
-    def launch_analysis_vm(self, ami_id: str, instance_type: str, session_id: str, subnet_id: str, iam_profile_name: str) -> Dict[str, Any]:
+    def launch_analysis_vm(self, ami_id: str, instance_type: str, session_id: str, subnet_id: str, iam_profile_name: str, profile_id: str = "custom_vm", security_group_id: str = None) -> Dict[str, Any]:
         """Launches an EC2 instance from an AMI configured with the SSM IAM role."""
         try:
-            response = self.ec2.run_instances(
-                ImageId=ami_id,
-                InstanceType=instance_type,
-                MinCount=1,
-                MaxCount=1,
-                SubnetId=subnet_id,
-                IamInstanceProfile={'Name': iam_profile_name},
-                TagSpecifications=[
+            kwargs = {
+                'ImageId': ami_id,
+                'InstanceType': instance_type,
+                'MinCount': 1,
+                'MaxCount': 1,
+                'SubnetId': subnet_id,
+                'TagSpecifications': [
                     {
                         'ResourceType': 'instance',
                         'Tags': [
-                            {'Key': 'Name', 'Value': f'Analysis-VM-{session_id}'},
+                            {'Key': 'Name', 'Value': f'ShadowTrust-{profile_id}-{session_id[:5]}'},
                             {'Key': 'SessionID', 'Value': session_id},
                             {'Key': 'ManagedBy', 'Value': 'ShadowTrust'}
                         ]
                     }
                 ]
-            )
+            }
+            
+            # Optional: Allow VMs to boot without an attached IAM profile
+            if iam_profile_name and iam_profile_name.strip():
+                kwargs['IamInstanceProfile'] = {'Name': iam_profile_name.strip()}
+                
+            if security_group_id and security_group_id.strip():
+                kwargs['SecurityGroupIds'] = [security_group_id.strip()]
+
+            response = self.ec2.run_instances(**kwargs)
+            
             instance_id = response['Instances'][0]['InstanceId']
             logger.info(f"Launched VM: {instance_id} for session: {session_id}")
             return {"status": "success", "instance_id": instance_id}
             
         except ClientError as e:
+            error_code = e.response.get('Error', {}).get('Code', '')
+            error_msg = e.response.get('Error', {}).get('Message', '')
+            
+            # If the user hasn't created the IAM role yet, fallback and launch the VM without it.
+            if error_code == 'InvalidParameterValue' and 'iamInstanceProfile.name' in error_msg and iam_profile_name is not None:
+                logger.warning(f"IAM Profile '{iam_profile_name}' not found. Falling back to launching without an IAM role attached.")
+                return self.launch_analysis_vm(ami_id, instance_type, session_id, subnet_id, iam_profile_name=None, profile_id=profile_id)
+                
             logger.error(f"Failed to launch VM: {e}")
+            return {"status": "error", "message": f"{error_code}: {error_msg}"}
+        except BotoCoreError as e:
+            logger.error(f"Boto3 Core Error: {e}")
             return {"status": "error", "message": str(e)}
+        except Exception as e:
+            logger.error(f"Unexpected error launching VM: {e}")
+            return {"status": "error", "message": "An unexpected infrastructure error occurred."}
 
     def terminate_vm(self, instance_id: str) -> bool:
         """Terminates an EC2 instance by its Instance ID."""

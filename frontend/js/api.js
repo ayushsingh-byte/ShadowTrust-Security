@@ -7,7 +7,7 @@ class ApiService {
             window.location.hostname === 'localhost' ||
             window.location.protocol === 'file:';
 
-        this.baseUrl = isLocalDev ? 'http://127.0.0.1:8004/api/v1' : '/api/v1';
+        this.baseUrl = isLocalDev ? 'http://127.0.0.1:8000/api/v1' : '/api/v1';
     }
 
     async get(endpoint) {

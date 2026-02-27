@@ -193,6 +193,12 @@
                         </div>
 
                         <div class="form-group">
+                            <label class="form-label">Security Group ID (RDP Allowed)</label>
+                            <input type="text" class="form-input" id="securityGroupId"
+                                placeholder="sg-0123456789abcdef0">
+                        </div>
+
+                        <div class="form-group">
                             <label class="form-label">IAM Profile Role Name</label>
                             <input type="text" class="form-input" id="iamProfile"
                                 placeholder="ShadowTrust-Analysis-Role" value="ShadowTrust-Analysis-Role">
@@ -214,20 +220,20 @@
 
                         <div class="form-group">
                             <label class="form-label">Windows Default AMI</label>
-                            <input type="text" class="form-input" id="amiWinBase" placeholder="ami-0dab019e2f90d9a3d"
-                                value="ami-0dab019e2f90d9a3d">
+                            <input type="text" class="form-input" id="amiWinBase" placeholder="ami-0f7a0c94dce9ab456"
+                                value="ami-0f7a0c94dce9ab456">
                         </div>
 
                         <div class="form-group">
                             <label class="form-label">Linux Default AMI</label>
-                            <input type="text" class="form-input" id="amiKaliBase" placeholder="ami-026489f968e64588d"
-                                value="ami-026489f968e64588d">
+                            <input type="text" class="form-input" id="amiKaliBase" placeholder="ami-0199fa5fada510433"
+                                value="ami-0199fa5fada510433">
                         </div>
 
                         <div class="form-group">
                             <label class="form-label">Windows Security Toolkit AMI</label>
-                            <input type="text" class="form-input" id="amiWinMal" placeholder="ami-083e29ace4dd6d300"
-                                value="ami-083e29ace4dd6d300">
+                            <input type="text" class="form-input" id="amiWinMal" placeholder="ami-0f7a0c94dce9ab456"
+                                value="ami-0f7a0c94dce9ab456">
                         </div>
                     </div>
                 </div>
@@ -254,7 +260,7 @@
 
         // Auto-fill form from localStorage on initial load
         document.addEventListener('DOMContentLoaded', () => {
-            const keys = ['awsAccessKey', 'awsSecretKey', 'awsRegion', 's3Bucket', 'subnetId', 'iamProfile', 'amiWinBase', 'amiKaliBase', 'amiWinMal'];
+            const keys = ['awsAccessKey', 'awsSecretKey', 'awsRegion', 's3Bucket', 'subnetId', 'securityGroupId', 'iamProfile', 'amiWinBase', 'amiKaliBase', 'amiWinMal'];
             keys.forEach(k => {
                 const lsKey = '_st_' + k.replace(/[A-Z]/g, match => '_' + match.toLowerCase()); // snake_case
                 const val = localStorage.getItem(lsKey);
@@ -314,6 +320,7 @@
                 'awsRegion': '_st_aws_region',
                 's3Bucket': '_st_s3_bucket',
                 'subnetId': '_st_subnet_id',
+                'securityGroupId': '_st_security_group_id',
                 'iamProfile': '_st_iam_profile',
                 'amiWinBase': '_st_ami_win_base',
                 'amiKaliBase': '_st_ami_kali_base',
@@ -322,14 +329,15 @@
 
             for (const [domId, lsKey] of Object.entries(map)) {
                 const el = document.getElementById(domId);
-                if (el && el.value) {
-                    localStorage.setItem(lsKey, el.value);
+                if (el) {
+                    localStorage.setItem(lsKey, el.value.trim()); // Save empty strings if user clears field
                 }
             }
 
             // Also keep the legacy names for vm_client compatibility
             localStorage.setItem('_st_aws_ak', document.getElementById('awsAccessKey').value);
             localStorage.setItem('_st_aws_sk', document.getElementById('awsSecretKey').value);
+            localStorage.setItem('_st_aws_sg', document.getElementById('securityGroupId').value);
 
             setTimeout(() => {
                 btn.innerHTML = '<i class="fas fa-check"></i> SAVED';

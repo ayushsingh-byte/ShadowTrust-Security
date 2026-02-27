@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System Diagnostics | Shadow Trust</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Orbitron:wght@500;700&family=Jura:wght@600&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/modern.css">
+    <style>
+        .debug-terminal {
+            background-color: var(--black);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 20px;
+            min-height: 400px;
+            position: relative;
+            overflow-y: auto;
+            max-height: 60vh;
+        }
+
+        .terminal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+
+        .terminal-line {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: flex-start;
+            gap: 15px;
+        }
+
+        .ts {
+            color: #666;
+            min-width: 80px;
+        }
+
+        .tag.sys {
+            color: var(--neon-cyan);
+            min-width: 50px;
+        }
+
+        .tag.aws {
+            color: #ff9900;
+            min-width: 50px;
+        }
+
+        .status.pass {
+            color: var(--neon-green);
+            font-weight: bold;
+        }
+
+        .status.fail {
+            color: var(--neon-pink);
+            font-weight: bold;
+        }
+
+        .status.wait {
+            color: #aaa;
+            font-style: italic;
+        }
+
+        .terminal-detail {
+            color: #ccc;
+            margin-left: auto;
+            max-width: 60%;
+            text-align: right;
+            word-break: break-all;
+        }
+
+        .error-dump {
+            background: rgba(255, 0, 85, 0.1);
+            border-left: 2px solid var(--neon-pink);
+            padding: 10px;
+            margin: 10px 0;
+            color: var(--neon-pink);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            white-space: pre-wrap;
+        }
+
+        /* Scan Line Effect */
+        .debug-terminal::after {
+            content: " ";
+            display: block;
+            position: absolute;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            right: 0;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+            z-index: 2;
+            background-size: 100% 2px, 3px 100%;
+            pointer-events: none;
+            opacity: 0.5;
+        }
+    </style>
+</head>
+
+<body class="dashboard-body">
+
+    <!-- Sidebar injected via JS -->
+    <nav class="sidebar" id="sidebar"></nav>
+
+    <div class="main-content">
+        <header class="top-bar">
+            <h2><i class="fas fa-terminal" style="color:var(--neon-green);"></i> // SYSTEM DIAGNOSTICS</h2>
+            <div class="user-profile">
+                <span class="pulse-dot"></span>
+                <span>ROOT_ADMIN</span>
+            </div>
+        </header>
+
+        <main class="content-wrapper">
+            <div class="soc-card">
+                <div class="terminal-header">
+                    <div>
+                        <h3 style="margin:0; font-family:'Jura'; color:var(--text-light);"><i
+                                class="fas fa-microchip"></i> AWS ORCHESTRATION ENGINE TEST</h3>
+                        <p class="text-muted" style="margin:5px 0 0 0; font-size: 0.85rem;">Run a deep systemic health
+                            check against the Boto3 integration before launching VMs.</p>
+                    </div>
+                    <div>
+                        <button class="soc-btn" onclick="clearTerminal()">CLEAR LOG</button>
+                        <button class="soc-btn" style="background:var(--neon-green); color:#000; border:none;"
+                            id="runScanBtn" onclick="runDiagnostics()">RUN DIAGNOSTICS</button>
+                    </div>
+                </div>
+
+                <div class="debug-terminal" id="terminalBox">
+                    <div class="terminal-line">
+                        <span class="ts">00:00:00</span>
+                        <span class="tag sys">[SYS]</span>
+                        <span class="msg">DIAGNOSTIC CONSOLE INITIALIZED. AWAITING COMMAND...</span>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="js/sidebar.js"></script>
+    <script type="module">
+        import { apiService } from './js/api.js';
+
+        // Wait to attach globals so inline onclick handlers work
+        window.apiService = apiService;
+
+        function logToTerminal(tag, message, statusClass = '', detail = '', error = null) {
+            const term = document.getElementById('terminalBox');
+            const now = new Date();
+            const ts = now.toTimeString().split(' ')[0] + '.' + now.getMilliseconds().toString().padStart(3, '0');
+
+            const line = document.createElement('div');
+            line.className = 'terminal-line';
+
+            const timeSpan = `<span class="ts">${ts}</span>`;
+            const tagSpan = `<span class="tag ${tag.toLowerCase()}">[${tag}]</span>`;
+            const msgSpan = `<span>${message}</span>`;
+
+            let statSpan = '';
+            if (statusClass) {
+                const text = statusClass === 'pass' ? 'SUCCESS' : (statusClass === 'fail' ? 'FAILED' : 'WAITING');
+                statSpan = `<span class="status ${statusClass}">[${text}]</span>`;
+            }
+
+            let detailSpan = detail ? `<span class="terminal-detail">${detail}</span>` : '';
+
+            line.innerHTML = `${timeSpan} ${tagSpan} ${msgSpan} ${statSpan} ${detailSpan}`;
+            term.appendChild(line);
+
+            if (error) {
+                const errBox = document.createElement('div');
+                errBox.className = 'error-dump';
+                errBox.innerText = error;
+                term.appendChild(errBox);
+            }
+
+            // Auto-scroll to bottom
+            term.scrollTop = term.scrollHeight;
+        }
+
+        window.clearTerminal = function () {
+            document.getElementById('terminalBox').innerHTML = `
+                <div class="terminal-line">
+                    <span class="ts">00:00:00</span>
+                    <span class="tag sys">[SYS]</span>
+                    <span class="msg">TERMINAL CLEARED.</span>
+                </div>
+            `;
+        }
+
+        window.runDiagnostics = async function () {
+            const btn = document.getElementById('runScanBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> EXECUTING...';
+
+            logToTerminal('SYS', 'Initiating full AWS infrastructure diagnostic sequence...', 'wait');
+
+            const payload = {
+                aws_access_key: localStorage.getItem('_st_aws_ak'),
+                aws_secret_key: localStorage.getItem('_st_aws_sk'),
+                aws_region: localStorage.getItem('_st_aws_region'),
+                s3_bucket: localStorage.getItem('_st_s3_bucket'),
+                iam_profile: localStorage.getItem('_st_iam_profile')
+            };
+
+            if (!payload.aws_access_key) {
+                logToTerminal('SYS', 'Aborting test. No AWS Keys found in local vault.', 'fail');
+                btn.disabled = false;
+                btn.innerHTML = 'RUN DIAGNOSTICS';
+                return;
+            }
+
+            try {
+                logToTerminal('AWS', 'Dispatching Boto3 connection request...', 'wait');
+
+                const response = await window.apiService.post('/aws/debug', Object.fromEntries(Object.entries(payload).filter(([_, v]) => v != null)));
+
+                if (response.results) {
+                    response.results.forEach(res => {
+                        const statusClass = res.status === 'PASS' ? 'pass' : 'fail';
+                        const errorDump = res.status === 'FAIL' ? res.info : null;
+                        const okDetail = res.status === 'PASS' ? res.info : '';
+
+                        logToTerminal('AWS', `Testing ${res.name}`, statusClass, okDetail, errorDump);
+                    });
+                } else {
+                    logToTerminal('AWS', 'Fatal Backend Reject', 'fail', '', response.message);
+                }
+
+                if (response.status === 'success') {
+                    logToTerminal('SYS', 'ALL SYSTEMS NOMINAL. READY FOR DEPLOYMENT.', 'pass');
+                } else {
+                    logToTerminal('SYS', 'DETECTED CRITICAL ARCHITECTURE FAILURES. Fix them before launching instances.', 'fail');
+                }
+
+            } catch (error) {
+                logToTerminal('SYS', 'Network Error', 'fail', '', error.message);
+            }
+
+            btn.disabled = false;
+            btn.innerHTML = 'RUN DIAGNOSTICS';
+        }
+    </script>
+</body>
+
+</html>

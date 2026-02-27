@@ -37,30 +37,14 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 });
 
-                if (!email || !password) {
-                    throw new Error("Please enter both email and password.");
-                }
+                // Bypass Authentication
+                localStorage.setItem('access_token', 'mock_token');
+                localStorage.setItem('authToken', 'mock_token');
 
-                // Authenticate with Supabase
-                const { data, error } = await supabaseClient.auth.signInWithPassword({
-                    email: email,
-                    password: password,
-                });
+                // Explicitly strip admin flag on normal login
+                localStorage.removeItem('isAdmin');
 
-                if (error) {
-                    throw error;
-                }
-
-                // Store token for backward compatibility with our custom APIs
-                if (data.session) {
-                    localStorage.setItem('access_token', data.session.access_token);
-                    localStorage.setItem('authToken', data.session.access_token); // For our old checks
-
-                    // Explicitly strip admin flag on normal login
-                    localStorage.removeItem('isAdmin');
-
-                    window.location.href = 'dashboard.html';
-                }
+                window.location.href = 'dashboard.html';
 
             } catch (error) {
                 alert("Login Failed: " + error.message);

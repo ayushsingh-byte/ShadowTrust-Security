@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Mock VDI Session</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            background-color: #05070a;
+            color: #00ff41;
+            font-family: 'JetBrains Mono', monospace;
+            margin: 0;
+            padding: 20px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            box-sizing: border-box;
+        }
+
+        .terminal {
+            width: 95%;
+            height: 95%;
+            border: 1px solid rgba(0, 255, 65, 0.3);
+            background: linear-gradient(135deg, rgba(0, 255, 65, 0.05) 0%, rgba(0, 0, 0, 0.8) 100%);
+            padding: 30px;
+            box-shadow: inset 0 0 50px rgba(0, 0, 0, 0.8), 0 0 20px rgba(0, 255, 65, 0.1);
+            position: relative;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+
+        .header {
+            border-bottom: 1px dashed rgba(0, 255, 65, 0.3);
+            padding-bottom: 15px;
+            margin-bottom: 25px;
+            display: flex;
+            justify-content: space-between;
+            font-weight: bold;
+            font-size: 14px;
+            letter-spacing: 1px;
+            color: #00ff41;
+        }
+
+        .blink {
+            animation: blink 1s step-end infinite;
+        }
+
+        @keyframes blink {
+            50% {
+                opacity: 0;
+            }
+        }
+
+        .log {
+            font-size: 15px;
+            line-height: 1.8;
+            color: #aaa;
+        }
+
+        .green {
+            color: #00ff41;
+            text-shadow: 0 0 5px #00ff41;
+        }
+
+        .red {
+            color: #ff0055;
+            text-shadow: 0 0 5px #ff0055;
+        }
+
+        .yellow {
+            color: #ff9900;
+        }
+
+        .cyan {
+            color: #00ffff;
+        }
+
+        .matrix-bg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image: linear-gradient(rgba(0, 255, 65, 0.1) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 255, 65, 0.1) 1px, transparent 1px);
+            background-size: 20px 20px;
+            z-index: -1;
+            opacity: 0.2;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="matrix-bg"></div>
+    <div class="terminal">
+        <div class="header">
+            <div><i class="fas fa-network-wired"></i> SHADOW TRUST // ISOLATED VDI TUNNEL (MOCK)</div>
+            <div id="timeDisp">00:00:00 UTC</div>
+        </div>
+        <div class="log" id="logContent">
+            > Initializing Virtual Display Interface Protocol... <span class="green">[OK]</span><br>
+            > Establishing secure WebSockets tunnel to Target Node... <span class="green">[OK]</span><br>
+            > Injecting telemetry agents into guest OS... <span class="green">[OK]</span><br>
+            > <br>
+            > <span class="yellow">WARNING: Local Apache Guacamole Gateway (localhost:5432) is offline.</span><br>
+            > Entering <span class="cyan">MOCK RENDER MODE</span> for architectural demonstration.<br>
+            > <br>
+            > System: <span class="green" id="targetDisp">Fetching...</span><br>
+            > Status: <span class="green">AWS EC2 INSTANCE IS LIVE AND RUNNING</span><br>
+            > Connection: <span class="green">ESTABLISHED (VIRTUAL)</span><br>
+            > <br>
+            > The GUI of the target machine would stream here natively in Production via Guacamole.<br>
+            > <br>
+            > Listening for network events<span class="blink">_</span>
+        </div>
+    </div>
+    <script>
+        setInterval(() => {
+            const date = new Date();
+            document.getElementById('timeDisp').innerText = date.toISOString().replace('T', ' ').substring(0, 19) + ' UTC';
+        }, 1000);
+
+        const params = new URLSearchParams(window.location.search);
+        const target = params.get('target');
+        if (target) {
+            document.getElementById('targetDisp').innerText = target;
+        }
+    </script>
+</body>
+
+</html>

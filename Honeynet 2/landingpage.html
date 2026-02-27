@@ -11,7 +11,7 @@
     <!-- AOS CSS for Animations -->
     <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
 
-    <link rel="stylesheet" href="css/landing/landingpage.css">
+    <link rel="stylesheet" href="CSS/landingpage.css">
 </head>
 
 <body>
@@ -22,7 +22,7 @@
         <nav>
             <div class="logo">Shadow<span>Trust</span></div>
             <ul>
-                <li><a href="index.html">Home</a></li>
+                <li><a href="landingpage.html">Home</a></li>
                 <li><a href="features.html">Features</a></li>
                 <li><a href="architecture.html">Architecture</a></li>
                 <li><a href="docs.html">Docs</a></li>
@@ -37,13 +37,11 @@
             data-aos="fade-up">
             <div class="hero-text">
                 <h1>Shadow Trust <span>Cyber Range Orchestration</span></h1>
-                <p>Shadow Trust is a modular backend platform for orchestrating honeypot VMs, collecting attack
-                    telemetry, automating malware analysis, and visualizing threat intelligence. Designed for research,
-                    analysis, and scalable security operations.</p>
+                <p>Shadow Trust is a modular backend platform for orchestrating honeypot VMs, collecting attack telemetry, automating malware analysis, and visualizing threat intelligence. Designed for research, analysis, and scalable security operations.</p>
                 <div class="hero-buttons">
-                    <a href="login.html" class="btn"
+                    <a href="#" class="btn"
                         style="background: transparent; border: 2px solid #00c6ff; color: #00c6ff;">Explore Platform</a>
-                    <a href="login.html" class="btn">Backend Engine</a>
+                    <a href="#" class="btn">Backend Engine</a>
                 </div>
             </div>
             <img src="./hero_image.png" alt="Cybersecurity Features Image"
@@ -56,23 +54,19 @@
             <div class="features">
                 <div class="card" data-aos="zoom-in" data-aos-delay="100">
                     <h3>Orchestration Dashboard</h3>
-                    <p>Central command center for launching analysis VMs, tracking honeypot activity, and visualizing
-                        attack sessions. Powered by Supabase for real-time updates.</p>
+                    <p>Central command center for launching analysis VMs, tracking honeypot activity, and visualizing attack sessions. Powered by Supabase for real-time updates.</p>
                 </div>
                 <div class="card" data-aos="zoom-in" data-aos-delay="200">
                     <h3>Live Honeypot VMs</h3>
-                    <p>Ephemeral AWS EC2 instances deployed from Golden AMIs, exposed to the internet for threat
-                        collection. All activity is monitored and logged by telemetry agents.</p>
+                    <p>Ephemeral AWS EC2 instances deployed from Golden AMIs, exposed to the internet for threat collection. All activity is monitored and logged by telemetry agents.</p>
                 </div>
                 <div class="card" data-aos="zoom-in" data-aos-delay="300">
                     <h3>Malware Collection Pipeline</h3>
-                    <p>Automated detection and collection of uploaded files, instant transfer to secure S3 storage, hash
-                        computation, and metadata association with attacker sessions.</p>
+                    <p>Automated detection and collection of uploaded files, instant transfer to secure S3 storage, hash computation, and metadata association with attacker sessions.</p>
                 </div>
                 <div class="card" data-aos="zoom-in" data-aos-delay="400">
                     <h3>Analysis Sandbox VMs</h3>
-                    <p>On-demand analysis environments (Windows, Kali, MobSF, IDA) for static, dynamic, and binary
-                        analysis. VMs are launched, registered, and terminated automatically.</p>
+                    <p>On-demand analysis environments (Windows, Kali, MobSF, IDA) for static, dynamic, and binary analysis. VMs are launched, registered, and terminated automatically.</p>
                 </div>
             </div>
         </section>
@@ -82,10 +76,7 @@
             <div>
                 <h2>Backend <span>Architecture</span></h2>
                 <p style="margin:20px 0;color:#cfcfcf;">
-                    Shadow Trust backend leverages AWS EC2 and VPC for secure VM orchestration, Supabase for real-time
-                    data streaming, and SQLite for high-frequency event ingestion. All VMs are ephemeral, launched from
-                    Golden AMIs, and managed via async FastAPI endpoints. No public management ports are exposed; access
-                    is via AWS SSM browser sessions.
+                    Shadow Trust backend leverages AWS EC2 and VPC for secure VM orchestration, Supabase for real-time data streaming, and SQLite for high-frequency event ingestion. All VMs are ephemeral, launched from Golden AMIs, and managed via async FastAPI endpoints. No public management ports are exposed; access is via AWS SSM browser sessions.
                 </p>
                 <a href="#" class="btn">Read Architecture Docs</a>
             </div>

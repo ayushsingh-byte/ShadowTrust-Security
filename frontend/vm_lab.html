@@ -9,86 +9,242 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         .vm-card {
-            background: #0a0a0f;
-            border: 1px solid #333;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
             height: 100%;
-            transition: 0.2s;
+            border-top: 3px solid var(--accent-primary);
         }
 
-        .vm-card:hover {
-            border-color: var(--neon-cyan);
+        .vm-card.mod-lin {
+            border-top: 3px solid var(--accent-secondary);
         }
 
-        .vm-status-dot {
-            width: 8px;
-            height: 8px;
-            background: #555;
-            border-radius: 50%;
-            display: inline-block;
-            margin-right: 5px;
+        .vm-card.mod-mal {
+            border-top: 3px solid var(--accent-critical);
         }
 
-        .vm-status-dot.running {
-            background: #00ff41;
-            box-shadow: 0 0 5px #00ff41;
+        .vm-icon-wrapper {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            color: var(--accent-primary);
         }
 
-        .vm-status-dot.stopped {
-            background: #ff0055;
+        .mod-lin .vm-icon-wrapper {
+            color: var(--accent-secondary);
         }
 
-        .resource-bar-bg {
-            background: #222;
-            height: 4px;
-            width: 100%;
-            margin: 5px 0 10px 0;
-            border-radius: 2px;
+        .mod-mal .vm-icon-wrapper {
+            color: var(--accent-critical);
         }
 
-        .resource-bar-fill {
-            height: 100%;
-            width: 0%;
-            border-radius: 2px;
-            transition: width 0.5s;
-        }
-
-        .topology-node {
-            display: inline-block;
-            padding: 10px;
-            border: 1px dashed #444;
-            margin: 10px;
+        .vm-specs {
+            margin: 1.5rem 0;
+            background: rgba(0, 0, 0, 0.2);
+            padding: 1rem;
             border-radius: 4px;
+            font-family: var(--font-mono);
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            border: 1px dashed #334155;
+        }
+
+        .vm-specs span {
+            color: var(--text-primary);
+            float: right;
+            font-weight: bold;
+        }
+
+        .vm-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: auto;
+        }
+
+        .btn-provision {
+            flex: 1;
+        }
+
+        .orb {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #334155;
+            display: inline-block;
+        }
+
+        /* --- INLINE VDI WORKSPACE CSS --- */
+        .workspace-mode .dashboard-grid.grid-4 {
+            display: none;
+        }
+
+        .workspace-mode .page-header {
+            display: none;
+        }
+
+        .workspace-mode .top-bar {
+            display: none;
+        }
+
+        .workspace-mode .vm-card>div:first-child p,
+        .workspace-mode .vm-card>div:first-child .vm-specs {
+            display: none;
+        }
+
+        .workspace-mode .vm-card {
+            flex-direction: row;
+            align-items: center;
+            padding: 10px 15px;
+            height: auto;
+            margin-bottom: 0;
+        }
+
+        .workspace-mode .vm-icon-wrapper {
+            margin-bottom: 0;
+            margin-right: 15px;
+            font-size: 1.5rem;
+        }
+
+        .workspace-mode .vm-actions {
+            margin-top: 0;
+            margin-left: auto;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .workspace-mode .vm-card h3 {
+            font-size: 1rem;
+            margin: 0 !important;
+        }
+
+        .workspace-mode #vmGrid {
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        #vdiWorkspace {
+            display: none;
+            height: calc(100vh - 120px);
+            border: 1px solid var(--accent-primary);
+            border-radius: 8px;
+            background: #000;
+            position: relative;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            overflow: hidden;
+        }
+
+        .workspace-mode #vdiWorkspace {
+            display: block;
+            animation: slideUp 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .protocol-select {
+            background: rgba(0, 0, 0, 0.4);
+            color: var(--text-secondary);
+            border: 1px solid #334155;
+            padding: 8px 30px 8px 15px;
+            border-radius: 4px;
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            margin-right: 10px;
+            outline: none;
+            cursor: pointer;
+            appearance: none;
+            -webkit-appearance: none;
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 10px center;
+            background-size: 14px;
+            text-transform: uppercase;
+            transition: all 0.2s;
+        }
+
+        .protocol-select:hover {
+            border-color: var(--text-primary);
+            color: var(--text-primary);
+        }
+
+        .protocol-select:focus {
+            border-color: var(--accent-primary);
+            color: var(--accent-primary);
+            box-shadow: 0 0 8px rgba(164, 232, 46, 0.2);
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23a4e82e' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+        }
+
+        .protocol-select option {
+            background: #0b1015;
+            color: #fff;
+        }
+
+        .workspace-mode .protocol-select {
+            display: none;
+        }
+
+        #vdiFrame {
+            width: 100%;
+            height: 100%;
+            border: none;
+            position: relative;
+            z-index: 2;
+            background: transparent;
+        }
+
+        .vdi-toolbar {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            z-index: 10;
+            display: flex;
+            gap: 10px;
+        }
+
+        .vdi-overlay-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: var(--accent-primary);
+            font-family: var(--font-mono);
             text-align: center;
+            z-index: 1;
         }
     </style>
 </head>
 
 <body>
-
     <div class="app-container">
 
-        <!-- SIDEBAR -->
-        <!-- VOID NEON SIDEBAR (FROM GEO INTEL) -->
-        <!-- SIDEBAR -->
+        <!-- Sidebar -->
         <aside class="sidebar" id="sidebar">
             <div class="logo-area" onclick="document.getElementById('sidebar').classList.toggle('collapsed')">
                 <div class="logo-icon"></div>
                 <div class="logo-text">
                     <div class="logo-title">SHADOW TRUST</div>
-                    <div class="logo-sub">DECEPTION GRID // V1</div>
+                    <div class="logo-sub">DEFENSE GRID // V2</div>
                 </div>
                 <i class="fas fa-arrow-left toggle-btn"
                     style="margin-left: auto; cursor: pointer; color: #555; transition:0.3s;"></i>
             </div>
 
             <div class="nav-group">
-                <div class="nav-group-label">Mission Control</div>
-                <a href="dashboard.html" class="nav-item"><i class="fas fa-th-large"></i> <span class="nav-text">Threat
-                        Overview</span></a>
-                <a href="events.html" class="nav-item"><i class="fas fa-stream"></i> <span class="nav-text">Event
-                        Stream</span></a>
-                <a href="alerts.html" class="nav-item"><i class="fas fa-bell"></i> <span class="nav-text">Alerts &
-                        Findings</span></a>
+                <div class="nav-group-label">Command Center</div>
+                <a href="dashboard.html" class="nav-item"><i class="fas fa-th-large"></i> <span
+                        class="nav-text">Tactical Overview</span></a>
+                <a href="events.html" class="nav-item"><i class="fas fa-list-alt"></i> <span class="nav-text">Event
+                        Log</span></a>
             </div>
 
             <div class="nav-group">
@@ -103,27 +259,27 @@
 
             <div class="nav-group">
                 <div class="nav-group-label">Intelligence</div>
-                <a href="mitre.html" class="nav-item"><i class="fas fa-project-diagram"></i> <span
-                        class="nav-text">MITRE Matrix</span></a>
-                <a href="graphs.html" class="nav-item"><i class="fas fa-chart-pie"></i> <span class="nav-text">Analytics
-                        Graphs</span></a>
+                <a href="mitre.html" class="nav-item"><i class="fas fa-chess-board"></i> <span class="nav-text">MITRE
+                        Matrix</span></a>
+                <a href="graphs.html" class="nav-item"><i class="fas fa-chart-area"></i> <span class="nav-text">Attack
+                        Analytics</span></a>
                 <a href="credentials.html" class="nav-item"><i class="fas fa-key"></i> <span
                         class="nav-text">Credentials Vault</span></a>
-                <a href="behavior.html" class="nav-item"><i class="fas fa-fingerprint"></i> <span
-                        class="nav-text">Behaviour Profiling</span></a>
-                <a href="simulation.html" class="nav-item"><i class="fas fa-dragon"></i> <span class="nav-text">Attack
-                        Simulation</span></a>
+                <a href="behavior.html" class="nav-item"><i class="fas fa-user-secret"></i> <span
+                        class="nav-text">Behavior Profiling</span></a>
+                <a href="simulation.html" class="nav-item"><i class="fas fa-crosshairs"></i> <span
+                        class="nav-text">Attack Sim</span></a>
             </div>
 
             <div class="nav-group">
                 <div class="nav-group-label">Tools Suite</div>
-                <a href="malware.html" class="nav-item"><i class="fas fa-bug"></i> <span class="nav-text">Malware
-                        Sandbox</span></a>
+                <a href="malware.html" class="nav-item"><i class="fas fa-biohazard"></i> <span class="nav-text">Binary
+                        Analysis</span></a>
                 <a href="urlscan.html" class="nav-item"><i class="fas fa-search-location"></i> <span
                         class="nav-text">URL Scanner</span></a>
-                <a href="apk.html" class="nav-item"><i class="fas fa-mobile-alt"></i> <span class="nav-text">APK
-                        Analyzer</span></a>
-                <a href="vm_lab.html" class="nav-item active"><i class="fas fa-desktop"></i> <span
+                <a href="apk.html" class="nav-item"><i class="fas fa-mobile"></i> <span class="nav-text">APK
+                        Inspector</span></a>
+                <a href="vm_lab.html" class="nav-item active"><i class="fas fa-laptop-code"></i> <span
                         class="nav-text">Virtual Lab</span></a>
             </div>
 
@@ -131,196 +287,228 @@
                 <div class="nav-group-label">System</div>
                 <a href="admin.html" class="nav-item"><i class="fas fa-user-shield"></i> <span class="nav-text">Admin
                         Panel</span></a>
-                <a href="config.html" class="nav-item"><i class="fas fa-cog"></i> <span
-                        class="nav-text">Configuration</span></a>
-                <a href="profile.html" class="nav-item"><i class="fas fa-id-card"></i> <span
-                        class="nav-text">Profile</span></a>
-                <a href="#" class="nav-item" id="logoutBtn" style="color: #ff4444;"><i class="fas fa-sign-out-alt"></i>
-                    <span class="nav-text">Logout</span></a>
+                <a href="aws_connection.html" class="nav-item"><i class="fas fa-cloud"></i> <span class="nav-text">AWS
+                        Connection</span></a>
+                <a href="#" class="nav-item" id="logoutBtn" style="color: var(--accent-critical);"><i
+                        class="fas fa-sign-out-alt"></i> <span class="nav-text">Logout</span></a>
             </div>
 
             <div class="build-info">
-                <div>DEPLOYMENT: <span class="text-cyan">PROD-01</span></div>
-                <div>STATUS: <span class="text-green">ONLINE</span></div>
+                <div>UNIT: <span class="text-green">CYBER-01</span></div>
+                <div>SECURE: <span class="text-green">ENCRYPTED</span></div>
             </div>
         </aside>
 
+        <!-- Main Content -->
         <main class="main-content">
-
             <div class="top-bar">
                 <div class="page-header">
-                    <h2>Cyber Range Virtual Lab</h2>
+                    <h2>ORCHESTRATION HUB</h2>
                     <p>Deploy and manage isolated honeypot environments.</p>
                 </div>
                 <div class="filters-bar">
-                    <a href="admin_login.html" class="soc-btn"
-                        style="color:var(--neon-red); border-color:var(--neon-red);"><i class="fas fa-user-shield"></i>
-                        ADMIN PANEL</a>
-                    <button class="soc-btn soc-btn-primary"><i class="fas fa-plus"></i> Launch Instance</button>
+                    <button class="soc-btn" onclick="window.location.href='aws_connection.html'"><i
+                            class="fas fa-link"></i> AWS CONFIGURATION</button>
+                    <button class="soc-btn" onclick="window.location.href='admin_login.html'"><i
+                            class="fas fa-shield-alt"></i> ADMIN PANEL</button>
                 </div>
             </div>
 
-            <!-- ROW 1: RESOURCES & TOPOLOGY -->
-            <div class="dashboard-grid" style="grid-template-columns: 1fr 1fr 1fr;">
-
-                <div class="soc-card">
-                    <div class="soc-card-header"><span class="card-title">LAB RESOURCES</span></div>
-                    <div style="margin-top:20px;">
-                        <div style="display:flex; justify-content:space-between; font-size:0.8rem; color:#888;">
-                            <span>vCPU Allocation</span>
-                            <span class="text-white">12 / 20</span>
-                        </div>
-                        <div class="resource-bar-bg">
-                            <div class="resource-bar-fill" style="width:60%; background:var(--neon-cyan);"></div>
-                        </div>
-
-                        <div style="display:flex; justify-content:space-between; font-size:0.8rem; color:#888;">
-                            <span>Memory Usage</span>
-                            <span class="text-white">32 / 64 GB</span>
-                        </div>
-                        <div class="resource-bar-bg">
-                            <div class="resource-bar-fill" style="width:50%; background:var(--neon-purple);"></div>
-                        </div>
-
-                        <div style="display:flex; justify-content:space-between; font-size:0.8rem; color:#888;">
-                            <span>Storage (NVMe)</span>
-                            <span class="text-white">1.2 / 5 TB</span>
-                        </div>
-                        <div class="resource-bar-bg">
-                            <div class="resource-bar-fill" style="width:25%; background:var(--neon-pink);"></div>
-                        </div>
+            <!-- Global Cluster Statistics -->
+            <div class="dashboard-grid grid-4" style="margin-bottom: 2rem;">
+                <div class="soc-card metric-tile">
+                    <div class="metric-header">
+                        <span>UPLINK STATUS</span>
+                        <i class="fas fa-satellite-dish text-green"></i>
+                    </div>
+                    <div class="metric-value">ACTIVE</div>
+                    <div class="metric-sub text-green">ap-south-1a // 22ms latency</div>
+                </div>
+                <div class="soc-card metric-tile">
+                    <div class="metric-header">
+                        <span>COMPUTE CLUSTER</span>
+                        <i class="fas fa-microchip text-yellow"></i>
+                    </div>
+                    <div class="metric-value">0 / 32 <span style="font-size: 1rem; color: #666;">vCPU</span></div>
+                    <div style="background: rgba(255,255,255,0.05); height: 4px; border-radius: 2px; margin-top: 10px;">
+                        <div style="background: var(--accent-secondary); width: 5%; height: 100%;"></div>
                     </div>
                 </div>
-
-                <div class="soc-card">
-                    <div class="soc-card-header"><span class="card-title">NETWORK GATEWAY</span></div>
-                    <div style="margin-top:10px; text-align:center;">
-                        <div class="text-xl text-green" style="margin-bottom:5px;">ASIA-SOUTH1-A</div>
-                        <div class="text-xs text-muted">12ms Latency • Standard Tier</div>
-                        <div style="margin-top:20px; font-size:2rem;"><i class="fas fa-network-wired text-cyan"></i>
-                        </div>
+                <div class="soc-card metric-tile">
+                    <div class="metric-header">
+                        <span>MEMORY POOL</span>
+                        <i class="fas fa-memory text-red"></i>
+                    </div>
+                    <div class="metric-value">0 / 64 <span style="font-size: 1rem; color: #666;">GB</span></div>
+                    <div style="background: rgba(255,255,255,0.05); height: 4px; border-radius: 2px; margin-top: 10px;">
+                        <div style="background: var(--accent-critical); width: 2%; height: 100%;"></div>
                     </div>
                 </div>
-
-                <div class="soc-card">
-                    <div class="soc-card-header"><span class="card-title">ACTIVE DEPLOYMENTS</span></div>
-                    <div style="margin-top:10px; text-align:center;">
-                        <div class="text-xl text-white" style="margin-bottom:5px;">—</div>
-                        <div class="text-xs text-muted">Running Instances</div>
-                        <div style="margin-top:20px; font-size:2rem;"><i class="fas fa-server text-purple"></i></div>
+                <div class="soc-card metric-tile">
+                    <div class="metric-header">
+                        <span>ACTIVE INSTANCES</span>
+                        <i class="fas fa-server text-green"></i>
                     </div>
+                    <div class="metric-value text-green">0</div>
+                    <div class="metric-sub">0 isolated blocks running</div>
                 </div>
-
             </div>
 
-            <!-- ROW 2: ACTIVE VMS -->
-            <div
-                style="margin-bottom:1rem; margin-top:1rem; font-size:0.9rem; color:var(--text-muted); font-family:'JetBrains Mono';">
-                VIRTUAL MACHINES</div>
-            <div class="dashboard-grid" style="grid-template-columns: repeat(3, 1fr);">
+            <div class="page-header" style="margin-bottom: 1rem;">
+                <p>AVAILABLE TARGET PAYLOADS</p>
+            </div>
 
-                <!-- VM 1: Windows Default -->
-                <div class="soc-card" style="padding:0; overflow:hidden; display:flex; flex-direction:column;">
-                    <div
-                        style="padding:15px; border-bottom:1px solid #333; display:flex; justify-content:space-between; align-items:center;">
-                        <span style="font-weight:bold; color:var(--neon-cyan);"><i class="fab fa-windows"></i> Windows
-                            Default</span>
-                        <span class="badge" style="background:rgba(255,255,255,0.1); color:#aaa;">ami-win-base</span>
-                    </div>
-                    <div style="padding:15px; flex-grow:1; font-size:0.85rem; color:#888;">
-                        Standard Windows Server environment. Clean slate for baseline testing.
-                        <ul style="margin-top:10px; padding-left:20px;">
-                            <li>OS: Windows Server 2022</li>
-                            <li>Type: t3.medium</li>
-                        </ul>
-                        <div style="margin-top:15px; display:flex; align-items:center; gap:8px;">
-                            <span class="vm-status-dot stopped"></span>
-                            <span class="text-xs" style="color:var(--neon-pink);">STATUS: OFFLINE</span>
+            <div id="vmGrid" class="dashboard-grid grid-3">
+
+                <!-- Windows Baseline -->
+                <div class="soc-card vm-card">
+                    <div>
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                            <div class="vm-icon-wrapper"><i class="fab fa-windows"></i></div>
+                            <div style="text-align: right;">
+                                <div class="orb" id="dot_win_base"></div>
+                                <div
+                                    style="font-family: var(--font-mono); font-size: 0.65rem; color: var(--text-muted); margin-top: 5px;">
+                                    AMI-WIN-BASE</div>
+                            </div>
+                        </div>
+                        <h3 style="margin: 0; font-family: var(--font-heading); letter-spacing: 1px;">WINDOWS SERVER
+                            BASELINE</h3>
+                        <p
+                            style="color: var(--text-secondary); font-size: 0.85rem; line-height: 1.5; margin-top: 10px;">
+                            Standard un-configured Windows Server 2022 image. Represents a sterile corporate baseline
+                            environment.</p>
+
+                        <div class="vm-specs">
+                            <div style="margin-bottom: 8px;">Architecture <span>x86_64</span></div>
+                            <div style="margin-bottom: 8px;">Hardware <span>t3.medium</span></div>
+                            <div style="margin-bottom: 8px;">Firewall <span>Port 3389</span></div>
+                            <div>Protocol <span>RDP GUI</span></div>
                         </div>
                     </div>
-                    <div style="padding:15px; background:#050507; border-top:1px solid #333; display:flex; gap:10px;">
-                        <button id="create_win_base" class="soc-btn soc-btn-primary" style="flex:1; font-size:0.8rem;"
+
+                    <div class="vm-actions">
+                        <select id="protocol_win_base" class="protocol-select">
+                            <option value="rdp">RDP GUI</option>
+                            <option value="ssh">SSH CLI</option>
+                        </select>
+                        <button id="create_win_base" class="soc-btn soc-btn-primary btn-provision"
                             data-profile="win_base" onclick="window.vmClient.launchInstance('win_base', this)"><i
-                                class="fas fa-play"></i> CREATE</button>
-                        <button id="terminate_win_base" class="soc-btn"
-                            style="flex:1; font-size:0.8rem; color:var(--neon-pink); border-color:var(--neon-pink);"
+                                class="fas fa-bolt"></i> PROVISION</button>
+                        <button id="terminate_win_base" class="soc-btn soc-btn-danger" style="padding: 10px 15px;"
                             onclick="window.vmClient.terminateInstance('win_base', document.getElementById('create_win_base'), this)"><i
-                                class="fas fa-trash"></i> TERMINATE</button>
+                                class="fas fa-power-off"></i></button>
                     </div>
                 </div>
 
-                <!-- VM 2: Linux Default -->
-                <div class="soc-card" style="padding:0; overflow:hidden; display:flex; flex-direction:column;">
-                    <div
-                        style="padding:15px; border-bottom:1px solid #333; display:flex; justify-content:space-between; align-items:center;">
-                        <span style="font-weight:bold; color:var(--neon-purple);"><i class="fab fa-linux"></i> Linux
-                            Default</span>
-                        <span class="badge" style="background:rgba(255,255,255,0.1); color:#aaa;">ami-lin-base</span>
-                    </div>
-                    <div style="padding:15px; flex-grow:1; font-size:0.85rem; color:#888;">
-                        Standard Ubuntu Linux environment. Useful for generic network monitoring.
-                        <ul style="margin-top:10px; padding-left:20px;">
-                            <li>OS: Ubuntu 24.04 LTS</li>
-                            <li>Type: t3.micro</li>
-                        </ul>
-                        <div style="margin-top:15px; display:flex; align-items:center; gap:8px;">
-                            <span class="vm-status-dot stopped"></span>
-                            <span class="text-xs" style="color:var(--neon-pink);">STATUS: OFFLINE</span>
+                <!-- Linux Monitoring node -->
+                <div class="soc-card vm-card mod-lin">
+                    <div>
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                            <div class="vm-icon-wrapper"><i class="fab fa-linux"></i></div>
+                            <div style="text-align: right;">
+                                <div class="orb" id="dot_kali_base"></div>
+                                <div
+                                    style="font-family: var(--font-mono); font-size: 0.65rem; color: var(--text-muted); margin-top: 5px;">
+                                    AMI-LINUX-SEC</div>
+                            </div>
+                        </div>
+                        <h3 style="margin: 0; font-family: var(--font-heading); letter-spacing: 1px;">Kali Linux
+                            INTRANET
+                            NODE</h3>
+                        <p
+                            style="color: var(--text-secondary); font-size: 0.85rem; line-height: 1.5; margin-top: 10px;">
+                            Linux Ubuntu 24.04 LTS equipped with generic passive monitoring suites to capture broad
+                            network telemetry.</p>
+
+                        <div class="vm-specs">
+                            <div style="margin-bottom: 8px;">Architecture <span>x86_64</span></div>
+                            <div style="margin-bottom: 8px;">Hardware <span>t3.micro</span></div>
+                            <div style="margin-bottom: 8px;">Firewall <span>Port 22/3389</span></div>
+                            <div>Protocol <span>SSH / XRDP</span></div>
                         </div>
                     </div>
-                    <div style="padding:15px; background:#050507; border-top:1px solid #333; display:flex; gap:10px;">
-                        <button id="create_kali_base" class="soc-btn soc-btn-primary" style="flex:1; font-size:0.8rem;"
+
+                    <div class="vm-actions">
+                        <select id="protocol_kali_base" class="protocol-select">
+                            <option value="ssh">SSH CLI</option>
+                            <option value="rdp">RDP GUI</option>
+                        </select>
+                        <button id="create_kali_base" class="soc-btn soc-btn-primary btn-provision"
                             data-profile="kali_base" onclick="window.vmClient.launchInstance('kali_base', this)"><i
-                                class="fas fa-play"></i> CREATE</button>
-                        <button id="terminate_kali_base" class="soc-btn"
-                            style="flex:1; font-size:0.8rem; color:var(--neon-pink); border-color:var(--neon-pink);"
+                                class="fas fa-bolt"></i> PROVISION</button>
+                        <button id="terminate_kali_base" class="soc-btn soc-btn-danger" style="padding: 10px 15px;"
                             onclick="window.vmClient.terminateInstance('kali_base', document.getElementById('create_kali_base'), this)"><i
-                                class="fas fa-trash"></i> TERMINATE</button>
+                                class="fas fa-power-off"></i></button>
                     </div>
                 </div>
 
-                <!-- VM 3: Windows Sec Tools -->
-                <div class="soc-card"
-                    style="padding:0; overflow:hidden; display:flex; flex-direction:column; border-color:var(--neon-red);">
-                    <div
-                        style="padding:15px; border-bottom:1px solid var(--neon-red); display:flex; justify-content:space-between; align-items:center;">
-                        <span style="font-weight:bold; color:var(--neon-red);"><i class="fas fa-shield-virus"></i>
-                            Windows Security Toolkit</span>
-                        <span class="badge"
-                            style="background:rgba(255,0,0,0.2); color:var(--neon-red);">ami-win-sec</span>
-                    </div>
-                    <div style="padding:15px; flex-grow:1; font-size:0.85rem; color:#888;">
-                        Highly vulnerable Windows machine pre-loaded with Honeypot CLI (Cowrie, Dionaea, Telnet) &
-                        analysis tools.
-                        <ul style="margin-top:10px; padding-left:20px; color:#aaa;">
-                            <li>OS: Windows Server 2022</li>
-                            <li>Type: t3.large</li>
-                        </ul>
-                        <div style="margin-top:15px; display:flex; align-items:center; gap:8px;">
-                            <span class="vm-status-dot stopped"></span>
-                            <span class="text-xs" style="color:var(--neon-pink);">STATUS: OFFLINE</span>
+                <!-- Windows High Value Honeypot -->
+                <div class="soc-card vm-card mod-mal">
+                    <div>
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                            <div class="vm-icon-wrapper"><i class="fas fa-biohazard"></i></div>
+                            <div style="text-align: right;">
+                                <div class="orb" id="dot_win_malware"></div>
+                                <div
+                                    style="font-family: var(--font-mono); font-size: 0.65rem; color: var(--text-muted); margin-top: 5px;">
+                                    AMI-HONEY-MAX</div>
+                            </div>
+                        </div>
+                        <h3 style="margin: 0; font-family: var(--font-heading); letter-spacing: 1px;"> Windows Analysis
+                            Environment</h3>
+                        <p
+                            style="color: var(--text-secondary); font-size: 0.85rem; line-height: 1.5; margin-top: 10px;">
+                            Dangerously misconfigured Windows instance actively running Cowrie, Dionaea, and exposed
+                            vulnerable services.</p>
+
+                        <div class="vm-specs">
+                            <div style="margin-bottom: 8px;">Architecture <span>x86_64</span></div>
+                            <div style="margin-bottom: 8px;">Hardware <span>t3.large</span></div>
+                            <div style="margin-bottom: 8px;">Firewall <span>ANY / ANY</span></div>
+                            <div>Protocol <span>RDP GUI</span></div>
                         </div>
                     </div>
-                    <div style="padding:15px; background:#050507; border-top:1px solid #333; display:flex; gap:10px;">
-                        <button id="create_win_malware" class="soc-btn soc-btn-danger" style="flex:1; font-size:0.8rem;"
+
+                    <div class="vm-actions">
+                        <select id="protocol_win_malware" class="protocol-select">
+                            <option value="rdp">RDP GUI</option>
+                            <option value="ssh">SSH CLI</option>
+                        </select>
+                        <button id="create_win_malware" class="soc-btn soc-btn-primary btn-provision"
                             data-profile="win_malware" onclick="window.vmClient.launchInstance('win_malware', this)"><i
-                                class="fas fa-play"></i> CREATE</button>
-                        <button id="terminate_win_malware" class="soc-btn"
-                            style="flex:1; font-size:0.8rem; color:var(--neon-pink); border-color:var(--neon-pink);"
+                                class="fas fa-bolt"></i> PROVISION</button>
+                        <button id="terminate_win_malware" class="soc-btn soc-btn-danger" style="padding: 10px 15px;"
                             onclick="window.vmClient.terminateInstance('win_malware', document.getElementById('create_win_malware'), this)"><i
-                                class="fas fa-trash"></i> TERMINATE</button>
+                                class="fas fa-power-off"></i></button>
                     </div>
                 </div>
 
             </div>
 
-            <div class="soc-card" style="margin-top:20px; padding:0; display:flex; align-items:center;">
-                <div style="padding:30px; flex:1;">
-                    <div style="font-size:1.2rem; margin-bottom:10px;">—</div>
-                    <div class="text-muted text-sm">—</div>
+            <!-- VDI Inline Workspace -->
+            <div id="vdiWorkspace">
+                <div class="vdi-toolbar">
+                    <button class="soc-btn"
+                        style="padding: 8px 12px; background: rgba(0,0,0,0.5); border-color: var(--accent-primary);"
+                        onclick="window.vmClient.closeWorkspace()">
+                        <i class="fas fa-times"></i> MINIMIZE
+                    </button>
+                    <button class="soc-btn"
+                        style="padding: 8px 12px; background: rgba(0,0,0,0.5); border-color: var(--text-muted);"
+                        onclick="window.vmClient.toggleFullscreen()">
+                        <i class="fas fa-expand"></i> FULLSCREEN
+                    </button>
                 </div>
-                <div style="background:linear-gradient(90deg, transparent, rgba(0,0,0,0.8)); width:50%; height:100px;">
+
+                <div class="vdi-overlay-text" id="vdiLoaderText">
+                    <i class="fas fa-circle-notch fa-spin" style="font-size: 2rem; margin-bottom: 10px;"></i>
+                    <div>BOOTING VIRTUAL MACHINE...</div>
+                    <div style="font-size: 0.75rem; color: #666; margin-top: 5px;" id="vdiSubLoader">Negotiating
+                        cryptographic keys</div>
                 </div>
+
+                <iframe id="vdiFrame" allow="clipboard-read; clipboard-write; fullscreen"></iframe>
             </div>
 
         </main>

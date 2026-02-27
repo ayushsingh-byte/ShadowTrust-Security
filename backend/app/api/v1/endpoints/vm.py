@@ -27,7 +27,8 @@ async def launch_vm(request: VMLaunchRequest, background_tasks: BackgroundTasks)
         instance_type=request.instance_type,
         session_id=request.session_id,
         subnet_id=request.subnet_id,
-        iam_profile_name=request.iam_profile_name
+        iam_profile_name=request.iam_profile_name,
+        profile_id=request.profile_id
     )
     
     if result["status"] == "error":
@@ -56,7 +57,7 @@ async def terminate_vm(instance_id: str, request: VMTerminateRequest):
     # TODO: Update Supabase vm_instances table status to TERMINATED
     return VMResponse(status="success", instance_id=instance_id, message="Termination initiated")
 
-@router.get("/{instance_id}/status", response_model=Dict[str, Any])
+@router.post("/{instance_id}/status", response_model=Dict[str, Any])
 async def get_vm_status(instance_id: str, request: VMTerminateRequest):
     """Returns status of a specific VM instance."""
     orchestrator = AWSOrchestrator(

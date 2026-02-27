@@ -1,0 +1,32 @@
+version: '3'
+services:
+  guacd:
+    image: guacamole/guacd:latest
+    restart: always
+
+  guacamole_db:
+    image: postgres:15
+    restart: always
+    environment:
+      POSTGRES_USER: guacamole_user
+      POSTGRES_PASSWORD: guacamole_password
+      POSTGRES_DB: guacamole
+    volumes:
+      - ./init/initdb.sql:/docker-entrypoint-initdb.d/initdb.sql:ro
+    ports:
+      - "5432:5432"
+
+  guacamole:
+    image: guacamole/guacamole:latest
+    restart: always
+    ports:
+      - "8080:8080"
+    environment:
+      GUACD_HOSTNAME: guacd
+      POSTGRESQL_HOSTNAME: guacamole_db
+      POSTGRESQL_DATABASE: guacamole
+      POSTGRESQL_USER: guacamole_user
+      POSTGRESQL_PASSWORD: guacamole_password
+    depends_on:
+      - guacd
+      - guacamole_db

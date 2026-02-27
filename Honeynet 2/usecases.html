@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ShadowTrust - Use Cases</title>
+
+    <!-- Google Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <!-- AOS CSS for Animations -->
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+
+    <!-- Global Styles (from landing page) -->
+    <link rel="stylesheet" href="CSS/landingpage.css">
+    <!-- Specific Use Cases Styles -->
+    <link rel="stylesheet" href="CSS/usecases.css">
+</head>
+
+<body>
+
+    <div class="container">
+
+        <!-- NAVBAR -->
+        <nav>
+            <div class="logo">Shadow<span>Trust</span></div>
+            <ul>
+                <li><a href="landingpage.html">Home</a></li>
+                <li><a href="features.html">Features</a></li>
+                <li><a href="architecture.html">Architecture</a></li>
+                <li><a href="docs.html">Docs</a></li>
+                <li><a href="status.html">Status</a></li>
+                <li><a href="usecases.html" class="active-link">Use Cases</a></li>
+            </ul>
+            <a href="contact.html" class="btn">Contact Us</a>
+        </nav>
+
+        <!-- USE CASES HERO -->
+        <section class="usecases-hero" data-aos="fade-up">
+            <div class="usecases-hero-text">
+                <h1>Shadow Trust <span>Use Cases</span></h1>
+                <p>Explore how Shadow Trust enables advanced honeypot orchestration, attack telemetry collection, malware analysis, and real-time threat intelligence for diverse sectors and research environments.</p>
+            </div>
+            <img src="./usecases_hero.png" alt="Global Industry Threat Intelligence Visualization">
+        </section>
+
+        <!-- INDUSTRIES GRID -->
+        <section class="section" data-aos="fade-up">
+            <h2>Backend <span>Applications</span></h2>
+
+            <div class="industry-grid">
+
+                <!-- Financial Sector -->
+                <div class="industry-card" data-aos="zoom-in" data-aos-delay="100">
+                    <div class="industry-icon">🏦</div>
+                    <div class="industry-content">
+                        <h3>Cybersecurity Research Labs</h3>
+                        <p>Automate spawning of analysis VMs, collect honeypot telemetry, and reconstruct attack sessions for malware and threat research.</p>
+                        <ul class="benefit-list">
+                            <li>Ephemeral VM orchestration</li>
+                            <li>Session timeline reconstruction</li>
+                            <li>Malware sample collection</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Healthcare -->
+                <div class="industry-card" data-aos="zoom-in" data-aos-delay="200">
+                    <div class="industry-icon">🏥</div>
+                    <div class="industry-content">
+                        <h3>Enterprise SOC Teams</h3>
+                        <p>Deploy honeypot VMs, ingest attacker telemetry, and visualize threat intelligence in real-time dashboards for incident response and threat hunting.</p>
+                        <ul class="benefit-list">
+                            <li>Live honeypot telemetry</li>
+                            <li>Real-time dashboard streaming</li>
+                            <li>Automated VM lifecycle control</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- E-Commerce -->
+                <div class="industry-card" data-aos="zoom-in" data-aos-delay="300">
+                    <div class="industry-icon">🛒</div>
+                    <div class="industry-content">
+                        <h3>Academic & Demo Environments</h3>
+                        <p>Showcase live attack telemetry, session reconstruction, and malware analysis workflows for educational and demonstration purposes.</p>
+                        <ul class="benefit-list">
+                            <li>Live attack visualization</li>
+                            <li>Session timeline demo</li>
+                            <li>Malware pipeline showcase</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Government -->
+                <div class="industry-card" data-aos="zoom-in" data-aos-delay="400">
+                    <div class="industry-icon">🏛️</div>
+                    <div class="industry-content">
+                        <h3>Threat Intelligence Providers</h3>
+                        <p>Aggregate telemetry from global honeypots, automate malware collection, and provide actionable threat intelligence feeds to clients.</p>
+                        <ul class="benefit-list">
+                            <li>Global honeypot orchestration</li>
+                            <li>Automated sample pipeline</li>
+                            <li>Realtime threat feeds</li>
+                        </ul>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- CASE STUDY / TESTIMONIAL BANNER -->
+        <section class="case-study-banner" data-aos="fade-up">
+            <div class="banner-content">
+                <h2>Ready to secure your enterprise?</h2>
+                <p>"ShadowTrust reduced our incident response time from hours to seconds. Attempted breaches are
+                    neutralized before they even reach our production perimeter."</p>
+                <div class="author">
+                    <strong>Jane Doe</strong>
+                    <span>CISO, Global FinTech Corp</span>
+                </div>
+                <a href="contact.html" class="btn banner-btn">Request a Demo</a>
+            </div>
+        </section>
+
+    </div>
+
+    <footer>
+        © 2026 Shadow Trust Project. All Rights Reserved.
+    </footer>
+
+    <!-- AOS Animation Script Iteration -->
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script>
+        AOS.init({
+            duration: 800,
+            once: true,
+            offset: 100
+        });
+    </script>
+</body>
+
+</html>

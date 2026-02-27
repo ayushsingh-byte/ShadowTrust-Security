@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ShadowTrust - System Status</title>
+
+    <!-- Google Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <!-- AOS CSS for Animations -->
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+
+    <!-- Global Styles (from landing page) -->
+    <link rel="stylesheet" href="CSS/landingpage.css">
+    <!-- Specific Status Styles -->
+    <link rel="stylesheet" href="CSS/status.css">
+</head>
+
+<body>
+
+    <div class="container">
+
+        <!-- NAVBAR -->
+        <nav>
+            <div class="logo">Shadow<span>Trust</span></div>
+            <ul>
+                <li><a href="landingpage.html">Home</a></li>
+                <li><a href="features.html">Features</a></li>
+                <li><a href="architecture.html">Architecture</a></li>
+                <li><a href="docs.html">Docs</a></li>
+                <li><a href="status.html" class="active-link">Status</a></li>
+                <li><a href="usecases.html">Use Cases</a></li>
+            </ul>
+            <a href="contact.html" class="btn">Contact Us</a>
+        </nav>
+
+        <!-- STATUS HERO -->
+        <section class="status-hero" data-aos="fade-up">
+            <div class="status-hero-text">
+                <h1>Shadow Trust <span>Backend Status</span></h1>
+                <p>Live monitoring of backend modules, VM orchestration, telemetry ingestion, and analysis pipelines. All core services are operational and ready for research and threat intelligence workflows.</p>
+
+                <div class="overall-status operational">
+                    <span class="pulse-dot"></span>
+                    All Core Modules Operational
+                </div>
+            </div>
+            <img src="./status_hero.png" alt="System Status Dashboard Visualization">
+        </section>
+
+        <!-- SERVICE HEALTH GRID -->
+        <section class="section" data-aos="fade-up">
+            <h2>Backend Modules <span>Health</span></h2>
+            <div class="status-grid">
+                <div class="status-card">
+                    <div class="status-header">
+                        <h3>VM Orchestration Service</h3>
+                        <span class="status-badge success">Operational</span>
+                    </div>
+                    <div class="uptime-bar">
+                        <div class="uptime-fill" style="width: 100%;"></div>
+                    </div>
+                    <p class="uptime-text">99.99% Uptime (Last 30 Days)</p>
+                </div>
+                <div class="status-card">
+                    <div class="status-header">
+                        <h3>Telemetry Ingestion Layer</h3>
+                        <span class="status-badge success">Operational</span>
+                    </div>
+                    <div class="uptime-bar">
+                        <div class="uptime-fill" style="width: 100%;"></div>
+                    </div>
+                    <p class="uptime-text">100% Uptime (Last 30 Days)</p>
+                </div>
+                <div class="status-card">
+                    <div class="status-header">
+                        <h3>Malware Collection Pipeline</h3>
+                        <span class="status-badge success">Operational</span>
+                    </div>
+                    <div class="uptime-bar">
+                        <div class="uptime-fill" style="width: 100%;"></div>
+                    </div>
+                    <p class="uptime-text">100% Uptime (Last 30 Days)</p>
+                </div>
+                <div class="status-card">
+                    <div class="status-header">
+                        <h3>Analysis Orchestrator</h3>
+                        <span class="status-badge success">Operational</span>
+                    </div>
+                    <div class="uptime-bar">
+                        <div class="uptime-fill" style="width: 100%;"></div>
+                    </div>
+                    <p class="uptime-text">99.98% Uptime (Last 30 Days)</p>
+                </div>
+                <div class="status-card">
+                    <div class="status-header">
+                        <h3>Session Engine</h3>
+                        <span class="status-badge success">Operational</span>
+                    </div>
+                    <div class="uptime-bar">
+                        <div class="uptime-fill" style="width: 100%;"></div>
+                    </div>
+                    <p class="uptime-text">100% Uptime (Last 30 Days)</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- INCIDENT HISTORY -->
+        <section class="incident-history" data-aos="fade-up">
+            <h2>Incident <span>History</span></h2>
+            <div class="incident-list">
+                <div class="incident-item">
+                    <div class="incident-date">Feb 25, 2026</div>
+                    <div class="incident-details">
+                        <h4>Telemetry Ingestion Spike (AP-South)</h4>
+                        <p><strong>Resolved</strong> - High-frequency attack telemetry caused ingestion delays. Backend auto-scaled ingestion layer and restored normal operation within 12 minutes.</p>
+                    </div>
+                </div>
+                <div class="incident-item">
+                    <div class="incident-date">Feb 12, 2026</div>
+                    <div class="incident-details">
+                        <h4>Scheduled Maintenance: VM Orchestration Service</h4>
+                        <p><strong>Completed</strong> - Successfully upgraded orchestration logic for faster VM launches and improved session mapping. No downtime observed.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </div>
+
+    <footer>
+        © 2026 Shadow Trust Project. All Rights Reserved.
+    </footer>
+
+    <!-- AOS Animation Script Iteration -->
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script>
+        AOS.init({
+            duration: 800,
+            once: true,
+            offset: 100
+        });
+    </script>
+</body>
+
+</html>

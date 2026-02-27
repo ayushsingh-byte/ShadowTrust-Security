@@ -1,0 +1,15 @@
+INFO:     Will watch for changes in these directories: ['/Users/ayuahkumarsingh/Desktop/SOC-Honeynet copy 5/backend']
+ERROR:    [Errno 48] Address already in use
+INFO:     Will watch for changes in these directories: ['/Users/ayuahkumarsingh/Desktop/SOC-Honeynet copy 5/backend']
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+INFO:     Started reloader process [31782] using StatReload
+ERROR:    Error loading ASGI app. Could not import module "main".
+WARNING:  StatReload detected changes in 'app/api/v1/endpoints/labs.py'. Reloading...
+ERROR:    Error loading ASGI app. Could not import module "main".
+WARNING:  StatReload detected changes in 'app/services/session_manager.py'. Reloading...
+ERROR:    Error loading ASGI app. Could not import module "main".
+INFO:     Stopping reloader process [31782]
+INFO:     Will watch for changes in these directories: ['/Users/ayuahkumarsingh/Desktop/SOC-Honeynet copy 5/backend']
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+INFO:     Started reloader process [33128] using StatReload
+ERROR:    Error loading ASGI app. Could not import module "main".

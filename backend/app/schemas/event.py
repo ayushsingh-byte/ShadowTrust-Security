@@ -34,6 +34,7 @@ class VMLaunchRequest(AWSCredentialsSchema):
     subnet_id: str
     iam_profile_name: str
     session_id: str
+    profile_id: Optional[str] = "custom_vm"
 
 class VMTerminateRequest(AWSCredentialsSchema):
     pass

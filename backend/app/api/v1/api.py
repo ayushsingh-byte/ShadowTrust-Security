@@ -20,6 +20,9 @@ api_router.include_router(admin_router, prefix="/admin", tags=["admin"])
 from app.api.v1.endpoints.vm import router as vm_router
 api_router.include_router(vm_router, prefix="/vm", tags=["vm"])
 
+from app.api.v1.endpoints.labs import router as labs_router
+api_router.include_router(labs_router, prefix="/labs", tags=["labs"])
+
 from app.api.v1.endpoints.url_scan import router as url_scan_router
 api_router.include_router(url_scan_router, prefix="/url-scan", tags=["url-scan"])
 

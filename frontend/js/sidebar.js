@@ -57,7 +57,8 @@ document.addEventListener("DOMContentLoaded", function () {
             systemGroup.items.splice(1, 0,
                 { href: 'admin.html', icon: 'fa-user-shield', text: 'Admin Console' },
                 { href: 'aws_connection.html', icon: 'fa-cloud', text: 'AWS Connection' },
-                { href: 'config.html', icon: 'fa-cogs', text: 'Global Config' }
+                { href: 'config.html', icon: 'fa-cogs', text: 'Global Config' },
+                { href: 'debug.html', icon: 'fa-terminal', text: 'System Diagnostics' }
             );
         }
 
