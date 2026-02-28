@@ -84,36 +84,36 @@ class LabSessionManager:
         
         max_retries = 30
         retry_delay = 5 # seconds
-        private_ip = None
+        public_ip = None
         
-        # 1. Wait for EC2 to assign a Private IP and enter RUNNING state
+        # 1. Wait for EC2 to assign a Public IP and enter RUNNING state
         for _ in range(max_retries):
             try:
                 response = self.aws.ec2.describe_instances(InstanceIds=[instance_id])
                 instance = response['Reservations'][0]['Instances'][0]
                 state = instance['State']['Name']
                 
-                if state == 'running' and 'PrivateIpAddress' in instance:
-                    private_ip = instance['PrivateIpAddress']
+                if state == 'running' and 'PublicIpAddress' in instance:
+                    public_ip = instance['PublicIpAddress']
                     break
             except Exception as e:
                 logger.warning(f"Polling EC2 {instance_id} threw an error: {e}")
                 
             time.sleep(retry_delay)
             
-        if not private_ip:
-            logger.error(f"Lab {lab_id} failed to provision: Timeout waiting for Private IP.")
+        if not public_ip:
+            logger.error(f"Lab {lab_id} failed to provision: Timeout waiting for Public IP.")
             self._update_db_status(lab_id, "ERROR")
             return
             
-        logger.info(f"Lab {lab_id} assigned Private IP: {private_ip}. Creating Guacamole Connection...")
+        logger.info(f"Lab {lab_id} assigned Public IP: {public_ip}. Creating Guacamole Connection...")
         
         # Retrieve intended protocol from state mapping
         protocol = GLOBAL_LAB_STATE.get(lab_id, {}).get("protocol", "rdp")
         
         guac_id = self.guac.create_connection(
             lab_id=lab_id,
-            private_ip=private_ip,
+            private_ip=public_ip,
             protocol=protocol, 
             username="Administrator" if protocol == "rdp" else "root"
         )
@@ -127,14 +127,14 @@ class LabSessionManager:
         if lab_id in GLOBAL_LAB_STATE:
             GLOBAL_LAB_STATE[lab_id].update({
                 "status": "READY",
-                "private_ip": private_ip,
+                "private_ip": public_ip,
                 "guacamole_connection_id": guac_id
             })
             
         try:
             self.db.table("vm_instances").update({
                 "status": "READY",
-                "private_ip": private_ip,
+                "private_ip": public_ip,
                 # In a real schema we'd store guac_connection_id as well
             }).eq("id", lab_id).execute()
             

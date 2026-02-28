@@ -17,7 +17,7 @@
     /* Hover state */
 
     /* --- TACTICAL ACCENTS --- */
-    --accent-primary: #a4e82e;
+    --accent-primary: #00c6ff;
     /* Tactical Green (Success/Safe/Online) */
     --accent-secondary: #ffaa00;
     /* Amber (Warning/Caution) */
@@ -37,9 +37,9 @@
     /* Remap pink to red */
 
     /* --- UI ELEMENTS --- */
-    --border-dim: 1px solid rgba(164, 232, 46, 0.15);
+    --border-dim: 1px solid rgba(0, 198, 255, 0.15);
     /* Subtle Green Border */
-    --border-bright: 1px solid rgba(164, 232, 46, 0.6);
+    --border-bright: 1px solid rgba(0, 198, 255, 0.6);
     --border-critical: 1px solid rgba(255, 51, 51, 0.6);
 
     /* --- TEXT --- */
@@ -162,7 +162,7 @@ h6 {
 
 /* Buttons */
 .soc-btn {
-    background: rgba(164, 232, 46, 0.05);
+    background: rgba(0, 198, 255, 0.05);
     /* Very faint green bg */
     border: 1px solid var(--accent-primary);
     color: var(--accent-primary);
@@ -187,7 +187,7 @@ h6 {
     left: -100%;
     width: 100%;
     height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(164, 232, 46, 0.2), transparent);
+    background: linear-gradient(90deg, transparent, rgba(0, 198, 255, 0.2), transparent);
     transition: left 0.5s;
 }
 
@@ -199,7 +199,7 @@ h6 {
     background: var(--accent-primary);
     color: #0b1015;
     /* Contrast text on green */
-    box-shadow: 0 0 15px rgba(164, 232, 46, 0.4);
+    box-shadow: 0 0 15px rgba(0, 198, 255, 0.4);
 }
 
 .soc-btn-primary {
@@ -326,7 +326,7 @@ h6 {
 }
 
 .soc-table tr:hover {
-    background: rgba(164, 232, 46, 0.05);
+    background: rgba(0, 198, 255, 0.05);
     /* Slight green tint hover */
 }
 
@@ -346,7 +346,7 @@ h6 {
 .badge-green,
 .badge-blue {
     /* Map blue to green for this theme mostly */
-    background: rgba(164, 232, 46, 0.15);
+    background: rgba(0, 198, 255, 0.15);
     color: var(--accent-primary);
     border: 1px solid var(--accent-primary);
 }

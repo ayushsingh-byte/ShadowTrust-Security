@@ -30,7 +30,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: conic-gradient(from 0deg, transparent 0deg, rgba(164, 232, 46, 0.1) 60deg, transparent 60deg);
+            background: conic-gradient(from 0deg, transparent 0deg, rgba(0, 198, 255, 0.1) 60deg, transparent 60deg);
             border-radius: 50%;
             animation: radar-spin 4s linear infinite;
             pointer-events: none;
@@ -117,7 +117,7 @@
     <!-- Loading Overlay -->
     <div id="full-page-loading"
         style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(5, 10, 15, 0.8); z-index:9999; justify-content:center; align-items:center; flex-direction:column; backdrop-filter:blur(5px);">
-        <i class="fas fa-circle-notch fa-spin" style="font-size:3rem; color:#a4e82e; margin-bottom:15px;"></i>
+        <i class="fas fa-circle-notch fa-spin" style="font-size:3rem; color:#00c6ff; margin-bottom:15px;"></i>
         <div style="color:#ffffff; font-family:'JetBrains Mono', monospace; font-size:1.2rem;" class="animate-pulse">
             REFRESHING INTELLIGENCE GRID...</div>
     </div>
@@ -614,8 +614,8 @@
                 datasets: [{
                     label: 'Traffic Volume',
                     data: Array.from({ length: 60 }, () => 0),
-                    borderColor: '#a4e82e', // Green
-                    backgroundColor: 'rgba(164, 232, 46, 0.1)',
+                    borderColor: '#00c6ff', // Green
+                    backgroundColor: 'rgba(0, 198, 255, 0.1)',
                     borderWidth: 1,
                     fill: true,
                     pointRadius: 0,
@@ -799,7 +799,7 @@
                     div.style.paddingLeft = '8px';
 
                     const level = String(item.threat_level || 'LOW').toUpperCase();
-                    let levelColor = '#a4e82e';
+                    let levelColor = '#00c6ff';
                     if (level === 'MEDIUM') levelColor = '#ffaa00';
                     if (level === 'HIGH' || level === 'CRITICAL') levelColor = '#ff3333';
                     div.style.color = levelColor;
@@ -841,7 +841,7 @@
                 // Color Logic
                 let statusColor = 'text-green';
                 let dotClass = 'status-dot';
-                let cpuColor = '#a4e82e'; // Green
+                let cpuColor = '#00c6ff'; // Green
                 let iconClass = 'fa-server';
 
                 if (node.status === 'OFFLINE' || node.status === 'STOPPED') {
@@ -897,7 +897,7 @@
                 if (onlineCount < nodes.length) {
                     activeNodesTile.style.color = '#ffaa00'; // Amber warning
                 } else {
-                    activeNodesTile.style.color = '#a4e82e'; // Green
+                    activeNodesTile.style.color = '#00c6ff'; // Green
                 }
             }
         }
@@ -919,10 +919,10 @@
                 datasets: [{
                     label: 'TRAFFIC SIGNATURE',
                     data: [0, 0, 0, 0, 0, 0],
-                    backgroundColor: 'rgba(164, 232, 46, 0.2)', // Green fill
-                    borderColor: '#a4e82e', // Green line
+                    backgroundColor: 'rgba(0, 198, 255, 0.2)', // Green fill
+                    borderColor: '#00c6ff', // Green line
                     borderWidth: 2,
-                    pointBackgroundColor: '#a4e82e'
+                    pointBackgroundColor: '#00c6ff'
                 }, {
                     label: 'NORMAL PROFILE',
                     data: [0, 0, 0, 0, 0, 0],

@@ -146,7 +146,7 @@ body:has(.app-container) {
 }
 
 .nav-item.active {
-    background: rgba(164, 232, 46, 0.05);
+    background: rgba(0, 198, 255, 0.05);
     color: #fff;
     border-left: 3px solid var(--accent-primary);
 }
