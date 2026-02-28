@@ -1,42 +1,77 @@
+<div align="center">
+  <img src="frontend/hero_image.png" alt="Shadow Trust - SentinelHive" width="100%">
+  
+  # 🛡️ Shadow Trust - SentinelHive
+  
+  **A Complete, Modular Threat Intelligence & Honeypot Platform with AI-Based Attack Classification**
 
-# 🛡️ Shadow Trust - AI Powered Honeypot Platform
+</div>
 
-A complete, modular Threat Intelligence Platform with AI-based attack classification, built for a 45-day development cycle.
+---
 
-## 🚀 Architecture
-- **Backend**: Python FastAPI (Modular, Async)
-- **Database**: Supabase (PostgreSQL + Realtime)
-- **AI Engine**: Heuristic Rule-Based Classifier (Regex/Pattern Matching)
-- **Frontend**: HTML5, CSS3 (Neon UI), JavaScript (Vanilla)
-- **Honeypot**: Custom Python Log Collector (simulated or real)
+## 🌟 Overview
+Shadow Trust (SentinelHive) is a next-generation Threat Intelligence Platform designed with a **map-first, intelligence-driven approach**. It combines hybrid edge-to-cloud architecture, seamless global threat monitoring, and advanced analytics to give you unprecedented visibility into cyber attacks.
+
+<div align="center">
+  <img src="frontend/architecture_hero.png" alt="Architecture" width="100%">
+</div>
+
+## 🚀 Key Features
+
+<img src="frontend/features_hero.png" alt="Features" width="100%">
+
+- **AI Analysis & Classification**: Detects sophisticated SQLi, XSS, Brute Force, and anomalous payloads using heuristic rule-based classifiers and pattern matching.
+- **Hybrid Edge + Cloud Design**: Honeypots ingest telemetry locally via SQLite for offline reliability, syncing derived insights to Supabase Postgres.
+- **Role-Based Access Control (RBAC)**: Fine-grained permissions featuring Operative, Specialist, Overseer, and Admin roles.
+- **Global Threat Intelligence Map**: Real-time visual tracking of attack origins, floating metrics, and localized threat levels.
+- **Deep Integrations**: Includes built-in URL Analyzers, Hash ID tooling, and Secret Finders.
+
+## 💡 Usecases & Applications
+
+<img src="frontend/usecases_hero.png" alt="Usecases" width="100%">
+
+Whether you're operating a high-security SOC, researching zero-day exploits, or safeguarding business infrastructure, Shadow Trust delivers. Track brute force attempts in real-time or capture full attack payloads via decoy VMs.
+
+## 🛠️ Technology Stack & Architecture
+
+- **Backend / API**: Node.js & Python FastAPI (Hybrid/Modular Async Support)
+- **Database Layer**: Supabase (PostgreSQL + Realtime Sync) & SQLite (Edge Node Telemetry)
+- **Frontend Panel**: HTML5, Vanilla CSS3 (Neon UI, Map-First Matte Dark), Vanilla JS
+- **Honeypot Collector**: Custom Log Collector (real/simulated environments)
 
 ## 📂 Project Structure
-- `ai_engine/`: Attack classification logic and MITRE mapping.
-- `backend/`: FastAPI application (API routes, Auth, Models).
-- `frontend/`: Web Dashboard and Tools.
-- `vm_scripts/`: Python scripts for log collection on the honeypot VM.
-- `supabase/`: Database schema and setup SQL.
 
-## 🛠️ Setup Guide
+- `backend/` & `services/`: API applications, background workers, and sync logic.
+- `frontend/`: Map-first Web Dashboard, Intelligence overviews, and threat tools.
+- `database/` & `supabase/`: Local and cloud Database schema, migrations, and rules.
+- `edge/`: Edge node configurations and SQLite schemas.
+- `vm_scripts/` & `scripts/`: Remote monitoring scripts for decoy/honeypot environments.
+
+## 📚 API & Documentation
+
+<img src="frontend/docs_hero.png" alt="Documentation" width="100%">
+
+We enforce strict security boundaries. The frontend never accesses edge databases directly. All queries pass through the authenticated API with JWT verification, rate limiting, and audit logging.
+
+## ⚙️ Setup & Deployment Guide
 
 ### 1. Prerequisites
-- Python 3.9+
-- Supabase Account (Free Tier)
-- Gmail Account (for SMTP OTP) - *Optional config*
+- Python 3.9+ / Node.js 18+
+- Supabase Account (Free Tier works great)
 
-### 2. Database Setup (Supabase)
+### 2. Cloud Database (Supabase)
 1. Create a new project in Supabase.
-2. Go to the SQL Editor and run the script in `supabase/schema.sql`.
-3. Get your `SUPABASE_URL` and `SUPABASE_KEY` from Project Settings.
+2. Run the SQL schemas in `supabase/` to set up tables and RLS policies.
+3. Retrieve your `SUPABASE_URL` and `SUPABASE_KEY`.
 
-### 3. Backend Setup
+### 3. Backend API
 ```bash
 cd backend
 python3 -m venv venv
-source venv/bin/activate  # Windows: venv\Scripts\activate
+source venv/bin/activate
 pip install -r requirements.txt
 
-# Create .env file
+# Environment Setup
 echo "SUPABASE_URL=your_url" > .env
 echo "SUPABASE_KEY=your_key" >> .env
 echo "SECRET_KEY=your_jwt_secret" >> .env
@@ -44,24 +79,25 @@ echo "SECRET_KEY=your_jwt_secret" >> .env
 # Run Server
 uvicorn app.main:app --reload
 ```
+*(Note: If using the Node.js API from `services/api`, utilize `npm install` and `npm start` instead).*
 
-### 4. Frontend Setup
-- Open `frontend/index.html` or `frontend/login.html` in your browser.
-- Use a Live Server (VS Code Extension) for best experience.
-- Ensure `js/api.js` points to `http://localhost:8000/api/v1`.
+### 4. Frontend Configuration
+Ensure the API paths in `frontend/js/api.js` match your local or production backend environments. Open `frontend/login.html` to begin.
 
-### 5. AI & Honeypot Setup
-- Deploy `vm_scripts/log_collector.py` to your Linux VM.
-- Run it to start sending logs to the backend:
+### 5. Start the Edge Node
+Deploy `vm_scripts/log_collector.py` or the edge agent to your Linux VM to start collecting live telemetry.
 ```bash
 sudo python3 log_collector.py
 ```
 
-## 🔐 Default Credentials
-- **Super Admin**: Register via the signup page, then manually set `role='super_admin'` and `is_approved=TRUE` in Supabase `users` table.
+## 🔐 Authentication & Roles
+- **Super Admin Setup**: Register via the signup page. Manually update your user role to `super_admin` in the Supabase backend dashboard to unlock Overseer privileges.
 
-## 📝 Features
-- **AI Analysis**: Detects SQLi, XSS, Brute Force.
-- **RBAC**: Operative, Specialist, Overseer, Admin roles.
-- **Live Feed**: Real-time attack logs.
-- **Tools**: URL Analyzer, Hash ID, Secret Finder.
+## 📊 System Status
+
+<img src="frontend/status_hero.png" alt="Status" width="100%">
+
+With built-in health endpoints, continuous syncing, and offline edge tolerance, the Threat Intelligence Platform maintains constant vigilance even during network partitions.
+
+---
+*Built for the next generation of Cyber Intelligence Operations.*
