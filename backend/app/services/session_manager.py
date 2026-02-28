@@ -1,6 +1,8 @@
 import logging
 import uuid
 import time
+import json
+import os
 from typing import Dict, Any, Optional
 
 from app.services.aws_orchestrator import AWSOrchestrator
@@ -9,7 +11,25 @@ from app.db.supabase_client import get_supabase
 
 logger = logging.getLogger(__name__)
 
-GLOBAL_LAB_STATE = {}
+STATE_FILE = os.path.join(os.path.dirname(__file__), "..", "..", ".lab_state.json")
+
+def load_local_state():
+    if os.path.exists(STATE_FILE):
+        try:
+            with open(STATE_FILE, "r") as f:
+                return json.load(f)
+        except:
+            pass
+    return {}
+
+def save_local_state(state):
+    try:
+        with open(STATE_FILE, "w") as f:
+            json.dump(state, f)
+    except Exception as e:
+        logger.warning(f"Failed to save local state: {e}")
+
+GLOBAL_LAB_STATE = load_local_state()
 
 class LabSessionManager:
     """
@@ -54,8 +74,10 @@ class LabSessionManager:
             "instance_id": instance_id,
             "status": "PROVISIONING",
             "session_id": user_id,
-            "protocol": protocol
+            "protocol": protocol,
+            "profile_id": environment_type
         }
+        save_local_state(GLOBAL_LAB_STATE)
         
         try:
             self.db.table("vm_instances").insert({
@@ -106,16 +128,51 @@ class LabSessionManager:
             self._update_db_status(lab_id, "ERROR")
             return
             
-        logger.info(f"Lab {lab_id} assigned Public IP: {public_ip}. Creating Guacamole Connection...")
+        logger.info(f"Lab {lab_id} assigned Public IP: {public_ip}. Waiting for services to initialize...")
         
         # Retrieve intended protocol from state mapping
-        protocol = GLOBAL_LAB_STATE.get(lab_id, {}).get("protocol", "rdp")
+        state_data = GLOBAL_LAB_STATE.get(lab_id, {})
+        protocol = state_data.get("protocol", "rdp")
+        profile_id = state_data.get("profile_id", "")
+        target_port = 22 if protocol == "ssh" else 3389
+
+        # 2. Wait for the actual SSH/RDP port to open
+        import socket
+        port_open = False
+        for _ in range(40): # Wait up to ~200 seconds for boot
+            try:
+                with socket.create_connection((public_ip, target_port), timeout=3):
+                    port_open = True
+                    break
+            except (ConnectionRefusedError, TimeoutError, OSError):
+                time.sleep(5)
+                
+        if not port_open:
+            logger.error(f"Lab {lab_id} failed to provision: Timeout waiting for port {target_port} to open on {public_ip}.")
+            self._update_db_status(lab_id, "ERROR")
+            return
+            
+        logger.info(f"Port {target_port} on {public_ip} is open. Creating Guacamole Connection...")
+        
+        # Map user-provided credentials based on target environment
+        if "kali" in profile_id:
+            username = "kali"
+            password = "kali"
+        elif "malware" in profile_id:
+            username = "Administrator"
+            password = "N1oHa9gwwPqU8b?0E(K4Mv2&Y&iu&u85"
+        else:
+            # Baseline or fallback
+            username = "Administrator"
+            password = "2aA.XlugId5KDkwu!pc5!@UygmmVkvov"
         
         guac_id = self.guac.create_connection(
             lab_id=lab_id,
             private_ip=public_ip,
             protocol=protocol, 
-            username="Administrator" if protocol == "rdp" else "root"
+            port=str(target_port),
+            username=username,
+            password=password
         )
         
         if not guac_id:
@@ -130,6 +187,7 @@ class LabSessionManager:
                 "private_ip": public_ip,
                 "guacamole_connection_id": guac_id
             })
+            save_local_state(GLOBAL_LAB_STATE)
             
         try:
             self.db.table("vm_instances").update({
@@ -164,6 +222,7 @@ class LabSessionManager:
     def _update_db_status(self, lab_id: str, status: str):
         if lab_id in GLOBAL_LAB_STATE:
             GLOBAL_LAB_STATE[lab_id]["status"] = status
+            save_local_state(GLOBAL_LAB_STATE)
         try:
             self.db.table("vm_instances").update({"status": status}).eq("id", lab_id).execute()
         except:

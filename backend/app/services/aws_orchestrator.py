@@ -40,6 +40,32 @@ class AWSOrchestrator:
                 ]
             }
             
+            # Provide initialization scripts
+            if "linux" in profile_id or "kali" in profile_id:
+                user_data = '''#!/bin/bash
+# Force password authentication
+echo 'PasswordAuthentication yes' > /etc/ssh/sshd_config.d/99-force-password.conf
+sed -i 's/^PasswordAuthentication.*/PasswordAuthentication yes/g' /etc/ssh/sshd_config
+systemctl restart sshd || service ssh restart
+
+# Force the kali user password so Guacamole (or the user) can log in
+echo "kali:kali" | chpasswd
+
+# Fix the prominent XRDP Black Screen issue for Kali XFCE
+echo "xfce4-session" > /home/kali/.xsession
+chown kali:kali /home/kali/.xsession
+chmod +x /home/kali/.xsession
+
+# Prevent DBus session crashes in xrdp
+if [ -f /etc/xrdp/startwm.sh ]; then
+    sed -i '1s/^/unset DBUS_SESSION_BUS_ADDRESS\\nunset XDG_RUNTIME_DIR\\n/' /etc/xrdp/startwm.sh
+    systemctl restart xrdp
+fi
+'''
+                import base64
+                encoded_user_data = base64.b64encode(user_data.encode('utf-8')).decode('utf-8')
+                kwargs['UserData'] = encoded_user_data
+            
             # Optional: Allow VMs to boot without an attached IAM profile
             if iam_profile_name and iam_profile_name.strip():
                 kwargs['IamInstanceProfile'] = {'Name': iam_profile_name.strip()}
