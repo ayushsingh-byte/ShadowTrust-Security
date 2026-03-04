@@ -284,10 +284,6 @@
                         <div class="text-mono" id="clock" style="font-size:1.1rem; color:#fff; font-weight:700;">
                             00:00:00</div>
                     </div>
-                    <button id="btn-refresh-intel" class="soc-btn soc-btn-primary"><i class="fas fa-sync-alt"></i>
-                        REFRESH INTEL</button>
-                    <button id="btn-lockdown" class="soc-btn soc-btn-danger"><i class="fas fa-lock"></i>
-                        LOCKDOWN</button>
                 </div>
             </div>
 
@@ -299,8 +295,8 @@
                         <span>TOTAL EVENTS</span>
                         <i class="fas fa-bolt text-yellow"></i>
                     </div>
-                    <div id="totalScansValue" class="metric-value">0</div>
-                    <div id="totalScansSub" class="metric-sub text-green">APK Scans Logged</div>
+                    <div id="honeypotEventsValue" class="metric-value">0</div>
+                    <div id="honeypotEventsSub" class="metric-sub text-green">Honeypot Hits Logged</div>
                 </div>
 
                 <div class="soc-card metric-tile">
@@ -308,26 +304,26 @@
                         <span>UNIQUE ATTACKERS</span>
                         <i class="fas fa-globe text-cyan"></i>
                     </div>
-                    <div id="uniquePackagesValue" class="metric-value">0</div>
-                    <div id="uniquePackagesSub" class="metric-sub">Unique APK Packages</div>
+                    <div id="uniqueAttackersValue" class="metric-value">0</div>
+                    <div id="uniqueAttackersSub" class="metric-sub">Distinct Threat IPs</div>
                 </div>
 
                 <div class="soc-card metric-tile">
                     <div class="metric-header">
-                        <span>MALWARE CAPTURED</span>
+                        <span>UNIQUE PAYLOADS</span>
                         <i class="fas fa-bug text-red"></i>
                     </div>
-                    <div id="malwareCapturedCount" class="metric-value">1,042</div>
-                    <div id="malwareCapturedSub" class="metric-sub">Artifacts Secured</div>
+                    <div id="malwareCapturedCount" class="metric-value">0</div>
+                    <div id="malwareCapturedSub" class="metric-sub">Distict Artifacts Identified</div>
                 </div>
 
                 <div class="soc-card metric-tile">
                     <div class="metric-header">
-                        <span>SECURITY SCORE</span>
-                        <i class="fas fa-key text-green"></i>
+                        <span>SYSTEM INTEGRITY</span>
+                        <i class="fas fa-shield-alt text-green"></i>
                     </div>
-                    <div id="avgScoreValue" class="metric-value">0.0</div>
-                    <div id="avgScoreSub" class="metric-sub">Average APK Security Score</div>
+                    <div id="avgScoreValue" class="metric-value">SECURE</div>
+                    <div id="avgScoreSub" class="metric-sub">Core Systems Nominal</div>
                 </div>
 
                 <!-- ROW 1b -->
@@ -342,10 +338,10 @@
 
                 <div class="soc-card metric-tile">
                     <div class="metric-header">
-                        <span>BLACKLISTED IPs</span>
-                        <i class="fas fa-ban text-red"></i>
+                        <span>HIGH RISK ALERTS</span>
+                        <i class="fas fa-siren-on text-red"></i>
                     </div>
-                    <div id="criticalVulnCount" class="metric-value text-red">142</div>
+                    <div id="criticalVulnCount" class="metric-value text-red">0</div>
                     <div id="criticalVulnSub" class="metric-sub">Auto-Mitigation Active</div>
                 </div>
 
@@ -463,11 +459,11 @@
 
                 <div class="soc-card" style="height: 400px; display:flex; flex-direction:column; padding:0;">
                     <div class="soc-card-header" style="padding:15px;">
-                        <span class="card-title">APK ANALYSIS FEED</span>
+                        <span class="card-title">HONEYPOT LIVE FEED</span>
                         <span class="badge badge-blue animate-pulse">LIVE</span>
                     </div>
                     <div id="liveFeed"
-                        style="flex:1; overflow:hidden; background:rgba(0,0,0,0.2); padding:10px; font-family:'JetBrains Mono', monospace; font-size:0.75rem;">
+                        style="flex:1; overflow-y:auto; overflow-x:hidden; background:rgba(0,0,0,0.2); padding:10px; font-family:'JetBrains Mono', monospace; font-size:0.75rem;">
                         <!-- JS Feed -->
                     </div>
                 </div>
@@ -501,7 +497,7 @@
                 <!-- RECENT MALWARE -->
                 <div class="soc-card" style="padding:0;">
                     <div style="padding:10px 15px; border-bottom:1px solid #334155;">
-                        <span class="card-title">RECENT MALWARE ARTIFACTS</span>
+                        <span class="card-title">RECENT UNIQUE PAYLOADS</span>
                     </div>
                     <table class="terminal-table">
                         <thead>
@@ -602,12 +598,16 @@
         // Live Feed
         const feed = document.getElementById('liveFeed');
         if (feed) {
-            feed.innerHTML = `<div style="color:#64748b; padding:8px;">Waiting for APK scan events...</div>`;
+            feed.innerHTML = `<div style="color:#64748b; padding:8px;">Analyzing sensor matrix...</div>`;
         }
+
+        // Global Chart instances so we can update them dynamically
+        let trafficChartInstance = null;
+        let radarChartInstance = null;
 
         // Traffic Chart (Tactical Colors)
         const ctx = document.getElementById('trafficChart').getContext('2d');
-        new Chart(ctx, {
+        trafficChartInstance = new Chart(ctx, {
             type: 'line',
             data: {
                 labels: Array.from({ length: 60 }, (_, i) => i),
@@ -700,120 +700,136 @@
             }
         }
 
-        async function fetchApkStats() {
+        // Removed fetchApkStats() as requested to only show live honeypot telemetry
+
+        async function fetchHoneypotStats() {
             try {
-                const response = await fetch(`${API_BASE_URL}/malware/apk/stats`);
+                const response = await fetch(`${API_BASE_URL}/dashboard/stats`);
                 if (!response.ok) return;
 
                 const payload = await response.json();
                 const summary = payload.summary || {};
+                const recentLogs = payload.recent || [];
 
-                const totalScansValueEl = document.getElementById('totalScansValue');
-                const totalScansSubEl = document.getElementById('totalScansSub');
-                const uniquePackagesValueEl = document.getElementById('uniquePackagesValue');
-                const uniquePackagesSubEl = document.getElementById('uniquePackagesSub');
+                const honeypotEventsValueEl = document.getElementById('honeypotEventsValue');
+                const uniqueAttackersValueEl = document.getElementById('uniqueAttackersValue');
                 const malwareCapturedEl = document.getElementById('malwareCapturedCount');
-                const malwareSubEl = document.getElementById('malwareCapturedSub');
-                const avgScoreValueEl = document.getElementById('avgScoreValue');
-                const avgScoreSubEl = document.getElementById('avgScoreSub');
-                const criticalVulnEl = document.getElementById('criticalVulnCount');
-                const criticalVulnSubEl = document.getElementById('criticalVulnSub');
-                const luresEl = document.getElementById('luresTrippedValue');
-                const zeroDaysEl = document.getElementById('zeroDaysValue');
 
-                if (totalScansValueEl) {
-                    totalScansValueEl.textContent = formatCompactNumber(summary.total_scans || 0);
+                if (honeypotEventsValueEl) {
+                    honeypotEventsValueEl.textContent = formatCompactNumber(summary.total_attacks || 0);
                 }
-                if (totalScansSubEl) {
-                    totalScansSubEl.textContent = 'APK Scans Logged';
-                }
-
-                if (uniquePackagesValueEl) {
-                    uniquePackagesValueEl.textContent = formatCompactNumber(summary.unique_packages || 0);
-                }
-                if (uniquePackagesSubEl) {
-                    uniquePackagesSubEl.textContent = 'Unique APK Packages';
-                }
-
-                if (malwareCapturedEl) {
-                    malwareCapturedEl.textContent = formatCompactNumber(summary.malware_captured || 0);
-                }
-                if (malwareSubEl) {
-                    malwareSubEl.textContent = `${summary.total_scans || 0} APK Scans Logged`;
-                }
-
-                if (avgScoreValueEl) {
-                    avgScoreValueEl.textContent = `${Number(summary.avg_security_score || 0).toFixed(1)}`;
-                }
-                if (avgScoreSubEl) {
-                    avgScoreSubEl.textContent = 'Average APK Security Score';
-                }
-
-                if (criticalVulnEl) {
-                    criticalVulnEl.textContent = `${summary.critical_vulnerabilities || 0}`;
-                }
-                if (criticalVulnSubEl) {
-                    criticalVulnSubEl.textContent = 'Critical Findings from APK Analysis';
-                }
-
-                if (luresEl) {
-                    luresEl.textContent = `${summary.total_vulnerabilities || 0}`;
-                }
-
-                if (zeroDaysEl) {
-                    zeroDaysEl.textContent = `${summary.high_risk_scans || 0}`;
+                if (uniqueAttackersValueEl) {
+                    uniqueAttackersValueEl.textContent = formatCompactNumber(summary.unique_attackers || 0);
                 }
 
                 applyThreatLevel(summary.current_threat_level || 'LOW');
 
-                const latest = summary.latest;
-                if (latest && latest.app_name) {
-                    const lastDetectEl = document.getElementById('lastDetect');
-                    if (lastDetectEl) {
-                        lastDetectEl.textContent = `${latest.app_name} // ${latest.threat_level}`;
+                if (recentLogs.length > 0 && feed) {
+                    feed.innerHTML = '';
+                    recentLogs.forEach(item => {
+                        const div = document.createElement('div');
+                        div.style.marginBottom = '6px';
+                        div.style.borderLeft = '2px solid #334155';
+                        div.style.paddingLeft = '8px';
+
+                        const timeStr = item.timestamp ? new Date(item.timestamp).toLocaleTimeString() : '--:--:--';
+                        const ip = item.attacker_ip || 'UNKNOWN';
+                        const port = item.target_port || '0';
+                        const honeypot_type = item.honeypot_type || 'SYSTEM';
+
+                        div.innerHTML = `<span style="color:#00c6ff;">[${timeStr}]</span> <span style="color:#ffcc00;">[${honeypot_type}]</span> <span style="color:#ff3333">${ip}:${port}</span>`;
+                        feed.appendChild(div);
+                    });
+
+                    const latest = recentLogs[0];
+                    if (latest) {
+                        const lastDetectEl = document.getElementById('lastDetect');
+                        if (lastDetectEl) {
+                            lastDetectEl.textContent = `${latest.attacker_ip} // PT:${latest.target_port}`;
+                        }
                     }
                 }
-            } catch (error) {
-                console.error('Failed to fetch APK stats:', error);
-            }
-        }
 
-        async function fetchApkHistory() {
-            try {
-                const response = await fetch(`${API_BASE_URL}/malware/apk/history?limit=12`);
-                if (!response.ok || !feed) return;
-
-                const payload = await response.json();
-                const history = Array.isArray(payload.history) ? payload.history : [];
-
-                if (!history.length) {
-                    feed.innerHTML = `<div style="color:#64748b; padding:8px;">No APK scan records yet. Upload an APK from APK Inspector.</div>`;
-                    return;
+                // Update Traffic Volume Chart
+                if (payload.traffic_chart && trafficChartInstance) {
+                    trafficChartInstance.data.datasets[0].data = payload.traffic_chart.ssh || Array(60).fill(0); // primary line
+                    trafficChartInstance.data.datasets[1].data = payload.traffic_chart.malware || Array(60).fill(0); // secondary line
+                    trafficChartInstance.update();
                 }
 
-                feed.innerHTML = '';
-                history.forEach(item => {
-                    const div = document.createElement('div');
-                    div.style.marginBottom = '6px';
-                    div.style.borderLeft = '2px solid #334155';
-                    div.style.paddingLeft = '8px';
+                // Update Protocol Radar
+                if (payload.protocol_radar && radarChartInstance) {
+                    radarChartInstance.data.datasets[0].data = payload.protocol_radar;
+                    radarChartInstance.update();
+                }
 
-                    const level = String(item.threat_level || 'LOW').toUpperCase();
-                    let levelColor = '#00c6ff';
-                    if (level === 'MEDIUM') levelColor = '#ffaa00';
-                    if (level === 'HIGH' || level === 'CRITICAL') levelColor = '#ff3333';
-                    div.style.color = levelColor;
-                    div.style.borderLeftColor = levelColor;
+                // Update Top Attacker Networks Table (Using IPs)
+                const attackTableBody = document.querySelector('.dashboard-grid.grid-3 .soc-card:nth-child(1) tbody');
+                if (attackTableBody && payload.top_attackers) {
+                    attackTableBody.innerHTML = '';
+                    if (payload.top_attackers.length === 0) {
+                        attackTableBody.innerHTML = `<tr><td colspan="4" class="text-muted">No data yet</td></tr>`;
+                    } else {
+                        payload.top_attackers.forEach(a => {
+                            const riskColor = a.risk === 'HIGH' ? 'text-red' : 'text-yellow';
+                            attackTableBody.innerHTML += `
+                                <tr>
+                                    <td>${a.asn}</td>
+                                    <td>${a.org}</td>
+                                    <td>${a.hits}</td>
+                                    <td class="${riskColor}">${a.risk}</td>
+                                </tr>
+                            `;
+                        });
+                    }
+                }
 
-                    const timeStr = item.timestamp ? new Date(item.timestamp).toLocaleTimeString() : '--:--:--';
-                    const appName = item.app_name || item.filename || 'Unknown APK';
-                    const vulnCount = Number(item.vulnerabilities_count || 0);
+                // Update Exploit Vectors By Port Table
+                const exploitTableBody = document.querySelector('.dashboard-grid.grid-3 .soc-card:nth-child(3) tbody');
+                if (exploitTableBody && payload.top_vectors) {
+                    exploitTableBody.innerHTML = '';
+                    if (payload.top_vectors.length === 0) {
+                        exploitTableBody.innerHTML = `<tr><td colspan="4" class="text-muted">No data yet</td></tr>`;
+                    } else {
+                        payload.top_vectors.forEach(v => {
+                            exploitTableBody.innerHTML += `
+                                <tr>
+                                    <td class="text-cyan">${v.port}</td>
+                                    <td>${v.service}</td>
+                                    <td class="text-red">${v.threat}</td>
+                                    <td>${v.count}</td>
+                                </tr>
+                            `;
+                        });
+                    }
+                }
 
-                    div.innerHTML = `<span style="color:#64748b;">[${timeStr}]</span> [${level}] ${appName} // ${vulnCount} vulns`;
-                    feed.appendChild(div);
-                });
+                // Update Recent Malware Artifacts -> Recent Unique Payloads Table
+                const artifactsTableBody = document.querySelector('.dashboard-grid.grid-3 .soc-card:nth-child(2) tbody');
+                if (artifactsTableBody && payload.recent_artifacts) {
+                    artifactsTableBody.innerHTML = '';
+                    if (payload.recent_artifacts.length === 0) {
+                        artifactsTableBody.innerHTML = `<tr><td colspan="4" class="text-muted">No payload data</td></tr>`;
+                    } else {
+                        payload.recent_artifacts.forEach(r => {
+                            artifactsTableBody.innerHTML += `
+                                <tr>
+                                    <td class="text-muted text-xs">${r.hash}</td>
+                                    <td>${r.type}</td>
+                                    <td class="text-yellow">${r.sensor}</td>
+                                    <td class="text-green">${r.status}</td>
+                                </tr>
+                            `;
+                        });
+                    }
+
+                    if (malwareCapturedEl) {
+                        malwareCapturedEl.textContent = formatCompactNumber(payload.recent_artifacts.length || 0);
+                    }
+                }
+
             } catch (error) {
-                console.error('Failed to fetch APK history:', error);
+                console.error('Failed to fetch dashboard stats:', error);
             }
         }
 
@@ -905,14 +921,13 @@
         // Fetch initially and loop
         fetchNodes();
         setInterval(fetchNodes, 5000);
-        fetchApkStats();
-        setInterval(fetchApkStats, 10000);
-        fetchApkHistory();
-        setInterval(fetchApkHistory, 10000);
+
+        fetchHoneypotStats();
+        setInterval(fetchHoneypotStats, 10000);
 
         // Protocol Radar Chart (Tactical)
         const radarCtx = document.getElementById('protocolRadar').getContext('2d');
-        new Chart(radarCtx, {
+        radarChartInstance = new Chart(radarCtx, {
             type: 'radar',
             data: {
                 labels: ['SSH', 'HTTP', 'RDP', 'SMB', 'TELNET', 'FTP'],

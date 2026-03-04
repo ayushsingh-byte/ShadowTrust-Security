@@ -1,6 +1,7 @@
-
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
+from sqlalchemy.ext.asyncio import AsyncSession
+from app.db.sqlite_db import get_db
 from app.services.auth_service import auth_service
 
 router = APIRouter()
@@ -8,6 +9,7 @@ router = APIRouter()
 class UserRegister(BaseModel):
     email: str
     password: str
+    full_name: str = ""
 
 class UserLogin(BaseModel):
     email: str
@@ -18,13 +20,19 @@ class OTPVerify(BaseModel):
     otp: str
 
 @router.post("/register")
-def register(user_in: UserRegister):
-    return auth_service.register_user(user_in.email, user_in.password)
+async def register(user_in: UserRegister, db: AsyncSession = Depends(get_db)):
+    return await auth_service.register_user(db, user_in.email, user_in.password, user_in.full_name)
+
+from fastapi.security import OAuth2PasswordRequestForm
 
 @router.post("/login")
-def login(user_in: UserLogin):
-    return auth_service.login(user_in.email, user_in.password)
+async def login(form_data: OAuth2PasswordRequestForm = Depends(), db: AsyncSession = Depends(get_db)):
+    return await auth_service.login(db, form_data.username, form_data.password)
 
 @router.post("/verify-otp")
-def verify_otp(otp_in: OTPVerify):
-    return auth_service.verify_otp_and_token(otp_in.email, otp_in.otp)
+async def verify_otp(otp_in: OTPVerify, db: AsyncSession = Depends(get_db)):
+    return await auth_service.verify_otp_and_token(db, otp_in.email, otp_in.otp)
+
+@router.post("/dev-bypass")
+async def dev_bypass(db: AsyncSession = Depends(get_db)):
+    return await auth_service.dev_bypass_token(db)

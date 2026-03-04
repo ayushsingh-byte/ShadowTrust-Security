@@ -9,13 +9,17 @@ let accessLogs = [];
 document.addEventListener('DOMContentLoaded', async () => {
     // Load initial data
     await loadPendingUsers();
+    // Use an interval instead of just a load to keep logs fresh in UI
+    setInterval(loadPendingUsers, 15000);
 });
 
 // --- PENDING REQUESTS ---
 
 window.loadPendingUsers = async () => {
     try {
-        pendingUsers = await apiService.get('/users/pending');
+        const response = await apiService.get('/users/pending');
+        // SQLAlchemy FastAPI endpoints usually return the array directly.
+        pendingUsers = Array.isArray(response) ? response : (response.data || []);
         renderPendingUsers();
     } catch (error) {
         console.error("Failed to load pending users:", error);
@@ -33,13 +37,13 @@ function renderPendingUsers() {
 
     tbody.innerHTML = pendingUsers.map(user => `
         <tr>
-            <td class="text-mono text-muted">#${user.id}</td>
+            <td class="text-mono text-muted">#${String(user.id).substring(0, 8)}...</td>
             <td class="text-white font-weight-bold">${user.email}</td>
             <td>${user.first_name || '-'} ${user.last_name || ''}</td>
             <td><span class="badge badge-yellow">PENDING</span></td>
             <td>
-                <button class="soc-btn" style="padding:4px 8px; border-color:#00ff41; color:#00ff41;" onclick="openApproveModal(${user.id})"><i class="fas fa-check"></i> APPROVE</button>
-                <button class="soc-btn" style="padding:4px 8px; border-color:#ff0055; color:#ff0055;" onclick="openDenyModal(${user.id})"><i class="fas fa-times"></i> DENY</button>
+                <button class="soc-btn" style="padding:4px 8px; border-color:#00ff41; color:#00ff41;" onclick="openApproveModal('${user.id}')"><i class="fas fa-check"></i> APPROVE</button>
+                <button class="soc-btn" style="padding:4px 8px; border-color:#ff0055; color:#ff0055;" onclick="openDenyModal('${user.id}')"><i class="fas fa-times"></i> DENY</button>
             </td>
         </tr>
     `).join('');
@@ -61,7 +65,7 @@ window.submitApproval = async () => {
         await apiService.post(`/users/${id}/approve`, {
             role: role,
             clearance_level: parseInt(level),
-            admin_id: 1 // Mocking Admin ID for now
+            admin_id: "me" // Server will determine admin from JWT
         });
         alert('User Approved Successfully');
         document.getElementById('approveModal').style.display = 'none';
@@ -90,7 +94,7 @@ window.submitDenial = async () => {
     try {
         await apiService.post(`/users/${id}/deny`, {
             reason: reason,
-            admin_id: 1 // Mocking Admin ID
+            admin_id: "me" // Server will determine admin from JWT
         });
         alert('User Request Rejected');
         document.getElementById('denyModal').style.display = 'none';
@@ -105,7 +109,7 @@ window.submitDenial = async () => {
 window.loadLogs = async () => {
     try {
         const result = await apiService.get('/admin/logs/access');
-        // Handle Supabase response format (data vs direct array)
+        // Handle FastAPI response format (typically direct array)
         accessLogs = Array.isArray(result) ? result : (result.data || []);
         renderLogs();
     } catch (error) {
@@ -123,9 +127,8 @@ function renderLogs() {
     }
 
     tbody.innerHTML = accessLogs.map(log => {
-        // Safe access to nested join data if available, else Fallback
-        const adminEmail = log.admin ? log.admin.email : `Admin #${log.admin_id}`;
-        const targetEmail = log.target_user ? log.target_user.email : (log.target_user_id ? `User #${log.target_user_id}` : 'Deleted/Unknown');
+        const adminEmail = log.admin ? log.admin.email : `User ID: ${String(log.admin_id).substring(0, 6)}`;
+        const targetEmail = log.target_user ? log.target_user.email : (log.target_user_id ? `User ID: ${String(log.target_user_id).substring(0, 6)}` : 'Deleted/Unknown');
         const badgeColor = log.action === 'APPROVE' ? 'badge-green' : 'badge-red';
 
         return `

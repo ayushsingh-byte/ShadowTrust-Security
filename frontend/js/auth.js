@@ -1,10 +1,5 @@
-// Initialize Supabase Client
-const SUPABASE_URL = 'https://nghuctaefsoanxxujtpg.supabase.co';
-// Note: In a production environment with sensitive data, the Anon Key should be used on the frontend, not the Service Role key.
-// Using the provided key for the prototype connection.
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5naHVjdGFlZnNvYW54eHVqdHBnIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3MDcyODY2NCwiZXhwIjoyMDg2MzA0NjY0fQ.8JkbpyXTBMuOMIXskfPy8CVHjK_nBBUoFk-8CUhA5Eg';
-
-const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+// API Config
+const API_BASE = 'http://localhost:8000/api/v1';
 
 document.addEventListener('DOMContentLoaded', () => {
     const loginForm = document.getElementById('loginForm');
@@ -23,26 +18,62 @@ document.addEventListener('DOMContentLoaded', () => {
 
             try {
                 // Get email and password from standard DOM elements
-                // Assuming the first type="text" or "email" is email, and type="password" is password.
                 const inputs = loginForm.querySelectorAll('input');
-                let email = '';
+                let username = '';
                 let password = '';
 
                 inputs.forEach(input => {
                     if (input.type === 'email' || (input.type === 'text' && input.placeholder.toLowerCase().includes('email'))) {
-                        email = input.value;
+                        username = input.value;
                     }
                     if (input.type === 'password') {
                         password = input.value;
                     }
                 });
 
-                // Bypass Authentication
-                localStorage.setItem('access_token', 'mock_token');
-                localStorage.setItem('authToken', 'mock_token');
+                if (!username || !password) {
+                    throw new Error("Please fill out all required fields.");
+                }
 
-                // Explicitly strip admin flag on normal login
-                localStorage.removeItem('isAdmin');
+                // Call local backend login endpoint
+                const formData = new URLSearchParams();
+                formData.append('username', username);
+                formData.append('password', password);
+
+                const response = await fetch(`${API_BASE}/auth/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    const err = await response.json();
+                    throw new Error(err.detail || "Authentication Failed");
+                }
+
+                const data = await response.json();
+
+                // Save Token
+                localStorage.setItem('access_token', data.access_token);
+                localStorage.setItem('authToken', data.access_token);
+
+                // We can fetch user details right away to store admin status
+                const userResp = await fetch(`${API_BASE}/users/me`, {
+                    headers: {
+                        'Authorization': `Bearer ${data.access_token}`
+                    }
+                });
+
+                if (userResp.ok) {
+                    const userData = await userResp.json();
+                    if (userData.role === "SUPER_ADMIN" || userData.role === "ADMIN") {
+                        localStorage.setItem('isAdmin', 'true');
+                    } else {
+                        localStorage.removeItem('isAdmin');
+                    }
+                }
 
                 window.location.href = 'dashboard.html';
 
@@ -54,7 +85,40 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Handle Registration / OTP Flow
+    // Developer Bypass Login
+    const devBypassBtn = document.getElementById('devBypassBtn');
+    if (devBypassBtn) {
+        devBypassBtn.addEventListener('click', async () => {
+            const originalText = devBypassBtn.innerHTML;
+            devBypassBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Bypassing...';
+            devBypassBtn.style.opacity = '0.7';
+
+            try {
+                const response = await fetch(`${API_BASE}/auth/dev-bypass`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+
+                if (!response.ok) {
+                    throw new Error("Bypass Failed. Ensure backend is running.");
+                }
+
+                const data = await response.json();
+
+                localStorage.setItem('access_token', data.access_token);
+                localStorage.setItem('authToken', data.access_token);
+                localStorage.setItem('isAdmin', 'true');
+
+                window.location.href = 'dashboard.html';
+            } catch (error) {
+                alert("Developer Bypass Error: " + error.message);
+                devBypassBtn.innerHTML = originalText;
+                devBypassBtn.style.opacity = '1';
+            }
+        });
+    }
+
+    // Handle Registration Flow
     if (registerForm) {
         registerForm.addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -80,22 +144,31 @@ document.addEventListener('DOMContentLoaded', () => {
                     throw new Error("Please fill out all required fields.");
                 }
 
-                // Register with Supabase
-                const { data, error } = await supabaseClient.auth.signUp({
-                    email: email,
-                    password: password,
-                    options: {
-                        data: {
-                            full_name: fullName,
-                        }
-                    }
+                // Basic separation of full name into first/last
+                const nameParts = fullName.split(' ');
+                const firstName = nameParts[0] || '';
+                const lastName = nameParts.length > 1 ? nameParts.slice(1).join(' ') : '';
+
+                const response = await fetch(`${API_BASE}/auth/register`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        email: email,
+                        password: password,
+                        username: email, // Using email as username
+                        first_name: firstName,
+                        last_name: lastName
+                    })
                 });
 
-                if (error) {
-                    throw error;
+                if (!response.ok) {
+                    const err = await response.json();
+                    throw new Error(err.detail || "Registration Failed");
                 }
 
-                alert("Registration successful! Please check your email for the confirmation OPT/Link.");
+                alert("Registration successful! Please login.");
                 window.location.href = 'login.html';
 
             } catch (error) {
@@ -113,16 +186,33 @@ document.addEventListener('DOMContentLoaded', () => {
 async function checkAuthGuard() {
     // If not on login/register pages, enforce session existence
     const path = window.location.pathname;
-    if (!path.includes('login.html') && !path.includes('register.html') && !path.includes('index.html') && !path.endsWith('/')) {
-        const { data: { session } } = await supabaseClient.auth.getSession();
+    const isPublicPage = path.includes('login.html') || path.includes('register.html') || path.includes('index.html') || path.endsWith('/');
 
-        if (!session && !localStorage.getItem('access_token')) {
-            console.warn("No active Supabase session or fallback token found. Redirecting to login.");
+    if (!isPublicPage) {
+        const token = localStorage.getItem('access_token');
+
+        if (!token) {
+            console.warn("No active session found. Redirecting to login.");
             window.location.href = 'login.html';
-        } else if (session) {
-            // keep legacy token updated
-            localStorage.setItem('access_token', session.access_token);
-            localStorage.setItem('authToken', session.access_token);
+            return;
+        }
+
+        try {
+            // Verify token with backend
+            const response = await fetch(`${API_BASE}/users/me`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error("Invalid session");
+            }
+        } catch (e) {
+            console.warn("Session verification failed. Redirecting to login.");
+            localStorage.removeItem('access_token');
+            localStorage.removeItem('authToken');
+            window.location.href = 'login.html';
         }
     }
 }

@@ -10,10 +10,6 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
     ALGORITHM: str = "HS256"
 
-    # Supabase
-    SUPABASE_URL: str
-    SUPABASE_KEY: str
-
     # Email (Optional)
     MAIL_USERNAME: Optional[str] = None
     MAIL_PASSWORD: Optional[str] = None

@@ -4,7 +4,7 @@ from typing import List
 import uuid
 
 from app.schemas.event import RawEventSchema
-from app.models.sqlite_models import RawEventModel
+from app.models.all_models import RawEventModel
 from app.db.sqlite_db import get_db
 
 router = APIRouter()

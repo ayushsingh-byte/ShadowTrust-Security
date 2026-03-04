@@ -1,7 +1,12 @@
 from fastapi import APIRouter, HTTPException, BackgroundTasks, Depends
 from pydantic import BaseModel
 from typing import Dict, Any, Optional
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.future import select
 
+from app.db.sqlite_db import get_db, AsyncSessionLocal
+from app.models.all_models import User, VMInstance
+from app.api.v1.dependencies import get_current_active_user
 from app.services.session_manager import LabSessionManager
 
 router = APIRouter()
@@ -25,7 +30,11 @@ class LabResponse(BaseModel):
     message: str
 
 @router.post("/start", response_model=LabResponse)
-async def start_lab(request: LabStartRequest, background_tasks: BackgroundTasks):
+async def start_lab(
+    request: LabStartRequest, 
+    background_tasks: BackgroundTasks,
+    current_user: User = Depends(get_current_active_user)
+):
     """
     Initiates the AWS + Guacamole Lab provisioning sequence.
     Returns the lab_id immediately while the instance boots in the background.
@@ -38,7 +47,7 @@ async def start_lab(request: LabStartRequest, background_tasks: BackgroundTasks)
     
     try:
         # Immediately start EC2 and create 'provisioning' DB record
-        result = manager.start_lab_provisioning(
+        result = await manager.start_lab_provisioning(
             user_id=request.user_id,
             environment_type=request.environment_type,
             ami_id=request.ami_id,
@@ -69,7 +78,10 @@ class LabStopRequest(BaseModel):
     aws_secret_key: Optional[str] = None
 
 @router.post("/stop")
-async def stop_lab(request: LabStopRequest):
+async def stop_lab(
+    request: LabStopRequest,
+    current_user: User = Depends(get_current_active_user)
+):
     """
     Terminates the EC2 instance and removes the Guacamole connection geometry.
     """
@@ -80,7 +92,7 @@ async def stop_lab(request: LabStopRequest):
     )
     
     try:
-        success = manager.terminate_lab(
+        success = await manager.terminate_lab(
             lab_id=request.lab_id,
             instance_id=request.instance_id,
             guac_connection_id=request.guac_connection_id
@@ -94,14 +106,18 @@ async def stop_lab(request: LabStopRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/status/{lab_id}")
-async def get_lab_status(lab_id: str):
+async def get_lab_status(
+    lab_id: str,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
     """
-    Polls the Supabase database to track the async background worker.
+    Polls the local SQLite database to track the async background worker.
     Returns status: provisioning | ready | error | stopped
     """
     from app.services.session_manager import GLOBAL_LAB_STATE
     
-    # Check in-memory state first (Graceful degradation if Supabase DB is offline)
+    # Check in-memory state first (Graceful degradation)
     if lab_id in GLOBAL_LAB_STATE:
         record = GLOBAL_LAB_STATE[lab_id]
         current_status = record.get("status", "UNKNOWN").upper()
@@ -128,16 +144,14 @@ async def get_lab_status(lab_id: str):
             "auth_token": auth_token
         }
 
-    from app.db.supabase_client import get_supabase
-    db = get_supabase()
-    
+    # Query SQLite Fallback
     try:
-        res = db.table("vm_instances").select("*").eq("id", lab_id).execute()
-        if not res.data:
+        result = await db.execute(select(VMInstance).where(VMInstance.id == lab_id))
+        record = result.scalars().first()
+        if not record:
             return {"status": "NOT_FOUND", "message": "Lab session not found"}
             
-        record = res.data[0]
-        status = record.get("status", "unknown").upper()
+        status = record.status.upper() if record.status else "UNKNOWN"
         auth_token = None
         
         if status in ["READY", "RUNNING"]:
@@ -158,10 +172,9 @@ async def get_lab_status(lab_id: str):
         return {
             "status": status,
             "state": status.lower(),
-            "instance_id": record.get("instance_id"),
-            "guacamole_connection_id": record.get("guacamole_connection_id", "1"), # Mocked ID #1 if schema lacks column
+            "instance_id": record.instance_id,
+            "guacamole_connection_id": "1", # Mocked ID #1 if schema lacks column
             "auth_token": auth_token
         }
     except Exception as e:
-        # Fallback if Supabase project is paused or offline (DNS Error)
-        return {"status": "NOT_FOUND", "state": "unknown", "message": f"Database unreachable: {str(e)}"}
+        return {"status": "NOT_FOUND", "state": "unknown", "message": f"Database error: {str(e)}"}

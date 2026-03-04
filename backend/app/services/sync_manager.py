@@ -1,14 +1,15 @@
 import asyncio
+import uuid
 from sqlalchemy.future import select
 from sqlalchemy import update
 from app.db.sqlite_db import AsyncSessionLocal
-from app.models.sqlite_models import RawEventModel
-from app.db.supabase_client import supabase
+from app.models.all_models import RawEventModel, StructuredEvent
+from datetime import datetime
 
 class SyncManager:
     """
     Background worker that fetches PENDING events from local SQLite 
-    and batches them over to Supabase for dashboard visualization.
+    and batches them over into StructuredEvents (now also local).
     """
     BATCH_SIZE = 100
 
@@ -26,8 +27,8 @@ class SyncManager:
             if not pending_events:
                 return 0
 
-            # 2. Map formats to Supabase expectations
-            supabase_payload = []
+            # 2. Map formats to Structured events expectations
+            structured_payloads = []
             for evt in pending_events:
                 # Basic normalization
                 details = {
@@ -41,21 +42,21 @@ class SyncManager:
                     "attacker_ip": evt.attacker_ip
                 }
 
-                # Depending on the Session Engine, we might just pass raw_event_id 
-                # and let another worker correlate sessions.
-                supabase_payload.append({
-                    "raw_event_id": evt.id,
-                    "session_id": evt.session_id, # Can be null if not yet correlated
-                    "timestamp": evt.timestamp.isoformat(),
-                    "honeypot_type": evt.honeypot_type,
-                    "event_type": evt.event_type,
-                    "details": details
-                })
+                structured_payloads.append(
+                    StructuredEvent(
+                        id=str(uuid.uuid4()),
+                        raw_event_id=evt.id,
+                        session_id=evt.session_id, # Can be null if not yet correlated
+                        timestamp=evt.timestamp if evt.timestamp else datetime.utcnow(),
+                        honeypot_type=evt.honeypot_type,
+                        event_type=evt.event_type,
+                        details=details
+                    )
+                )
             
-            # 3. Push to Supabase
+            # 3. Push to SQLite Local Structured Events
             try:
-                # The python supabase client handles sync requests, we should wrap in executor if keeping pure async
-                response = supabase.table("structured_events").insert(supabase_payload).execute()
+                db.add_all(structured_payloads)
                 
                 # 4. Mark as SYNCED locally on success
                 ids_to_update = [evt.id for evt in pending_events]

@@ -13,3 +13,55 @@ INFO:     Will watch for changes in these directories: ['/Users/ayuahkumarsingh/
 INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
 INFO:     Started reloader process [33128] using StatReload
 ERROR:    Error loading ASGI app. Could not import module "main".
+INFO:     Will watch for changes in these directories: ['/Users/ayuahkumarsingh/Desktop/SOC-Honeynet copy 5/backend']
+ERROR:    [Errno 48] Address already in use
+INFO:     Will watch for changes in these directories: ['/Users/ayuahkumarsingh/Desktop/SOC-Honeynet copy 5/backend']
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+INFO:     Started reloader process [16531] using StatReload
+INFO:     Started server process [16604]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+Initializing Database...
+[SessionEngine] Found 1 new events for IP 192.168.1.100
+[SessionEngine] Found 2 new events for IP 119.23.44.11
+[SessionEngine] Found 1 new events for IP 45.10.10.2
+[SessionEngine] Found 1 new events for IP 192.168.1.100
+[SessionEngine] Found 2 new events for IP 119.23.44.11
+[SessionEngine] Found 1 new events for IP 45.10.10.2
+INFO:     127.0.0.1:58756 - "GET /api/v1/nodes/ HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:58766 - "OPTIONS /api/v1/users/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58766 - "GET /api/v1/users/ HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:58756 - "GET /api/v1/nodes/ HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:58756 - "GET /api/v1/nodes/ HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:58766 - "GET /api/v1/users/ HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:58766 - "OPTIONS /api/v1/vm/list HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58767 - "GET /api/v1/vm/list HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:58767 - "OPTIONS /api/v1/admin/settings HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58766 - "GET /api/v1/admin/settings HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:58836 - "OPTIONS /api/v1/auth/dev-bypass HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58836 - "POST /api/v1/auth/dev-bypass HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58836 - "GET /api/v1/nodes/ HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:58838 - "GET /api/v1/dashboard/stats HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58838 - "GET /api/v1/nodes/ HTTP/1.1" 401 Unauthorized
+[SessionEngine] Found 1 new events for IP 192.168.1.100
+[SessionEngine] Found 2 new events for IP 119.23.44.11
+[SessionEngine] Found 1 new events for IP 45.10.10.2
+[SessionEngine] Found 1 new events for IP 192.168.1.100
+[SessionEngine] Found 2 new events for IP 119.23.44.11
+[SessionEngine] Found 1 new events for IP 45.10.10.2
+INFO:     127.0.0.1:59437 - "POST /api/v1/labs/start HTTP/1.1" 200 OK
+Polling EC2 i-0f4a5740fc9703cd5 threw an error: An error occurred (InvalidInstanceID.NotFound) when calling the DescribeInstances operation: The instance ID 'i-0f4a5740fc9703cd5' does not exist
+INFO:     127.0.0.1:59437 - "OPTIONS /api/v1/labs/status/4847116f-54fc-4876-93d9-8884a504790a HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59437 - "GET /api/v1/labs/status/4847116f-54fc-4876-93d9-8884a504790a HTTP/1.1" 200 OK
+[SessionEngine] Found 1 new events for IP 192.168.1.100
+[SessionEngine] Found 2 new events for IP 119.23.44.11
+[SessionEngine] Found 1 new events for IP 45.10.10.2
+[SessionEngine] Found 1 new events for IP 192.168.1.100
+[SessionEngine] Found 2 new events for IP 119.23.44.11
+[SessionEngine] Found 1 new events for IP 45.10.10.2
+INFO:     127.0.0.1:59610 - "GET /api/v1/labs/status/4847116f-54fc-4876-93d9-8884a504790a HTTP/1.1" 200 OK
+[SessionEngine] Found 1 new events for IP 192.168.1.100
+[SessionEngine] Found 2 new events for IP 119.23.44.11
+[SessionEngine] Found 1 new events for IP 45.10.10.2
+INFO:     127.0.0.1:59624 - "OPTIONS /api/v1/labs/stop HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59624 - "POST /api/v1/labs/stop HTTP/1.1" 200 OK

@@ -1,26 +1,39 @@
 from fastapi import APIRouter, HTTPException, Depends
 from typing import Dict, Any
-from app.core.supabase import supabase
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.future import select
 import json
 import datetime
+
+from app.db.sqlite_db import get_db
+from app.models.all_models import User, Node, Event, SystemSettings, AccessLog
+from app.api.v1.dependencies import require_role
 
 router = APIRouter()
 
 @router.get("/backup")
-def system_backup():
+async def system_backup(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_role(["SUPER_ADMIN"]))
+):
     """Export all system data as JSON."""
     try:
         # Fetch all tables
-        users = supabase.table("users").select("*").execute()
-        nodes = supabase.table("nodes").select("*").execute()
-        logs = supabase.table("logs").select("*").limit(500).execute() # Limit to prevent timeout
+        result_users = await db.execute(select(User))
+        users = result_users.scalars().all()
+        
+        result_nodes = await db.execute(select(Node))
+        nodes = result_nodes.scalars().all()
+        
+        result_logs = await db.execute(select(Event).limit(500))
+        logs = result_logs.scalars().all()
         
         backup_data = {
             "timestamp": datetime.datetime.now().isoformat(),
-            "users": users.data,
-            "nodes": nodes.data,
-            "logs": logs.data,
-            "system_info": {"version": "v1.0", "deployment": "PROD-01"}
+            "users": [{"id": u.id, "email": u.email, "role": u.role} for u in users],
+            "nodes": [{"id": n.node_id, "name": n.name, "status": n.status} for n in nodes],
+            "logs": [{"id": l.id, "type": l.type, "timestamp": str(l.timestamp)} for l in logs],
+            "system_info": {"version": "v1.0", "deployment": "PROD-01 (SQLite)"}
         }
         
         return backup_data
@@ -28,13 +41,16 @@ def system_backup():
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/settings")
-def get_settings():
+async def get_settings(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_role(["SUPER_ADMIN", "OVERSEER"]))
+):
     """Get System Settings."""
     try:
-        # Fetch sector settings
-        settings = supabase.table("system_settings").select("*").eq("key", "sector_control").execute()
-        if settings.data:
-            return json.loads(settings.data[0]['value'])
+        result = await db.execute(select(SystemSettings).where(SystemSettings.key == "sector_control"))
+        settings = result.scalars().first()
+        if settings:
+            return settings.value
         
         # Default settings if none exist
         return {
@@ -47,38 +63,56 @@ def get_settings():
         return {}
 
 @router.post("/settings")
-def update_settings(settings: Dict[str, Any]):
+async def update_settings(
+    settings_data: Dict[str, Any],
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_role(["SUPER_ADMIN"]))
+):
     """Update System Settings."""
     try:
-        # Save to 'system_settings' table
-        data = {
-            "key": "sector_control",
-            "value": json.dumps(settings),
-            "updated_at": datetime.datetime.now().isoformat()
-        }
+        result = await db.execute(select(SystemSettings).where(SystemSettings.key == "sector_control"))
+        settings = result.scalars().first()
         
-        # Upsert (Insert or Update)
-        result = supabase.table("system_settings").upsert(data).execute()
-        return {"status": "updated", "data": result.data}
+        if settings:
+            settings.value = settings_data
+            settings.updated_at = datetime.datetime.utcnow()
+        else:
+            settings = SystemSettings(
+                key="sector_control",
+                value=settings_data
+            )
+            db.add(settings)
+            
+        await db.commit()
+        return {"status": "updated", "data": settings_data}
     except Exception as e:
+        await db.rollback()
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/reset")
-def reset_settings():
+async def reset_settings(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_role(["SUPER_ADMIN"]))
+):
     """Reset to defaults."""
     try:
-        supabase.table("system_settings").delete().eq("key", "sector_control").execute()
+        result = await db.execute(select(SystemSettings).where(SystemSettings.key == "sector_control"))
+        settings = result.scalars().first()
+        if settings:
+            await db.delete(settings)
+            await db.commit()
         return {"status": "reset", "message": "System settings restored to default."}
     except Exception as e:
+        await db.rollback()
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/health")
-def system_health():
+async def system_health(db: AsyncSession = Depends(get_db)):
     """Check system health status."""
     try:
          # Check DB connection
         try:
-             supabase.table("users").select("count", count="exact").limit(1).execute()
+             await db.execute(select(User).limit(1))
              db_status = "ONLINE"
         except:
              db_status = "UNREACHABLE"
@@ -86,7 +120,7 @@ def system_health():
         return {
             "status": "HEALTHY" if db_status == "ONLINE" else "DEGRADED",
             "database": db_status,
-            "api_version": "v1.0",
+            "api_version": "v1.0 (SQLite)",
             "timestamp": datetime.datetime.now().isoformat(),
             "services": {
                 "auth": "ONLINE",
@@ -98,21 +132,31 @@ def system_health():
         return {"status": "CRITICAL", "error": str(e)}
 
 @router.get("/logs/access")
-def get_access_logs():
+async def get_access_logs(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_role(["SUPER_ADMIN", "AUDITOR"]))
+):
     """Get Access Control Logs."""
     try:
-        # Fetch logs with admin and target user details
-        # Note: Supabase syntax for foreign key joins might vary based on client version.
-        # Assuming standard PostgREST syntax: select=*,admin:users!admin_id(email),target_user:users!target_user_id(email)
-        # If that fails, we fallback to just fetching logs.
+        # We query the AccessLog model directly.
+        # SQLAlchemy handles the join if we configure relationship access,
+        # but for simple serialization we can just return properties.
+        result = await db.execute(select(AccessLog).order_by(AccessLog.timestamp.desc()).limit(100))
+        logs = result.scalars().all()
         
-        try:
-            response = supabase.table("access_logs").select("*, admin:users!admin_id(email), target_user:users!target_user_id(email)").order("timestamp", desc=True).limit(100).execute()
-            return response.data
-        except:
-             # Fallback if join syntax issues
-             response = supabase.table("access_logs").select("*").order("timestamp", desc=True).limit(100).execute()
-             return response.data
+        fmt_logs = []
+        for l in logs:
+            fmt_logs.append({
+                "id": str(l.id),
+                "admin_id": l.admin_id,
+                "target_user_id": l.target_user_id,
+                "action": l.action,
+                "details": l.details,
+                "timestamp": str(l.timestamp)
+            })
+            
+        return fmt_logs
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+

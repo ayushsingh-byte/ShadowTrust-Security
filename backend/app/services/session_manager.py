@@ -3,11 +3,14 @@ import uuid
 import time
 import json
 import os
+import asyncio
 from typing import Dict, Any, Optional
 
 from app.services.aws_orchestrator import AWSOrchestrator
 from app.services.guacamole_service import GuacamoleService
-from app.db.supabase_client import get_supabase
+from app.db.sqlite_db import AsyncSessionLocal
+from app.models.all_models import VMInstance
+from sqlalchemy.future import select
 
 logger = logging.getLogger(__name__)
 
@@ -42,9 +45,8 @@ class LabSessionManager:
             aws_secret_key=aws_secret_key
         )
         self.guac = GuacamoleService()
-        self.db = get_supabase()
 
-    def start_lab_provisioning(self, user_id: str, environment_type: str, ami_id: str, instance_type: str, subnet_id: str, security_group_id: str = None, protocol: str = "rdp") -> Dict[str, Any]:
+    async def start_lab_provisioning(self, user_id: str, environment_type: str, ami_id: str, instance_type: str, subnet_id: str, security_group_id: str = None, protocol: str = "rdp") -> Dict[str, Any]:
         """
         Initiates the EC2 launch sequence immediately and creates a provisioning database record.
         Returns the lab_id to the frontend.
@@ -68,7 +70,7 @@ class LabSessionManager:
             
         instance_id = launch_res["instance_id"]
         
-        # 2. Record initial 'provisioning' state in memory and Supabase DB
+        # 2. Record initial 'provisioning' state in memory and SQLite DB
         GLOBAL_LAB_STATE[lab_id] = {
             "id": lab_id,
             "instance_id": instance_id,
@@ -80,12 +82,15 @@ class LabSessionManager:
         save_local_state(GLOBAL_LAB_STATE)
         
         try:
-            self.db.table("vm_instances").insert({
-                "id": lab_id,
-                "instance_id": instance_id,
-                "status": "PROVISIONING",
-                "session_id": user_id # Map user
-            }).execute()
+            async with AsyncSessionLocal() as session:
+                new_vm = VMInstance(
+                    id=lab_id,
+                    instance_id=instance_id,
+                    status="PROVISIONING",
+                    session_id=user_id
+                )
+                session.add(new_vm)
+                await session.commit()
         except Exception as e:
             logger.warning(f"Failed to insert DB record for lab {lab_id}, but EC2 is live: {e}")
             
@@ -96,7 +101,7 @@ class LabSessionManager:
             "message": "Provisioning started in background."
         }
 
-    def process_lab_readiness(self, lab_id: str, instance_id: str):
+    async def process_lab_readiness(self, lab_id: str, instance_id: str):
         """
         Background Worker Function.
         Polls AWS until the instance is fully booted, extracts the private IP,
@@ -125,7 +130,7 @@ class LabSessionManager:
             
         if not public_ip:
             logger.error(f"Lab {lab_id} failed to provision: Timeout waiting for Public IP.")
-            self._update_db_status(lab_id, "ERROR")
+            await self._update_db_status(lab_id, "ERROR")
             return
             
         logger.info(f"Lab {lab_id} assigned Public IP: {public_ip}. Waiting for services to initialize...")
@@ -149,7 +154,7 @@ class LabSessionManager:
                 
         if not port_open:
             logger.error(f"Lab {lab_id} failed to provision: Timeout waiting for port {target_port} to open on {public_ip}.")
-            self._update_db_status(lab_id, "ERROR")
+            await self._update_db_status(lab_id, "ERROR")
             return
             
         logger.info(f"Port {target_port} on {public_ip} is open. Creating Guacamole Connection...")
@@ -177,7 +182,7 @@ class LabSessionManager:
         
         if not guac_id:
             logger.error(f"Lab {lab_id} failed to provision: Guacamole DB error.")
-            self._update_db_status(lab_id, "ERROR")
+            await self._update_db_status(lab_id, "ERROR")
             return
             
         # 3. Transition to READY
@@ -190,21 +195,23 @@ class LabSessionManager:
             save_local_state(GLOBAL_LAB_STATE)
             
         try:
-            self.db.table("vm_instances").update({
-                "status": "READY",
-                "private_ip": public_ip,
-                # In a real schema we'd store guac_connection_id as well
-            }).eq("id", lab_id).execute()
+            async with AsyncSessionLocal() as session:
+                result = await session.execute(select(VMInstance).where(VMInstance.id == lab_id))
+                vm = result.scalars().first()
+                if vm:
+                    vm.status = "READY"
+                    vm.private_ip = public_ip
+                    await session.commit()
             
             logger.info(f"Lab {lab_id} completely provisioned. Ready for Guacamole connection #{guac_id}.")
         except Exception as e:
             logger.error(f"Failed to update DB for lab {lab_id}: {e}")
 
-    def terminate_lab(self, lab_id: str, instance_id: str, guac_connection_id: Optional[int] = None):
+    async def terminate_lab(self, lab_id: str, instance_id: str, guac_connection_id: Optional[int] = None):
         """
         Shuts down the entire lab: AWS EC2 termination + Guacamole cleanup.
         """
-        self._update_db_status(lab_id, "STOPPING")
+        await self._update_db_status(lab_id, "STOPPING")
         
         # 1. Clean up Guacamole
         if guac_connection_id:
@@ -213,17 +220,22 @@ class LabSessionManager:
         # 2. Terminate EC2
         success = self.aws.terminate_vm(instance_id)
         if success:
-            self._update_db_status(lab_id, "TERMINATED")
+            await self._update_db_status(lab_id, "TERMINATED")
         else:
-            self._update_db_status(lab_id, "ERROR")
+           await self._update_db_status(lab_id, "ERROR")
             
         return success
 
-    def _update_db_status(self, lab_id: str, status: str):
+    async def _update_db_status(self, lab_id: str, status: str):
         if lab_id in GLOBAL_LAB_STATE:
             GLOBAL_LAB_STATE[lab_id]["status"] = status
             save_local_state(GLOBAL_LAB_STATE)
         try:
-            self.db.table("vm_instances").update({"status": status}).eq("id", lab_id).execute()
+            async with AsyncSessionLocal() as session:
+                result = await session.execute(select(VMInstance).where(VMInstance.id == lab_id))
+                vm = result.scalars().first()
+                if vm:
+                    vm.status = status
+                    await session.commit()
         except:
             pass

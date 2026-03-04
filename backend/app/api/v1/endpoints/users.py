@@ -1,9 +1,13 @@
 from fastapi import APIRouter, HTTPException, Depends
 from typing import List, Optional
 from pydantic import BaseModel
-from app.core.supabase import supabase
-from app.services.auth_service import AuthService
-# reusing the existing service for password hashing if available, or implementing basic hash here
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.future import select
+
+from app.db.sqlite_db import get_db
+from app.models.all_models import User, AccessLog
+from app.services.auth_service import get_password_hash
+from app.api.v1.dependencies import get_current_active_user, require_role, require_clearance
 
 router = APIRouter()
 
@@ -24,88 +28,159 @@ class UserUpdate(BaseModel):
     status: Optional[str] = None
 
 class UserOut(BaseModel):
-    id: int
+    id: str
     email: str
     first_name: Optional[str]
     last_name: Optional[str]
     role: str
     clearance_level: int
     status: str
-    last_login: Optional[str]
+    last_login: Optional[str] = None
 
 @router.get("/", response_model=List[UserOut])
-def list_users():
-    """List all users."""
+async def list_users(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_role(["SUPER_ADMIN", "OVERSEER"]))
+):
+    """List all users (Admin/Overseer only)."""
     try:
-        response = supabase.table("users").select("*").execute()
-        return response.data
+        result = await db.execute(select(User))
+        users = result.scalars().all()
+        # Format the datetime for response model
+        fmt_users = []
+        for u in users:
+             fmt_users.append({
+                 "id": u.id,
+                 "email": u.email,
+                 "first_name": u.first_name,
+                 "last_name": u.last_name,
+                 "role": u.role,
+                 "clearance_level": u.clearance_level,
+                 "status": u.status,
+                 "last_login": str(u.last_login) if u.last_login else None
+             })
+        return fmt_users
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@router.post("/")
-def create_user(user: UserCreate):
-    """Create a new user with specific role and clearance."""
+@router.get("/me", response_model=UserOut)
+async def get_me(current_user: User = Depends(get_current_active_user)):
+    """Get current logged in user details."""
+    return {
+        "id": current_user.id,
+        "email": current_user.email,
+        "first_name": current_user.first_name,
+        "last_name": current_user.last_name,
+        "role": current_user.role,
+        "clearance_level": current_user.clearance_level,
+        "status": current_user.status,
+        "last_login": str(current_user.last_login) if current_user.last_login else None
+    }
+
+
+@router.post("/", response_model=UserOut)
+async def create_user(
+    user: UserCreate, 
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_role(["SUPER_ADMIN"]))
+):
+    """Create a new user with specific role and clearance (Admin only)."""
     try:
         # Check if user exists
-        exists = supabase.table("users").select("email").eq("email", user.email).execute()
-        if exists.data:
+        result = await db.execute(select(User).where(User.email == user.email))
+        if result.scalars().first():
             raise HTTPException(status_code=400, detail="User already exists")
 
-        # Hash password (using AuthService utility if possible, else implementing here)
-        # For now assuming AuthService has a helper or we use a basic implementation
-        # In a real scenario we'd import the context from passlib
-        # hashed_pw = auth_service.get_password_hash(user.password) 
-        
-        # Simulating hash for now as we don't have direct access to internal hash func in previous view
-        # But we can call the service register method if it supports extra fields, 
-        # or just invoke the hashing logic. 
-        # Let's use a placeholder hash for safety until we see auth_service.py
-        hashed_pw = f"hashed_{user.password}" 
+        hashed_pw = get_password_hash(user.password) 
+        username = user.email.split('@')[0]
 
-        new_user = {
+        new_user = User(
+            username=username,
+            email=user.email,
+            password_hash=hashed_pw,
+            first_name=user.first_name,
+            last_name=user.last_name,
+            role=user.role,
+            clearance_level=user.clearance_level,
+            status="ACTIVE" 
+        )
+
+        db.add(new_user)
+        await db.commit()
+        await db.refresh(new_user)
+             
+        return {
+            "id": new_user.id,
+            "email": new_user.email,
+            "first_name": new_user.first_name,
+            "last_name": new_user.last_name,
+            "role": new_user.role,
+            "clearance_level": new_user.clearance_level,
+            "status": new_user.status,
+            "last_login": None
+        }
+
+    except Exception as e:
+        await db.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.put("/{user_id}", response_model=UserOut)
+async def update_user(
+    user_id: str, 
+    user_update: UserUpdate,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_role(["SUPER_ADMIN"]))
+):
+    """Update user details and access level."""
+    try:
+        result = await db.execute(select(User).where(User.id == user_id))
+        user = result.scalars().first()
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+            
+        update_data = user_update.dict(exclude_unset=True)
+        if not update_data:
+            raise HTTPException(status_code=400, detail="No fields to update")
+
+        for key, value in update_data.items():
+            setattr(user, key, value)
+            
+        await db.commit()
+        await db.refresh(user)
+
+        return {
+            "id": user.id,
             "email": user.email,
-            "password_hash": hashed_pw,
             "first_name": user.first_name,
             "last_name": user.last_name,
             "role": user.role,
             "clearance_level": user.clearance_level,
-            "status": "ACTIVE" 
+            "status": user.status,
+            "last_login": str(user.last_login) if user.last_login else None
         }
-
-        data = supabase.table("users").insert(new_user).execute()
-        if not data.data:
-             raise HTTPException(status_code=500, detail="Failed to create user")
-             
-        return data.data[0]
-
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-@router.put("/{user_id}")
-def update_user(user_id: int, user_update: UserUpdate):
-    """Update user details and access level."""
-    try:
-        updates = {k: v for k, v in user_update.dict().items() if v is not None}
-        if not updates:
-            raise HTTPException(status_code=400, detail="No fields to update")
-
-        data = supabase.table("users").update(updates).eq("id", user_id).execute()
-        if not data.data:
-            raise HTTPException(status_code=404, detail="User not found")
-            
-        return data.data[0]
-    except Exception as e:
+        await db.rollback()
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.delete("/{user_id}")
-def delete_user(user_id: int):
+async def delete_user(
+    user_id: str,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_role(["SUPER_ADMIN"]))
+):
     """Delete a user."""
     try:
-        data = supabase.table("users").delete().eq("id", user_id).execute()
-        if not data.data:
+        result = await db.execute(select(User).where(User.id == user_id))
+        user = result.scalars().first()
+        if not user:
              raise HTTPException(status_code=404, detail="User not found")
+             
+        await db.delete(user)
+        await db.commit()
+        
         return {"message": "User deleted successfully"}
     except Exception as e:
+        await db.rollback()
         raise HTTPException(status_code=500, detail=str(e))
 
 # --- Access Control Endpoints ---
@@ -113,73 +188,112 @@ def delete_user(user_id: int):
 class UserApprove(BaseModel):
     role: str
     clearance_level: int
-    admin_id: int # The ID of the admin performing the action
 
 class UserDeny(BaseModel):
     reason: str
-    admin_id: int
 
 @router.get("/pending", response_model=List[UserOut])
-def list_pending_users():
+async def list_pending_users(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_role(["SUPER_ADMIN"]))
+):
     """List users awaiting approval."""
     try:
-        response = supabase.table("users").select("*").eq("status", "PENDING").execute()
-        return response.data
+        result = await db.execute(select(User).where(User.status == "PENDING"))
+        pending_users = result.scalars().all()
+        
+        fmt_users = []
+        for u in pending_users:
+             fmt_users.append({
+                 "id": u.id,
+                 "email": u.email,
+                 "first_name": u.first_name,
+                 "last_name": u.last_name,
+                 "role": u.role,
+                 "clearance_level": u.clearance_level,
+                 "status": u.status,
+                 "last_login": str(u.last_login) if u.last_login else None
+             })
+        return fmt_users
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/{user_id}/approve")
-def approve_user(user_id: int, approval: UserApprove):
+async def approve_user(
+    user_id: str, 
+    approval: UserApprove,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_role(["SUPER_ADMIN"]))
+):
     """Approve a pending user."""
     try:
-        # 1. Update User
-        updates = {
-            "status": "ACTIVE",
-            "role": approval.role,
-            "clearance_level": approval.clearance_level
-        }
-        user_data = supabase.table("users").update(updates).eq("id", user_id).execute()
+        result = await db.execute(select(User).where(User.id == user_id))
+        user = result.scalars().first()
         
-        if not user_data.data:
+        if not user:
             raise HTTPException(status_code=404, detail="User not found")
 
-        # 2. Log Action
-        log_entry = {
-            "admin_id": approval.admin_id,
-            "target_user_id": user_id,
-            "action": "APPROVE",
-            "details": f"Role: {approval.role}, Level: {approval.clearance_level}"
-        }
-        supabase.table("access_logs").insert(log_entry).execute()
+        user.status = "ACTIVE"
+        user.role = approval.role
+        user.clearance_level = approval.clearance_level
 
-        return {"status": "approved", "user": user_data.data[0]}
+        # 2. Log Action
+        log_entry = AccessLog(
+            admin_id=current_user.id,
+            target_user_id=user.id,
+            action="APPROVE",
+            details=f"Role: {approval.role}, Level: {approval.clearance_level}"
+        )
+        db.add(log_entry)
+        
+        await db.commit()
+        await db.refresh(user)
+
+        return {"status": "approved", "user": {
+                 "id": user.id,
+                 "email": user.email,
+                 "first_name": user.first_name,
+                 "last_name": user.last_name,
+                 "role": user.role,
+                 "clearance_level": user.clearance_level,
+                 "status": user.status,
+             }}
     except Exception as e:
+        await db.rollback()
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/{user_id}/deny")
-def deny_user(user_id: int, denial: UserDeny):
+async def deny_user(
+    user_id: str, 
+    denial: UserDeny,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_role(["SUPER_ADMIN"]))
+):
     """Deny (Delete) a pending user."""
     try:
-        # 1. Get user details for log before Deleting
-        user_data = supabase.table("users").select("*").eq("id", user_id).execute()
-        if not user_data.data:
+        result = await db.execute(select(User).where(User.id == user_id))
+        user = result.scalars().first()
+        
+        if not user:
              raise HTTPException(status_code=404, detail="User not found")
         
-        target_email = user_data.data[0]['email']
+        target_email = user.email
 
         # 2. Delete User (or could set status=REJECTED)
-        # For security, often better to just remove pending request
-        supabase.table("users").delete().eq("id", user_id).execute()
+        await db.delete(user)
 
         # 3. Log Action
-        log_entry = {
-            "admin_id": denial.admin_id,
-            "target_user_id": None, # User deleted, so null or keep ID for record if soft delete
-            "action": "DENY",
-            "details": f"User {target_email} denied. Reason: {denial.reason}"
-        }
-        supabase.table("access_logs").insert(log_entry).execute()
+        log_entry = AccessLog(
+            admin_id=current_user.id,
+            target_user_id=None,
+            action="DENY",
+            details=f"User {target_email} denied. Reason: {denial.reason}"
+        )
+        db.add(log_entry)
+        
+        await db.commit()
 
         return {"status": "denied", "message": "User access denied and record removed."}
     except Exception as e:
-         raise HTTPException(status_code=500, detail=str(e))
+        await db.rollback()
+        raise HTTPException(status_code=500, detail=str(e))

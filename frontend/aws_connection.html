@@ -172,6 +172,11 @@
                             <input type="text" class="form-input" id="s3Bucket" placeholder="honeynet-telemetry-logs"
                                 value="honeynet-telemetry-logs">
                         </div>
+
+                        <div class="form-group">
+                            <label class="form-label">3rd EC2 Server S3 Bucket Name</label>
+                            <input type="text" class="form-input" id="s3Bucket3rd" placeholder="3rd-ec2-honeypot-logs">
+                        </div>
                     </div>
                 </div>
 
@@ -244,6 +249,8 @@
                     <div id="validationResult"
                         style="color:#aaa; font-family:'JetBrains Mono'; font-size:0.9rem; margin-right:20px;"></div>
                     <button class="soc-btn" onclick="testConnection(event)">VALIDATE KEYS</button>
+                    <button class="soc-btn" style="background:#00aeff; color:black; border:none;"
+                        onclick="pullS3Logs(event)">PULL S3 LOGS</button>
                     <button class="soc-btn soc-btn-primary" style="background:#ff9900; color:black; border:none;"
                         onclick="saveAwsConfig(event)">SAVE HUB CONFIGURATION</button>
                 </div>
@@ -260,7 +267,7 @@
 
         // Auto-fill form from localStorage on initial load
         document.addEventListener('DOMContentLoaded', () => {
-            const keys = ['awsAccessKey', 'awsSecretKey', 'awsRegion', 's3Bucket', 'subnetId', 'securityGroupId', 'iamProfile', 'amiWinBase', 'amiKaliBase', 'amiWinMal'];
+            const keys = ['awsAccessKey', 'awsSecretKey', 'awsRegion', 's3Bucket', 's3Bucket3rd', 'subnetId', 'securityGroupId', 'iamProfile', 'amiWinBase', 'amiKaliBase', 'amiWinMal'];
             keys.forEach(k => {
                 const lsKey = '_st_' + k.replace(/[A-Z]/g, match => '_' + match.toLowerCase()); // snake_case
                 const val = localStorage.getItem(lsKey);
@@ -319,6 +326,7 @@
                 'awsSecretKey': '_st_aws_secret_key',
                 'awsRegion': '_st_aws_region',
                 's3Bucket': '_st_s3_bucket',
+                's3Bucket3rd': '_st_s3_bucket_3rd',
                 'subnetId': '_st_subnet_id',
                 'securityGroupId': '_st_security_group_id',
                 'iamProfile': '_st_iam_profile',
@@ -347,6 +355,48 @@
                     btn.innerText = originalText;
                 }, 2000);
             }, 800);
+        }
+
+        window.pullS3Logs = async function (event) {
+            const btn = event.target;
+            const originalText = btn.innerText;
+            const resDiv = document.getElementById('validationResult');
+
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> PULLING S3 LOGS...';
+            resDiv.innerHTML = '';
+
+            const accessKey = document.getElementById('awsAccessKey').value;
+            const secretKey = document.getElementById('awsSecretKey').value;
+            const region = document.getElementById('awsRegion').value || "ap-south-1";
+            const s3Bucket3rd = document.getElementById('s3Bucket3rd').value;
+
+            if (!accessKey || !secretKey || !s3Bucket3rd) {
+                resDiv.innerHTML = '<span style="color:#ff0055;"><i class="fas fa-times"></i> Missing IAM Keys or 3rd EC2 Bucket Name</span>';
+                btn.innerHTML = originalText;
+                return;
+            }
+
+            try {
+                const response = await window.apiService.post('/aws/pull-s3-logs', {
+                    aws_access_key: accessKey,
+                    aws_secret_key: secretKey,
+                    aws_region: region,
+                    s3_bucket_3rd: s3Bucket3rd
+                });
+
+                if (response.status === 'success') {
+                    resDiv.innerHTML = `<span style="color:#00ff41;"><i class="fas fa-check"></i> Logs Pull Required!</span>`;
+                    setTimeout(() => {
+                        resDiv.innerHTML = `<span style="color:#00ff41;"><i class="fas fa-check"></i> ${response.message}</span>`;
+                    }, 500);
+                } else {
+                    resDiv.innerHTML = `<span style="color:#ff0055;"><i class="fas fa-exclamation-triangle"></i> ${response.message || 'Failed to pull logs'}</span>`;
+                }
+            } catch (error) {
+                resDiv.innerHTML = `<span style="color:#ff0055;"><i class="fas fa-exclamation-triangle"></i> Error pulling logs: ${error.message}</span>`;
+            }
+
+            btn.innerHTML = originalText;
         }
     </script>
 </body>
