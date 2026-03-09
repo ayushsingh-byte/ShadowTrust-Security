@@ -178,3 +178,14 @@ async def get_lab_status(
         }
     except Exception as e:
         return {"status": "NOT_FOUND", "state": "unknown", "message": f"Database error: {str(e)}"}
+
+@router.get("/cluster-metrics")
+async def get_cluster_metrics(
+    current_user: User = Depends(get_current_active_user)
+):
+    """
+    Returns actual live vCPU, RAM, and instances from AWS EC2
+    """
+    manager = LabSessionManager()
+    metrics = manager.aws.get_cluster_metrics()
+    return metrics

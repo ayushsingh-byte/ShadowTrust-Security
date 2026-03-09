@@ -272,45 +272,50 @@
         </div>
 
         <form id="registerForm" action="dashboard.html">
+            <div class="input-group">
+                <label>Username</label>
+                <input type="text" id="regUsername" class="clean-input" placeholder="e.g. alexchen" required>
+            </div>
+
             <div class="input-row">
                 <div class="input-group">
                     <label>First Name</label>
-                    <input type="text" class="clean-input" placeholder="e.g. Alex" required>
+                    <input type="text" id="regFirstName" class="clean-input" placeholder="e.g. Alex" required>
                 </div>
                 <div class="input-group">
                     <label>Last Name</label>
-                    <input type="text" class="clean-input" placeholder="e.g. Chen" required>
+                    <input type="text" id="regLastName" class="clean-input" placeholder="e.g. Chen" required>
                 </div>
             </div>
 
             <div class="input-group">
                 <label>Work Email</label>
-                <input type="email" class="clean-input" placeholder="name@company.com" required>
+                <input type="email" id="regEmail" class="clean-input" placeholder="name@company.com" required>
             </div>
 
             <div class="input-group">
                 <label>Department / Role</label>
-                <select class="clean-select">
+                <select id="regDepartment" class="clean-select">
                     <option value="" disabled selected>Select your department</option>
-                    <option value="sectest">Security Testing</option>
-                    <option value="threatintel">Threat Intelligence</option>
-                    <option value="netops">Network Operations</option>
-                    <option value="admin">System Administration</option>
+                    <option value="Security Testing">Security Testing</option>
+                    <option value="Threat Intelligence">Threat Intelligence</option>
+                    <option value="Network Operations">Network Operations</option>
+                    <option value="System Administration">System Administration</option>
                 </select>
             </div>
 
             <div class="input-group">
-                <label>Requested Clearance Level</label>
-                <select class="clean-select">
-                    <option value="1">TIER 1 — OPERATIVE (Standard)</option>
-                    <option value="2">TIER 2 — SPECIALIST (Elevated)</option>
-                    <option value="3">TIER 3 — OVERSEER (Full Admin)</option>
+                <label>Requested Access Level</label>
+                <select id="regClearanceLevel" class="clean-select">
+                    <option value="1">LEVEL 1 — Basic Access (View dashboards & reports)</option>
+                    <option value="2">LEVEL 2 — Intermediate Access (Analyze threats & events)</option>
+                    <option value="3">LEVEL 3 — Full Access (Admin controls & system config)</option>
                 </select>
             </div>
 
             <div class="input-group">
                 <label>Set Passphrase</label>
-                <input type="password" class="clean-input" placeholder="••••••••••••" required>
+                <input type="password" id="regPassword" class="clean-input" placeholder="••••••••••••" required>
                 <div style="font-size: 0.75rem; color: #555; margin-top: 5px;">Must be at least 12 characters.</div>
             </div>
 

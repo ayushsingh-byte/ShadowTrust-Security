@@ -17,6 +17,7 @@ class User(Base):
     last_name = Column(String)
     department = Column(String)
     clearance_level = Column(Integer) # 1, 2, 3
+    requested_clearance_level = Column(Integer) # 1, 2, 3 — what user requested at registration
     role = Column(String) # SUPER_ADMIN, ANALYST, AUDITOR, OPERATIVE, SPECIALIST, OVERSEER
     status = Column(String, default="PENDING") # ACTIVE, PENDING, BLOCKED
     otp_code = Column(String, nullable=True)
@@ -99,6 +100,14 @@ class RawEventModel(Base):
     risk_score = Column(Float, default=0.0)
     raw_payload = Column(String, nullable=True)
     sync_status = Column(String, default="PENDING", index=True)
+    signature = Column(String, unique=True, index=True, nullable=True)
+
+class S3SyncState(Base):
+    __tablename__ = "s3_sync_state"
+
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    file_key = Column(String, unique=True, index=True, nullable=False)
+    processed_at = Column(DateTime(timezone=True), server_default=func.now())
 
 class Alert(Base):
     __tablename__ = "alerts"
@@ -196,3 +205,9 @@ class StructuredEvent(Base):
     honeypot_type = Column(String)
     event_type = Column(String)
     details = Column(JSON)
+class SystemConfig(Base):
+    __tablename__ = "system_config"
+
+    key = Column(String, primary_key=True)
+    value = Column(String, nullable=True)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)

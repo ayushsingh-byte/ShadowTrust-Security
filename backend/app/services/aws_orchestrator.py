@@ -86,7 +86,7 @@ fi
             # If the user hasn't created the IAM role yet, fallback and launch the VM without it.
             if error_code == 'InvalidParameterValue' and 'iamInstanceProfile.name' in error_msg and iam_profile_name is not None:
                 logger.warning(f"IAM Profile '{iam_profile_name}' not found. Falling back to launching without an IAM role attached.")
-                return self.launch_analysis_vm(ami_id, instance_type, session_id, subnet_id, iam_profile_name=None, profile_id=profile_id)
+                return self.launch_analysis_vm(ami_id, instance_type, session_id, subnet_id, iam_profile_name=None, profile_id=profile_id, security_group_id=security_group_id)
                 
             logger.error(f"Failed to launch VM: {e}")
             return {"status": "error", "message": f"{error_code}: {error_msg}"}
@@ -125,3 +125,66 @@ fi
         # Note: AWS Systems Manager requires the target instance to be fully booted with the SSM agent running.
         region = self.ec2.meta.region_name
         return f"https://{region}.console.aws.amazon.com/systems-manager/session-manager/{instance_id}"
+
+    def get_cluster_metrics(self) -> Dict[str, Any]:
+        """Fetches total vCPU, RAM, and returning instance details for the cluster."""
+        try:
+            # Filter all running/pending instances managed by ShadowTrust
+            response = self.ec2.describe_instances(
+                Filters=[
+                    {'Name': 'tag:ManagedBy', 'Values': ['ShadowTrust']},
+                    {'Name': 'instance-state-name', 'Values': ['running', 'pending']}
+                ]
+            )
+            
+            total_vcpu = 0
+            total_ram = 0
+            active_instances = 0
+            instances_data = []
+
+            # Hardware specs for AWS instances used
+            hw_map = {
+                't3.micro': {'vcpu': 2, 'ram': 1},
+                't3.medium': {'vcpu': 2, 'ram': 4},
+                't3.large': {'vcpu': 2, 'ram': 8},
+                't2.micro': {'vcpu': 1, 'ram': 1},
+            }
+
+            for r in response.get('Reservations', []):
+                for i in r.get('Instances', []):
+                    active_instances += 1
+                    itype = i.get('InstanceType', 't3.micro')
+                    specs = hw_map.get(itype, {'vcpu': 2, 'ram': 1})
+                    
+                    total_vcpu += specs['vcpu']
+                    total_ram += specs['ram']
+                    
+                    # Extract tags for profile matching
+                    profile_id = "unknown"
+                    for tag in i.get('Tags', []):
+                        if tag['Key'] == 'Name':
+                            name_val = tag['Value']
+                            if 'win_base' in name_val: profile_id = 'win_base'
+                            elif 'kali_base' in name_val: profile_id = 'kali_base'
+                            elif 'win_malware' in name_val: profile_id = 'win_malware'
+                    
+                    instances_data.append({
+                        "instance_id": i.get('InstanceId'),
+                        "profile_id": profile_id,
+                        "private_ip": i.get('PrivateIpAddress', 'Unknown'),
+                        "public_ip": i.get('PublicIpAddress', 'None'),
+                        "architecture": i.get('Architecture', 'x86_64'),
+                        "instance_type": itype,
+                        "status": i.get('State', {}).get('Name', 'unknown').upper()
+                    })
+
+            return {
+                "status": "success",
+                "vcpu": total_vcpu,
+                "ram": total_ram,
+                "active_count": active_instances,
+                "instances": instances_data
+            }
+        except Exception as e:
+            logger.error(f"Failed to fetch cluster metrics: {e}")
+            return {"status": "error", "message": str(e), "vcpu": 0, "ram": 0, "active_count": 0, "instances": []}

@@ -16,9 +16,68 @@ class VMLabClient {
 
     saveState() {
         localStorage.setItem('_st_instances', JSON.stringify(this.instances));
+        this.updateGlobalStats();
+    }
+
+    async updateGlobalStats() {
+        try {
+            const metrics = await apiService.get('/labs/cluster-metrics');
+            if (metrics.status !== 'success') return;
+
+            const totalVcpu = metrics.vcpu || 0;
+            const totalRam = metrics.ram || 0;
+            const activeCount = metrics.active_count || 0;
+
+            const maxVcpu = 32;
+            const maxRam = 64;
+
+            // Update DOM elements if they exist
+            const e1 = document.getElementById('global-vcpu-count');
+            if (e1) e1.textContent = totalVcpu;
+
+            const e2 = document.getElementById('global-vcpu-bar');
+            if (e2) e2.style.width = `${Math.min((totalVcpu / maxVcpu) * 100, 100)}%`;
+
+            const e3 = document.getElementById('global-ram-count');
+            if (e3) e3.textContent = totalRam;
+
+            const e4 = document.getElementById('global-ram-bar');
+            if (e4) e4.style.width = `${Math.min((totalRam / maxRam) * 100, 100)}%`;
+
+            const e5 = document.getElementById('global-instance-count');
+            if (e5) e5.textContent = activeCount;
+
+            const e6 = document.getElementById('global-instance-sub');
+            if (e6) e6.textContent = activeCount;
+
+            // Update individual VM specs with Live Data if available
+            if (metrics.instances && Array.isArray(metrics.instances)) {
+                for (const inst of metrics.instances) {
+                    if (inst.profile_id && inst.profile_id !== 'unknown' && inst.status === 'RUNNING') {
+                        const btn = document.querySelector(`button[data-profile="${inst.profile_id}"]`);
+                        if (btn) {
+                            const specsDiv = btn.closest('.vm-card').querySelector('.vm-specs');
+                            if (specsDiv && !specsDiv.dataset.live) {
+                                specsDiv.dataset.live = "true";
+                                specsDiv.innerHTML = `
+                                    <div style="margin-bottom: 8px;">IP Address <span style="color: var(--accent-primary); font-family: var(--font-mono);">${inst.private_ip}</span></div>
+                                    <div style="margin-bottom: 8px;">Hardware <span>${inst.instance_type}</span></div>
+                                    <div style="margin-bottom: 8px;">Architecture <span>${inst.architecture}</span></div>
+                                    <div>Status <span class="text-green">RUNNING</span></div>
+                                `;
+                            }
+                        }
+                    }
+                }
+            }
+
+        } catch (e) {
+            console.warn("[VMLab] Failed to fetch live cluster metrics:", e);
+        }
     }
 
     async restoreUI() {
+        this.updateGlobalStats();
         for (const profileId in this.instances) {
             const instanceData = this.instances[profileId];
             const labId = instanceData.labId;
@@ -27,38 +86,104 @@ class VMLabClient {
             // Cross-check with backend to ensure the VM is actually still alive
             try {
                 const response = await apiService.get(`/labs/status/${labId}`);
-                if (response.status === 'ERROR' || response.status === 'NOT_FOUND' || response.status === 'TERMINATED') {
-                    // Backend says this lab doesn't exist or is dead. Clear the stale cache.
+                const status = (response.status || '').toUpperCase();
+
+                // ── DEAD / TERMINATED ── clear the stale entry
+                if (['ERROR', 'NOT_FOUND', 'TERMINATED', 'STOPPED', 'UNKNOWN'].includes(status)) {
                     delete this.instances[profileId];
                     this.saveState();
                     if (btn) this.setButtonState(btn, 'DEFAULT', 'PROVISION');
 
                     const orb = document.getElementById(`dot_${profileId}`);
                     if (orb) { orb.style.background = '#555'; orb.style.boxShadow = 'none'; orb.style.animation = 'none'; }
-                    continue; // Skip setting it to ACTIVE
+                    continue;
                 }
+
+                // ── STILL PROVISIONING ── keep the spinning state and poll for readiness
+                if (status === 'PROVISIONING') {
+                    if (btn) {
+                        this.setButtonState(btn, 'LOADING', 'LAUNCHING...');
+                        const orb = document.getElementById(`dot_${profileId}`);
+                        if (orb) { orb.style.background = '#f59e0b'; orb.style.boxShadow = '0 0 10px #f59e0b'; orb.style.animation = 'pulse-red 2s infinite'; }
+                    }
+                    // Start polling in background — once READY it will switch to CONNECT TERMINAL
+                    this._pollProvisioningStatus(profileId, labId, btn);
+                    continue;
+                }
+
+                // ── READY / RUNNING ── reconnect the button
+                if (btn) {
+                    this.setButtonState(btn, 'ACTIVE', 'CONNECT TERMINAL');
+                    const orb = document.getElementById(`dot_${profileId}`);
+                    if (orb) { orb.style.background = 'var(--accent-primary)'; orb.style.boxShadow = '0 0 10px var(--accent-primary)'; orb.style.animation = 'pulse-red 2s infinite'; }
+                }
+
             } catch (error) {
-                // If API throws 404/500, assume the lab is unreachable or dead
-                delete this.instances[profileId];
-                this.saveState();
-                if (btn) this.setButtonState(btn, 'DEFAULT', 'PROVISION');
+                console.warn(`[VMLab] Could not verify status for ${profileId}. Keeping state.`, error);
 
-                const orb = document.getElementById(`dot_${profileId}`);
-                if (orb) { orb.style.background = '#555'; orb.style.boxShadow = 'none'; orb.style.animation = 'none'; }
+                // If backend is unreachable, we keep the UI in its current logical state
+                if (btn && instanceData.labId) {
+                    // Try to guess based on existing UI state or assume it's still active if we don't know
+                    // Let's just leave it alone or set to ACTIVE so user doesn't lose the button
+                    this.setButtonState(btn, 'ACTIVE', 'CONNECT TERMINAL');
+                    const orb = document.getElementById(`dot_${profileId}`);
+                    if (orb) { orb.style.background = 'var(--accent-primary)'; orb.style.boxShadow = '0 0 10px var(--accent-primary)'; }
+                }
                 continue;
-            }
-
-            if (btn) {
-                this.setButtonState(btn, 'ACTIVE', 'CONNECT TERMINAL');
-                // Also light up the orb
-                const orb = document.getElementById(`dot_${profileId}`);
-                if (orb) { orb.style.background = 'var(--accent-primary)'; orb.style.boxShadow = '0 0 10px var(--accent-primary)'; orb.style.animation = 'pulse-red 2s infinite'; }
             }
         }
     }
 
+    async _pollProvisioningStatus(profileId, labId, btn) {
+        // Poll every 5s until READY or ERROR, max 60 attempts (~5 min)
+        let attempts = 0;
+        const maxAttempts = 60;
+        const interval = setInterval(async () => {
+            attempts++;
+            try {
+                const response = await apiService.get(`/labs/status/${labId}`);
+                const status = (response.status || '').toUpperCase();
+
+                if (status === 'READY' || status === 'RUNNING') {
+                    clearInterval(interval);
+                    if (btn) this.setButtonState(btn, 'ACTIVE', 'CONNECT TERMINAL');
+                    const orb = document.getElementById(`dot_${profileId}`);
+                    if (orb) { orb.style.background = 'var(--accent-primary)'; orb.style.boxShadow = '0 0 10px var(--accent-primary)'; }
+                    this.showNotification(`${profileId} is ready!`, 'success');
+                } else if (['ERROR', 'TERMINATED', 'NOT_FOUND'].includes(status)) {
+                    clearInterval(interval);
+                    delete this.instances[profileId];
+                    this.saveState();
+                    if (btn) this.setButtonState(btn, 'DEFAULT', 'PROVISION');
+                    const orb = document.getElementById(`dot_${profileId}`);
+                    if (orb) { orb.style.background = '#555'; orb.style.boxShadow = 'none'; orb.style.animation = 'none'; }
+                } else if (attempts >= maxAttempts) {
+                    clearInterval(interval);
+                    delete this.instances[profileId];
+                    this.saveState();
+                    if (btn) this.setButtonState(btn, 'DEFAULT', 'PROVISION');
+                    const orb = document.getElementById(`dot_${profileId}`);
+                    if (orb) { orb.style.background = '#555'; orb.style.boxShadow = 'none'; orb.style.animation = 'none'; }
+                    this.showNotification(`${profileId} timed out during provisioning.`, 'error');
+                }
+                // else still PROVISIONING — keep polling
+            } catch (e) {
+                console.warn(`[VMLab] Polling error for ${profileId} at attempt ${attempts}:`, e);
+                // Don't kill the interval on a transient network error, just count it as an attempt
+                if (attempts >= maxAttempts) {
+                    clearInterval(interval);
+                    delete this.instances[profileId];
+                    this.saveState();
+                    if (btn) this.setButtonState(btn, 'DEFAULT', 'PROVISION');
+                    this.showNotification(`${profileId} provisioning check failed permanently.`, 'error');
+                }
+            }
+        }, 5000);
+    }
+
     async launchInstance(profileId, btnElement) {
-        if (this.isLoading) return;
+        this.isLoading = this.isLoading || {};
+        if (this.isLoading[profileId]) return;
 
         try {
             this.setButtonState(btnElement, 'LOADING', 'LAUNCHING...');
@@ -175,15 +300,16 @@ class VMLabClient {
     setButtonState(btn, state, text) {
         if (!btn) return;
 
+        this.isLoading = this.isLoading || {};
         switch (state) {
             case 'LOADING':
-                this.isLoading = true;
+                this.isLoading[btn.getAttribute('data-profile')] = true;
                 btn.disabled = true;
                 btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> ${text}`;
                 btn.style.opacity = '0.7';
                 break;
             case 'ACTIVE':
-                this.isLoading = false;
+                this.isLoading[btn.getAttribute('data-profile')] = false;
                 btn.disabled = false;
                 btn.innerHTML = `<i class="fas fa-terminal"></i> ${text}`;
                 btn.style.opacity = '1';
@@ -197,7 +323,7 @@ class VMLabClient {
                 }
                 break;
             case 'DEFAULT':
-                this.isLoading = false;
+                this.isLoading[btn.getAttribute('data-profile')] = false;
                 btn.disabled = false;
 
                 if (text.includes('PROVISION')) {

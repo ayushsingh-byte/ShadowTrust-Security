@@ -5,64 +5,8 @@ from sqlalchemy import select, func, desc
 from app.db.sqlite_db import get_db
 from app.models.all_models import RawEventModel
 from datetime import datetime, timedelta
-import requests
-import asyncio
 
 router = APIRouter()
-
-# Simple memory cache for GeoIP to avoid spamming the free API
-GEOIP_CACHE = {}
-
-def get_flag_emoji(country_code):
-    if not country_code or len(country_code) != 2 or country_code == "UN":
-        return '🏳️'
-    if country_code == "INT":
-        return '🏴'
-    try:
-        return chr(ord(country_code[0].upper()) + 127397) + chr(ord(country_code[1].upper()) + 127397)
-    except:
-        return '🏳️'
-
-def fetch_geoip_batch_sync(ips):
-    # filter out already cached and invalid
-    ips_to_fetch = [ip for ip in ips if ip and ip not in GEOIP_CACHE and not ip.startswith("192.168.") and not ip.startswith("10.") and ip != "127.0.0.1"]
-    
-    if ips_to_fetch:
-        try:
-            # batch fetch up to 100 IPs
-            url = "http://ip-api.com/batch"
-            params = {"fields": "status,country,countryCode,isp,org,as,lat,lon,query"}
-            response = requests.post(url, json=ips_to_fetch[:100], params=params, timeout=5)
-            if response.status_code == 200:
-                data = response.json()
-                for res in data:
-                    req_ip = res.get("query")
-                    if req_ip and res.get("status") == "success":
-                        as_field = res.get("as", "")
-                        as_number = as_field.split(" ")[0] if as_field else "N/A"
-                        GEOIP_CACHE[req_ip] = {
-                            "country": res.get("country", "Unknown"),
-                            "code": res.get("countryCode", "UN"),
-                            "isp": res.get("isp", "Unknown ISP"),
-                            "asn": as_number,
-                            "lat": res.get("lat", 0.0),
-                            "lon": res.get("lon", 0.0)
-                        }
-                    elif req_ip:
-                         GEOIP_CACHE[req_ip] = {"country": "Unknown", "code": "UN", "isp": "Unknown ISP", "lat": 0.0, "lon": 0.0}
-        except Exception as e:
-            print("GeoIP Fetch Error:", e)
-            
-    # internal mock fallback
-    for ip in ips:
-        if ip and (ip.startswith("192.168.") or ip.startswith("10.") or ip == "127.0.0.1"):
-            GEOIP_CACHE[ip] = {"country": "Internal", "code": "INT", "isp": "Local Network", "lat": 38.8951, "lon": -77.0364}
-            
-    return GEOIP_CACHE
-
-async def fetch_geoip_batch(ips):
-    return await asyncio.to_thread(fetch_geoip_batch_sync, ips)
-
 
 @router.get("/stats")
 async def get_dashboard_stats(db: AsyncSession = Depends(get_db)):
@@ -118,12 +62,11 @@ async def get_dashboard_stats(db: AsyncSession = Depends(get_db)):
     # 5. Top Attacker Networks (IPs for now since ASN requires lookup)
     top_ips_query = await db.execute(
         select(RawEventModel.attacker_ip, func.count(RawEventModel.id).label("hits"))
-        .where(RawEventModel.attacker_ip != '0.0.0.0')
         .group_by(RawEventModel.attacker_ip)
         .order_by(desc("hits"))
         .limit(30)
     )
-    top_ips_results = top_ips_query.all()
+    top_ips = [{"asn": "UNKNOWN", "org": ip, "hits": hits, "risk": "HIGH" if hits > 50 else "MEDIUM"} for ip, hits in top_ips_query.all()]
     
     # 6. Exploit Vectors by Port
     top_ports_query = await db.execute(
@@ -138,19 +81,19 @@ async def get_dashboard_stats(db: AsyncSession = Depends(get_db)):
         if rp not in port_counts:
             port_counts[rp] = 0
             
-    port_map = {22: "SSH", 80: "HTTP", 443: "HTTPS", 23: "TELNET", 445: "SMB", 3389: "RDP", 8080: "HTTP-ALT", 5060: "SIP", 21: "FTP", 2222: "SSH-ALT", 8022: "HTTP-ALT", 3306: "MySQL", 5432: "PostgreSQL", 2223: "SSH-ALT", 5439: "Redshift"}
+    port_map = {22: "SSH", 80: "HTTP", 443: "HTTPS", 23: "TELNET", 445: "SMB", 3389: "RDP", 8080: "HTTP-ALT", 5060: "SIP", 21: "FTP", 2222: "SSH-ALT", 3306: "MySQL", 5432: "PostgreSQL", 2223: "SSH-ALT", 5439: "Redshift"}
     top_ports = [{"port": port, "service": port_map.get(port, "UNKNOWN"), "threat": "HIGH" if count > 0 else "MEDIUM", "count": count} for port, count in port_counts.items()]
     top_ports.sort(key=lambda x: x["count"], reverse=True)
     
     # 7. Protocol Anomaly Radar ['SSH', 'HTTP', 'RDP', 'SMB', 'TELNET', 'FTP']
     radar_counts = {"SSH": 0, "HTTP": 0, "RDP": 0, "SMB": 0, "TELNET": 0, "FTP": 0}
     for port, count in all_top_ports:
-        if port in [22, 2222, 2223]: radar_counts["SSH"] += count
-        elif port in [80, 443, 8080, 8022]: radar_counts["HTTP"] += count
+        if port == 22: radar_counts["SSH"] += count
+        elif port in [80, 443]: radar_counts["HTTP"] += count
         elif port == 3389: radar_counts["RDP"] += count
-        elif port in [445, 139]: radar_counts["SMB"] += count
-        elif port in [23, 8023]: radar_counts["TELNET"] += count
-        elif port in [20, 21, 2121]: radar_counts["FTP"] += count
+        elif port == 445: radar_counts["SMB"] += count
+        elif port == 23: radar_counts["TELNET"] += count
+        elif port in [20, 21]: radar_counts["FTP"] += count
     
     radar_data = [radar_counts["SSH"], radar_counts["HTTP"], radar_counts["RDP"], radar_counts["SMB"], radar_counts["TELNET"], radar_counts["FTP"]]
 
@@ -177,45 +120,18 @@ async def get_dashboard_stats(db: AsyncSession = Depends(get_db)):
             if len(artifacts) >= 20:
                 break
     
-    top_ips_list = [ip for ip, _ in top_ips_results if ip]
-    recent_ips = list(set([evt.attacker_ip for evt in recent_events if evt.attacker_ip]))
-    
-    # Combine IPs to resolve everything in one batch
-    all_ips_to_resolve = list(set(top_ips_list + recent_ips))
-    geo_map = await fetch_geoip_batch(all_ips_to_resolve)
-    
-    # Map Top Attackers
-    top_ips = []
-    for ip, hits in top_ips_results:
-        geo = geo_map.get(ip, {})
-        
-        # Don't show Internal IPs in Top Attackers
-        if geo.get("code") == "INT":
-            continue
-            
-        top_ips.append({
-            "asn": geo.get("asn", "N/A"),
-            "ip": ip,
-            "org": geo.get("isp", "Unknown ISP"),
-            "hits": hits,
-            "risk": "HIGH" if hits >= 10 else ("MEDIUM" if hits >= 3 else "LOW")
-        })
-        
-    recent_data = []
-    for event in recent_events:
-        ip = event.attacker_ip
-        geo = geo_map.get(ip, {})
-        recent_data.append({
+    recent_data = [
+        {
             "id": event.id,
             "timestamp": event.timestamp.isoformat() if event.timestamp else None,
-            "attacker_ip": ip,
+            "attacker_ip": event.attacker_ip,
             "target_port": event.target_port,
             "protocol": event.protocol,
             "honeypot_type": event.honeypot_type,
-            "event_type": event.event_type,
-            "lat": geo.get("lat", 0.0),
-            "lon": geo.get("lon", 0.0)
-        })
+            "event_type": event.event_type
+        }
+        for event in recent_events
+    ]
     
     # 9. Additional Dashboard Metrics
     # High Risk Alerts (count of CRITICAL/HIGH alerts in last 24h)
@@ -228,19 +144,16 @@ async def get_dashboard_stats(db: AsyncSession = Depends(get_db)):
     # Lures tripped (total count of events on honeypots is inherently total lures tripped)
     lures_tripped = total_attacks
     
-    # Hostile sources (Unique IPs in the last 30d)
-    thirty_days_ago = now - timedelta(days=30)
+    # Hostile sources (Unique IPs in the last 24h)
+    one_day_ago = now - timedelta(days=1)
     hostile_query = await db.execute(
         select(func.count(func.distinct(RawEventModel.attacker_ip)))
-        .where(RawEventModel.timestamp >= thirty_days_ago)
+        .where(RawEventModel.timestamp >= one_day_ago)
     )
     hostile_sources = hostile_query.scalar() or 0
     
     # Targeted Sectors (Assuming ports/honeypot types as distinct "sectors" for now)
-    sectors_query = await db.execute(
-        select(func.count(func.distinct(RawEventModel.target_port)))
-        .where(RawEventModel.timestamp >= thirty_days_ago)
-    )
+    sectors_query = await db.execute(select(func.count(func.distinct(RawEventModel.target_port))))
     targeted_sectors = sectors_query.scalar() or 0
     
     return {
@@ -264,19 +177,19 @@ async def get_dashboard_stats(db: AsyncSession = Depends(get_db)):
 @router.get("/geo")
 async def get_geo_stats(db: AsyncSession = Depends(get_db)):
     now = datetime.utcnow()
-    thirty_days_ago = now - timedelta(days=30)
+    one_day_ago = now - timedelta(days=1)
     
     # Active Sources
     hostile_query = await db.execute(
         select(func.count(func.distinct(RawEventModel.attacker_ip)))
-        .where(RawEventModel.timestamp >= thirty_days_ago)
+        .where(RawEventModel.timestamp >= one_day_ago)
     )
     active_sources = hostile_query.scalar() or 0
     
     # Targeted Zones
     sectors_query = await db.execute(
         select(func.count(func.distinct(RawEventModel.target_port)))
-        .where(RawEventModel.timestamp >= thirty_days_ago)
+        .where(RawEventModel.timestamp >= one_day_ago)
     )
     targeted_zones = sectors_query.scalar() or 0
     
@@ -299,45 +212,31 @@ async def get_geo_stats(db: AsyncSession = Depends(get_db)):
     
     ip_hits = top_ips_query.all()
     
-    # Markers
-    markers_query = await db.execute(
-        select(RawEventModel.attacker_ip)
-        .order_by(desc(RawEventModel.timestamp))
-        .limit(20)
-    )
-    raw_markers = [ip for ip in markers_query.scalars().all() if ip]
-
-    all_ips_to_fetch = list(set([ip.split(':')[0] for ip, _ in ip_hits if ip] + [ip.split(':')[0] for ip in raw_markers]))
-    geo_map = await fetch_geoip_batch(all_ips_to_fetch)
+    # Mock Geo map for countries and ASNs based on IPs
+    mock_geo = {
+        '119.23.44.11': {'country': 'China', 'code': 'CN', 'isp': 'Alibaba', 'flag': '🇨🇳'},
+        '45.10.10.2': {'country': 'Netherlands', 'code': 'NL', 'isp': 'Hostinger', 'flag': '🇳🇱'},
+        '192.168.1.100': {'country': 'Internal', 'code': 'INT', 'isp': 'Local Network', 'flag': '🏴'},
+    }
     
     countries_data = {}
     asn_data = {}
     
     for ip, hits in ip_hits:
         base_ip = (ip or '').split(':')[0]
-        geo = geo_map.get(base_ip, {'country': 'Unknown', 'code': 'UN', 'isp': 'Unknown ISP', 'asn': 'N/A'})
-        geo_flag = get_flag_emoji(geo.get('code', 'UN'))
-        
-        # Skip Internal/Local networks from Global Intelligence
-        if geo.get('code') == 'INT':
-            continue
+        geo = mock_geo.get(base_ip, {'country': 'Unknown', 'code': 'UN', 'isp': 'Unknown ISP', 'flag': '🏳️'})
         
         # Aggregate countries
-        country_name = geo.get('country', 'Unknown')
-        if country_name not in countries_data:
-            countries_data[country_name] = {'flag': geo_flag, 'code': geo.get('code', 'UN'), 'events': 0, 'traffic': 0}
-        countries_data[country_name]['events'] += hits
-        
-        traffic_multiplier = 0.5 + ((sum(bytearray(base_ip.encode())) % 10) / 10.0)  # Pseudo-random but consistent traffic per IP
-        countries_data[country_name]['traffic'] += hits * traffic_multiplier
+        if geo['country'] not in countries_data:
+            countries_data[geo['country']] = {'flag': geo['flag'], 'code': geo['code'], 'events': 0, 'traffic': 0}
+        countries_data[geo['country']]['events'] += hits
+        countries_data[geo['country']]['traffic'] += hits * 4.5  # Mock traffic in MB
         
         # Aggregate ASN
-        asn_name = geo.get('isp', 'Unknown ISP')
-        asn_id = geo.get('asn', 'N/A')
+        asn_name = geo['isp']
         if asn_name not in asn_data:
-            asn_data[asn_name] = {'asn': asn_id, 'count': 0, 'ips': set()}
+            asn_data[asn_name] = {'asn': f"AS{abs(hash(asn_name)) % 100000}", 'count': 0}
         asn_data[asn_name]['count'] += hits
-        asn_data[asn_name]['ips'].add(base_ip)
 
     top_countries = []
     for country, data in countries_data.items():
@@ -355,26 +254,19 @@ async def get_geo_stats(db: AsyncSession = Depends(get_db)):
         asn_intelligence.append({
             'asn': data['asn'],
             'isp_name': isp,
-            'count': data['count'],
-            'ips': ", ".join(list(data['ips']))
+            'count': data['count']
         })
     asn_intelligence.sort(key=lambda x: x['count'], reverse=True)
     
     top_isp = asn_intelligence[0] if asn_intelligence else None
     
-    markers = []
-    for ip in raw_markers:
-        base_ip = (ip or '').split(':')[0]
-        geo = geo_map.get(base_ip)
-        
-        if geo and geo.get('code') == 'INT':
-            continue
-            
-        if geo and geo.get('lat') and geo.get('lon'):
-            markers.append({"ip": ip, "lat": geo['lat'], "lon": geo['lon']})
-        else:
-            # Skip invalid locations instead of mocking them in the ocean so it doesn't look fake
-            continue
+    # Markers
+    markers_query = await db.execute(
+        select(RawEventModel.attacker_ip)
+        .order_by(desc(RawEventModel.timestamp))
+        .limit(20)
+    )
+    markers = [ip for ip in markers_query.scalars().all() if ip]
 
     return {
         "active_sources": active_sources,

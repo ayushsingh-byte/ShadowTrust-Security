@@ -30,10 +30,13 @@ class UserUpdate(BaseModel):
 class UserOut(BaseModel):
     id: str
     email: str
-    first_name: Optional[str]
-    last_name: Optional[str]
-    role: str
-    clearance_level: int
+    username: Optional[str] = None
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    department: Optional[str] = None
+    role: Optional[str] = None
+    clearance_level: Optional[int] = None
+    requested_clearance_level: Optional[int] = None
     status: str
     last_login: Optional[str] = None
 
@@ -52,10 +55,13 @@ async def list_users(
              fmt_users.append({
                  "id": u.id,
                  "email": u.email,
+                 "username": u.username,
                  "first_name": u.first_name,
                  "last_name": u.last_name,
+                 "department": u.department,
                  "role": u.role,
                  "clearance_level": u.clearance_level,
+                 "requested_clearance_level": u.requested_clearance_level,
                  "status": u.status,
                  "last_login": str(u.last_login) if u.last_login else None
              })
@@ -69,10 +75,13 @@ async def get_me(current_user: User = Depends(get_current_active_user)):
     return {
         "id": current_user.id,
         "email": current_user.email,
+        "username": current_user.username,
         "first_name": current_user.first_name,
         "last_name": current_user.last_name,
+        "department": current_user.department,
         "role": current_user.role,
         "clearance_level": current_user.clearance_level,
+        "requested_clearance_level": current_user.requested_clearance_level,
         "status": current_user.status,
         "last_login": str(current_user.last_login) if current_user.last_login else None
     }
@@ -112,10 +121,13 @@ async def create_user(
         return {
             "id": new_user.id,
             "email": new_user.email,
+            "username": new_user.username,
             "first_name": new_user.first_name,
             "last_name": new_user.last_name,
+            "department": new_user.department,
             "role": new_user.role,
             "clearance_level": new_user.clearance_level,
+            "requested_clearance_level": new_user.requested_clearance_level,
             "status": new_user.status,
             "last_login": None
         }
@@ -151,10 +163,13 @@ async def update_user(
         return {
             "id": user.id,
             "email": user.email,
+            "username": user.username,
             "first_name": user.first_name,
             "last_name": user.last_name,
+            "department": user.department,
             "role": user.role,
             "clearance_level": user.clearance_level,
+            "requested_clearance_level": user.requested_clearance_level,
             "status": user.status,
             "last_login": str(user.last_login) if user.last_login else None
         }
@@ -207,10 +222,13 @@ async def list_pending_users(
              fmt_users.append({
                  "id": u.id,
                  "email": u.email,
+                 "username": u.username,
                  "first_name": u.first_name,
                  "last_name": u.last_name,
+                 "department": u.department,
                  "role": u.role,
                  "clearance_level": u.clearance_level,
+                 "requested_clearance_level": u.requested_clearance_level,
                  "status": u.status,
                  "last_login": str(u.last_login) if u.last_login else None
              })
@@ -252,10 +270,13 @@ async def approve_user(
         return {"status": "approved", "user": {
                  "id": user.id,
                  "email": user.email,
+                 "username": user.username,
                  "first_name": user.first_name,
                  "last_name": user.last_name,
+                 "department": user.department,
                  "role": user.role,
                  "clearance_level": user.clearance_level,
+                 "requested_clearance_level": user.requested_clearance_level,
                  "status": user.status,
              }}
     except Exception as e:

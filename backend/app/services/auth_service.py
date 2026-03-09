@@ -40,33 +40,40 @@ def generate_otp():
     return ''.join(random.choices(string.digits, k=6))
 
 class AuthService:
-    async def register_user(self, db: AsyncSession, email: str, password: str, full_name: str = ""):
-        # Check if user exists
+    async def register_user(self, db: AsyncSession, username: str, email: str, password: str,
+                             first_name: str = "", last_name: str = "", department: str = "",
+                             clearance_level: int = 1):
+        # Check if user exists by email or username
         result = await db.execute(select(User).where(User.email == email))
         if result.scalars().first():
             raise HTTPException(status_code=400, detail="Email already registered")
-        
-        # Split full_name
-        parts = full_name.split(" ", 1)
-        first_name = parts[0] if len(parts) > 0 else ""
-        last_name = parts[1] if len(parts) > 1 else ""
 
-        # Create user (PENDING by default until approved by Admin)
-        username = email.split('@')[0]
-        
-        # For prototype simplicity, the first user could become SUPER_ADMIN,
-        # but the db schema script handles that. We default to 'OPERATIVE' here.
+        result = await db.execute(select(User).where(User.username == username))
+        if result.scalars().first():
+            raise HTTPException(status_code=400, detail="Username already taken")
+
+        # Validate clearance level
+        if clearance_level not in (1, 2, 3):
+            raise HTTPException(status_code=400, detail="Clearance level must be 1, 2, or 3")
+
+        # Map requested clearance level to a default role
+        role_map = {1: "OPERATIVE", 2: "SPECIALIST", 3: "OVERSEER"}
+        requested_role = role_map.get(clearance_level, "OPERATIVE")
+
+        # Create user — PENDING until Admin approves
         new_user = User(
             username=username,
             email=email,
             password_hash=get_password_hash(password),
-            role="OPERATIVE",
-            clearance_level=1,
-            status="PENDING",
             first_name=first_name,
-            last_name=last_name
+            last_name=last_name,
+            department=department,
+            role=requested_role,
+            clearance_level=None,  # Not assigned until approved
+            requested_clearance_level=clearance_level,
+            status="PENDING",
         )
-        
+
         db.add(new_user)
         try:
             await db.commit()
@@ -74,12 +81,22 @@ class AuthService:
         except Exception as e:
             await db.rollback()
             raise HTTPException(status_code=500, detail=str(e))
-        
-        return {"id": new_user.id, "email": new_user.email, "message": "User registered successfully, pending approval."}
+
+        return {
+            "id": new_user.id,
+            "email": new_user.email,
+            "username": new_user.username,
+            "requested_clearance_level": new_user.requested_clearance_level,
+            "message": "Registration successful. Your account is pending admin approval."
+        }
 
     async def login(self, db: AsyncSession, email: str, password: str):
+        # Try to find user by email first, then by username
         result = await db.execute(select(User).where(User.email == email))
         user = result.scalars().first()
+        if not user:
+            result = await db.execute(select(User).where(User.username == email))
+            user = result.scalars().first()
         
         if not user or not verify_password(password, user.password_hash):
              raise HTTPException(status_code=401, detail="Invalid credentials")

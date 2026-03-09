@@ -9,8 +9,11 @@ document.addEventListener('DOMContentLoaded', () => {
     if (loginForm) {
         loginForm.addEventListener('submit', async (e) => {
             e.preventDefault();
-            const btn = loginForm.querySelector('button');
+            const btn = loginForm.querySelector('button[type="submit"]');
             const originalText = btn.innerHTML;
+
+            // Clear any previous error messages
+            clearStatusMessage();
 
             // UI Loading State
             btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Authenticating...';
@@ -50,7 +53,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 if (!response.ok) {
                     const err = await response.json();
-                    throw new Error(err.detail || "Authentication Failed");
+                    const detail = err.detail || "Authentication Failed";
+
+                    // Handle specific status codes with styled messages
+                    if (response.status === 403) {
+                        showStatusMessage(detail, 'warning');
+                        btn.innerHTML = originalText;
+                        btn.style.opacity = '1';
+                        return;
+                    }
+                    throw new Error(detail);
                 }
 
                 const data = await response.json();
@@ -59,7 +71,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 localStorage.setItem('access_token', data.access_token);
                 localStorage.setItem('authToken', data.access_token);
 
-                // We can fetch user details right away to store admin status
+                // Fetch user details to store role, clearance, and admin status
                 const userResp = await fetch(`${API_BASE}/users/me`, {
                     headers: {
                         'Authorization': `Bearer ${data.access_token}`
@@ -68,6 +80,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 if (userResp.ok) {
                     const userData = await userResp.json();
+                    localStorage.setItem('userRole', userData.role || '');
+                    localStorage.setItem('clearanceLevel', userData.clearance_level || '');
+                    localStorage.setItem('userEmail', userData.email || '');
+
                     if (userData.role === "SUPER_ADMIN" || userData.role === "ADMIN") {
                         localStorage.setItem('isAdmin', 'true');
                     } else {
@@ -78,7 +94,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 window.location.href = 'dashboard.html';
 
             } catch (error) {
-                alert("Login Failed: " + error.message);
+                showStatusMessage(error.message, 'error');
                 btn.innerHTML = originalText;
                 btn.style.opacity = '1';
             }
@@ -108,10 +124,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 localStorage.setItem('access_token', data.access_token);
                 localStorage.setItem('authToken', data.access_token);
                 localStorage.setItem('isAdmin', 'true');
+                localStorage.setItem('userRole', 'SUPER_ADMIN');
+                localStorage.setItem('clearanceLevel', '3');
 
                 window.location.href = 'dashboard.html';
             } catch (error) {
-                alert("Developer Bypass Error: " + error.message);
+                showStatusMessage("Developer Bypass Error: " + error.message, 'error');
                 devBypassBtn.innerHTML = originalText;
                 devBypassBtn.style.opacity = '1';
             }
@@ -122,32 +140,32 @@ document.addEventListener('DOMContentLoaded', () => {
     if (registerForm) {
         registerForm.addEventListener('submit', async (e) => {
             e.preventDefault();
-            const btn = registerForm.querySelector('button');
+            const btn = registerForm.querySelector('button[type="submit"]');
             const originalText = btn.innerHTML;
+
+            // Clear any previous messages
+            clearStatusMessage();
 
             btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Requesting Access...';
             btn.style.opacity = '0.7';
 
             try {
-                const inputs = registerForm.querySelectorAll('input');
-                let email = '';
-                let password = '';
-                let fullName = '';
+                // Read all fields by ID
+                const username = document.getElementById('regUsername')?.value?.trim();
+                const firstName = document.getElementById('regFirstName')?.value?.trim();
+                const lastName = document.getElementById('regLastName')?.value?.trim();
+                const email = document.getElementById('regEmail')?.value?.trim();
+                const department = document.getElementById('regDepartment')?.value || '';
+                const clearanceLevel = parseInt(document.getElementById('regClearanceLevel')?.value || '1');
+                const password = document.getElementById('regPassword')?.value;
 
-                inputs.forEach(input => {
-                    if (input.type === 'email' || (input.placeholder && input.placeholder.toLowerCase().includes('email'))) email = input.value;
-                    if (input.type === 'password') password = input.value;
-                    if (input.type === 'text' && input.placeholder && input.placeholder.toLowerCase().includes('name')) fullName = input.value;
-                });
-
-                if (!email || !password) {
+                if (!username || !email || !password) {
                     throw new Error("Please fill out all required fields.");
                 }
 
-                // Basic separation of full name into first/last
-                const nameParts = fullName.split(' ');
-                const firstName = nameParts[0] || '';
-                const lastName = nameParts.length > 1 ? nameParts.slice(1).join(' ') : '';
+                if (password.length < 12) {
+                    throw new Error("Passphrase must be at least 12 characters.");
+                }
 
                 const response = await fetch(`${API_BASE}/auth/register`, {
                     method: 'POST',
@@ -155,11 +173,13 @@ document.addEventListener('DOMContentLoaded', () => {
                         'Content-Type': 'application/json',
                     },
                     body: JSON.stringify({
+                        username: username,
                         email: email,
                         password: password,
-                        username: email, // Using email as username
-                        first_name: firstName,
-                        last_name: lastName
+                        first_name: firstName || '',
+                        last_name: lastName || '',
+                        department: department,
+                        clearance_level: clearanceLevel
                     })
                 });
 
@@ -168,11 +188,21 @@ document.addEventListener('DOMContentLoaded', () => {
                     throw new Error(err.detail || "Registration Failed");
                 }
 
-                alert("Registration successful! Please login.");
-                window.location.href = 'login.html';
+                const data = await response.json();
+
+                // Show success message with pending approval info
+                showStatusMessage(
+                    data.message || "Registration successful! Your account is pending admin approval.",
+                    'success'
+                );
+
+                // Redirect to login after a delay
+                setTimeout(() => {
+                    window.location.href = 'login.html';
+                }, 3000);
 
             } catch (error) {
-                alert("Registration Failed: " + error.message);
+                showStatusMessage(error.message, 'error');
                 btn.innerHTML = originalText;
                 btn.style.opacity = '1';
             }
@@ -182,6 +212,81 @@ document.addEventListener('DOMContentLoaded', () => {
     // Auth Guard Check for protected pages
     checkAuthGuard();
 });
+
+// ─── Inline Status Messages (styled, non-intrusive) ─────────────────────────
+
+function showStatusMessage(message, type = 'error') {
+    clearStatusMessage();
+
+    const msgDiv = document.createElement('div');
+    msgDiv.id = 'authStatusMessage';
+    msgDiv.style.cssText = `
+        margin-top: 20px;
+        padding: 16px 20px;
+        border-radius: 8px;
+        font-size: 0.9rem;
+        font-family: 'Outfit', sans-serif;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        animation: fadeSlideIn 0.3s ease;
+    `;
+
+    let icon, borderColor, bgColor, textColor;
+
+    switch (type) {
+        case 'warning':
+            icon = 'fas fa-clock';
+            borderColor = '#f59e0b';
+            bgColor = 'rgba(245, 158, 11, 0.08)';
+            textColor = '#f59e0b';
+            break;
+        case 'success':
+            icon = 'fas fa-check-circle';
+            borderColor = '#10b981';
+            bgColor = 'rgba(16, 185, 129, 0.08)';
+            textColor = '#10b981';
+            break;
+        case 'error':
+        default:
+            icon = 'fas fa-exclamation-triangle';
+            borderColor = '#ef4444';
+            bgColor = 'rgba(239, 68, 68, 0.08)';
+            textColor = '#ef4444';
+            break;
+    }
+
+    msgDiv.style.border = `1px solid ${borderColor}`;
+    msgDiv.style.background = bgColor;
+    msgDiv.style.color = textColor;
+    msgDiv.innerHTML = `<i class="${icon}"></i> <span>${message}</span>`;
+
+    // Insert after the form
+    const form = document.getElementById('loginForm') || document.getElementById('registerForm');
+    if (form) {
+        form.parentNode.insertBefore(msgDiv, form.nextSibling);
+    }
+
+    // Add animation keyframes if not present
+    if (!document.getElementById('authAnimationStyle')) {
+        const style = document.createElement('style');
+        style.id = 'authAnimationStyle';
+        style.textContent = `
+            @keyframes fadeSlideIn {
+                from { opacity: 0; transform: translateY(-8px); }
+                to { opacity: 1; transform: translateY(0); }
+            }
+        `;
+        document.head.appendChild(style);
+    }
+}
+
+function clearStatusMessage() {
+    const existing = document.getElementById('authStatusMessage');
+    if (existing) existing.remove();
+}
+
+// ─── Auth Guard ─────────────────────────────────────────────────────────────
 
 async function checkAuthGuard() {
     // If not on login/register pages, enforce session existence
@@ -208,10 +313,18 @@ async function checkAuthGuard() {
             if (!response.ok) {
                 throw new Error("Invalid session");
             }
+
+            // Update stored user info on every page load
+            const userData = await response.json();
+            localStorage.setItem('userRole', userData.role || '');
+            localStorage.setItem('clearanceLevel', userData.clearance_level || '');
         } catch (e) {
             console.warn("Session verification failed. Redirecting to login.");
             localStorage.removeItem('access_token');
             localStorage.removeItem('authToken');
+            localStorage.removeItem('isAdmin');
+            localStorage.removeItem('userRole');
+            localStorage.removeItem('clearanceLevel');
             window.location.href = 'login.html';
         }
     }

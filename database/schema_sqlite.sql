@@ -10,6 +10,7 @@ CREATE TABLE IF NOT EXISTS users (
     last_name TEXT,
     department TEXT,
     clearance_level INTEGER CHECK (clearance_level IN (1, 2, 3)),
+    requested_clearance_level INTEGER CHECK (requested_clearance_level IN (1, 2, 3)),
     role TEXT CHECK (role IN ('SUPER_ADMIN', 'ANALYST', 'AUDITOR', 'OPERATIVE', 'SPECIALIST', 'OVERSEER')),
     status TEXT DEFAULT 'PENDING' CHECK (status IN ('ACTIVE', 'PENDING', 'BLOCKED')),
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,

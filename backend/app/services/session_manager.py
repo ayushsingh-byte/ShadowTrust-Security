@@ -155,6 +155,7 @@ class LabSessionManager:
         if not port_open:
             logger.error(f"Lab {lab_id} failed to provision: Timeout waiting for port {target_port} to open on {public_ip}.")
             await self._update_db_status(lab_id, "ERROR")
+            self.aws.terminate_vm(instance_id)
             return
             
         logger.info(f"Port {target_port} on {public_ip} is open. Creating Guacamole Connection...")
@@ -183,6 +184,7 @@ class LabSessionManager:
         if not guac_id:
             logger.error(f"Lab {lab_id} failed to provision: Guacamole DB error.")
             await self._update_db_status(lab_id, "ERROR")
+            self.aws.terminate_vm(instance_id)
             return
             
         # 3. Transition to READY

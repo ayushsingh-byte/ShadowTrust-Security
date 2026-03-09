@@ -9,6 +9,7 @@ from contextlib import asynccontextmanager
 from app.db.sqlite_db import init_db
 from app.services.sync_manager import SyncManager
 from app.services.session_engine import SessionEngine
+from app.services.aws_telemetry_service import telemetry_engine
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -18,12 +19,15 @@ async def lifespan(app: FastAPI):
     # Start background tasks
     sync_task = asyncio.create_task(background_sync_loop())
     session_engine_task = asyncio.create_task(background_session_loop())
+    telemetry_task = asyncio.create_task(telemetry_engine.run_pipeline())
     
     yield
     
     # Clean up on shutdown
     sync_task.cancel()
     session_engine_task.cancel()
+    telemetry_engine.is_running = False
+    telemetry_task.cancel()
 
 async def background_sync_loop():
     while True:
@@ -49,36 +53,23 @@ app = FastAPI(
     lifespan=lifespan
 )
 
-# CORS PROPERLY CONFIGURED
-origins = [
-    "http://localhost",
-    "http://localhost:8000",
-    "http://localhost:5500",
-    "http://localhost:5501",
-    "http://localhost:5502",
-    "http://localhost:5503",
-    "http://localhost:5504",
-    "http://localhost:5505",
-    "http://localhost:3000",
-    "http://127.0.0.1:5500",
-    "http://127.0.0.1:5501",
-    "http://127.0.0.1:5502",
-    "http://127.0.0.1:5503",
-    "http://127.0.0.1:5504",
-    "http://127.0.0.1:5505",
-    "http://127.0.0.1:3000",
-]
-
+# CORS — allow all origins for development
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
+app.include_router(api_router, prefix=settings.API_V1_STR)
+
+from app.api.v1.endpoints.attacks_api import router as attacks_router
+from app.api.v1.endpoints.honeypots_api import router as honeypots_router
+
+app.include_router(attacks_router, prefix="/api/attacks", tags=["attacks"])
+app.include_router(honeypots_router, prefix="/api/honeypots", tags=["honeypots"])
+
 @app.get("/")
 def root():
     return {"message": "Welcome to SOC-Honeynet API", "status": "running"}
-
-app.include_router(api_router, prefix=settings.API_V1_STR)

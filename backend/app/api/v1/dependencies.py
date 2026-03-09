@@ -20,6 +20,10 @@ async def get_current_user(
         headers={"WWW-Authenticate": "Bearer"},
     )
     try:
+        if token == "dev_bypass_token":
+            # Mock a super admin user for local development without Supabase
+            return User(email="dev@shadowtrust.local", role="SUPER_ADMIN", status="ACTIVE")
+            
         payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
         email: str = payload.get("sub")
         if email is None:

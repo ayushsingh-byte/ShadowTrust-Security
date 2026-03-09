@@ -321,17 +321,20 @@
                         <span>UPLINK STATUS</span>
                         <i class="fas fa-satellite-dish text-green"></i>
                     </div>
-                    <div class="metric-value">ACTIVE</div>
-                    <div class="metric-sub text-green">ap-south-1a // 22ms latency</div>
+                    <div class="metric-value" id="global-uplink-status">ACTIVE</div>
+                    <div class="metric-sub text-green" id="global-uplink-region">ap-south-1a // 22ms latency</div>
                 </div>
                 <div class="soc-card metric-tile">
                     <div class="metric-header">
                         <span>COMPUTE CLUSTER</span>
                         <i class="fas fa-microchip text-yellow"></i>
                     </div>
-                    <div class="metric-value">0 / 32 <span style="font-size: 1rem; color: #666;">vCPU</span></div>
+                    <div class="metric-value"><span id="global-vcpu-count">0</span> / 32 <span
+                            style="font-size: 1rem; color: #666;">vCPU</span></div>
                     <div style="background: rgba(255,255,255,0.05); height: 4px; border-radius: 2px; margin-top: 10px;">
-                        <div style="background: var(--accent-secondary); width: 5%; height: 100%;"></div>
+                        <div id="global-vcpu-bar"
+                            style="background: var(--accent-secondary); width: 0%; height: 100%; transition: width 0.5s ease;">
+                        </div>
                     </div>
                 </div>
                 <div class="soc-card metric-tile">
@@ -339,9 +342,12 @@
                         <span>MEMORY POOL</span>
                         <i class="fas fa-memory text-red"></i>
                     </div>
-                    <div class="metric-value">0 / 64 <span style="font-size: 1rem; color: #666;">GB</span></div>
+                    <div class="metric-value"><span id="global-ram-count">0</span> / 64 <span
+                            style="font-size: 1rem; color: #666;">GB</span></div>
                     <div style="background: rgba(255,255,255,0.05); height: 4px; border-radius: 2px; margin-top: 10px;">
-                        <div style="background: var(--accent-critical); width: 2%; height: 100%;"></div>
+                        <div id="global-ram-bar"
+                            style="background: var(--accent-critical); width: 0%; height: 100%; transition: width 0.5s ease;">
+                        </div>
                     </div>
                 </div>
                 <div class="soc-card metric-tile">
@@ -349,8 +355,8 @@
                         <span>ACTIVE INSTANCES</span>
                         <i class="fas fa-server text-green"></i>
                     </div>
-                    <div class="metric-value text-green">0</div>
-                    <div class="metric-sub">0 isolated blocks running</div>
+                    <div class="metric-value text-green" id="global-instance-count">0</div>
+                    <div class="metric-sub"><span id="global-instance-sub">0</span> isolated blocks running</div>
                 </div>
             </div>
 

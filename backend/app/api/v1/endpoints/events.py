@@ -47,3 +47,43 @@ async def ingest_telemetry(events: List[RawEventSchema], db: AsyncSession = Depe
     except Exception as e:
         await db.rollback()
         raise HTTPException(status_code=500, detail=str(e))
+
+from sqlalchemy import select, desc
+from app.api.v1.dependencies import get_current_active_user
+from app.models.all_models import User
+
+@router.get("/")
+async def get_events(limit: int = 200, db: AsyncSession = Depends(get_db), current_user: User = Depends(get_current_active_user)):
+    """
+    Retrieves the raw telemetry events directly from the database for the Event Log page. 
+    Only accessible to authenticated users.
+    """
+    try:
+        query = await db.execute(
+            select(RawEventModel)
+            .order_by(desc(RawEventModel.timestamp))
+            .limit(limit)
+        )
+        events = query.scalars().all()
+        
+        return [
+            {
+                "id": event.id,
+                "timestamp": event.timestamp.isoformat() if event.timestamp else None,
+                "attacker_ip": event.attacker_ip,
+                "target_port": event.target_port,
+                "protocol": event.protocol,
+                "honeypot_type": event.honeypot_type,
+                "session_id": event.session_id,
+                "event_type": event.event_type,
+                "commands": event.commands,
+                "uploaded_files": event.uploaded_files,
+                "ports_scanned": event.ports_scanned,
+                "geoip_data": event.geoip_data,
+                "risk_score": event.risk_score,
+                "raw_payload": event.raw_payload
+            }
+            for event in events
+        ]
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to fetch events: {str(e)}")

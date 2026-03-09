@@ -5,6 +5,7 @@ class ApiService {
         // Automatically determine API URL based on environment
         const isLocalDev = window.location.hostname === '127.0.0.1' ||
             window.location.hostname === 'localhost' ||
+            window.location.hostname === '0.0.0.0' ||
             window.location.protocol === 'file:';
 
         this.baseUrl = isLocalDev ? 'http://127.0.0.1:8000/api/v1' : '/api/v1';
@@ -69,11 +70,10 @@ class ApiService {
             // Handle 401 Unauthorized (Token Expired)
             if (response.status === 401) {
                 localStorage.removeItem('access_token');
-                if (!localStorage.getItem('authToken')) {
-                    window.location.href = 'login.html';
-                }
-                const errorData = await response.json().catch(() => ({}));
-                throw new Error(errorData.detail || 'Unauthorized (Mock Token used?)');
+                localStorage.removeItem('authToken');
+                localStorage.removeItem('isAdmin');
+                window.location.href = 'login.html';
+                throw new Error('Unauthorized - Session Expired. Please log in again.');
             }
 
             if (!response.ok) {
@@ -97,6 +97,8 @@ class ApiService {
 
     clearToken() {
         localStorage.removeItem('access_token');
+        localStorage.removeItem('authToken');
+        localStorage.removeItem('isAdmin');
     }
 }
 

@@ -264,7 +264,7 @@
                     </div>
                     <div class="overlay-row">
                         <span class="text-muted">TARGETED ZONES</span>
-                        <span class="text-pink">0</span>
+                        <span class="text-pink" id="targetedZones">0</span>
                     </div>
                     <div class="overlay-row" style="margin-top:10px;">
                         <span class="text-xs text-purple">LAST DETECTED:</span>
@@ -290,7 +290,7 @@
                                 <th>TRAFFIC</th>
                             </tr>
                         </thead>
-                        <tbody>
+                        <tbody id="topCountriesTbody">
                             <tr>
                                 <td colspan="5" class="text-muted">No data yet</td>
                             </tr>
@@ -307,19 +307,20 @@
                     <div
                         style="background:rgba(255,255,255,0.02); padding:1rem; border-radius:4px; margin-bottom:15px; border:1px solid #222;">
                         <span class="text-xs text-muted">TOP OFFENDING ISP</span>
-                        <div class="text-xl text-white">—</div>
-                        <div class="text-xs text-pink">—</div>
+                        <div class="text-xl text-white" id="topOffendingIspName">—</div>
+                        <div class="text-xs text-pink" id="topOffendingIspCount">—</div>
                     </div>
 
                     <table class="soc-table">
                         <thead>
                             <tr>
                                 <th>ASN</th>
+                                <th>IPs</th>
                                 <th>ISP Name</th>
                                 <th>Count</th>
                             </tr>
                         </thead>
-                        <tbody>
+                        <tbody id="asnIntelligenceTbody">
                             <tr>
                                 <td colspan="3" class="text-muted">No data yet</td>
                             </tr>
@@ -347,7 +348,8 @@
             subdomains: 'abcd'
         }).addTo(map);
 
-        // Live geo events are loaded from the backend; no client-side fake/simulated data.
+        // Live geo events are loaded from the backend
+
 
         // --- CUSTOM MODAL & BUTTON LOGIC ---
         const topModal = document.getElementById('custom-modal');
@@ -461,6 +463,105 @@
             );
         });
 
+    </script>
+    <script type="module">
+        import { apiService } from './js/api.js';
+
+        window.fetchGeoStats = async function () {
+            try {
+                const data = await apiService.get('/dashboard/geo');
+                if (!data) return;
+
+                // Update Overlays
+                document.getElementById('activeSrc').textContent = data.active_sources || 0;
+                document.getElementById('targetedZones').textContent = data.targeted_zones || 0;
+                document.getElementById('lastDetect').textContent = data.last_detected || "—";
+
+                // Update Map Markers
+                if (typeof map !== 'undefined' && data.markers && data.markers.length > 0) {
+                    if (!window.geoAttackMarkersLayer) {
+                        window.geoAttackMarkersLayer = L.layerGroup().addTo(map);
+                    }
+                    window.geoAttackMarkersLayer.clearLayers();
+
+                    const markerHtmlStyles = `
+                        background-color: var(--accent-critical);
+                        width: 12px;
+                        height: 12px;
+                        display: block;
+                        left: -6px;
+                        top: -6px;
+                        position: relative;
+                        border-radius: 50%;
+                        box-shadow: 0 0 15px var(--accent-critical);
+                        animation: pulse-ring 2s infinite;
+                    `;
+
+                    data.markers.slice(0, 30).forEach(m => {
+                        if (m.lat !== undefined && m.lon !== undefined) {
+                            const icon = L.divIcon({
+                                className: "blinking-marker",
+                                html: `<span style="${markerHtmlStyles}"></span>`
+                            });
+                            L.marker([m.lat, m.lon], { icon }).addTo(window.geoAttackMarkersLayer);
+                        }
+                    });
+                }
+
+                // Update Top Countries Table
+                const countriesTbody = document.getElementById('topCountriesTbody');
+                if (countriesTbody && data.top_countries) {
+                    countriesTbody.innerHTML = '';
+                    if (data.top_countries.length === 0) {
+                        countriesTbody.innerHTML = '<tr><td colspan="5" class="text-muted">No data yet</td></tr>';
+                    } else {
+                        data.top_countries.forEach(c => {
+                            const tr = document.createElement('tr');
+                            tr.innerHTML = `
+                                <td>${c.flag || '🏳️'}</td>
+                                <td>${c.country || 'Unknown'}</td>
+                                <td>${c.code || '--'}</td>
+                                <td>${c.events || 0}</td>
+                                <td class="text-mono text-xs">${c.traffic || '0 MB'}</td>
+                            `;
+                            countriesTbody.appendChild(tr);
+                        });
+                    }
+                }
+
+                // Update ASN Intelligence
+                const asnTbody = document.getElementById('asnIntelligenceTbody');
+                if (asnTbody && data.asn_intelligence) {
+                    asnTbody.innerHTML = '';
+                    if (data.asn_intelligence.length === 0) {
+                        asnTbody.innerHTML = '<tr><td colspan="3" class="text-muted">No data yet</td></tr>';
+                    } else {
+                        data.asn_intelligence.forEach(a => {
+                            const tr = document.createElement('tr');
+                            tr.innerHTML = `
+                                <td class="text-mono text-cyan">${a.asn || '--'}</td>
+                                <td class="text-mono text-muted" style="font-size:0.75rem;">${a.ips || '--'}</td>
+                                <td>${a.isp_name || 'Unknown'}</td>
+                                <td>${a.count || 0}</td>
+                            `;
+                            asnTbody.appendChild(tr);
+                        });
+                    }
+                }
+
+                if (data.top_isp) {
+                    document.getElementById('topOffendingIspName').textContent = data.top_isp.isp_name || "—";
+                    document.getElementById('topOffendingIspCount').textContent = `${data.top_isp.count || 0} EVENTS LOGGED`;
+                }
+
+            } catch (err) {
+                console.error("Error fetching geo stats:", err);
+            }
+        }
+
+        // Modules are deferred by default, initialization can happen immediately
+        window.fetchGeoStats();
+        setInterval(window.fetchGeoStats, 5000);
     </script>
     <script src="js/sidebar.js"></script>
 </body>

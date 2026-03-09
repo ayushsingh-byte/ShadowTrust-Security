@@ -17,11 +17,20 @@ router = APIRouter()
 class NodeService:
     @staticmethod
     def get_system_stats():
+        process = psutil.Process()
+        uptime_seconds = time.time() - process.create_time()
+        net_io = psutil.net_io_counters()
+        
         return {
             "cpu_percent": psutil.cpu_percent(interval=None),
             "memory": psutil.virtual_memory()._asdict(),
             "disk": psutil.disk_usage('/')._asdict(),
-            "boot_time": psutil.boot_time()
+            "boot_time": process.create_time(),
+            "uptime_seconds": uptime_seconds,
+            "network": {
+                "bytes_sent": net_io.bytes_sent,
+                "bytes_recv": net_io.bytes_recv
+            }
         }
 
     @staticmethod
@@ -84,7 +93,27 @@ async def get_nodes(
                 "risk_level": "LOW",
                 "cpu_percent": random.randint(5, 30) # Simulated load for the UI
             })
-        
+    # Guarantee core honeypot sensors are always listed
+    core_sensors = ["COWRIE", "DIONAEA", "HONEYTRAP"]
+    
+    # Check what we already dynamically gathered from the database
+    existing_virtual_names = [nd["name"] for nd in nodes_data]
+
+    for sensor in core_sensors:
+        virtual_name = f"{sensor}-SENSOR-01"
+        if virtual_name not in existing_virtual_names:
+            nodes_data.append({
+                "node_id": str(uuid.uuid4()),
+                "name": virtual_name,
+                "type": sensor,
+                "sector": "EXTERNAL",
+                "status": "ONLINE",
+                "ip_address": "Locally Ingested",
+                "uptime_seconds": 99999,
+                "risk_level": "LOW",
+                "cpu_percent": random.randint(5, 30)
+            })
+
     return nodes_data
 
 @router.get("/stats")

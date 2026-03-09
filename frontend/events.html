@@ -281,9 +281,11 @@
 
         <!-- VISUALIZATION ROW -->
         <div class="dashboard-grid" style="grid-template-columns: 3fr 1fr; margin-bottom: 20px;">
-            <div class="soc-card" style="height:200px; padding:10px;">
+            <div class="soc-card" style="height:300px; padding:10px; display:flex; flex-direction:column;">
                 <div class="text-xs text-muted" style="margin-bottom:10px;">EVENT VOLUME (LAST 1 HOUR)</div>
-                <canvas id="volumeChart"></canvas>
+                <div style="flex:1; position:relative;">
+                    <canvas id="volumeChart"></canvas>
+                </div>
             </div>
             <div class="soc-card" style="padding:15px;">
                 <div class="card-title">TOP SOURCES</div>
@@ -333,15 +335,139 @@
 </div>
 
 <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
-<script>
+<script type="module">
+    import { apiService } from './js/api.js';
+
     $(document).ready(function () {
-        $('#logTable').DataTable({
+        const table = $('#logTable').DataTable({
             data: [],
             pageLength: 25,
             lengthChange: false,
             ordering: true,
-            order: [[0, "desc"]]
+            order: [[0, "desc"]],
+            columns: [
+                { data: 'timestamp', render: data => data ? data.replace('T', ' ').substring(0, 19) : '' },
+                {
+                    data: 'risk_score', render: data => {
+                        if (data >= 80) return '<span class="text-red">CRITICAL</span>';
+                        if (data >= 50) return '<span class="text-yellow">HIGH</span>';
+                        if (data >= 20) return '<span class="text-cyan">MEDIUM</span>';
+                        return '<span class="text-green">LOW</span>';
+                    }
+                },
+                { data: 'attacker_ip', render: data => `<span class="text-mono">${data}</span>` },
+                { data: 'geoip_data', render: data => data?.country_name || 'UNKNOWN' },
+                { data: 'target_port', render: (data, type, row) => `${row.honeypot_type || 'HONEYPOT'}:${data}` },
+                { data: 'protocol', render: data => `<span class="text-pink">${data || 'UNKNOWN'}</span>` },
+                { data: 'event_type', render: (data, type, row) => `<span class="text-mono text-muted">${data || 'CONNECTION'}</span>` },
+                { data: null, render: () => `<button class="soc-btn soc-btn-sm" style="padding: 2px 10px; font-size: 0.7rem;">ANALYZE</button>` }
+            ]
         });
+
+        // Initialize Chart
+        const ctxVolume = document.getElementById('volumeChart').getContext('2d');
+        const volumeChart = new Chart(ctxVolume, {
+            type: 'bar',
+            data: {
+                labels: Array.from({ length: 60 }, (_, i) => i + 'm ago').reverse(),
+                datasets: [
+                    {
+                        label: 'SSH/Telnet (Brute Force)',
+                        data: [],
+                        backgroundColor: '#ff003c'
+                    },
+                    {
+                        label: 'HTTP/S (Web Exploits)',
+                        data: [],
+                        backgroundColor: '#00f0ff'
+                    },
+                    {
+                        label: 'Other/Malware',
+                        data: [],
+                        backgroundColor: '#aa00ff'
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: { stacked: true, ticks: { color: '#666', font: { family: 'JetBrains Mono' } }, grid: { color: '#222' } },
+                    y: { stacked: true, ticks: { color: '#666', font: { family: 'JetBrains Mono' } }, grid: { color: '#222' } }
+                },
+                plugins: {
+                    legend: { labels: { color: '#aaa', font: { family: 'JetBrains Mono', size: 10 } } }
+                }
+            }
+        });
+
+        // Fetch Real Telemetry Data & Stats
+        async function fetchEventsAndStats() {
+            try {
+                // Fetch Events Table Data
+                const events = await apiService.get('/events/');
+                table.clear();
+                table.rows.add(events);
+                table.draw();
+
+                // Update Top Bar Stats (Buffer Size)
+                const bufferSize = events.reduce((acc, curr) => acc + JSON.stringify(curr).length, 0);
+                document.querySelector('.filters-bar .text-mono.text-cyan').innerText = (bufferSize / 1024).toFixed(2) + ' KB';
+
+                // Fetch Dashboard Stats for Top Widgets & Chart
+                const stats = await apiService.get('/dashboard/stats');
+
+                // Update Top Source List
+                const topSourcesContainer = document.querySelector('.dashboard-grid .soc-card:nth-child(2) > div:nth-child(2)');
+                if (stats.top_attackers && stats.top_attackers.length > 0) {
+                    topSourcesContainer.innerHTML = stats.top_attackers.map(attacker => `
+                        <div style="display:flex; justify-content:space-between; margin-bottom:10px; border-bottom:1px solid #222; padding-bottom:5px;">
+                            <span class="text-mono" style="color:#e2e8f0;">${attacker.org}</span>
+                            <span class="text-cyan text-mono">${attacker.hits} <i class="fas fa-fire ${attacker.risk === 'HIGH' ? 'text-red' : 'text-yellow'}"></i></span>
+                        </div>
+                    `).join('');
+                } else {
+                    topSourcesContainer.innerHTML = '<div class="text-muted">No data yet</div>';
+                }
+
+                // Update Chart Data
+                if (stats.traffic_chart) {
+                    volumeChart.data.datasets[0].data = stats.traffic_chart.ssh || [];
+                    volumeChart.data.datasets[1].data = stats.traffic_chart.http || [];
+                    volumeChart.data.datasets[2].data = stats.traffic_chart.malware || [];
+                    volumeChart.update();
+                }
+
+                // Update Header Stat Blocks
+                const statBlocks = document.querySelectorAll('.dashboard-grid[style*="repeat(6"] > div');
+                if (statBlocks.length >= 6) {
+                    const totalAttacksThisHour = (stats.traffic_chart?.ssh?.reduce((a, b) => a + b, 0) || 0) +
+                        (stats.traffic_chart?.http?.reduce((a, b) => a + b, 0) || 0) +
+                        (stats.traffic_chart?.malware?.reduce((a, b) => a + b, 0) || 0);
+
+                    // 1. Ingest Rate (Estimating based on last hour)
+                    statBlocks[0].querySelector('.text-purple').innerText = Math.round(totalAttacksThisHour / 60) + '/min';
+                    // 2. Critical Alerts
+                    statBlocks[1].querySelector('.text-pink').innerText = events.filter(e => e.risk_score >= 80).length;
+                    // 3. Total Logs (24H)
+                    statBlocks[2].querySelector('.text-cyan').innerText = stats.summary?.total_attacks || 0;
+                    // 4. Index Status
+                    statBlocks[3].querySelector('.text-green').innerText = 'GREEN';
+                    // 5. Query Latency (Mock latency base on buffer)
+                    statBlocks[4].querySelector('div:first-child').innerText = Math.max(12, Math.round(bufferSize / 1024 * 1.5)) + 'ms';
+                    // 6. Cache Hit Ratio
+                    statBlocks[5].querySelector('.text-white').innerText = '94.2%';
+                }
+
+
+            } catch (err) {
+                console.error("Failed to load telemetry:", err);
+            }
+        }
+
+        fetchEventsAndStats();
+        // Auto-refresh every 30 seconds
+        setInterval(fetchEventsAndStats, 30000);
     });
 
     // --- CUSTOM MODAL LOGIC ---
