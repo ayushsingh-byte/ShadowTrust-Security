@@ -44,13 +44,13 @@ async def _seed_admin():
         if not existing_admin:
             import bcrypt
             import uuid
-            password = "admin123456!"
+            password = "admin"
             hashed = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
 
             admin = User(
                 id=str(uuid.uuid4()),
                 username="admin",
-                email="admin@shadowtrust.com",
+                email="admin@gmail.com",
                 password_hash=hashed,
                 first_name="System",
                 last_name="Admin",
@@ -58,11 +58,10 @@ async def _seed_admin():
                 role="SUPER_ADMIN",
                 clearance_level=3,
                 requested_clearance_level=3,
-                status="ACTIVE",
+                status="ACTIVE"
             )
             session.add(admin)
             await session.commit()
-            print("[SEED] Default admin user created: admin@shadowtrust.com / admin123456!")
+            print("[SEED] Default admin user created: admin@gmail.com / admin")
         else:
             print(f"[SEED] Admin user already exists: {existing_admin.email}")
-

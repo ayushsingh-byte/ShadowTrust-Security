@@ -500,7 +500,7 @@
                     data.markers.slice(0, 30).forEach(m => {
                         if (m.lat !== undefined && m.lon !== undefined) {
                             const icon = L.divIcon({
-                                className: "blinking-marker",
+                                className: "", // Clear the class so Leaflet uses its clean default positioning class
                                 html: `<span style="${markerHtmlStyles}"></span>`
                             });
                             L.marker([m.lat, m.lon], { icon }).addTo(window.geoAttackMarkersLayer);

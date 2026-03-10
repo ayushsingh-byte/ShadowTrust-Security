@@ -44,3 +44,9 @@ api_router.include_router(events_router, prefix="/events", tags=["events"])
 
 from app.api.v1.endpoints.aws import router as aws_router
 api_router.include_router(aws_router, prefix="/aws", tags=["aws"])
+
+from app.api.v1.endpoints.analytics import router as analytics_router
+api_router.include_router(analytics_router, prefix="/analytics", tags=["analytics"])
+
+from app.api.v1.endpoints.behavior import router as behavior_router
+api_router.include_router(behavior_router, prefix="/behavior", tags=["behavior"])

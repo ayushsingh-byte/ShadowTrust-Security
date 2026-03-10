@@ -148,7 +148,7 @@ class AuthService:
 
     async def dev_bypass_token(self, db: AsyncSession):
         # Create or fetch an admin user for dev bypass
-        email = "admin@shadowtrust.com"
+        email = "admin@gmail.com"
         result = await db.execute(select(User).where(User.email == email))
         user = result.scalars().first()
         

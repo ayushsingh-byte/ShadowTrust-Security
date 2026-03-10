@@ -128,267 +128,218 @@
             <!-- ROW 2: MAIN CHARTS -->
             <div class="dashboard-grid" style="grid-template-columns: 2fr 1fr; margin-bottom: 2rem;">
                 <!-- MAIN TRAFFIC -->
-                <div class="soc-card" style="height:350px;">
+                <div class="soc-card" style="height:375px;">
                     <div class="soc-card-header"><span class="card-title">CROSS-SECTOR ATTACK VOLUME</span></div>
-                    <div style="height:300px;"><canvas id="mainChart"></canvas></div>
+                    <div style="height:321px;"><canvas id="mainChart"></canvas></div>
                 </div>
                 <!-- ATTACK VECTORS RADAR -->
-                <div class="soc-card" style="height:350px;">
+                <div class="soc-card" style="height:375px;">
                     <div class="soc-card-header"><span class="card-title">ATTACK VECTOR LANDSCAPE</span></div>
-                    <div style="height:300px;"><canvas id="radarChart"></canvas></div>
+                    <div style="height:321px;"><canvas id="radarChart"></canvas></div>
                 </div>
             </div>
 
             <!-- ROW 3: DETAILED SPLITS -->
             <div class="dashboard-grid" style="grid-template-columns: 1fr 1fr 1fr; margin-bottom: 2rem;">
-                <div class="soc-card" style="height:300px;">
+                <div class="soc-card" style="height:321px;">
                     <div class="soc-card-header"><span class="card-title">PROTOCOL DISTRIBUTION</span></div>
-                    <div style="height:250px;"><canvas id="pieChart"></canvas></div>
+                    <div style="height:267px;"><canvas id="pieChart"></canvas></div>
                 </div>
-                <div class="soc-card" style="height:300px;">
+                <div class="soc-card" style="height:321px;">
                     <div class="soc-card-header"><span class="card-title">HOURLY ANOMALIES</span></div>
-                    <div style="height:250px;"><canvas id="barChart"></canvas></div>
+                    <div style="height:267px;"><canvas id="barChart"></canvas></div>
                 </div>
-                <div class="soc-card" style="height:300px;">
+                <div class="soc-card" style="height:321px;">
                     <div class="soc-card-header"><span class="card-title">GEO-ORIGIN HEATMAP</span></div>
-                    <div style="height:250px;"><canvas id="polarChart"></canvas></div>
+                    <div style="height:267px;"><canvas id="polarChart"></canvas></div>
                 </div>
             </div>
 
             <!-- ROW 4: ADVANCED CORRELATION (NEW) -->
             <div class="dashboard-grid" style="grid-template-columns: 1fr 1fr; margin-bottom: 2rem;">
-                <div class="soc-card" style="height:350px;">
+                <div class="soc-card" style="height:375px;">
                     <div class="soc-card-header"><span class="card-title">TTD VS TTR CORRELATION (Efficiency)</span>
                     </div>
-                    <div style="height:300px;"><canvas id="scatterChart"></canvas></div>
+                    <div style="height:321px;"><canvas id="scatterChart"></canvas></div>
                 </div>
-                <div class="soc-card" style="height:350px;">
+                <div class="soc-card" style="height:375px;">
                     <div class="soc-card-header"><span class="card-title">MALWARE FAMILY TRENDS (Volume vs Sev)</span>
                     </div>
-                    <div style="height:300px;"><canvas id="mixedChart"></canvas></div>
+                    <div style="height:321px;"><canvas id="mixedChart"></canvas></div>
                 </div>
             </div>
 
             <!-- ROW 5: MICRO ANALYTICS (NEW) -->
             <div class="dashboard-grid" style="grid-template-columns: 1fr 1fr 1fr;">
-                <div class="soc-card" style="height:300px;">
+                <div class="soc-card" style="height:321px;">
                     <div class="soc-card-header"><span class="card-title">TARGETED PORT USAGE</span></div>
-                    <div style="height:250px;"><canvas id="portsChart"></canvas></div>
+                    <div style="height:267px;"><canvas id="portsChart"></canvas></div>
                 </div>
-                <div class="soc-card" style="height:300px;">
+                <div class="soc-card" style="height:321px;">
                     <div class="soc-card-header"><span class="card-title">INSIDER THREAT MATRIX</span></div>
-                    <div style="height:250px;"><canvas id="bubbleChart"></canvas></div>
+                    <div style="height:267px;"><canvas id="bubbleChart"></canvas></div>
                 </div>
-                <div class="soc-card" style="height:300px;">
+                <div class="soc-card" style="height:321px;">
                     <div class="soc-card-header"><span class="card-title">NODE LOAD AVERAGES</span></div>
-                    <div style="height:250px;"><canvas id="systemChart"></canvas></div>
+                    <div style="height:267px;"><canvas id="systemChart"></canvas></div>
                 </div>
             </div>
 
         </main>
     </div>
 
-    <script>
+    <script type="module">
+        import { apiService } from './js/api.js';
+
         Chart.defaults.color = '#666';
         Chart.defaults.borderColor = 'rgba(255,255,255,0.05)';
         Chart.defaults.font.family = "'JetBrains Mono', monospace";
 
-        // 1. Main Line Chart
-        new Chart(document.getElementById('mainChart'), {
-            type: 'line',
-            data: {
-                labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
-                datasets: [{
-                    label: 'Education Sector',
-                    data: [120, 190, 300, 500, 200, 300, 450],
-                    borderColor: '#bc13fe',
-                    tension: 0.4
-                },
-                {
-                    label: 'Defence Sector',
-                    data: [400, 200, 100, 600, 800, 100, 50],
-                    borderColor: '#ff0055',
-                    tension: 0.4
-                }]
-            },
-            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: "#fff" } } } }
-        });
+        // Chart References
+        let charts = {};
 
-        // 2. Radar Chart
-        new Chart(document.getElementById('radarChart'), {
-            type: 'radar',
-            data: {
-                labels: ['Brute Force', 'SQLi', 'XSS', 'DDoS', 'Malware', 'Phishing'],
-                datasets: [{
-                    label: 'Risk Score',
-                    data: [85, 90, 60, 40, 95, 70],
-                    backgroundColor: 'rgba(0, 243, 255, 0.2)',
-                    borderColor: '#00f3ff',
-                    pointBackgroundColor: '#fff'
-                }]
-            },
-            options: { responsive: true, maintainAspectRatio: false, scales: { r: { grid: { color: '#333' } } } }
-        });
+        function initCharts() {
+            // 1. Main Line Chart
+            charts.main = new Chart(document.getElementById('mainChart'), {
+                type: 'line',
+                data: { labels: [], datasets: [{ label: 'Education Sector', data: [], borderColor: '#bc13fe', tension: 0.4 }, { label: 'Defence Sector', data: [], borderColor: '#ff0055', tension: 0.4 }] },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: "#fff" } } } }
+            });
 
-        // 3. Pie Chart
-        new Chart(document.getElementById('pieChart'), {
-            type: 'doughnut',
-            data: {
-                labels: ['SSH', 'HTTP', 'RDP', 'FTP', 'DNS'],
-                datasets: [{
-                    data: [45, 25, 15, 10, 5],
-                    backgroundColor: ['#bc13fe', '#00f3ff', '#ff0055', '#ffee00', '#00ff41'],
-                    borderWidth: 0
-                }]
-            },
-            options: { responsive: true, maintainAspectRatio: false }
-        });
+            // 2. Radar Chart
+            charts.radar = new Chart(document.getElementById('radarChart'), {
+                type: 'radar',
+                data: { labels: ['Brute Force', 'Exploit', 'XSS', 'DDoS', 'Malware', 'Phishing'], datasets: [{ label: 'Risk Score', data: [], backgroundColor: 'rgba(0, 243, 255, 0.2)', borderColor: '#00f3ff', pointBackgroundColor: '#fff' }] },
+                options: { responsive: true, maintainAspectRatio: false, scales: { r: { grid: { color: '#333' } } } }
+            });
 
-        // 4. Bar Chart
-        new Chart(document.getElementById('barChart'), {
-            type: 'bar',
-            data: {
-                labels: ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00'],
-                datasets: [{
-                    label: 'Anomalies',
-                    data: [12, 19, 3, 5, 22, 30],
-                    backgroundColor: '#ef4444'
-                }]
-            },
-            options: { responsive: true, maintainAspectRatio: false }
-        });
+            // 3. Pie Chart
+            charts.pie = new Chart(document.getElementById('pieChart'), {
+                type: 'doughnut',
+                data: { labels: ['SSH', 'HTTP', 'RDP', 'FTP', 'DNS'], datasets: [{ data: [], backgroundColor: ['#bc13fe', '#00f3ff', '#ff0055', '#ffee00', '#00ff41'], borderWidth: 0 }] },
+                options: { responsive: true, maintainAspectRatio: false }
+            });
 
-        // 5. Polar Chart
-        new Chart(document.getElementById('polarChart'), {
-            type: 'polarArea',
-            data: {
-                labels: ['CN', 'RU', 'US', 'BR', 'IR'],
-                datasets: [{
-                    data: [11, 16, 7, 3, 14],
-                    backgroundColor: ['#ff0055', '#bc13fe', '#00f3ff', '#00ff41', '#ffee00']
-                }]
-            },
-            options: { responsive: true, maintainAspectRatio: false, scales: { r: { grid: { display: false } } } }
-        });
+            // 4. Bar Chart
+            charts.bar = new Chart(document.getElementById('barChart'), {
+                type: 'bar',
+                data: { labels: ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00'], datasets: [{ label: 'Anomalies', data: [], backgroundColor: '#ef4444' }] },
+                options: { responsive: true, maintainAspectRatio: false }
+            });
 
-        // 6. Scatter Chart (TTD vs TTR)
-        new Chart(document.getElementById('scatterChart'), {
-            type: 'scatter',
-            data: {
-                datasets: [{
-                    label: 'Crit Incidents',
-                    data: [
-                        { x: 10, y: 120 }, { x: 15, y: 100 }, { x: 30, y: 200 }, { x: 45, y: 300 }, { x: 5, y: 60 }
-                    ],
-                    backgroundColor: '#ff0055'
-                }, {
-                    label: 'Minor Incidents',
-                    data: [
-                        { x: 60, y: 30 }, { x: 90, y: 20 }, { x: 120, y: 10 }, { x: 70, y: 40 }
-                    ],
-                    backgroundColor: '#00ff41'
-                }]
-            },
-            options: {
-                responsive: true, maintainAspectRatio: false,
-                scales: {
-                    x: { title: { display: true, text: 'Time To Detect (min)', color: '#666' } },
-                    y: { title: { display: true, text: 'Time To Respond (min)', color: '#666' } }
-                }
+            // 5. Polar Chart
+            charts.polar = new Chart(document.getElementById('polarChart'), {
+                type: 'polarArea',
+                data: { labels: [], datasets: [{ data: [], backgroundColor: ['#ff0055', '#bc13fe', '#00f3ff', '#00ff41', '#ffee00'] }] },
+                options: { responsive: true, maintainAspectRatio: false, scales: { r: { grid: { display: false } } } }
+            });
+
+            // 6. Scatter Chart (TTD vs TTR)
+            charts.scatter = new Chart(document.getElementById('scatterChart'), {
+                type: 'scatter',
+                data: { datasets: [{ label: 'Crit Incidents', data: [], backgroundColor: '#ff0055' }, { label: 'Minor Incidents', data: [], backgroundColor: '#00ff41' }] },
+                options: { responsive: true, maintainAspectRatio: false, scales: { x: { title: { display: true, text: 'Time To Detect (min)', color: '#666' } }, y: { title: { display: true, text: 'Time To Respond (min)', color: '#666' } } } }
+            });
+
+            // 7. Mixed Chart (Malware Trends)
+            charts.mixed = new Chart(document.getElementById('mixedChart'), {
+                type: 'bar',
+                data: { labels: [], datasets: [{ label: 'Volume', data: [], backgroundColor: 'rgba(6, 182, 212, 0.5)', order: 2 }, { label: 'Avg Severity', data: [], type: 'line', borderColor: '#ffee00', tension: 0.4, yAxisID: 'y1', order: 1 }] },
+                options: { responsive: true, maintainAspectRatio: false, scales: { y: { position: 'left' }, y1: { position: 'right', min: 0, max: 5, grid: { drawOnChartArea: false } } } }
+            });
+
+            // 8. Horizontal Bar (Ports)
+            charts.ports = new Chart(document.getElementById('portsChart'), {
+                type: 'bar', indexAxis: 'y',
+                data: { labels: ['Port 445 (SMB)', 'Port 22 (SSH)', 'Port 80 (HTTP)', 'Port 3389 (RDP)'], datasets: [{ label: 'Hits', data: [], backgroundColor: '#bc13fe' }] },
+                options: { responsive: true, maintainAspectRatio: false }
+            });
+
+            // 9. Bubble Chart (Insider Threat)
+            charts.bubble = new Chart(document.getElementById('bubbleChart'), {
+                type: 'bubble',
+                data: { datasets: [{ label: 'Internal IPs', data: [], backgroundColor: function (c) { return (c.raw && c.raw.r > 20) ? '#ef4444' : '#00f3ff'; } }] },
+                options: { responsive: true, maintainAspectRatio: false, scales: { x: { title: { display: true, text: 'Login Ops', color: '#666' } }, y: { title: { display: true, text: 'Data Exfil (MB)', color: '#666' } } } }
+            });
+
+            // 10. System Chart (Area)
+            charts.system = new Chart(document.getElementById('systemChart'), {
+                type: 'line',
+                data: { labels: ['10m', '8m', '6m', '4m', '2m', 'Now'], datasets: [{ label: 'CPU Load %', data: [], fill: true, borderColor: '#ff0055', backgroundColor: 'rgba(255, 0, 85, 0.2)', tension: 0.4 }] },
+                options: { responsive: true, maintainAspectRatio: false, scales: { y: { min: 0, max: 100 } } }
+            });
+        }
+
+        async function fetchAnalytics() {
+            try {
+                // Ensure API service is accessible
+                const data = await apiService.get('/analytics/graphs');
+
+                // Update KPI Cards
+                document.querySelector('.metric-tile:nth-child(1) .metric-value').textContent = data.kpi.processed;
+                document.querySelector('.metric-tile:nth-child(2) .metric-value').textContent = data.kpi.threat_intel;
+                document.querySelector('.metric-tile:nth-child(3) .metric-value').textContent = data.kpi.false_positives;
+                document.querySelector('.metric-tile:nth-child(4) .metric-value').textContent = data.kpi.decryption;
+
+                const c = data.charts;
+
+                // 1. Main
+                charts.main.data.labels = c.main.labels;
+                charts.main.data.datasets[0].data = c.main.education;
+                charts.main.data.datasets[1].data = c.main.defence;
+                charts.main.update();
+
+                // 2. Radar
+                charts.radar.data.datasets[0].data = c.radar.data;
+                charts.radar.update();
+
+                // 3. Pie
+                charts.pie.data.datasets[0].data = c.pie.data;
+                charts.pie.update();
+
+                // 4. Bar
+                charts.bar.data.datasets[0].data = c.bar.data;
+                charts.bar.update();
+
+                // 5. Polar
+                charts.polar.data.labels = c.polar.labels;
+                charts.polar.data.datasets[0].data = c.polar.data;
+                charts.polar.update();
+
+                // 6. Scatter
+                charts.scatter.data.datasets[0].data = c.scatter.critical;
+                charts.scatter.data.datasets[1].data = c.scatter.minor;
+                charts.scatter.update();
+
+                // 7. Mixed
+                charts.mixed.data.labels = c.mixed.labels;
+                charts.mixed.data.datasets[0].data = c.mixed.volume;
+                charts.mixed.data.datasets[1].data = c.mixed.severity;
+                charts.mixed.update();
+
+                // 8. Ports
+                charts.ports.data.datasets[0].data = c.ports.data;
+                charts.ports.update();
+
+                // 9. Bubble
+                charts.bubble.data.datasets[0].data = c.bubble.data;
+                charts.bubble.update();
+
+                // 10. System
+                charts.system.data.datasets[0].data = c.system.data;
+                charts.system.update();
+
+            } catch (err) {
+                console.error("Failed to load live analytics arrays:", err);
             }
-        });
+        }
 
-        // 7. Mixed Chart (Malware Trends)
-        new Chart(document.getElementById('mixedChart'), {
-            type: 'bar',
-            data: {
-                labels: ['Wk1', 'Wk2', 'Wk3', 'Wk4', 'Wk5'],
-                datasets: [{
-                    label: 'Volume',
-                    data: [300, 450, 320, 500, 600],
-                    backgroundColor: 'rgba(6, 182, 212, 0.5)',
-                    order: 2
-                }, {
-                    label: 'Avg Severity',
-                    data: [2, 3, 2.5, 4.5, 4],
-                    type: 'line',
-                    borderColor: '#ffee00',
-                    tension: 0.4,
-                    yAxisID: 'y1',
-                    order: 1
-                }]
-            },
-            options: {
-                responsive: true, maintainAspectRatio: false,
-                scales: {
-                    y: { position: 'left' },
-                    y1: { position: 'right', min: 0, max: 5, grid: { drawOnChartArea: false } }
-                }
-            }
+        document.addEventListener('DOMContentLoaded', () => {
+            initCharts();
+            fetchAnalytics();
+            setInterval(fetchAnalytics, 15000); // 15s refresh
         });
-
-        // 8. Horizontal Bar (Ports)
-        new Chart(document.getElementById('portsChart'), {
-            type: 'bar',
-            indexAxis: 'y',
-            data: {
-                labels: ['Port 445 (SMB)', 'Port 22 (SSH)', 'Port 80 (HTTP)', 'Port 3389 (RDP)'],
-                datasets: [{
-                    label: 'Hits',
-                    data: [1240, 980, 750, 450],
-                    backgroundColor: '#bc13fe'
-                }]
-            },
-            options: { responsive: true, maintainAspectRatio: false }
-        });
-
-        // 9. Bubble Chart (Insider Threat)
-        new Chart(document.getElementById('bubbleChart'), {
-            type: 'bubble',
-            data: {
-                datasets: [{
-                    label: 'Users',
-                    data: [
-                        { x: 20, y: 30, r: 15 }, // Safe
-                        { x: 40, y: 10, r: 10 }, // Safe
-                        { x: 90, y: 80, r: 40 }, // DANGEROUS
-                        { x: 35, y: 90, r: 12 }  // Suspicious
-                    ],
-                    backgroundColor: function (context) {
-                        const v = context.raw;
-                        if (v && v.r > 20) return '#ef4444'; // Red
-                        return '#00f3ff'; // Cyan
-                    }
-                }]
-            },
-            options: {
-                responsive: true, maintainAspectRatio: false,
-                scales: {
-                    x: { title: { display: true, text: 'Login Ops', color: '#666' } },
-                    y: { title: { display: true, text: 'Data Exfil (MB)', color: '#666' } }
-                }
-            }
-        });
-
-        // 10. System Chart (Area)
-        new Chart(document.getElementById('systemChart'), {
-            type: 'line',
-            data: {
-                labels: ['10m', '8m', '6m', '4m', '2m', 'Now'],
-                datasets: [{
-                    label: 'CPU Load',
-                    data: [40, 45, 60, 55, 80, 85],
-                    fill: true,
-                    borderColor: '#ff0055',
-                    backgroundColor: 'rgba(255, 0, 85, 0.2)',
-                    tension: 0.4
-                }]
-            },
-            options: { responsive: true, maintainAspectRatio: false, scales: { y: { min: 0, max: 100 } } }
-        });
-
     </script>
-
     <script src="js/sidebar.js"></script>
 </body>
 
