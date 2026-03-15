@@ -19,13 +19,15 @@ async def get_behavior_profile(
     Fetches the latest chronological events and instantiates the Temporal GNN algorithmic model
     to synthesize behavioral threats, MITRE mappings, and graph network nodes.
     """
-    now = datetime.utcnow()
-    seven_days_ago = now - timedelta(days=7)
+    # Grab the last 200 chronological events (within 30 days of the latest event)
+    latest_res = await db.execute(select(RawEventModel.timestamp).order_by(desc(RawEventModel.timestamp)).limit(1))
+    latest_ts = latest_res.scalar()
+    now = latest_ts if latest_ts else datetime.utcnow()
+    thirty_days_ago = now - timedelta(days=30)
     
-    # Grab the last 200 chronological events
     result = await db.execute(
         select(RawEventModel)
-        .where(RawEventModel.timestamp >= seven_days_ago)
+        .where(RawEventModel.timestamp >= thirty_days_ago)
         .order_by(desc(RawEventModel.timestamp))
         .limit(200)
     )

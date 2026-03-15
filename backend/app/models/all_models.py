@@ -1,4 +1,4 @@
-from sqlalchemy import Column, ForeignKey, Integer, String, Float, DateTime, Text, JSON
+from sqlalchemy import Column, ForeignKey, Integer, String, Float, DateTime, Text, JSON, Boolean
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from app.db.sqlite_db import Base
@@ -211,3 +211,56 @@ class SystemConfig(Base):
     key = Column(String, primary_key=True)
     value = Column(String, nullable=True)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+# ─── Credential Management System ────────────────────────────────────────────
+
+class CredentialToken(Base):
+    """One-time login tokens issued alongside temporary credentials."""
+    __tablename__ = "credential_tokens"
+
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    user_id = Column(String, nullable=True)          # target user ID (may be new/external)
+    username = Column(String, nullable=False)
+    token = Column(String, unique=True, index=True, nullable=False)
+    issued_by = Column(String, ForeignKey("users.id"), nullable=True)  # admin who issued
+    issued_at = Column(DateTime, default=datetime.utcnow)
+    expires_at = Column(DateTime, nullable=False)
+    used = Column(Boolean, default=False)
+    used_at = Column(DateTime, nullable=True)
+    force_password_change = Column(Boolean, default=True)
+
+
+class CredentialAuditLog(Base):
+    """Full audit trail for every credential delivery event."""
+    __tablename__ = "credential_audit_log"
+
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    username = Column(String, nullable=False)
+    recipient_email = Column(String, nullable=True)
+    recipient_phone = Column(String, nullable=True)
+    issued_by = Column(String, ForeignKey("users.id"), nullable=True)   # admin ID
+    issuer_name = Column(String, nullable=True)                          # admin display name
+    timestamp = Column(DateTime, default=datetime.utcnow)
+    delivery_method = Column(String, nullable=False)   # EMAIL | WHATSAPP | BOTH
+    email_status = Column(String, default="NOT_SENT")  # SENT | FAILED | NOT_SENT | SIMULATED
+    whatsapp_status = Column(String, default="NOT_SENT")
+    token_id = Column(String, ForeignKey("credential_tokens.id"), nullable=True)
+    token_status = Column(String, default="GENERATED")  # GENERATED | USED | EXPIRED | NONE
+    custom_message = Column(Text, nullable=True)
+    admin_ip = Column(String, nullable=True)
+
+
+class AdminActivity(Base):
+    """Log of every administrative action for security auditing."""
+    __tablename__ = "admin_activity_log"
+
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    admin_id = Column(String, ForeignKey("users.id"), nullable=True)
+    admin_username = Column(String, nullable=True)
+    action = Column(String, nullable=False)   # ISSUE_CREDENTIALS | RESET_PASSWORD | RESEND | etc.
+    affected_user = Column(String, nullable=True)
+    ip_address = Column(String, nullable=True)
+    timestamp = Column(DateTime, default=datetime.utcnow)
+    result = Column(String, default="SUCCESS")  # SUCCESS | FAILED | RATE_LIMITED
+    details = Column(Text, nullable=True)        # JSON blob with extra context

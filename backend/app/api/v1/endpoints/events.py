@@ -87,3 +87,76 @@ async def get_events(limit: int = 200, db: AsyncSession = Depends(get_db), curre
         ]
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to fetch events: {str(e)}")
+
+from ai_engine.classifier import AIEngine
+import base64
+
+ai_engine = AIEngine()
+
+@router.get("/{event_id}/analyze")
+async def analyze_event(
+    event_id: str,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    """
+    On-demand advanced analysis of a specific honeypot event using the AI engine.
+    Extracts the payload, dynamically identifies the attack type, maps it to MITRE,
+    and returns a structured report for the frontend modal.
+    """
+    try:
+        # Fetch the event
+        result = await db.execute(
+            select(RawEventModel).where(RawEventModel.id == event_id)
+        )
+        event = result.scalars().first()
+        
+        if not event:
+            raise HTTPException(status_code=404, detail="Event not found")
+            
+        # Extract analysis inputs
+        payload = event.raw_payload or event.commands or "{}"
+        ip = event.attacker_ip
+        port = event.target_port
+        
+        # Analyze using AIEngine
+        analysis_result = ai_engine.analyze_log(payload=payload, ip=ip, port=port)
+        
+        # Format a decoded payload for readability (often payloads are hex/base64 encoded or raw JSON)
+        decoded_payload = payload
+        try:
+            # Simple heuristic to decode if it looks like base64
+            if len(payload) > 20 and not " " in payload and not "{" in payload:
+                decoded_bytes = base64.b64decode(payload)
+                decoded_payload = decoded_bytes.decode('utf-8')
+        except:
+            pass
+            
+        # Construct the advanced intelligence report response
+        report = {
+            "id": event.id,
+            "timestamp": event.timestamp.isoformat() if event.timestamp else None,
+            "attacker_ip": ip,
+            "target_port": port,
+            "protocol": event.protocol,
+            "geo_ip": event.geoip_data.get("country_name", "Unknown") if event.geoip_data else "Unknown",
+            "ai_analysis": {
+                "detected_attack": analysis_result["type"],
+                "severity": analysis_result["severity"],
+                "mitre_mapping": analysis_result["mitre"]
+            },
+            "payload_data": {
+                "raw": payload,
+                "decoded": decoded_payload,
+                "commands": event.commands,
+                "uploaded_files": event.uploaded_files
+            }
+        }
+        
+        return {"status": "success", "report": report}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Analysis failed: {str(e)}")
+

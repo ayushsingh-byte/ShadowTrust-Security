@@ -84,12 +84,15 @@ async def get_mitre_matrix(
     Dynamically maps raw honeypot events to the MITRE ATT&CK framework.
     """
     try:
-        # Fetch up to 200 recent events from the last 7 days
-        seven_days_ago = datetime.utcnow() - timedelta(days=7)
+        # Fetch up to 200 recent events from the last 30 days relative to latest event
+        latest_res = await db.execute(select(RawEventModel.timestamp).order_by(desc(RawEventModel.timestamp)).limit(1))
+        latest_ts = latest_res.scalar()
+        now = latest_ts if latest_ts else datetime.utcnow()
+        thirty_days_ago = now - timedelta(days=30)
         
         result = await db.execute(
             select(RawEventModel)
-            .where(RawEventModel.timestamp >= seven_days_ago)
+            .where(RawEventModel.timestamp >= thirty_days_ago)
             .order_by(desc(RawEventModel.timestamp))
             .limit(200)
         )

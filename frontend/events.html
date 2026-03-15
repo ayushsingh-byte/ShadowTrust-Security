@@ -360,9 +360,96 @@
                 { data: 'target_port', render: (data, type, row) => `${row.honeypot_type || 'HONEYPOT'}:${data}` },
                 { data: 'protocol', render: data => `<span class="text-pink">${data || 'UNKNOWN'}</span>` },
                 { data: 'event_type', render: (data, type, row) => `<span class="text-mono text-muted">${data || 'CONNECTION'}</span>` },
-                { data: null, render: () => `<button class="soc-btn soc-btn-sm" style="padding: 2px 10px; font-size: 0.7rem;">ANALYZE</button>` }
+                { data: null, render: (data, type, row) => `<button class="soc-btn soc-btn-sm" style="padding: 2px 10px; font-size: 0.7rem;" onclick="analyzeEvent('${row.id}')">ANALYZE</button>` }
             ]
         });
+
+        // Global function for Datatable button
+        window.analyzeEvent = async function(eventId) {
+            // Show initial processing modal
+            showModal(
+                '<i class="fas fa-microchip"></i> AI INTELLIGENCE ENGINE',
+                '<span class="text-cyan animate-pulse">Initializing deep behavioral heuristics...</span>',
+                false, 
+                null, 
+                true // isAlert
+            );
+            
+            // Start the data streaming background
+            document.getElementById('modal-data-stream').style.display = 'block';
+            document.getElementById('modal-data-stream').innerHTML = generateDataStream();
+            
+            try {
+                // Fetch the analysis report
+                const res = await apiService.get(`/events/${eventId}/analyze`);
+                const r = res.report;
+                
+                // Construct the modal HTML body for the report
+                let mitreHtml = `<span class="text-muted">No specific tactic detected.</span>`;
+                if (r.ai_analysis.mitre_mapping) {
+                    mitreHtml = `
+                        <div style="border: 1px solid #334155; padding: 5px; background: #0f172a;">
+                            <span class="text-purple">${r.ai_analysis.mitre_mapping.tactic}</span> &gt; 
+                            <span class="text-cyan">${r.ai_analysis.mitre_mapping.id}: ${r.ai_analysis.mitre_mapping.technique}</span>
+                        </div>
+                    `;
+                }
+
+                let severityClass = "text-green";
+                if (r.ai_analysis.severity === "CRITICAL") severityClass = "text-red";
+                else if (r.ai_analysis.severity === "HIGH") severityClass = "text-yellow";
+                else if (r.ai_analysis.severity === "MEDIUM") severityClass = "text-cyan";
+
+                const reportHtml = `
+                    <div style="text-align: left; margin-bottom: 20px;">
+                        <div style="margin-bottom: 10px;">
+                            <div class="text-muted" style="font-size: 0.7rem;">DETECTED VECTOR</div>
+                            <div class="${severityClass}" style="font-size: 1.2rem; font-weight: bold;">
+                                <i class="fas fa-bug"></i> ${r.ai_analysis.detected_attack} 
+                                <span style="font-size: 0.8rem;">(${r.ai_analysis.severity})</span>
+                            </div>
+                        </div>
+                        
+                        <div style="margin-bottom: 10px;">
+                            <div class="text-muted" style="font-size: 0.7rem;">MITRE ATT&CK EVALUATION</div>
+                            ${mitreHtml}
+                        </div>
+                        
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
+                            <div style="border: 1px solid #334155; padding: 5px; background: #0f172a;">
+                                <div class="text-muted" style="font-size: 0.6rem;">THREAT ACTOR IP</div>
+                                <div class="text-mono text-pink">${r.attacker_ip}</div>
+                            </div>
+                            <div style="border: 1px solid #334155; padding: 5px; background: #0f172a;">
+                                <div class="text-muted" style="font-size: 0.6rem;">GEO TILT</div>
+                                <div class="text-mono text-cyan">${r.geo_ip}</div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <div class="text-muted" style="font-size: 0.7rem; margin-bottom: 5px;">DECODED PAYLOAD FORENSICS</div>
+                            <div style="background: #000; border: 1px dashed #334155; padding: 10px; font-size: 0.75rem; color: #a3e635; max-height: 150px; overflow-y: auto; word-break: break-all;">
+                                ${$("<div>").text(r.payload_data.decoded || "No readable payload extracted.").html()}
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                // Update the modal after an artificial delay for visual effect
+                setTimeout(() => {
+                    document.getElementById('modal-data-stream').style.display = 'none';
+                    document.getElementById('modal-title').innerHTML = `<i class="fas fa-shield-alt"></i> INTELLIGENCE REPORT`;
+                    document.getElementById('modal-message').innerHTML = reportHtml;
+                }, 1200);
+
+            } catch (err) {
+                console.error("Analysis failed", err);
+                setTimeout(() => {
+                    document.getElementById('modal-data-stream').style.display = 'none';
+                    document.getElementById('modal-message').innerHTML = `<span class="text-red"><i class="fas fa-times-circle"></i> FAILED TO SYNTHESIZE REPORT</span><br><br><span class="text-muted" style="font-size:0.7rem;">${err.message || 'Server error occurred'}</span>`;
+                }, 1000);
+            }
+        };
 
         // Initialize Chart
         const ctxVolume = document.getElementById('volumeChart').getContext('2d');

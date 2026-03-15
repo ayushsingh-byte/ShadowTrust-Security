@@ -128,60 +128,60 @@
             <!-- ROW 2: MAIN CHARTS -->
             <div class="dashboard-grid" style="grid-template-columns: 2fr 1fr; margin-bottom: 2rem;">
                 <!-- MAIN TRAFFIC -->
-                <div class="soc-card" style="height:375px;">
+                <div class="soc-card" style="height:400px; display:flex; flex-direction:column;">
                     <div class="soc-card-header"><span class="card-title">CROSS-SECTOR ATTACK VOLUME</span></div>
-                    <div style="height:321px;"><canvas id="mainChart"></canvas></div>
+                    <div style="flex: 1; position: relative; min-height: 0;"><canvas id="mainChart"></canvas></div>
                 </div>
                 <!-- ATTACK VECTORS RADAR -->
-                <div class="soc-card" style="height:375px;">
+                <div class="soc-card" style="height:400px; display:flex; flex-direction:column;">
                     <div class="soc-card-header"><span class="card-title">ATTACK VECTOR LANDSCAPE</span></div>
-                    <div style="height:321px;"><canvas id="radarChart"></canvas></div>
+                    <div style="flex: 1; position: relative; min-height: 0;"><canvas id="radarChart"></canvas></div>
                 </div>
             </div>
 
             <!-- ROW 3: DETAILED SPLITS -->
             <div class="dashboard-grid" style="grid-template-columns: 1fr 1fr 1fr; margin-bottom: 2rem;">
-                <div class="soc-card" style="height:321px;">
+                <div class="soc-card" style="height:360px; display:flex; flex-direction:column;">
                     <div class="soc-card-header"><span class="card-title">PROTOCOL DISTRIBUTION</span></div>
-                    <div style="height:267px;"><canvas id="pieChart"></canvas></div>
+                    <div style="flex: 1; position: relative; min-height: 0;"><canvas id="pieChart"></canvas></div>
                 </div>
-                <div class="soc-card" style="height:321px;">
+                <div class="soc-card" style="height:360px; display:flex; flex-direction:column;">
                     <div class="soc-card-header"><span class="card-title">HOURLY ANOMALIES</span></div>
-                    <div style="height:267px;"><canvas id="barChart"></canvas></div>
+                    <div style="flex: 1; position: relative; min-height: 0;"><canvas id="barChart"></canvas></div>
                 </div>
-                <div class="soc-card" style="height:321px;">
+                <div class="soc-card" style="height:360px; display:flex; flex-direction:column;">
                     <div class="soc-card-header"><span class="card-title">GEO-ORIGIN HEATMAP</span></div>
-                    <div style="height:267px;"><canvas id="polarChart"></canvas></div>
+                    <div style="flex: 1; position: relative; min-height: 0;"><canvas id="polarChart"></canvas></div>
                 </div>
             </div>
 
             <!-- ROW 4: ADVANCED CORRELATION (NEW) -->
             <div class="dashboard-grid" style="grid-template-columns: 1fr 1fr; margin-bottom: 2rem;">
-                <div class="soc-card" style="height:375px;">
+                <div class="soc-card" style="height:400px; display:flex; flex-direction:column;">
                     <div class="soc-card-header"><span class="card-title">TTD VS TTR CORRELATION (Efficiency)</span>
                     </div>
-                    <div style="height:321px;"><canvas id="scatterChart"></canvas></div>
+                    <div style="flex: 1; position: relative; min-height: 0;"><canvas id="scatterChart"></canvas></div>
                 </div>
-                <div class="soc-card" style="height:375px;">
+                <div class="soc-card" style="height:400px; display:flex; flex-direction:column;">
                     <div class="soc-card-header"><span class="card-title">MALWARE FAMILY TRENDS (Volume vs Sev)</span>
                     </div>
-                    <div style="height:321px;"><canvas id="mixedChart"></canvas></div>
+                    <div style="flex: 1; position: relative; min-height: 0;"><canvas id="mixedChart"></canvas></div>
                 </div>
             </div>
 
             <!-- ROW 5: MICRO ANALYTICS (NEW) -->
             <div class="dashboard-grid" style="grid-template-columns: 1fr 1fr 1fr;">
-                <div class="soc-card" style="height:321px;">
+                <div class="soc-card" style="height:360px; display:flex; flex-direction:column;">
                     <div class="soc-card-header"><span class="card-title">TARGETED PORT USAGE</span></div>
-                    <div style="height:267px;"><canvas id="portsChart"></canvas></div>
+                    <div style="flex: 1; position: relative; min-height: 0;"><canvas id="portsChart"></canvas></div>
                 </div>
-                <div class="soc-card" style="height:321px;">
+                <div class="soc-card" style="height:360px; display:flex; flex-direction:column;">
                     <div class="soc-card-header"><span class="card-title">INSIDER THREAT MATRIX</span></div>
-                    <div style="height:267px;"><canvas id="bubbleChart"></canvas></div>
+                    <div style="flex: 1; position: relative; min-height: 0;"><canvas id="bubbleChart"></canvas></div>
                 </div>
-                <div class="soc-card" style="height:321px;">
+                <div class="soc-card" style="height:360px; display:flex; flex-direction:column;">
                     <div class="soc-card-header"><span class="card-title">NODE LOAD AVERAGES</span></div>
-                    <div style="height:267px;"><canvas id="systemChart"></canvas></div>
+                    <div style="flex: 1; position: relative; min-height: 0;"><canvas id="systemChart"></canvas></div>
                 </div>
             </div>
 

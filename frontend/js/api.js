@@ -58,6 +58,7 @@ class ApiService {
         const config = {
             method,
             headers,
+            cache: 'no-store'
         };
 
         if (data) {

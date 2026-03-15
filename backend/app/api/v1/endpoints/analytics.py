@@ -21,15 +21,18 @@ async def get_analytics_graphs(
     """
     Provides aggregated, structured data for all 10 Chart.js widgets on the Deep Analytics page.
     """
-    now = datetime.utcnow()
-    seven_days_ago = now - timedelta(days=7)
+    # Establish 'now' relative to the latest event so older test data still appears in graphs
+    latest_res = await db.execute(select(RawEventModel.timestamp).order_by(desc(RawEventModel.timestamp)).limit(1))
+    latest_ts = latest_res.scalar()
+    now = latest_ts if latest_ts else datetime.utcnow()
+    
+    # Still pull a 30-day window to ensure we get a good spread of data
+    thirty_days_ago = now - timedelta(days=30)
     
     # Pre-fetch recent events logic
-    # Fetch massive dataset once instead of 10 times if possible (since SQLite is fast locally)
-    # We will compute mostly in Python for simplicity and flexibility with SQLite limitations on complex group_by
     result = await db.execute(
         select(RawEventModel)
-        .where(RawEventModel.timestamp >= seven_days_ago)
+        .where(RawEventModel.timestamp >= thirty_days_ago)
         .order_by(desc(RawEventModel.timestamp))
     )
     all_recent_events = result.scalars().all()

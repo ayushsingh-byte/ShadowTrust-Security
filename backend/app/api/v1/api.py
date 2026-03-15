@@ -50,3 +50,6 @@ api_router.include_router(analytics_router, prefix="/analytics", tags=["analytic
 
 from app.api.v1.endpoints.behavior import router as behavior_router
 api_router.include_router(behavior_router, prefix="/behavior", tags=["behavior"])
+
+from app.api.v1.endpoints.credentials_api import router as credentials_router
+api_router.include_router(credentials_router, prefix="/credentials", tags=["credentials"])
