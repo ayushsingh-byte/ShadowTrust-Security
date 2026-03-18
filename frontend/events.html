@@ -338,6 +338,97 @@
 <script type="module">
     import { apiService } from './js/api.js';
 
+    let latestEvents = [];
+    let eventsTableRef = null;
+
+    function getCurrentQueryExpression() {
+        const tags = Array.from(document.querySelectorAll('.query-builder .query-tag'))
+            .map((el) => el.textContent?.trim())
+            .filter(Boolean);
+        const clause = tags.length ? tags.join(' AND ') : 'severity="*"';
+        return `SEARCH index="honeypot-*" | WHERE ${clause}`;
+    }
+
+    function saveQueryToLocalStore() {
+        const storageKey = 'shadowtrust_saved_queries';
+        const existing = JSON.parse(localStorage.getItem(storageKey) || '[]');
+        const now = new Date().toISOString();
+        const query = {
+            id: `qry_${Date.now()}`,
+            created_at: now,
+            query: getCurrentQueryExpression(),
+        };
+
+        existing.unshift(query);
+        localStorage.setItem(storageKey, JSON.stringify(existing.slice(0, 50)));
+        return query;
+    }
+
+    function toCsvValue(value) {
+        if (value === null || value === undefined) return '';
+        if (typeof value === 'object') {
+            value = JSON.stringify(value);
+        }
+        const str = String(value);
+        return /[",\n]/.test(str) ? `"${str.replace(/"/g, '""')}"` : str;
+    }
+
+    function buildEventsCsv(events) {
+        const columns = [
+            'timestamp',
+            'risk_score',
+            'attacker_ip',
+            'country',
+            'target',
+            'protocol',
+            'event_type',
+            'payload',
+        ];
+
+        const rows = events.map((e) => {
+            const country = e?.geoip_data?.country_name || 'UNKNOWN';
+            const target = `${e?.honeypot_type || 'HONEYPOT'}:${e?.target_port || ''}`;
+            const payload = e?.raw_data || e?.payload || e?.event_payload || '';
+            const mapped = {
+                timestamp: e?.timestamp || '',
+                risk_score: e?.risk_score ?? '',
+                attacker_ip: e?.attacker_ip || '',
+                country,
+                target,
+                protocol: e?.protocol || '',
+                event_type: e?.event_type || 'CONNECTION',
+                payload,
+            };
+            return columns.map((col) => toCsvValue(mapped[col])).join(',');
+        });
+
+        return `${columns.join(',')}\n${rows.join('\n')}`;
+    }
+
+    function downloadCsvFile(csvContent) {
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        const ts = new Date().toISOString().replace(/[:.]/g, '-');
+        link.href = url;
+        link.download = `shadowtrust-telemetry-${ts}.csv`;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        URL.revokeObjectURL(url);
+    }
+
+    function getEventsForExport() {
+        if (Array.isArray(latestEvents) && latestEvents.length > 0) {
+            return latestEvents;
+        }
+        if (eventsTableRef) {
+            const rows = eventsTableRef.rows().data().toArray();
+            if (rows.length > 0) return rows;
+        }
+        return [];
+    }
+
     $(document).ready(function () {
         const table = $('#logTable').DataTable({
             data: [],
@@ -363,6 +454,7 @@
                 { data: null, render: (data, type, row) => `<button class="soc-btn soc-btn-sm" style="padding: 2px 10px; font-size: 0.7rem;" onclick="analyzeEvent('${row.id}')">ANALYZE</button>` }
             ]
         });
+        eventsTableRef = table;
 
         // Global function for Datatable button
         window.analyzeEvent = async function(eventId) {
@@ -493,12 +585,13 @@
             try {
                 // Fetch Events Table Data
                 const events = await apiService.get('/events/');
+                latestEvents = Array.isArray(events) ? events : [];
                 table.clear();
-                table.rows.add(events);
+                table.rows.add(latestEvents);
                 table.draw();
 
                 // Update Top Bar Stats (Buffer Size)
-                const bufferSize = events.reduce((acc, curr) => acc + JSON.stringify(curr).length, 0);
+                const bufferSize = latestEvents.reduce((acc, curr) => acc + JSON.stringify(curr).length, 0);
                 document.querySelector('.filters-bar .text-mono.text-cyan').innerText = (bufferSize / 1024).toFixed(2) + ' KB';
 
                 // Fetch Dashboard Stats for Top Widgets & Chart
@@ -535,7 +628,7 @@
                     // 1. Ingest Rate (Estimating based on last hour)
                     statBlocks[0].querySelector('.text-purple').innerText = Math.round(totalAttacksThisHour / 60) + '/min';
                     // 2. Critical Alerts
-                    statBlocks[1].querySelector('.text-pink').innerText = events.filter(e => e.risk_score >= 80).length;
+                    statBlocks[1].querySelector('.text-pink').innerText = latestEvents.filter(e => e.risk_score >= 80).length;
                     // 3. Total Logs (24H)
                     statBlocks[2].querySelector('.text-cyan').innerText = stats.summary?.total_attacks || 0;
                     // 4. Index Status
@@ -627,12 +720,15 @@
             'Store current search parameters to the central index?',
             false,
             () => {
+                const saved = saveQueryToLocalStore();
+                const totalSaved = JSON.parse(localStorage.getItem('shadowtrust_saved_queries') || '[]').length;
+
                 // Start saving animation
                 modalButtons.style.display = 'none';
                 modalMessage.innerHTML = '<span class="text-cyan animate-pulse">Hashing query pattern...</span>';
 
                 setTimeout(() => {
-                    modalMessage.innerHTML = '<span class="text-green"><i class="fas fa-check-circle"></i> QUERY SUCCESSFULLY SAVED</span>';
+                    modalMessage.innerHTML = `<span class="text-green"><i class="fas fa-check-circle"></i> QUERY SUCCESSFULLY SAVED</span><br><br><span class="text-muted" style="font-size:0.75rem;">${saved.query}</span><br><span class="text-cyan" style="font-size:0.72rem;">Saved Queries: ${totalSaved}</span>`;
                     modalTitle.className = 'card-title text-green';
                     topModal.querySelector('.soc-card').style.borderColor = 'var(--accent-primary)';
 
@@ -648,6 +744,26 @@
             'WARNING: You are about to extract highly sensitive telemetry data. Proceed with extraction?',
             true,
             () => {
+                const eventsForExport = getEventsForExport();
+                if (!eventsForExport.length) {
+                    modalButtons.style.display = 'none';
+                    modalMessage.innerHTML = '<span class="text-yellow"><i class="fas fa-info-circle"></i> No telemetry rows available to export right now.</span>';
+                    setTimeout(() => { hideModal(); }, 1500);
+                    return;
+                }
+
+                // Trigger download immediately in direct user-confirm flow.
+                try {
+                    const csv = buildEventsCsv(eventsForExport);
+                    downloadCsvFile(csv);
+                } catch (e) {
+                    console.error('CSV export failed:', e);
+                    modalButtons.style.display = 'none';
+                    modalMessage.innerHTML = `<span class="text-red"><i class="fas fa-times-circle"></i> CSV export failed</span><br><span class="text-muted" style="font-size:0.75rem;">${e.message || 'Unknown error'}</span>`;
+                    setTimeout(() => { hideModal(); }, 1800);
+                    return;
+                }
+
                 // Start extraction animation
                 modalButtons.style.display = 'none';
                 progressContainer.style.display = 'block';
@@ -671,7 +787,6 @@
 
                     setTimeout(() => {
                         hideModal();
-                        // Simulate actual download logic completion here if necessary
                     }, 2500);
                 }, 2050); // wait for 2s transiton
             }

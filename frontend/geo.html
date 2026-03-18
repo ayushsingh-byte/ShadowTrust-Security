@@ -364,6 +364,7 @@
         const dataStream = document.getElementById('modal-data-stream');
 
         let modalConfirmCallback = null;
+        window.lastGeoStatsSnapshot = null;
 
         function generateDataStream() {
             let str = '';
@@ -408,6 +409,73 @@
             modalConfirmCallback = null;
         }
 
+        function formatNumber(value) {
+            const num = Number(value || 0);
+            return Number.isFinite(num) ? num.toLocaleString() : '0';
+        }
+
+        function buildGeoSocReportText(stats) {
+            const now = new Date();
+            const topCountries = Array.isArray(stats?.top_countries) ? stats.top_countries : [];
+            const asnIntelligence = Array.isArray(stats?.asn_intelligence) ? stats.asn_intelligence : [];
+            const topIsp = stats?.top_isp || {};
+            const markers = Array.isArray(stats?.markers) ? stats.markers : [];
+
+            const countryLines = topCountries.length
+                ? topCountries.slice(0, 10).map((c, idx) => {
+                    return `${idx + 1}. ${c.country || 'Unknown'} (${c.code || '--'}) | Events: ${formatNumber(c.events)} | Traffic: ${c.traffic || '0 MB'}`;
+                }).join('\n')
+                : 'No country attribution records available.';
+
+            const asnLines = asnIntelligence.length
+                ? asnIntelligence.slice(0, 10).map((a, idx) => {
+                    return `${idx + 1}. ${a.isp_name || 'Unknown ISP'} | ASN: ${a.asn || '--'} | IPs: ${a.ips || '--'} | Events: ${formatNumber(a.count)}`;
+                }).join('\n')
+                : 'No ASN intelligence records available.';
+
+            return [
+                'SHADOW TRUST - SOC GEO INTELLIGENCE REPORT',
+                '==========================================',
+                `Generated At: ${now.toISOString()}`,
+                `Selected Range: Last 24 hours`,
+                '',
+                'EXECUTIVE SUMMARY',
+                '-----------------',
+                `Active Sources: ${formatNumber(stats?.active_sources)}`,
+                `Targeted Zones: ${formatNumber(stats?.targeted_zones)}`,
+                `Last Detected: ${stats?.last_detected || 'N/A'}`,
+                `Geolocation Markers: ${formatNumber(markers.length)}`,
+                `Top Offending ISP: ${topIsp.isp_name || 'N/A'} (${formatNumber(topIsp.count)} events)`,
+                '',
+                'TOP SOURCE COUNTRIES',
+                '--------------------',
+                countryLines,
+                '',
+                'ASN INTELLIGENCE',
+                '----------------',
+                asnLines,
+                '',
+                'ANALYST NOTES',
+                '-------------',
+                '- Prioritize traffic controls and throttling for top offending ASN and country clusters.',
+                '- Cross-correlate listed sources with event telemetry and honeypot service fingerprints.',
+                '- Re-run this report after mitigation policy updates for drift validation.'
+            ].join('\n');
+        }
+
+        function downloadSocReport(content) {
+            const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const stamp = new Date().toISOString().replace(/[:.]/g, '-');
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `shadowtrust-geo-soc-report-${stamp}.txt`;
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            URL.revokeObjectURL(url);
+        }
+
         btnCancel.addEventListener('click', hideModal);
         btnConfirm.addEventListener('click', () => {
             if (modalConfirmCallback) modalConfirmCallback();
@@ -419,7 +487,7 @@
                 '<i class="fas fa-file-contract"></i> GENERATE SOC REPORT',
                 'Compile automated geographic intelligence report for the selected timeframe?',
                 false,
-                () => {
+                async () => {
                     modalButtons.style.display = 'none';
                     progressContainer.style.display = 'block';
                     radarScan.style.display = 'block';
@@ -448,11 +516,34 @@
                     // Trigger CSS width transition
                     setTimeout(() => { progressBar.style.width = '100%'; }, 50);
 
+                    let reportContent = '';
+                    try {
+                        const freshStats = (typeof window.fetchGeoStats === 'function')
+                            ? await window.fetchGeoStats()
+                            : null;
+                        const reportStats = freshStats || window.lastGeoStatsSnapshot;
+                        if (!reportStats) {
+                            throw new Error('No geo telemetry data is available yet.');
+                        }
+                        reportContent = buildGeoSocReportText(reportStats);
+                    } catch (err) {
+                        clearInterval(interval);
+                        radarScan.style.display = 'none';
+                        dataStream.style.display = 'none';
+                        progressContainer.style.display = 'none';
+                        modalTitle.className = 'card-title text-red';
+                        topModal.querySelector('.soc-card').style.borderColor = 'var(--accent-critical)';
+                        modalMessage.innerHTML = `<span class="text-red"><i class="fas fa-times-circle"></i> REPORT GENERATION FAILED</span><br><br><span style="color:#94a3b8; font-size:0.75rem;">${err.message || 'Unknown error'}</span>`;
+                        setTimeout(() => { hideModal(); }, 2200);
+                        return;
+                    }
+
                     setTimeout(() => {
                         // Generation complete
                         radarScan.style.display = 'none';
                         dataStream.style.display = 'none';
                         progressContainer.style.display = 'none';
+                        downloadSocReport(reportContent);
                         modalMessage.innerHTML = '<span class="text-green"><i class="fas fa-check-circle"></i> REPORT GENERATED SUCCESSFULLY</span><br><br><span style="color:#64748b; font-size:0.75rem;">Download will commence automatically.</span>';
                         modalTitle.className = 'card-title text-green';
                         topModal.querySelector('.soc-card').style.borderColor = 'var(--accent-primary)';
@@ -470,7 +561,9 @@
         window.fetchGeoStats = async function () {
             try {
                 const data = await apiService.get('/dashboard/geo');
-                if (!data) return;
+                if (!data) return null;
+
+                window.lastGeoStatsSnapshot = data;
 
                 // Update Overlays
                 document.getElementById('activeSrc').textContent = data.active_sources || 0;
@@ -556,7 +649,10 @@
 
             } catch (err) {
                 console.error("Error fetching geo stats:", err);
+                return null;
             }
+
+            return window.lastGeoStatsSnapshot;
         }
 
         // Modules are deferred by default, initialization can happen immediately

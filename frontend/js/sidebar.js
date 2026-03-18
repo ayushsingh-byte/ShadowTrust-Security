@@ -7,6 +7,53 @@ document.addEventListener("DOMContentLoaded", function () {
     if (sidebar) {
         const currentPage = (window.location.pathname.split('/').pop() || '').split('?')[0].split('#')[0];
 
+        function getApiBase() {
+            const isLocalDev = window.location.hostname === '127.0.0.1' ||
+                window.location.hostname === 'localhost' ||
+                window.location.hostname === '0.0.0.0' ||
+                window.location.protocol === 'file:';
+            return isLocalDev ? 'http://127.0.0.1:8000/api/v1' : '/api/v1';
+        }
+
+        async function resolveAdminSession() {
+            const token = localStorage.getItem('access_token') || localStorage.getItem('authToken');
+            if (!token) {
+                localStorage.removeItem('isAdmin');
+                return false;
+            }
+
+            try {
+                const response = await fetch(`${getApiBase()}/users/me`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    },
+                    cache: 'no-store'
+                });
+
+                if (!response.ok) {
+                    localStorage.removeItem('isAdmin');
+                    return false;
+                }
+
+                const user = await response.json();
+                const isAdminRole = user.role === 'ADMIN' || user.role === 'SUPER_ADMIN';
+                if (isAdminRole) {
+                    localStorage.setItem('isAdmin', 'true');
+                    localStorage.setItem('userRole', user.role || '');
+                    return true;
+                }
+
+                localStorage.removeItem('isAdmin');
+                return false;
+            } catch (_) {
+                // Fail closed: if role can't be verified, do not show admin links.
+                localStorage.removeItem('isAdmin');
+                return false;
+            }
+        }
+
+        function renderSidebar(isAdminSession) {
+
         const navGroups = [
             {
                 label: 'Command Center',
@@ -52,7 +99,7 @@ document.addEventListener("DOMContentLoaded", function () {
         ];
 
         // Conditional Admin Links
-        if (localStorage.getItem('isAdmin') === 'true') {
+        if (isAdminSession) {
             const systemGroup = navGroups.find(g => g.label === 'System');
             systemGroup.items.splice(1, 0,
                 { href: 'admin.html', icon: 'fa-user-shield', text: 'Admin Console' },
@@ -60,6 +107,10 @@ document.addEventListener("DOMContentLoaded", function () {
                 { href: 'config.html', icon: 'fa-cogs', text: 'Global Config' },
                 { href: 'debug.html', icon: 'fa-terminal', text: 'System Diagnostics' }
             );
+        } else {
+            // Hide the entire System block for non-admin sessions.
+            const idx = navGroups.findIndex(g => g.label === 'System');
+            if (idx >= 0) navGroups.splice(idx, 1);
         }
 
         const navHtml = navGroups.map(group => {
@@ -104,5 +155,10 @@ document.addEventListener("DOMContentLoaded", function () {
                 localStorage.setItem('sidebarScrollPosition', sidebar.scrollTop);
             });
         });
+
+        }
+
+        // Render with strict role verification to avoid stale admin links from localStorage.
+        resolveAdminSession().then(renderSidebar);
     }
 });

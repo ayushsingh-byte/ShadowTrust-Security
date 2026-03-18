@@ -259,8 +259,8 @@
                     <p>ACCESS CONTROL CENTER // <span class="text-pink">ROOT PRIVILEGES ACTIVE</span></p>
                 </div>
                 <div class="filters-bar">
-                    <button class="soc-btn" style="border-color:#333;"><i class="fas fa-bell"></i> Alerts (3)</button>
-                    <button class="soc-btn soc-btn-primary"
+                    <button id="btn-admin-alerts" class="soc-btn" style="border-color:#333;"><i class="fas fa-bell"></i> Alerts (0)</button>
+                    <button id="btn-system-backup" class="soc-btn soc-btn-primary"
                         style="background:var(--neon-cyan); border:none; color:black;"><i class="fas fa-save"></i>
                         SYSTEM BACKUP</button>
                 </div>
@@ -273,45 +273,45 @@
                 <!-- System Monitoring moved from Dashboard -->
                 <div class="dashboard-grid grid-6" style="margin-bottom: 20px;">
                     <div class="micro-metric">
-                        <div class="text-xs text-muted">CPU LOAD</div>
-                        <div class="text-mono text-cyan">14%</div>
+                        <div id="micro-label-1" class="text-xs text-muted">CPU LOAD</div>
+                        <div id="micro-value-1" class="text-mono text-cyan">—</div>
                         <div style="height:2px; background:#222; margin-top:5px;">
-                            <div style="width:14%; height:100%; background:#00f3ff;"></div>
+                            <div id="micro-bar-1" style="width:0%; height:100%; background:#00f3ff;"></div>
                         </div>
                     </div>
                     <div class="micro-metric">
-                        <div class="text-xs text-muted">RAM HEAP</div>
-                        <div class="text-mono text-purple">4.2 GB</div>
+                        <div id="micro-label-2" class="text-xs text-muted">RAM HEAP</div>
+                        <div id="micro-value-2" class="text-mono text-purple">—</div>
                         <div style="height:2px; background:#222; margin-top:5px;">
-                            <div style="width:40%; height:100%; background:#bc13fe;"></div>
+                            <div id="micro-bar-2" style="width:0%; height:100%; background:#bc13fe;"></div>
                         </div>
                     </div>
                     <div class="micro-metric">
-                        <div class="text-xs text-muted">DISK I/O</div>
-                        <div class="text-mono text-pink">42 MB/s</div>
+                        <div id="micro-label-3" class="text-xs text-muted">DISK I/O</div>
+                        <div id="micro-value-3" class="text-mono text-pink">—</div>
                         <div style="height:2px; background:#222; margin-top:5px;">
-                            <div style="width:60%; height:100%; background:#ff0055;"></div>
+                            <div id="micro-bar-3" style="width:0%; height:100%; background:#ff0055;"></div>
                         </div>
                     </div>
                     <div class="micro-metric">
-                        <div class="text-xs text-muted">THREADS</div>
-                        <div class="text-mono text-green">1,024</div>
+                        <div id="micro-label-4" class="text-xs text-muted">THREADS</div>
+                        <div id="micro-value-4" class="text-mono text-green">—</div>
                         <div style="height:2px; background:#222; margin-top:5px;">
-                            <div style="width:20%; height:100%; background:#00ff41;"></div>
+                            <div id="micro-bar-4" style="width:0%; height:100%; background:#00ff41;"></div>
                         </div>
                     </div>
                     <div class="micro-metric">
-                        <div class="text-xs text-muted">DB CONNS</div>
-                        <div class="text-mono text-yellow">42</div>
+                        <div id="micro-label-5" class="text-xs text-muted">DB CONNS</div>
+                        <div id="micro-value-5" class="text-mono text-yellow">—</div>
                         <div style="height:2px; background:#222; margin-top:5px;">
-                            <div style="width:10%; height:100%; background:#ffee00;"></div>
+                            <div id="micro-bar-5" style="width:0%; height:100%; background:#ffee00;"></div>
                         </div>
                     </div>
                     <div class="micro-metric">
-                        <div class="text-xs text-muted">API LATENCY</div>
-                        <div class="text-mono text-cyan">12ms</div>
+                        <div id="micro-label-6" class="text-xs text-muted">API LATENCY</div>
+                        <div id="micro-value-6" class="text-mono text-cyan">—</div>
                         <div style="height:2px; background:#222; margin-top:5px;">
-                            <div style="width:5%; height:100%; background:#00f3ff;"></div>
+                            <div id="micro-bar-6" style="width:0%; height:100%; background:#00f3ff;"></div>
                         </div>
                     </div>
                 </div>
@@ -324,8 +324,8 @@
                             <div class="metric-icon"><i class="fas fa-database text-cyan"></i></div>
                             <span class="badge">TOTAL VOL</span>
                         </div>
-                        <div class="metric-value">17,287</div>
-                        <div class="metric-sub">Stored Requests <span class="text-green">(+38)</span></div>
+                        <div id="admin-metric-total-requests" class="metric-value">—</div>
+                        <div id="admin-metric-total-requests-sub" class="metric-sub">Stored Requests</div>
                         <div class="metric-mini-chart">
                             <!-- Sparkline Simulation -->
                             <div style="display:flex; align-items:flex-end; height:100%; gap:2px;">
@@ -343,8 +343,8 @@
                             <div class="metric-icon"><i class="fas fa-globe text-purple"></i></div>
                             <span class="badge">UNIQUE</span>
                         </div>
-                        <div class="metric-value">2,455</div>
-                        <div class="metric-sub">Distinct IPs <span class="text-green">(+16)</span></div>
+                        <div id="admin-metric-unique-ips" class="metric-value">—</div>
+                        <div id="admin-metric-unique-ips-sub" class="metric-sub">Distinct IPs</div>
                         <div class="metric-mini-chart">
                             <div style="display:flex; align-items:flex-end; height:100%; gap:2px;">
                                 <div style="width:10%; height:30%; background:#333;"></div>
@@ -361,8 +361,8 @@
                             <div class="metric-icon"><i class="fas fa-fingerprint text-pink"></i></div>
                             <span class="badge badge-red">CRITICAL</span>
                         </div>
-                        <div class="metric-value">4,421</div>
-                        <div class="metric-sub">WP Pwd Guesses <span class="text-pink">(+15)</span></div>
+                        <div id="admin-metric-critical" class="metric-value">—</div>
+                        <div id="admin-metric-critical-sub" class="metric-sub">Critical Events</div>
                         <div class="metric-mini-chart">
                             <div style="display:flex; align-items:flex-end; height:100%; gap:2px;">
                                 <div style="width:10%; height:20%; background:#333;"></div>
@@ -379,8 +379,8 @@
                             <div class="metric-icon"><i class="fas fa-server text-green"></i></div>
                             <span class="badge">STATUS</span>
                         </div>
-                        <div class="metric-value text-green">HEALTHY</div>
-                        <div class="metric-sub">All Systems Go</div>
+                        <div id="admin-metric-health" class="metric-value text-green">—</div>
+                        <div id="admin-metric-health-sub" class="metric-sub">System Status</div>
                         <div class="metric-mini-chart">
                             <div style="width:100%; height:50%; border-bottom:1px solid #333; position:relative;">
                                 <div
@@ -430,9 +430,7 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr>
-                                    <td colspan="2" class="text-muted">No data yet</td>
-                                </tr>
+                                <tr><td colspan="2" class="text-muted">No data yet</td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -448,9 +446,7 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr>
-                                    <td colspan="2" class="text-muted">No data yet</td>
-                                </tr>
+                                <tr><td colspan="2" class="text-muted">No data yet</td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -466,9 +462,7 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr>
-                                    <td colspan="2" class="text-muted">No data yet</td>
-                                </tr>
+                                <tr><td colspan="2" class="text-muted">No data yet</td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -505,7 +499,7 @@
                             </thead>
                             <tbody id="usersTableBody">
                                 <!-- Populated by JS -->
-                            </tbody>
+                            <tbody id="overview-paths-body">
                         </table>
                     </div>
                 </div>
@@ -557,7 +551,7 @@
                                     <td colspan="6" class="text-muted" style="text-align:center; padding:20px;">No nodes
                                         yet</td>
                                 </tr>
-                            </tbody>
+                            <tbody id="overview-endpoints-body">
                         </table>
                     </div>
                 </div>
@@ -608,7 +602,7 @@
                                     <td colspan="3" style="text-align:center; color:#666; padding:20px;">No node actions
                                         recorded</td>
                                 </tr>
-                            </tbody>
+                            <tbody id="overview-topips-body">
                         </table>
                     </div>
                 </div>
@@ -909,60 +903,6 @@
         // Initial Load
         document.addEventListener('DOMContentLoaded', () => {
             handleHash();
-
-
-            // Initialize Charts (Placeholder logic - handled more dynamically in admin.js if needed, but keeping basic init here)
-            const ctx24h = document.getElementById('requests24hChart');
-            if (ctx24h) {
-                new Chart(ctx24h, {
-                    type: 'line',
-                    data: {
-                        labels: ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00'],
-                        datasets: [{
-                            label: 'Requests',
-                            data: [120, 190, 300, 500, 200, 300],
-                            borderColor: '#00f3ff',
-                            backgroundColor: 'rgba(0, 243, 255, 0.1)',
-                            fill: true,
-                            tension: 0.4
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: { legend: { display: false } },
-                        scales: {
-                            y: { grid: { color: '#222' }, ticks: { color: '#666' } },
-                            x: { grid: { display: false }, ticks: { color: '#666' } }
-                        }
-                    }
-                });
-            }
-
-            const ctx7d = document.getElementById('requests7dChart');
-            if (ctx7d) {
-                new Chart(ctx7d, {
-                    type: 'bar',
-                    data: {
-                        labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
-                        datasets: [{
-                            label: 'Volume',
-                            data: [4500, 5200, 4800, 6100, 5500, 4200, 3800],
-                            backgroundColor: '#bc13fe',
-                            borderRadius: 4
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: { legend: { display: false } },
-                        scales: {
-                            y: { grid: { color: '#222' }, ticks: { color: '#666' } },
-                            x: { grid: { display: false }, ticks: { color: '#666' } }
-                        }
-                    }
-                });
-            }
         });
     </script>
 </body>

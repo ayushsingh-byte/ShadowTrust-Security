@@ -318,6 +318,13 @@ async function checkAuthGuard() {
             const userData = await response.json();
             localStorage.setItem('userRole', userData.role || '');
             localStorage.setItem('clearanceLevel', userData.clearance_level || '');
+
+            const isAdminRole = userData.role === 'SUPER_ADMIN' || userData.role === 'ADMIN';
+            if (isAdminRole) {
+                localStorage.setItem('isAdmin', 'true');
+            } else {
+                localStorage.removeItem('isAdmin');
+            }
         } catch (e) {
             console.warn("Session verification failed. Redirecting to login.");
             localStorage.removeItem('access_token');

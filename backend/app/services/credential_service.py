@@ -45,6 +45,7 @@ TWILIO_SID    = os.getenv("TWILIO_ACCOUNT_SID", "")
 TWILIO_TOKEN  = os.getenv("TWILIO_AUTH_TOKEN", "")
 TWILIO_FROM   = os.getenv("TWILIO_FROM", "")
 TWILIO_ENABLED = bool(TWILIO_SID and TWILIO_TOKEN and TWILIO_FROM)
+TWILIO_WA_SANDBOX_NUMBER = "+14155238886"
 
 PORTAL_BASE_URL = os.getenv("PORTAL_BASE_URL", "http://localhost:8001")
 
@@ -163,7 +164,29 @@ def send_whatsapp_notification(phone: str, message: str) -> str:
 
     try:
         from twilio.rest import Client  # type: ignore
+        from twilio.base.exceptions import TwilioRestException  # type: ignore
         client = Client(TWILIO_SID, TWILIO_TOKEN)
+
+        # Twilio sandbox only delivers to opted-in numbers (join <keyword> to sandbox).
+        if TWILIO_FROM == TWILIO_WA_SANDBOX_NUMBER:
+            inbound = client.messages.list(
+                to=f"whatsapp:{TWILIO_FROM}",
+                from_=f"whatsapp:{phone}",
+                limit=20,
+            )
+            opted_in = False
+            for msg in inbound:
+                body = (msg.body or "").strip().lower()
+                if body.startswith("stop") or body.startswith("unsubscribe") or body.startswith("cancel"):
+                    opted_in = False
+                    break
+                if body.startswith("join "):
+                    opted_in = True
+                    break
+            if not opted_in:
+                logger.warning("[WHATSAPP] Recipient %s is not opted-in to Twilio sandbox", phone)
+                return "NOT_OPTED_IN"
+
         client.messages.create(
             body=message,
             from_=f"whatsapp:{TWILIO_FROM}",
@@ -172,7 +195,12 @@ def send_whatsapp_notification(phone: str, message: str) -> str:
         logger.info("[WHATSAPP] Successfully sent to %s", phone)
         return "SENT"
     except Exception as exc:
-        logger.error("[WHATSAPP] Delivery failed: %s", exc)
+        # Error 63015 = recipient has not opted-in to the WhatsApp sandbox
+        code = getattr(exc, 'code', None) or getattr(exc, 'status', None)
+        if code == 63015:
+            logger.warning("[WHATSAPP] Recipient %s not opted-in to sandbox (63015)", phone)
+            return "NOT_OPTED_IN"
+        logger.error("[WHATSAPP] Delivery failed (code=%s): %s", code, exc)
         return "FAILED"
 
 
