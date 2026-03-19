@@ -633,14 +633,6 @@ function bindActions() {
                 return;
             }
 
-            if (!serviceStatusCache || !serviceStatusCache.api_key_configured) {
-                const docsUrl = serviceStatusCache?.api_docs_url || 'http://localhost:8001/api_docs';
-                const message = `One-time setup needed:\n1) Open ${docsUrl}\n2) Copy API key\n3) Paste into backend/mobsf_service/config.py (MOBSF_API_KEY)\n4) Retry Upload & Scan`;
-                setStatus('MobSF API key missing. Complete one-time setup first.', 'yellow');
-                window.alert(message);
-                return;
-            }
-
             try {
                 scanButton.disabled = true;
                 setStatus('Uploading APK to MobSF...', 'cyan');
@@ -654,8 +646,7 @@ function bindActions() {
                 setStatus(`Analysis complete for ${report.app_name}.`, 'green');
             } catch (error) {
                 console.error('APK scan failed:', error);
-                setStatus(error.message, 'pink');
-                window.alert(`APK scan failed: ${error.message}`);
+                setStatus(`Scan failed: ${error.message}`, 'pink');
             } finally {
                 scanButton.disabled = false;
             }
