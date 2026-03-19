@@ -6,8 +6,9 @@ from sqlalchemy.future import select
 
 from app.db.sqlite_db import get_db
 from app.models.all_models import User, AccessLog
-from app.services.auth_service import get_password_hash
+from app.services.auth_service import get_password_hash, generate_system_code, _send_auth_email, create_access_token
 from app.api.v1.dependencies import get_current_active_user, require_role, require_clearance
+from datetime import datetime
 
 router = APIRouter()
 
@@ -255,7 +256,14 @@ async def approve_user(
         user.role = approval.role
         user.clearance_level = approval.clearance_level
 
-        # 2. Log Action
+        # 2. If promoted to an admin role, generate + email an access code
+        system_code_generated = None
+        ADMIN_ROLES = {"SUPER_ADMIN", "ADMIN", "OVERSEER"}
+        if approval.role in ADMIN_ROLES:
+            system_code_generated = generate_system_code()
+            user.system_code = system_code_generated
+
+        # 3. Log Action
         log_entry = AccessLog(
             admin_id=current_user.id,
             target_user_id=user.id,
@@ -263,9 +271,60 @@ async def approve_user(
             details=f"Role: {approval.role}, Level: {approval.clearance_level}"
         )
         db.add(log_entry)
-        
+
         await db.commit()
         await db.refresh(user)
+
+        # 4. Send approval email (with admin code if applicable)
+        if system_code_generated:
+            html = f"""<!DOCTYPE html><html><head><meta charset="UTF-8">
+<style>body{{background:#f4f6f8;font-family:sans-serif;margin:0;padding:0}}
+.w{{max-width:580px;margin:40px auto;background:#fff;border-radius:8px;overflow:hidden;border-top:4px solid #ff0055}}
+.h{{padding:28px 30px;border-bottom:1px solid #eef0f2}}.h h1{{margin:0;color:#0f171e;font-size:22px}}
+.h p{{margin:6px 0 0;color:#64748b;font-size:13px;text-transform:uppercase;letter-spacing:1px}}
+.b{{padding:36px 30px}}.b p{{color:#334155;line-height:1.6;font-size:15px}}
+.code-box{{background:#0f171e;color:#ff0055;font-family:monospace;font-size:2rem;font-weight:700;
+text-align:center;padding:20px;border-radius:6px;letter-spacing:8px;margin:24px 0}}
+.note{{background:#fff5f5;border:1px solid #fed7d7;border-radius:6px;padding:14px;
+font-size:13px;color:#c53030;margin-top:24px}}
+.f{{background:#0f171e;padding:20px;font-size:12px;color:#94a3b8;text-align:center}}</style></head>
+<body><div class="w">
+<div class="h"><h1>SOC SENTINEL</h1><p>Admin Access Approved</p></div>
+<div class="b">
+<p>Hello <strong>{user.first_name or user.username}</strong>,<br><br>
+Your account has been approved with <strong>{approval.role}</strong> privileges (Clearance Level {approval.clearance_level}).<br>
+You can now log into the system using your credentials along with the Admin Access Code below.</p>
+<div class="code-box">{system_code_generated}</div>
+<p>Use this code in the <strong>Admin Login</strong> page alongside your email and password.<br>
+Navigate to: <a href="http://localhost:5500/frontend/admin_login.html" style="color:#00c6ff">Admin Login Page</a></p>
+<div class="note"><strong>Security Notice:</strong> Keep this code confidential. Do not share it with anyone.
+This code is your second factor for admin authentication.</div>
+</div>
+<div class="f">Shadow Trust Defense Systems &bull; {datetime.utcnow().strftime("%Y-%m-%d %H:%M UTC")}</div>
+</div></body></html>"""
+            _send_auth_email(user.email, "[Shadow Trust] Admin Access Approved — Your Access Code", html)
+        else:
+            # Regular user approval email
+            html = f"""<!DOCTYPE html><html><head><meta charset="UTF-8">
+<style>body{{background:#f4f6f8;font-family:sans-serif;margin:0;padding:0}}
+.w{{max-width:580px;margin:40px auto;background:#fff;border-radius:8px;overflow:hidden;border-top:4px solid #00c6ff}}
+.h{{padding:28px 30px;border-bottom:1px solid #eef0f2}}.h h1{{margin:0;color:#0f171e;font-size:22px}}
+.h p{{margin:6px 0 0;color:#64748b;font-size:13px;text-transform:uppercase;letter-spacing:1px}}
+.b{{padding:36px 30px}}.b p{{color:#334155;line-height:1.6;font-size:15px}}
+.btn{{display:inline-block;background:#00c6ff;color:#0f171e;padding:13px 26px;border-radius:4px;
+font-weight:700;text-decoration:none;font-size:15px;margin:24px 0}}
+.f{{background:#0f171e;padding:20px;font-size:12px;color:#94a3b8;text-align:center}}</style></head>
+<body><div class="w">
+<div class="h"><h1>SOC SENTINEL</h1><p>Account Approved</p></div>
+<div class="b">
+<p>Hello <strong>{user.first_name or user.username}</strong>,<br><br>
+Your account has been approved with role <strong>{approval.role}</strong> (Clearance Level {approval.clearance_level}).<br>
+You can now sign in to the platform.</p>
+<a href="http://localhost:5500/frontend/login.html" class="btn">Sign In Now</a>
+</div>
+<div class="f">Shadow Trust Defense Systems &bull; {datetime.utcnow().strftime("%Y-%m-%d %H:%M UTC")}</div>
+</div></body></html>"""
+            _send_auth_email(user.email, "[Shadow Trust] Your Account Has Been Approved", html)
 
         return {"status": "approved", "user": {
                  "id": user.id,
@@ -282,6 +341,54 @@ async def approve_user(
     except Exception as e:
         await db.rollback()
         raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/{user_id}/regenerate-admin-code")
+async def regenerate_admin_code(
+    user_id: str,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_role(["SUPER_ADMIN"]))
+):
+    """Generate (or regenerate) the 2FA hardware token for an admin user and email it."""
+    result = await db.execute(select(User).where(User.id == user_id))
+    user = result.scalars().first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    new_code = generate_system_code()
+    user.system_code = new_code
+    await db.commit()
+
+    # Email the new code
+    html = f"""<!DOCTYPE html><html><head><meta charset="UTF-8">
+<style>body{{background:#f4f6f8;font-family:sans-serif;margin:0;padding:0}}
+.w{{max-width:580px;margin:40px auto;background:#fff;border-radius:8px;overflow:hidden;border-top:4px solid #ff0055}}
+.h{{padding:28px 30px;border-bottom:1px solid #eef0f2}}.h h1{{margin:0;color:#0f171e;font-size:22px}}
+.h p{{margin:6px 0 0;color:#64748b;font-size:13px;text-transform:uppercase;letter-spacing:1px}}
+.b{{padding:36px 30px}}.b p{{color:#334155;line-height:1.6;font-size:15px}}
+.code-box{{background:#0f171e;color:#ff0055;font-family:monospace;font-size:2rem;font-weight:700;
+text-align:center;padding:20px;border-radius:6px;letter-spacing:8px;margin:24px 0}}
+.note{{background:#fff5f5;border:1px solid #fed7d7;border-radius:6px;padding:14px;
+font-size:13px;color:#c53030;margin-top:24px}}
+.f{{background:#0f171e;padding:20px;font-size:12px;color:#94a3b8;text-align:center}}</style></head>
+<body><div class="w">
+<div class="h"><h1>SOC SENTINEL</h1><p>New 2FA Hardware Token</p></div>
+<div class="b">
+<p>Hello <strong>{user.first_name or user.username}</strong>,<br><br>
+A new admin 2FA Hardware Token has been generated for your account by a Super Administrator.</p>
+<div class="code-box">{new_code}</div>
+<p>Use this token on the Admin Login page alongside your email and password.</p>
+<div class="note"><strong>Security Notice:</strong> Your old token is now invalid. Keep this code confidential.</div>
+</div>
+<div class="f">Shadow Trust Defense Systems &bull; {datetime.utcnow().strftime("%Y-%m-%d %H:%M UTC")}</div>
+</div></body></html>"""
+    email_sent = _send_auth_email(user.email, "[Shadow Trust] Your New 2FA Hardware Token", html)
+
+    return {
+        "status": "success",
+        "system_code": new_code,
+        "email_sent": email_sent,
+        "user_email": user.email
+    }
 
 @router.post("/{user_id}/deny")
 async def deny_user(

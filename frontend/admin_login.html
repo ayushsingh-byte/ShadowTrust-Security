@@ -4,7 +4,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sudo Access | Shadow Trust</title>
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>Admin Login | Shadow Trust</title>
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -283,19 +286,19 @@
 
         <form id="adminLoginForm">
             <div class="input-group">
-                <label>Root Identifier</label>
-                <input type="text" class="clean-input" placeholder="Enter root identifier" required>
+                <label>Email Address</label>
+                <input type="email" id="adminEmail" class="clean-input" placeholder="admin@example.com" required>
             </div>
 
             <div class="input-group">
-                <label>Sudo Key</label>
-                <input type="password" class="clean-input" placeholder="••••••••••••••••" required>
+                <label>Password</label>
+                <input type="password" id="adminPassword" class="clean-input" placeholder="••••••••••••••••" required>
             </div>
 
             <div class="input-group">
                 <label>2FA Hardware Token</label>
-                <input type="text" class="clean-input" placeholder="000-000" maxlength="7"
-                    style="letter-spacing: 5px; text-align: center;">
+                <input type="text" id="adminCode" class="clean-input" placeholder="XXX-XXX" maxlength="7"
+                    style="letter-spacing: 5px; text-align: center; text-transform: uppercase;" autocomplete="off">
             </div>
 
             <button type="submit" class="btn-clean">
@@ -305,22 +308,64 @@
     </div>
 
     <script>
-        document.getElementById('adminLoginForm').addEventListener('submit', function (e) {
+        const API_BASE = 'http://localhost:8000/api/v1';
+
+        function showAdminMsg(msg, type) {
+            let el = document.getElementById('adminMsg');
+            if (!el) {
+                el = document.createElement('div');
+                el.id = 'adminMsg';
+                el.style.cssText = 'margin-top:20px;padding:14px 18px;border-radius:4px;font-size:0.85rem;font-family:monospace;';
+                document.getElementById('adminLoginForm').after(el);
+            }
+            el.style.border = type === 'error' ? '1px solid #ff0055' : '1px solid #10b981';
+            el.style.background = type === 'error' ? 'rgba(255,0,85,0.08)' : 'rgba(16,185,129,0.08)';
+            el.style.color = type === 'error' ? '#ff0055' : '#10b981';
+            el.textContent = msg;
+        }
+
+        document.getElementById('adminLoginForm').addEventListener('submit', async function (e) {
             e.preventDefault();
+            const email = document.getElementById('adminEmail').value.trim();
+            const password = document.getElementById('adminPassword').value;
+            const systemCode = document.getElementById('adminCode').value.trim();
             const btn = e.target.querySelector('button');
             const originalText = btn.innerHTML;
+
+            if (!email || !password || !systemCode) {
+                showAdminMsg('All fields are required.', 'error');
+                return;
+            }
 
             btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Authenticating...';
             btn.style.opacity = '0.7';
 
-            // Simulate admin network lookup
-            setTimeout(() => {
-                // Grant admin access token
-                localStorage.setItem('isAdmin', 'true');
+            try {
+                const res = await fetch(`${API_BASE}/auth/admin-login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password, system_code: systemCode })
+                });
 
-                // Redirect to actual admin console
-                window.location.href = 'admin.html';
-            }, 1000);
+                if (!res.ok) {
+                    const err = await res.json();
+                    throw new Error(err.detail || 'Authentication failed');
+                }
+
+                const data = await res.json();
+                localStorage.setItem('access_token', data.access_token);
+                localStorage.setItem('authToken', data.access_token);
+                localStorage.setItem('isAdmin', 'true');
+                localStorage.setItem('userRole', data.user.role);
+
+                showAdminMsg('Access granted. Redirecting...', 'success');
+                setTimeout(() => window.location.href = 'admin.html', 800);
+
+            } catch (err) {
+                showAdminMsg(err.message, 'error');
+                btn.innerHTML = originalText;
+                btn.style.opacity = '1';
+            }
         });
     </script>
     </div>
