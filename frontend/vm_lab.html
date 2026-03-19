@@ -221,6 +221,31 @@
             text-align: center;
             z-index: 1;
         }
+
+        /* Keyboard-capture hint — shown after VM is ready, hides on first click */
+        #vdiKeyHint {
+            display: none;
+            position: absolute;
+            bottom: 14px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 198, 255, 0.12);
+            border: 1px solid var(--accent-primary);
+            color: var(--accent-primary);
+            font-family: var(--font-mono);
+            font-size: 0.7rem;
+            padding: 5px 14px;
+            border-radius: 4px;
+            z-index: 20;
+            pointer-events: none;
+            white-space: nowrap;
+            animation: fadeHint 4s ease-out forwards;
+        }
+        @keyframes fadeHint {
+            0%   { opacity: 1; }
+            60%  { opacity: 1; }
+            100% { opacity: 0; }
+        }
     </style>
 </head>
 
@@ -267,8 +292,7 @@
                         class="nav-text">Credentials Vault</span></a>
                 <a href="behavior.html" class="nav-item"><i class="fas fa-user-secret"></i> <span
                         class="nav-text">Behavior Profiling</span></a>
-                <a href="simulation.html" class="nav-item"><i class="fas fa-crosshairs"></i> <span
-                        class="nav-text">Attack Sim</span></a>
+                
             </div>
 
             <div class="nav-group">
@@ -514,7 +538,13 @@
                         cryptographic keys</div>
                 </div>
 
-                <iframe id="vdiFrame" allow="clipboard-read; clipboard-write; fullscreen"></iframe>
+                <iframe id="vdiFrame"
+                    tabindex="0"
+                    allow="clipboard-read; clipboard-write; fullscreen; keyboard-map"
+                    style="outline: none;"></iframe>
+
+                <!-- Brief hint that auto-fades after 4 s -->
+                <div id="vdiKeyHint"><i class="fas fa-keyboard"></i>&nbsp; CLICK INSIDE TO ACTIVATE KEYBOARD</div>
             </div>
 
         </main>

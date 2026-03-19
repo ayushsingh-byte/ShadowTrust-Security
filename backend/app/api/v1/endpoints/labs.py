@@ -105,6 +105,26 @@ async def stop_lab(
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+async def _get_guac_auth_token() -> Optional[str]:
+    """
+    Fetches a fresh Guacamole session token using the admin account.
+    Uses async httpx so the FastAPI event loop is never blocked.
+    Returns None silently if Guacamole is unreachable (Docker not running, etc.).
+    """
+    try:
+        import httpx
+        async with httpx.AsyncClient(timeout=3.0) as client:
+            resp = await client.post(
+                "http://localhost:8080/guacamole/api/tokens",
+                data={"username": "guacadmin", "password": "guacadmin"}
+            )
+            if resp.status_code == 200:
+                return resp.json().get("authToken")
+    except Exception:
+        pass
+    return None
+
+
 @router.get("/status/{lab_id}")
 async def get_lab_status(
     lab_id: str,
@@ -112,68 +132,49 @@ async def get_lab_status(
     current_user: User = Depends(get_current_active_user)
 ):
     """
-    Polls the local SQLite database to track the async background worker.
-    Returns status: provisioning | ready | error | stopped
+    Polls the local state to track the async background worker.
+    Returns: { status, instance_id, guacamole_connection_id, auth_token }
     """
     from app.services.session_manager import GLOBAL_LAB_STATE
-    
-    # Check in-memory state first (Graceful degradation)
+
+    # ── In-memory state (most up-to-date) ────────────────────────────────────
     if lab_id in GLOBAL_LAB_STATE:
         record = GLOBAL_LAB_STATE[lab_id]
         current_status = record.get("status", "UNKNOWN").upper()
         auth_token = None
-        
+
         if current_status in ["READY", "RUNNING"]:
-            try:
-                import httpx
-                resp = httpx.post(
-                    "http://localhost:8080/guacamole/api/tokens",
-                    data={"username": "guacadmin", "password": "guacadmin"},
-                    timeout=3.0
-                )
-                if resp.status_code == 200:
-                    auth_token = resp.json().get("authToken")
-            except:
-                pass
+            auth_token = await _get_guac_auth_token()
 
         return {
             "status": current_status,
-            "state": record.get("status", "unknown").lower(),
+            "state": current_status.lower(),
             "instance_id": record.get("instance_id"),
+            "private_ip": record.get("private_ip"),
             "guacamole_connection_id": record.get("guacamole_connection_id"),
             "auth_token": auth_token
         }
 
-    # Query SQLite Fallback
+    # ── SQLite fallback (survives server restarts) ────────────────────────────
     try:
         result = await db.execute(select(VMInstance).where(VMInstance.id == lab_id))
         record = result.scalars().first()
         if not record:
             return {"status": "NOT_FOUND", "message": "Lab session not found"}
-            
-        status = record.status.upper() if record.status else "UNKNOWN"
+
+        status = (record.status or "UNKNOWN").upper()
         auth_token = None
-        
+        guac_id = getattr(record, "guac_connection_id", None)
+
         if status in ["READY", "RUNNING"]:
-            try:
-                import httpx
-                resp = httpx.post(
-                    "http://localhost:8080/guacamole/api/tokens",
-                    data={"username": "guacadmin", "password": "guacadmin"},
-                    timeout=3.0
-                )
-                if resp.status_code == 200:
-                    auth_token = resp.json().get("authToken")
-            except:
-                pass
-        
-        # In a full schema, we'd also pull the guac_connection_id explicitly.
-        # For this prototype we're returning the raw status state to drive the UI.
+            auth_token = await _get_guac_auth_token()
+
         return {
             "status": status,
             "state": status.lower(),
             "instance_id": record.instance_id,
-            "guacamole_connection_id": "1", # Mocked ID #1 if schema lacks column
+            "private_ip": getattr(record, "private_ip", None),
+            "guacamole_connection_id": guac_id,
             "auth_token": auth_token
         }
     except Exception as e:

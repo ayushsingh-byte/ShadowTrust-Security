@@ -299,15 +299,7 @@ async def get_geo_stats(db: AsyncSession = Depends(get_db)):
     
     ip_hits = top_ips_query.all()
     
-    # Markers
-    markers_query = await db.execute(
-        select(RawEventModel.attacker_ip)
-        .order_by(desc(RawEventModel.timestamp))
-        .limit(20)
-    )
-    raw_markers = [ip for ip in markers_query.scalars().all() if ip]
-
-    all_ips_to_fetch = list(set([ip.split(':')[0] for ip, _ in ip_hits if ip] + [ip.split(':')[0] for ip in raw_markers]))
+    all_ips_to_fetch = list(set([ip.split(':')[0] for ip, _ in ip_hits if ip]))
     geo_map = await fetch_geoip_batch(all_ips_to_fetch)
     
     countries_data = {}
@@ -363,18 +355,17 @@ async def get_geo_stats(db: AsyncSession = Depends(get_db)):
     top_isp = asn_intelligence[0] if asn_intelligence else None
     
     markers = []
-    for ip in raw_markers:
+    for ip, hits in ip_hits:
         base_ip = (ip or '').split(':')[0]
         geo = geo_map.get(base_ip)
-        
-        if geo and geo.get('code') == 'INT':
+
+        if not geo or geo.get('code') == 'INT':
             continue
-            
-        if geo and geo.get('lat') and geo.get('lon'):
-            markers.append({"ip": ip, "lat": geo['lat'], "lon": geo['lon']})
-        else:
-            # Skip invalid locations instead of mocking them in the ocean so it doesn't look fake
-            continue
+
+        lat = geo.get('lat')
+        lon = geo.get('lon')
+        if lat is not None and lon is not None and (lat != 0.0 or lon != 0.0):
+            markers.append({"ip": base_ip, "lat": lat, "lon": lon, "hits": hits})
 
     return {
         "active_sources": active_sources,

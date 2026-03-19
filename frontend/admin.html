@@ -234,9 +234,6 @@
                 <a href="aws_connection.html" class="nav-item">
                     <i class="fab fa-aws"></i> <span class="nav-text">AWS Connection</span>
                 </a>
-                <a href="admin.html#section-nodes" class="nav-item">
-                    <i class="fas fa-network-wired"></i> <span class="nav-text">Node Control</span>
-                </a>
                 <a href="admin.html#section-settings" class="nav-item">
                     <i class="fas fa-cogs"></i> <span class="nav-text">System Settings</span>
                 </a>
@@ -504,111 +501,6 @@
                     </div>
                 </div>
             </div>
-
-            <!-- SECTION: NODE CONTROL -->
-            <div id="section-nodes" style="display:none;">
-
-                <!-- NODE STATS -->
-                <div class="dashboard-grid grid-4" style="margin-bottom: 20px;">
-                    <div class="metric-tile" style="border-top: 3px solid #ff9900;">
-                        <div class="metric-value text-center">—</div>
-                        <div class="metric-sub text-center">TOTAL NODES</div>
-                    </div>
-                    <div class="metric-tile" style="border-top: 3px solid #00ff41;">
-                        <div class="metric-value text-center text-green">—</div>
-                        <div class="metric-sub text-center">RUNNING</div>
-                    </div>
-                    <div class="metric-tile" style="border-top: 3px solid #ff0055;">
-                        <div class="metric-value text-center text-red">—</div>
-                        <div class="metric-sub text-center">STOPPED</div>
-                    </div>
-                    <div class="metric-tile" style="border-top: 3px solid #00f3ff;">
-                        <div class="metric-value text-center text-cyan">—</div>
-                        <div class="metric-sub text-center">OPEN PORTS</div>
-                    </div>
-                </div>
-
-                <!-- NODES LIST -->
-                <div class="dashboard-grid grid-1" style="margin-bottom: 2rem;">
-                    <div class="soc-card">
-                        <div class="soc-card-header">
-                            <span class="card-title">HONEYPOT NODES CONTROL</span>
-                            <button class="soc-btn"><i class="fas fa-sync"></i> Refresh</button>
-                        </div>
-                        <table class="terminal-table">
-                            <thead>
-                                <tr>
-                                    <th>NODE</th>
-                                    <th>HOST</th>
-                                    <th>PORT</th>
-                                    <th>STATUS</th>
-                                    <th>REACHABILITY</th>
-                                    <th>ACTION</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td colspan="6" class="text-muted" style="text-align:center; padding:20px;">No nodes
-                                        yet</td>
-                                </tr>
-                            <tbody id="overview-endpoints-body">
-                        </table>
-                    </div>
-                </div>
-
-                <!-- REACHABILITY & ACTIONS -->
-                <div class="dashboard-grid grid-2-1">
-                    <div class="soc-card">
-                        <div class="soc-card-header"><span class="card-title">LISTENER REACHABILITY</span></div>
-                        <div style="margin-bottom:15px; border-bottom:1px solid #222; padding-bottom:10px;">
-                            <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
-                                <b class="text-white">DASHBOARD</b>
-                                <span class="text-muted">—</span>
-                            </div>
-                            <div style="display:flex; gap:15px; font-size:0.7rem; color:#666;">
-                                <span>Latency: <span class="text-white">—</span></span>
-                                <span>Uptime: <span class="text-white">—</span></span>
-                            </div>
-                            <div style="width:100%; height:4px; background:#222; margin-top:5px;">
-                                <div style="width:0%; height:100%; background:var(--neon-green);"></div>
-                            </div>
-                        </div>
-                        <div>
-                            <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
-                                <b class="text-white">HTTP</b>
-                                <span class="text-muted">—</span>
-                            </div>
-                            <div style="display:flex; gap:15px; font-size:0.7rem; color:#666;">
-                                <span>Latency: <span class="text-white">—</span></span>
-                                <span>Uptime: <span class="text-white">—</span></span>
-                            </div>
-                            <div style="width:100%; height:4px; background:#222; margin-top:5px;">
-                                <div style="width:0%; height:100%; background:var(--neon-green);"></div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="soc-card">
-                        <div class="soc-card-header"><span class="card-title">RECENT NODE ACTIONS</span></div>
-                        <table class="terminal-table">
-                            <thead>
-                                <tr>
-                                    <th>TIME</th>
-                                    <th>ACTOR</th>
-                                    <th>ACTION</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td colspan="3" style="text-align:center; color:#666; padding:20px;">No node actions
-                                        recorded</td>
-                                </tr>
-                            <tbody id="overview-topips-body">
-                        </table>
-                    </div>
-                </div>
-
-            </div>
-
 
             <!-- SECTION: SYSTEM SETTINGS -->
             <div id="section-settings" style="display:none;">

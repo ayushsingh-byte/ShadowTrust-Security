@@ -76,8 +76,7 @@ document.addEventListener("DOMContentLoaded", function () {
                     { href: 'mitre.html', icon: 'fa-chess-board', text: 'MITRE Matrix' },
                     { href: 'graphs.html', icon: 'fa-chart-area', text: 'Attack Analytics' },
                     { href: 'credentials.html', icon: 'fa-key', text: 'Credentials Vault' },
-                    { href: 'behavior.html', icon: 'fa-user-secret', text: 'Behavior Profiling' },
-                    { href: 'simulation.html', icon: 'fa-crosshairs', text: 'Attack Sim' }
+                    { href: 'behavior.html', icon: 'fa-user-secret', text: 'Behavior Profiling' }
                 ]
             },
             {
@@ -102,10 +101,7 @@ document.addEventListener("DOMContentLoaded", function () {
         if (isAdminSession) {
             const systemGroup = navGroups.find(g => g.label === 'System');
             systemGroup.items.splice(1, 0,
-                { href: 'admin.html', icon: 'fa-user-shield', text: 'Admin Console' },
-                { href: 'aws_connection.html', icon: 'fa-cloud', text: 'AWS Connection' },
-                { href: 'config.html', icon: 'fa-cogs', text: 'Global Config' },
-                { href: 'debug.html', icon: 'fa-terminal', text: 'System Diagnostics' }
+                { href: 'admin.html', icon: 'fa-user-shield', text: 'Admin Console' }
             );
         } else {
             // Hide the entire System block for non-admin sessions.

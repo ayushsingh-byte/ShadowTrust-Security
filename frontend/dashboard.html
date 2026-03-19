@@ -236,9 +236,7 @@
                         class="nav-text">Credentials Vault</span></a>
                 <a href="behavior.html" class="nav-item"><i class="fas fa-user-secret"></i> <span
                         class="nav-text">Behavior Profiling</span></a>
-                <a href="simulation.html" class="nav-item"><i class="fas fa-crosshairs"></i> <span
-                        class="nav-text">Attack
-                        Sim</span></a>
+                
             </div>
 
             <div class="nav-group">
@@ -278,19 +276,21 @@
                     <p>THREAT LEVEL: <span class="text-yellow">ELEVATED</span> // AUTH: <span
                             class="text-green">SECURE</span></p>
                 </div>
-                <div class="filters-bar" style="display:flex; align-items:center; gap:20px;">
-                    <button id="btn-refresh-intel" class="soc-btn"
-                        style="background: rgba(0, 198, 255, 0.1); border-color: #00c6ff; color: #00c6ff; padding: 6px 15px; font-size: 0.8rem;">
-                        <i class="fas fa-sync-alt" id="refresh-icon"></i> REFRESH DATA
-                    </button>
-                    <button id="btn-lockdown" class="soc-btn"
-                        style="background: rgba(255, 51, 51, 0.1); border-color: #ff3333; color: #ff3333; padding: 6px 15px; font-size: 0.8rem;">
-                        <i class="fas fa-lock"></i> LOCKDOWN
-                    </button>
+                <div class="filters-bar" style="display:flex; flex-direction:column; align-items:flex-end; gap:10px;">
                     <div style="text-align:right;">
-                        <div class="text-mono" style="font-size:0.7rem; color:#64748b;">ZULU TIME</div>
-                        <div class="text-mono" id="clock" style="font-size:1.1rem; color:#fff; font-weight:700;">
+                        <div class="text-mono" style="font-size:0.7rem; color:#64748b; letter-spacing:1px; margin-bottom:2px;">ZULU TIME</div>
+                        <div class="text-mono" id="clock" style="font-size:1.2rem; color:#fff; font-weight:700; letter-spacing:1px;">
                             00:00:00</div>
+                    </div>
+                    <div style="display:flex; gap:15px;">
+                        <button id="btn-refresh-intel" class="soc-btn"
+                            style="background: rgba(0, 198, 255, 0.1); border-color: #00c6ff; color: #00c6ff; padding: 6px 15px; font-size: 0.8rem;">
+                            <i class="fas fa-sync-alt" id="refresh-icon"></i> REFRESH DATA
+                        </button>
+                        <button id="btn-lockdown" class="soc-btn"
+                            style="background: rgba(255, 51, 51, 0.1); border-color: #ff3333; color: #ff3333; padding: 6px 15px; font-size: 0.8rem;">
+                            <i class="fas fa-lock"></i> LOCKDOWN
+                        </button>
                     </div>
                 </div>
             </div>
@@ -1211,7 +1211,12 @@
 
                     // Force the backend python worker to pull newest AWS S3 bucket logs
                     try {
-                        await apiService.post('/aws/pull-s3-logs');
+                        await apiService.post('/aws/pull-s3-logs', {
+                            aws_access_key: localStorage.getItem('_st_aws_access_key') || '',
+                            aws_secret_key: localStorage.getItem('_st_aws_secret_key') || '',
+                            aws_region:     localStorage.getItem('_st_aws_region')      || 'ap-south-1',
+                            s3_bucket_3rd:  localStorage.getItem('_st_s3_bucket')       || 'honeynet-telemetry-logs'
+                        });
                     } catch (e) {
                         console.error('Failed to trigger S3 manual sync on intelligence refresh:', e);
                     }

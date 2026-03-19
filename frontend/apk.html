@@ -94,11 +94,42 @@
         }
 
         .upload-strip input[type="file"] {
-            background: #111827;
+            background: #0b1320;
             border: 1px solid #1f2937;
             color: #cbd5e1;
-            padding: 10px 12px;
+            padding: 8px 12px;
             min-width: 280px;
+            border-radius: 4px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .upload-strip input[type="file"]:hover {
+            border-color: #00c6ff;
+            box-shadow: 0 0 10px rgba(0, 198, 255, 0.15);
+        }
+
+        .upload-strip input[type="file"]::file-selector-button {
+            margin-right: 15px;
+            border: 1px solid #00c6ff;
+            background: rgba(0, 198, 255, 0.1);
+            padding: 8px 16px;
+            border-radius: 4px;
+            color: #00c6ff;
+            cursor: pointer;
+            transition: all 0.2s ease-in-out;
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: bold;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+        }
+
+        .upload-strip input[type="file"]::file-selector-button:hover {
+            background: #00c6ff;
+            color: #050a0f;
+            box-shadow: 0 0 10px rgba(0, 198, 255, 0.4);
         }
 
         .terminal-table td,
@@ -378,8 +409,7 @@
                         class="nav-text">Credentials Vault</span></a>
                 <a href="behavior.html" class="nav-item"><i class="fas fa-fingerprint"></i> <span
                         class="nav-text">Behaviour Profiling</span></a>
-                <a href="simulation.html" class="nav-item"><i class="fas fa-dragon"></i> <span class="nav-text">Attack
-                        Simulation</span></a>
+                
             </div>
 
             <div class="nav-group">

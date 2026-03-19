@@ -144,10 +144,13 @@ fi
 
             # Hardware specs for AWS instances used
             hw_map = {
-                't3.micro': {'vcpu': 2, 'ram': 1},
-                't3.medium': {'vcpu': 2, 'ram': 4},
-                't3.large': {'vcpu': 2, 'ram': 8},
-                't2.micro': {'vcpu': 1, 'ram': 1},
+                't2.micro':   {'vcpu': 1, 'ram': 1},
+                't3.micro':   {'vcpu': 2, 'ram': 1},
+                't3.small':   {'vcpu': 2, 'ram': 2},
+                't3.medium':  {'vcpu': 2, 'ram': 4},
+                't3.large':   {'vcpu': 2, 'ram': 8},
+                't3.xlarge':  {'vcpu': 4, 'ram': 16},
+                't3.2xlarge': {'vcpu': 8, 'ram': 32},
             }
 
             for r in response.get('Reservations', []):

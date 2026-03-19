@@ -229,13 +229,17 @@ class VMLabClient {
             if (response.status === 'provisioning' || response.status === 'success') {
                 this.instances[profileId] = { instanceId: response.instance_id, labId: response.lab_id };
                 this.saveState();
-                this.setButtonState(btnElement, 'ACTIVE', 'CONNECT TERMINAL');
+
+                // VM is PROVISIONING — keep button in loading state until status checks pass
+                this.setButtonState(btnElement, 'LOADING', 'BOOTING...');
 
                 const orb = document.getElementById(`dot_${profileId}`);
-                if (orb) { orb.style.background = 'var(--accent-primary)'; orb.style.boxShadow = '0 0 10px var(--accent-primary)'; orb.style.animation = 'pulse-red 2s infinite'; }
+                if (orb) { orb.style.background = '#f59e0b'; orb.style.boxShadow = '0 0 10px #f59e0b'; orb.style.animation = 'pulse-red 2s infinite'; }
 
-                // Show notification
-                this.showNotification(`Successfully deployed ${profileId} (${response.lab_id})`, 'success');
+                this.showNotification(`Instance ${response.lab_id} is booting. This takes 3-10 minutes...`, 'success');
+
+                // Poll in background — button transitions to CONNECT TERMINAL when READY
+                this._pollProvisioningStatus(profileId, response.lab_id, btnElement);
             } else {
                 this.setButtonState(btnElement, 'DEFAULT', 'PROVISION');
                 this.showNotification(`Failed to launch: ${response.message}`, 'error');
@@ -307,6 +311,8 @@ class VMLabClient {
                 btn.disabled = true;
                 btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> ${text}`;
                 btn.style.opacity = '0.7';
+                btn.style.background = '';
+                btn.style.color = '';
                 break;
             case 'ACTIVE':
                 this.isLoading[btn.getAttribute('data-profile')] = false;
@@ -354,7 +360,47 @@ class VMLabClient {
         document.getElementById('vdiSubLoader').innerText = 'Negotiating cryptographic keys...';
         document.getElementById('vdiSubLoader').style.color = '#666';
 
+        this._setupKeyboardCapture();
         this.pollVdiStatus(labId);
+    }
+
+    _setupKeyboardCapture() {
+        const frame     = document.getElementById('vdiFrame');
+        const workspace = document.getElementById('vdiWorkspace');
+        if (!frame || !workspace) return;
+
+        // ── Tear down any previous listeners ────────────────────────────────
+        if (this._wsMdownHandler) {
+            workspace.removeEventListener('mousedown',  this._wsMdownHandler,  true);
+            workspace.removeEventListener('touchstart', this._wsMdownHandler,  true);
+        }
+        if (this._docKeyHandler) {
+            document.removeEventListener('keydown', this._docKeyHandler, true);
+        }
+
+        // ── Mousedown inside workspace → focus iframe ────────────────────────
+        // Using capture phase so we get it before anything else sees it.
+        this._wsMdownHandler = (e) => {
+            if (e.target.closest('.vdi-toolbar')) return; // don't hijack toolbar buttons
+            frame.focus();
+        };
+        workspace.addEventListener('mousedown',  this._wsMdownHandler, true);
+        workspace.addEventListener('touchstart', this._wsMdownHandler, { capture: true, passive: true });
+
+        // ── If a keydown reaches the PARENT document while workspace is open,
+        //    the iframe lost focus — push it back immediately.
+        //    This handles clicks outside the iframe (e.g. on the toolbar) that
+        //    steal focus back to the parent page.
+        this._docKeyHandler = () => {
+            if (document.body.classList.contains('workspace-mode') &&
+                document.activeElement !== frame) {
+                frame.focus();
+            }
+        };
+        document.addEventListener('keydown', this._docKeyHandler, true);
+
+        // ── Re-focus on each mouse-enter (handles alt-tab / OS-level focus loss)
+        frame.onmouseenter = () => frame.focus();
     }
 
     async pollVdiStatus(labId) {
@@ -365,16 +411,65 @@ class VMLabClient {
                 document.getElementById('vdiLoaderText').style.display = 'none';
                 const frame = document.getElementById('vdiFrame');
                 frame.style.display = 'block';
-                // Construct Guacamole Client URL format: /guacamole/#/client/[base64(id\0c\0postgresql)]
-                const guacIdString = `${response.guacamole_connection_id}\0c\0postgresql`;
-                const b64Id = btoa(guacIdString);
 
-                let sessionUrl = `http://localhost:8080/guacamole/#/client/${b64Id}`;
-                if (response.auth_token) {
-                    sessionUrl += `?token=${response.auth_token}`;
+                const guacId = response.guacamole_connection_id;
+
+                if (guacId) {
+                    // Guacamole client URL format:
+                    // base64( connectionId + NUL + "c" + NUL + "postgresql" )
+                    // IMPORTANT: ?token= must come BEFORE the # — it is a real query param
+                    // that Guacamole's Angular app reads via $location.search() on startup.
+                    // Putting it after # makes it invisible to the Angular router.
+                    const guacIdString = `${guacId}\0c\0postgresql`;
+                    const b64Id = btoa(guacIdString);
+
+                    let sessionUrl;
+                    if (response.auth_token) {
+                        sessionUrl = `http://localhost:8080/guacamole/?token=${response.auth_token}#/client/${b64Id}`;
+                    } else {
+                        // No auto-token — load Guacamole home (user logs in with guacadmin / guacadmin)
+                        sessionUrl = `http://localhost:8080/guacamole/`;
+                    }
+                    frame.src = sessionUrl;
+
+                    // Guacamole is a SPA that authenticates then re-renders.
+                    // Focus needs to be injected at multiple points during that init.
+                    // Without this, keyboard events stay trapped in the parent page.
+                    [100, 500, 1200, 2500].forEach(ms =>
+                        setTimeout(() => {
+                            if (this.activeWorkspaceLab === labId) frame.focus();
+                        }, ms)
+                    );
+
+                    // Show the keyboard-activation hint for 4 s
+                    const hint = document.getElementById('vdiKeyHint');
+                    if (hint) {
+                        hint.style.display = 'block';
+                        // Re-trigger animation cleanly
+                        hint.style.animation = 'none';
+                        void hint.offsetHeight;
+                        hint.style.animation = 'fadeHint 4s ease-out forwards';
+                        setTimeout(() => { hint.style.display = 'none'; }, 4200);
+                    }
+                } else {
+                    // Lab is READY but Guacamole connection was not registered (Guacamole may be offline)
+                    frame.style.display = 'none';
+                    const loader = document.getElementById('vdiLoaderText');
+                    loader.style.display = 'block';
+                    loader.innerHTML = `
+                        <i class="fas fa-exclamation-triangle" style="font-size:2rem;color:var(--accent-secondary);margin-bottom:10px;"></i>
+                        <div style="color:var(--accent-secondary)">INSTANCE READY — NO BROWSER SESSION</div>
+                        <div style="font-size:0.8rem;color:#888;margin-top:8px;">Guacamole is offline. Connect directly:</div>
+                        <div style="font-size:0.85rem;color:var(--text-primary);margin-top:6px;font-family:var(--font-mono);">
+                            IP: <span style="color:var(--accent-primary)">${response.instance_id || 'See AWS Console'}</span>
+                        </div>
+                        <div style="margin-top:12px;">
+                            <a href="http://localhost:8080/guacamole/" target="_blank" class="soc-btn" style="font-size:0.75rem;padding:8px 14px;">
+                                <i class="fas fa-external-link-alt"></i> Open Guacamole
+                            </a>
+                        </div>
+                    `;
                 }
-
-                frame.src = sessionUrl;
             } else if (response.status === 'ERROR') {
                 document.getElementById('vdiSubLoader').innerText = 'FATAL ERROR: AWS Orchestrator failed.';
                 document.getElementById('vdiSubLoader').style.color = 'var(--accent-critical)';
@@ -390,8 +485,24 @@ class VMLabClient {
     closeWorkspace() {
         document.body.classList.remove('workspace-mode');
         this.activeWorkspaceLab = null;
+
+        // Remove keyboard capture handlers
+        const workspace = document.getElementById('vdiWorkspace');
+        if (workspace && this._wsMdownHandler) {
+            workspace.removeEventListener('mousedown',  this._wsMdownHandler, true);
+            workspace.removeEventListener('touchstart', this._wsMdownHandler, true);
+            this._wsMdownHandler = null;
+        }
+        if (this._docKeyHandler) {
+            document.removeEventListener('keydown', this._docKeyHandler, true);
+            this._docKeyHandler = null;
+        }
+
         const frame = document.getElementById('vdiFrame');
-        if (frame) frame.src = '';
+        if (frame) {
+            frame.onmouseenter = null;
+            frame.src = '';
+        }
     }
 
     toggleFullscreen() {

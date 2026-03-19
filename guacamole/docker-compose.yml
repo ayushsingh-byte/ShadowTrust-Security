@@ -1,11 +1,21 @@
-version: '3'
 services:
+
   guacd:
     image: guacamole/guacd:latest
+    container_name: guacd
     restart: always
+    networks:
+      - guacnet
+    healthcheck:
+      test: ["CMD-SHELL", "nc -z localhost 4822 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
 
   guacamole_db:
     image: postgres:15
+    container_name: guacamole_db
     restart: always
     environment:
       POSTGRES_USER: guacamole_user
@@ -13,20 +23,43 @@ services:
       POSTGRES_DB: guacamole
     volumes:
       - ./init/initdb.sql:/docker-entrypoint-initdb.d/initdb.sql:ro
+      - guac_pgdata:/var/lib/postgresql/data
     ports:
-      - "5432:5432"
+      - "5432:5432"   # Exposed so the FastAPI backend can write connection records
+    networks:
+      - guacnet
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U guacamole_user -d guacamole"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
 
   guacamole:
     image: guacamole/guacamole:latest
+    container_name: guacamole
     restart: always
-    ports:
-      - "8080:8080"
+    depends_on:
+      guacd:
+        condition: service_healthy
+      guacamole_db:
+        condition: service_healthy
     environment:
       GUACD_HOSTNAME: guacd
+      GUACD_PORT: 4822
       POSTGRESQL_HOSTNAME: guacamole_db
+      POSTGRESQL_PORT: 5432
       POSTGRESQL_DATABASE: guacamole
       POSTGRESQL_USER: guacamole_user
       POSTGRESQL_PASSWORD: guacamole_password
-    depends_on:
-      - guacd
-      - guacamole_db
+    ports:
+      - "8080:8080"
+    networks:
+      - guacnet
+
+networks:
+  guacnet:
+    driver: bridge
+
+volumes:
+  guac_pgdata:
