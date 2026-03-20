@@ -1,188 +1,244 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-    <meta http-equiv="Pragma" content="no-cache">
-    <meta http-equiv="Expires" content="0">
-    <title>ShadowTrust</title>
-
-    <!-- Google Font -->
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
-    <!-- AOS CSS for Animations -->
+    <title>Shadow Trust — AI-Powered SOC & Threat Intelligence Platform</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700;800&display=swap" rel="stylesheet">
     <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
-
-    <link rel="stylesheet" href="css/landing/landingpage.css">
+    <link rel="stylesheet" href="css/landing/landingpage.css?v=3">
 </head>
-
 <body>
 
-    <div class="container">
+<div class="container">
 
-        <!-- NAVBAR -->
-        <nav>
-            <div class="logo">Shadow<span>Trust</span></div>
-            <ul>
-                <li><a href="index.html">Home</a></li>
-                <li><a href="features.html">Features</a></li>
-                <li><a href="architecture.html">Architecture</a></li>
-                <li><a href="docs.html">Docs</a></li>
-                <li><a href="status.html">Status</a></li>
-                <li><a href="usecases.html">Use Cases</a></li>
-            </ul>
-            <a href="login.html" class="btn">Sign In</a>
-        </nav>
+    <!-- NAVBAR -->
+    <nav>
+        <div class="logo">Shadow Trust</div>
+        <ul>
+            <li><a href="index.html" class="active-link">Home</a></li>
+            <li><a href="features.html">Features</a></li>
+            <li><a href="architecture.html">Architecture</a></li>
+            <li><a href="docs.html">Docs</a></li>
+            <li><a href="status.html">Status</a></li>
+            <li><a href="usecases.html">Use Cases</a></li>
+        </ul>
+        <a href="login.html" class="btn">Sign In</a>
+    </nav>
 
-        <!-- HERO -->
-        <section class="hero" style="min-height: calc(100vh - 80px); display: flex; align-items: center;"
-            data-aos="fade-up">
-            <div class="hero-text">
-                <h1>Shadow Trust <span>Cyber Range Orchestration</span></h1>
-                <p>Shadow Trust is a modular backend platform for orchestrating honeypot VMs, collecting attack
-                    telemetry, automating malware analysis, and visualizing threat intelligence. Designed for research,
-                    analysis, and scalable security operations.</p>
-                <div class="hero-buttons">
-                    <a href="login.html" class="btn"
-                        style="background: transparent; border: 2px solid #00c6ff; color: #00c6ff;">Explore Platform</a>
-                    <a href="login.html" class="btn">Backend Engine</a>
-                </div>
+    <!-- HERO -->
+    <section class="hero" data-aos="fade-up">
+        <div class="hero-text">
+            <div class="hero-badge">
+                <span class="dot"></span>
+                AI-Powered Security Operations Center
             </div>
-            <img src="./hero_image.png" alt="Cybersecurity Features Image"
-                style="border-radius: 15px; box-shadow: 0 0 20px rgba(0, 198, 255, 0.3);">
-        </section>
-
-        <!-- CORE CAPABILITIES -->
-        <section class="section" data-aos="fade-up">
-            <h2>Core <span>Backend Capabilities</span></h2>
-            <div class="features">
-                <div class="card" data-aos="zoom-in" data-aos-delay="100">
-                    <h3>Orchestration Dashboard</h3>
-                    <p>Central command center for launching analysis VMs, tracking honeypot activity, and visualizing
-                        attack sessions. Powered by Supabase for real-time updates.</p>
-                </div>
-                <div class="card" data-aos="zoom-in" data-aos-delay="200">
-                    <h3>Live Honeypot VMs</h3>
-                    <p>Ephemeral AWS EC2 instances deployed from Golden AMIs, exposed to the internet for threat
-                        collection. All activity is monitored and logged by telemetry agents.</p>
-                </div>
-                <div class="card" data-aos="zoom-in" data-aos-delay="300">
-                    <h3>Malware Collection Pipeline</h3>
-                    <p>Automated detection and collection of uploaded files, instant transfer to secure S3 storage, hash
-                        computation, and metadata association with attacker sessions.</p>
-                </div>
-                <div class="card" data-aos="zoom-in" data-aos-delay="400">
-                    <h3>Analysis Sandbox VMs</h3>
-                    <p>On-demand analysis environments (Windows, Kali, MobSF, IDA) for static, dynamic, and binary
-                        analysis. VMs are launched, registered, and terminated automatically.</p>
-                </div>
+            <h1>Deceive. Capture.<br><span>Analyze. Respond.</span></h1>
+            <p>Shadow Trust is a full-stack threat intelligence platform that orchestrates honeypot networks, captures attack telemetry in real-time, runs AI-driven classification, and delivers a 30+ page SOC dashboard — all in one Docker command.</p>
+            <div class="hero-buttons">
+                <a href="login.html" class="btn btn-primary">Launch Platform</a>
+                <a href="features.html" class="btn btn-outline">Explore Features</a>
             </div>
-        </section>
+        </div>
+        <div class="hero-img-wrap" data-aos="fade-left" data-aos-delay="200">
+            <img src="./hero_image.png" alt="Shadow Trust Platform Dashboard">
+        </div>
+    </section>
 
-        <!-- ARCHITECTURE -->
-        <section class="section why" data-aos="fade-right">
-            <div>
-                <h2>Backend <span>Architecture</span></h2>
-                <p style="margin:20px 0;color:#cfcfcf;">
-                    Shadow Trust backend leverages AWS EC2 and VPC for secure VM orchestration, Supabase for real-time
-                    data streaming, and SQLite for high-frequency event ingestion. All VMs are ephemeral, launched from
-                    Golden AMIs, and managed via async FastAPI endpoints. No public management ports are exposed; access
-                    is via AWS SSM browser sessions.
-                </p>
-                <a href="architecture.html" class="btn">Read Architecture Docs</a>
+</div>
+
+<!-- STATS BAR -->
+<div class="container" data-aos="fade-up" data-aos-delay="100">
+    <div class="stats-bar">
+        <div class="stat-item">
+            <span class="stat-num">30+</span>
+            <span class="stat-label">Dashboard Pages</span>
+        </div>
+        <div class="stat-item">
+            <span class="stat-num">19</span>
+            <span class="stat-label">API Modules</span>
+        </div>
+        <div class="stat-item">
+            <span class="stat-num">6</span>
+            <span class="stat-label">RBAC Roles</span>
+        </div>
+        <div class="stat-item">
+            <span class="stat-num">4</span>
+            <span class="stat-label">Malware Pipeline Stages</span>
+        </div>
+        <div class="stat-item">
+            <span class="stat-num">3</span>
+            <span class="stat-label">Honeypot Protocols</span>
+        </div>
+        <div class="stat-item">
+            <span class="stat-num">5</span>
+            <span class="stat-label">Docker Services</span>
+        </div>
+    </div>
+</div>
+
+<div class="container">
+
+    <!-- CORE CAPABILITIES -->
+    <section class="section" data-aos="fade-up">
+        <span class="section-label">Core Platform</span>
+        <h2>Built for <span>Real Operations</span></h2>
+        <p class="section-sub">Every component is purpose-built for threat detection, not just monitoring. From honeypot deception to cloud VM orchestration — Shadow Trust handles the full kill chain.</p>
+        <div class="features">
+            <div class="card" data-aos="zoom-in" data-aos-delay="100">
+                <span class="card-icon">🗺️</span>
+                <h3>Global Threat Map</h3>
+                <p>Real-time interactive world map showing live attack origins, GeoIP-enriched threat levels, and attacker session overlays across your honeypot network.</p>
             </div>
-            <img src="https://images.unsplash.com/photo-1550751827-4bd374c3f58b?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"
-                alt="Cloud Architecture Icon">
-        </section>
-
-        <!-- NEW SEGMENT 1: TELEMETRY -->
-        <section class="feature-segment reverse" data-aos="fade-left">
-            <div class="feature-info">
-                <h2>Real-Time <span>Telemetry & Monitoring</span></h2>
-                <p>
-                    When an attacker interacts with our honeypot VMs, lightweight agents capture host logs, network
-                    activity, and shell commands in near real-time.
-                    This structured telemetry is securely forwarded, indexed, and streamed back to the dashboard.
-                    Observe every keystroke, exploited service, and persistence attempt instantly.
-                </p>
-                <a href="login.html" class="btn" style="background: transparent; border: 2px solid #00c6ff; color: #00c6ff;">View
-                    Logs Demo</a>
+            <div class="card" data-aos="zoom-in" data-aos-delay="200">
+                <span class="card-icon">🍯</span>
+                <h3>Multi-Protocol Honeypots</h3>
+                <p>Deploy Cowrie (SSH/Telnet), Dionaea (malware capture), and Honeytrap (multi-port) nodes. Logs flow to edge SQLite for full offline resilience.</p>
             </div>
-            <img src="https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"
-                alt="Telemetry Data Stream">
-        </section>
-
-        <!-- NEW SEGMENT 2: PIPELINE -->
-        <section class="feature-segment" data-aos="fade-right">
-            <div class="feature-info">
-                <h2>Automated <span>Malware Collection</span></h2>
-                <p>
-                    If an attacker uploads any script, binary, or APK, automated collectors detect file creation events.
-                    The samples are instantly transferred into an isolated secure storage pipeline (S3).
-                    Metadata including file hashes, attacker IP associations, and behavioral context is preserved for
-                    deep analysis, while the compromised VM is safely terminated.
-                </p>
+            <div class="card" data-aos="zoom-in" data-aos-delay="300">
+                <span class="card-icon">🔬</span>
+                <h3>4-Stage Malware Pipeline</h3>
+                <p>Static analysis → sandbox detonation → APK scanning via MobSF → secret extraction. Full automated pipeline from capture to intelligence.</p>
             </div>
-            <img src="https://images.unsplash.com/photo-1563986768494-4dee2763ff3f?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"
-                alt="Secure Malware Storage">
-        </section>
-
-        <!-- NEW SEGMENT 3: ANALYSIS -->
-        <section class="feature-segment reverse" data-aos="fade-left">
-            <div class="feature-info">
-                <h2>Phishing & <span>Sandbox Analysis</span></h2>
-                <p>
-                    Our integrated analysis capabilities support on-demand reverse engineering VMs loaded with IDA and
-                    MobSF.
-                    Additionally, the phishing intelligence module evaluates suspicious links using threat intel APIs
-                    and machine learning, generating safe previews of URLs inside an isolated rendering environment.
-                </p>
+            <div class="card" data-aos="zoom-in" data-aos-delay="400">
+                <span class="card-icon">🖥️</span>
+                <h3>AWS VM Orchestration</h3>
+                <p>Launch isolated EC2 analysis VMs on demand. JIT credential injection via SSM. Guacamole remote desktop access. Auto-terminate after session.</p>
             </div>
-            <img src="https://images.unsplash.com/photo-1558494949-ef010cbdcc31?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"
-                alt="Sandbox Virtual Machine">
-        </section>
-
-        <!-- DEPLOYMENT MODELS -->
-        <section class="section" data-aos="fade-up">
-            <h2>Deployment <span>Use Cases</span></h2>
-            <div class="pricing">
-                <div class="price-card">
-                    <h3>Research Analysis</h3>
-                    <div class="price">Automated</div>
-                    <p>On-demand reverse engineering VMs and MobSF container isolation for malware research.</p>
-                </div>
-                <div class="price-card">
-                    <h3>Academic Demo</h3>
-                    <div class="price">Interactive</div>
-                    <p>Live visualization of attacker activity for educational and demonstration purposes.</p>
-                </div>
-                <div class="price-card">
-                    <h3>Enterprise Threat Intel</h3>
-                    <div class="price">Scalable</div>
-                    <p>Phishing detection and scalable threat intelligence gathering across multiple public IPs.</p>
-                </div>
+            <div class="card" data-aos="zoom-in" data-aos-delay="500">
+                <span class="card-icon">🎯</span>
+                <h3>MITRE ATT&CK Mapping</h3>
+                <p>Every captured attack is automatically mapped to MITRE ATT&CK techniques and tactics — giving your analysts structured, actionable context.</p>
             </div>
-        </section>
+            <div class="card" data-aos="zoom-in" data-aos-delay="600">
+                <span class="card-icon">🔐</span>
+                <h3>6-Tier RBAC System</h3>
+                <p>Super Admin, Overseer, Analyst, Specialist, Operative, and Auditor roles with clearance levels 1–3. JWT-authenticated with full audit logging.</p>
+            </div>
+        </div>
+    </section>
 
+    <!-- ARCHITECTURE SPLIT -->
+    <section class="why" data-aos="fade-right">
+        <div>
+            <span class="section-label">Architecture</span>
+            <h2>Hybrid <span>Edge-to-Cloud</span> Design</h2>
+            <p>Honeypot nodes write telemetry locally to SQLite — zero dependency on connectivity. When online, the backend syncs enriched analytics to Supabase PostgreSQL. AWS EC2 powers on-demand analysis sandboxes via async FastAPI endpoints. No public management ports. All admin access via AWS SSM.</p>
+            <a href="architecture.html" class="btn btn-outline">View Architecture →</a>
+        </div>
+        <img src="./architecture_hero.png" alt="Shadow Trust Architecture">
+    </section>
+
+    <!-- FEATURE SEGMENT: TELEMETRY -->
+    <section class="feature-segment reverse" data-aos="fade-left">
+        <div class="feature-info">
+            <span class="section-label">Telemetry</span>
+            <h2>Real-Time <span>Attack Monitoring</span></h2>
+            <p>When an attacker touches a honeypot, lightweight agents capture every keystroke, command, file upload, and network probe in near real-time. Structured telemetry is enriched with GeoIP, risk scoring, and AI classification — then streamed directly to your dashboard.</p>
+            <a href="login.html" class="btn btn-outline">View Live Dashboard →</a>
+        </div>
+        <img src="https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" alt="Real-Time Telemetry Stream">
+    </section>
+
+    <!-- FEATURE SEGMENT: MALWARE -->
+    <section class="feature-segment" data-aos="fade-right">
+        <div class="feature-info">
+            <span class="section-label">Malware Analysis</span>
+            <h2>Automated <span>Sample Collection</span></h2>
+            <p>The moment an attacker uploads a binary, script, or APK — automated collectors detect the file event, hash the sample, push it to secure S3 storage, and link it to the attacker session. The full 4-stage pipeline (static → sandbox → APK → secrets) runs without analyst intervention.</p>
+            <a href="login.html" class="btn btn-outline">Explore Malware Lab →</a>
+        </div>
+        <img src="https://images.unsplash.com/photo-1563986768494-4dee2763ff3f?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" alt="Malware Collection Pipeline">
+    </section>
+
+    <!-- FEATURE SEGMENT: ANALYSIS -->
+    <section class="feature-segment reverse" data-aos="fade-left">
+        <div class="feature-info">
+            <span class="section-label">Sandbox & APK</span>
+            <h2>Deep <span>Behavioral Analysis</span></h2>
+            <p>Spin up isolated analysis VMs with tools pre-loaded. MobSF integration delivers full Android APK security reports — permissions, network calls, hardcoded secrets — in minutes. URL scanner runs multi-engine reputation analysis with safe isolated rendering. All from the browser.</p>
+            <a href="login.html" class="btn btn-outline">Open VM Lab →</a>
+        </div>
+        <img src="https://images.unsplash.com/photo-1558494949-ef010cbdcc31?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" alt="Sandbox Analysis Environment">
+    </section>
+
+    <!-- DEPLOYMENT USE CASES -->
+    <section class="section" data-aos="fade-up">
+        <span class="section-label">Deployment</span>
+        <h2>Built for <span>Every Mission</span></h2>
+        <p class="section-sub">One platform — multiple deployment models. From a solo researcher to an enterprise SOC, Shadow Trust scales to your operation.</p>
+        <div class="pricing">
+            <div class="price-card" data-aos="zoom-in" data-aos-delay="100">
+                <div style="font-size:36px;margin-bottom:12px;">🔬</div>
+                <h3>Research & Analysis</h3>
+                <div class="price">Automated</div>
+                <p>On-demand reverse-engineering VMs, MobSF APK scanning, and full malware pipeline automation for security research teams.</p>
+            </div>
+            <div class="price-card" data-aos="zoom-in" data-aos-delay="200">
+                <div style="font-size:36px;margin-bottom:12px;">🛡️</div>
+                <h3>Enterprise SOC</h3>
+                <div class="price">Scalable</div>
+                <p>Deploy honeypot networks, monitor threats in real-time, correlate attacker sessions, and send alerts via email and WhatsApp.</p>
+            </div>
+            <div class="price-card" data-aos="zoom-in" data-aos-delay="300">
+                <div style="font-size:36px;margin-bottom:12px;">🎓</div>
+                <h3>Academic & Training</h3>
+                <div class="price">Interactive</div>
+                <p>Live attack visualization, MITRE ATT&CK mapping demos, and interactive threat intelligence dashboards for cybersecurity education.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA BANNER -->
+    <div class="cta-banner" data-aos="zoom-in">
+        <h2>Ready to Deploy Shadow Trust?</h2>
+        <p>One command. Five services. Full SOC capability. Clone the repo, run the setup wizard, and you're live in minutes.</p>
+        <div class="cta-btns">
+            <a href="login.html" class="btn btn-primary">Launch Platform</a>
+            <a href="docs.html" class="btn btn-outline">Read the Docs</a>
+        </div>
     </div>
 
-    <footer>
-        © 2026 Shadow Trust Project. All Rights Reserved.
-    </footer>
+</div>
 
-    <script></script>
+<!-- FOOTER -->
+<footer>
+    <div class="footer-grid">
+        <div class="footer-brand">
+            <span class="logo">Shadow Trust</span>
+            <p>AI-powered Security Operations Center with honeypot deception, malware analysis, and real-time threat intelligence. Built for the next generation of cyber operations.</p>
+        </div>
+        <div class="footer-col">
+            <h4>Platform</h4>
+            <ul>
+                <li><a href="features.html">Features</a></li>
+                <li><a href="architecture.html">Architecture</a></li>
+                <li><a href="usecases.html">Use Cases</a></li>
+                <li><a href="docs.html">Documentation</a></li>
+                <li><a href="status.html">System Status</a></li>
+            </ul>
+        </div>
+        <div class="footer-col">
+            <h4>Access</h4>
+            <ul>
+                <li><a href="login.html">Sign In</a></li>
+                <li><a href="register.html">Register</a></li>
+                <li><a href="dashboard.html">Dashboard</a></li>
+                <li><a href="http://localhost:8000/docs" target="_blank">API Docs</a></li>
+                <li><a href="admin_login.html">Admin Panel</a></li>
+            </ul>
+        </div>
+    </div>
+    <div class="footer-bottom">
+        <p>© 2026 Shadow Trust. All Rights Reserved. Private Repository.</p>
+        <div class="footer-status">
+            <span class="dot"></span>
+            All Systems Operational
+        </div>
+    </div>
+</footer>
 
-    <!-- AOS Animation Script Iteration -->
-    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
-    <script>
-        AOS.init({
-            duration: 800,
-            once: true,
-            offset: 100
-        });
-    </script>
-
+<script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+<script>AOS.init({ duration: 750, once: true, offset: 80 });</script>
 </body>
-
 </html>

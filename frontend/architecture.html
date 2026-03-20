@@ -1,146 +1,264 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ShadowTrust - Architecture</title>
-
-    <!-- Google Font -->
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
-    <!-- AOS CSS for Animations -->
+    <title>Shadow Trust — Architecture</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700;800&display=swap" rel="stylesheet">
     <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
-
-    <!-- Global Styles (from landing page) -->
-    <link rel="stylesheet" href="css/landing/landingpage.css">
-    <!-- Specific Architecture Styles -->
-    <link rel="stylesheet" href="css/landing/architecture.css">
+    <link rel="stylesheet" href="css/landing/landingpage.css?v=3">
+    <link rel="stylesheet" href="css/landing/architecture.css?v=3">
 </head>
-
 <body>
 
-    <div class="container">
+<div class="container">
 
-        <!-- NAVBAR -->
-        <nav>
-            <div class="logo">Shadow<span>Trust</span></div>
-            <ul>
-                <li><a href="index.html">Home</a></li>
-                <li><a href="features.html">Features</a></li>
-                <li><a href="architecture.html" class="active-link">Architecture</a></li>
-                <li><a href="docs.html">Docs</a></li>
-                <li><a href="status.html">Status</a></li>
-                <li><a href="usecases.html">Use Cases</a></li>
-            </ul>
-            <a href="contact.html" class="btn">Contact Us</a>
-        </nav>
+    <!-- NAVBAR -->
+    <nav>
+        <div class="logo">Shadow Trust</div>
+        <ul>
+            <li><a href="index.html">Home</a></li>
+            <li><a href="features.html">Features</a></li>
+            <li><a href="architecture.html" class="active-link">Architecture</a></li>
+            <li><a href="docs.html">Docs</a></li>
+            <li><a href="status.html">Status</a></li>
+            <li><a href="usecases.html">Use Cases</a></li>
+        </ul>
+        <a href="login.html" class="btn">Sign In</a>
+    </nav>
 
-        <!-- ARCHITECTURE HERO -->
-        <section class="arch-hero" data-aos="fade-up">
-            <div class="arch-hero-text">
-                <h1>Shadow Trust <span>Backend Architecture</span></h1>
-                <p>Shadow Trust is a cloud-orchestrated cyber range and honeypot platform for cybersecurity research,
-                    malware analysis, and threat intelligence. The backend is designed for modular orchestration, secure
-                    VM lifecycle management, and real-time telemetry ingestion, enabling scalable and ephemeral analysis
-                    environments.</p>
+    <!-- HERO -->
+    <section class="arch-hero" data-aos="fade-up">
+        <div class="arch-hero-text">
+            <span class="section-label">System Design</span>
+            <h1>Shadow Trust <span>Architecture</span></h1>
+            <p>A hybrid edge-to-cloud platform — honeypots ingest locally to SQLite for zero-dependency offline resilience, while enriched intelligence syncs to Supabase PostgreSQL in the cloud. AWS EC2 powers isolated analysis sandboxes. Five Docker services. One command to deploy.</p>
+        </div>
+        <div class="arch-hero-widget">
+            <div class="awg-header">
+                <span class="awg-live-dot"></span>
+                Live Data Pipeline
+                <span class="awg-live-badge">ACTIVE</span>
             </div>
-            <img src="./architecture_hero.png" alt="Cloud Cybersecurity Architecture Diagram">
-        </section>
-
-        <!-- ARCHITECTURE DETAILS -->
-        <section class="section" data-aos="fade-up">
-            <h2>Core <span>Platform Components</span></h2>
-
-            <div class="arch-timeline">
-
-                <!-- Step 1 -->
-                <div class="timeline-step" data-aos="fade-right">
-                    <div class="step-icon">1</div>
-                    <div class="step-content">
-                        <h3>Event Ingestion Layer</h3>
-                        <p>Honeypot VMs and telemetry agents send structured attack events to the backend. Events are
-                            normalized, written to a local SQLite store, and streamed to Supabase for dashboard
-                            visualization. High-frequency logging is supported for noisy environments.</p>
+            <div class="awg-flow">
+                <div class="awg-node">
+                    <span class="awg-icon">🍯</span>
+                    <div class="awg-info">
+                        <b>Honeypot Layer</b>
+                        <span>Cowrie · Dionaea · Honeytrap</span>
                     </div>
+                    <span class="awg-badge green">LIVE</span>
                 </div>
-
-                <!-- Step 2 -->
-                <div class="timeline-step" data-aos="fade-left">
-                    <div class="step-icon">2</div>
-                    <div class="step-content">
-                        <h3>VM Orchestration Service</h3>
-                        <p>Analysis and honeypot VMs are launched from Golden AMIs using AWS EC2 APIs. The backend
-                            manages VM lifecycle, tags instances with session IDs, and ensures cost-safe ephemeral
-                            compute. No state is stored inside VMs; all persistent data is externalized.</p>
+                <div class="awg-connector"><span>↓ events ingested</span></div>
+                <div class="awg-node">
+                    <span class="awg-icon">⚡</span>
+                    <div class="awg-info">
+                        <b>FastAPI Backend</b>
+                        <span>Python 3.11 · Port 8000</span>
                     </div>
+                    <span class="awg-badge green">OK</span>
                 </div>
-
-                <!-- Step 3 -->
-                <div class="timeline-step" data-aos="fade-right">
-                    <div class="step-icon">3</div>
-                    <div class="step-content">
-                        <h3>Session Engine</h3>
-                        <p>Links multiple attack events into sessions, reconstructs timelines, and manages session
-                            lifecycle. Enables analysts to trace attacker behavior across VM instances and honeypot
-                            logs.</p>
+                <div class="awg-connector"><span>↓ AI classified</span></div>
+                <div class="awg-node">
+                    <span class="awg-icon">🧠</span>
+                    <div class="awg-info">
+                        <b>AI Classification</b>
+                        <span>SQLi · XSS · RCE · BruteForce</span>
                     </div>
+                    <span class="awg-badge cyan">ACTIVE</span>
                 </div>
-
-                <!-- Step 4 -->
-                <div class="timeline-step" data-aos="fade-left">
-                    <div class="step-icon">4</div>
-                    <div class="step-content">
-                        <h3>Malware Collection Pipeline</h3>
-                        <p>When file events are detected, samples are uploaded to S3, hashes are computed, and metadata
-                            is stored in Supabase. Samples are linked to attacker sessions for further analysis.</p>
+                <div class="awg-connector"><span>↓ synced to cloud</span></div>
+                <div class="awg-node">
+                    <span class="awg-icon">📊</span>
+                    <div class="awg-info">
+                        <b>Dashboard &amp; Cloud</b>
+                        <span>Supabase · Nginx · AWS EC2</span>
                     </div>
+                    <span class="awg-badge green">LIVE</span>
                 </div>
-
-                <!-- Step 5 -->
-                <div class="timeline-step" data-aos="fade-right">
-                    <div class="step-icon">5</div>
-                    <div class="step-content">
-                        <h3>Analysis Orchestrator & API Layer</h3>
-                        <p>Supports launching analysis VMs, registering jobs, tracking job lifecycle, and
-                            auto-terminating instances. Exposes async FastAPI endpoints for VM orchestration, session
-                            management, event ingestion, and analysis workflows. Real-time updates are streamed to the
-                            dashboard via Supabase or Redis pub/sub.</p>
-                    </div>
-                </div>
-
             </div>
-        </section>
+        </div>
+    </section>
 
-        <!-- TECH STACK -->
-        <section class="tech-stack-section" data-aos="fade-up">
-            <h2>Backend <span>Tech Stack</span></h2>
-            <div class="stack-grid">
-                <div class="stack-item"><span>AWS EC2 & VPC</span></div>
-                <div class="stack-item"><span>FastAPI (Python)</span></div>
-                <div class="stack-item"><span>Boto3</span></div>
-                <div class="stack-item"><span>Supabase (Postgres)</span></div>
-                <div class="stack-item"><span>SQLite</span></div>
-                <div class="stack-item"><span>MobSF</span></div>
-                <div class="stack-item"><span>Redis Pub/Sub</span></div>
-                <div class="stack-item"><span>HTML/CSS/JS Dashboard</span></div>
+    <!-- DATA FLOW TIMELINE -->
+    <section class="section" data-aos="fade-up">
+        <span class="section-label">Data Flow</span>
+        <h2>How an Attack <span>Flows Through the Platform</span></h2>
+        <p class="section-sub">From first contact with a honeypot to a full threat intelligence report — every step is automated.</p>
+
+        <div class="arch-timeline">
+
+            <div class="timeline-step" data-aos="fade-right">
+                <div class="step-icon">1</div>
+                <div class="step-content">
+                    <h3>🍯 Honeypot Capture</h3>
+                    <p>Attackers interact with Cowrie (SSH/Telnet brute force + shell), Dionaea (malware upload), or Honeytrap (multi-port probing). Every keystroke, credential attempt, and uploaded file is recorded. Data is written immediately to the local edge SQLite database — works completely offline.</p>
+                </div>
             </div>
-        </section>
 
+            <div class="timeline-step" data-aos="fade-left">
+                <div class="step-icon">2</div>
+                <div class="step-content">
+                    <h3>📡 Telemetry Ingestion</h3>
+                    <p>The FastAPI backend (Python 3.11, Uvicorn async) receives structured telemetry via <code>/api/v1/events</code>. Events are normalized, stored in SQLite for high-frequency edge logging, and queued for cloud sync. The background sync loop runs every 10 seconds — pushing derived analytics to Supabase PostgreSQL.</p>
+                </div>
+            </div>
+
+            <div class="timeline-step" data-aos="fade-right">
+                <div class="step-icon">3</div>
+                <div class="step-content">
+                    <h3>🧠 AI Classification & Enrichment</h3>
+                    <p>Each event passes through the AI classification engine — detecting SQLi, XSS, brute force, RCE, path traversal, and anomalous payloads. GeoIP enrichment adds country, ASN, and city data. Risk scoring (0–10) is computed. Events are tagged with MITRE ATT&CK techniques automatically.</p>
+                </div>
+            </div>
+
+            <div class="timeline-step" data-aos="fade-left">
+                <div class="step-icon">4</div>
+                <div class="step-content">
+                    <h3>🔗 Session Correlation</h3>
+                    <p>The background Session Engine (runs every 60s) groups raw events by attacker IP, timing, and protocol into full attacker sessions. It reconstructs timelines, tracks persistence attempts, and builds behavioral profiles. Sessions power the Behavior and Geo dashboard pages.</p>
+                </div>
+            </div>
+
+            <div class="timeline-step" data-aos="fade-right">
+                <div class="step-icon">5</div>
+                <div class="step-content">
+                    <h3>☣️ Malware Pipeline (4-Stage)</h3>
+                    <p>Uploaded files trigger the pipeline automatically: <strong>Stage 1</strong> — static analysis (hashes, strings, metadata). <strong>Stage 2</strong> — sandbox behavioral detonation. <strong>Stage 3</strong> — APK security scan via MobSF Flask proxy (Docker socket). <strong>Stage 4</strong> — credential and API key extraction from payloads. Results stored and linked to attacker session.</p>
+                </div>
+            </div>
+
+            <div class="timeline-step" data-aos="fade-left">
+                <div class="step-icon">6</div>
+                <div class="step-content">
+                    <h3>🖥️ VM Orchestration (AWS)</h3>
+                    <p>Analysts can launch isolated EC2 analysis environments on demand via <code>/api/v1/vm/launch</code>. Boto3 provisions the instance from a pre-configured AMI. AWS Systems Manager injects credentials JIT — no SSH keys. Apache Guacamole provides browser-based remote desktop. Instances auto-terminate on session end.</p>
+                </div>
+            </div>
+
+            <div class="timeline-step" data-aos="fade-right">
+                <div class="step-icon">7</div>
+                <div class="step-content">
+                    <h3>📊 Dashboard & Alerts</h3>
+                    <p>Nginx serves the 30+ page Vanilla JS dashboard on port 5500. The frontend calls the FastAPI backend directly on port 8000. Supabase Realtime pushes live updates to the threat map. Critical events trigger Gmail SMTP email alerts and WhatsApp messages via Twilio — before the analyst has even opened the dashboard.</p>
+                </div>
+            </div>
+
+        </div>
+    </section>
+
+    <!-- TECH STACK -->
+    <section class="tech-stack-section" data-aos="fade-up">
+        <span class="section-label">Technology</span>
+        <h2>Full <span>Tech Stack</span></h2>
+        <div class="stack-grid">
+            <div class="stack-item"><span>Python 3.11</span></div>
+            <div class="stack-item"><span>FastAPI v2.0</span></div>
+            <div class="stack-item"><span>Uvicorn (Async)</span></div>
+            <div class="stack-item"><span>Flask (MobSF Proxy)</span></div>
+            <div class="stack-item"><span>Node.js 20</span></div>
+            <div class="stack-item"><span>Fastify (TypeScript)</span></div>
+            <div class="stack-item"><span>SQLite + aiosqlite</span></div>
+            <div class="stack-item"><span>Supabase PostgreSQL</span></div>
+            <div class="stack-item"><span>AWS EC2 / S3</span></div>
+            <div class="stack-item"><span>AWS IAM / SSM</span></div>
+            <div class="stack-item"><span>Boto3</span></div>
+            <div class="stack-item"><span>Docker Compose</span></div>
+            <div class="stack-item"><span>Nginx 1.25</span></div>
+            <div class="stack-item"><span>MobSF</span></div>
+            <div class="stack-item"><span>Cowrie</span></div>
+            <div class="stack-item"><span>Dionaea</span></div>
+            <div class="stack-item"><span>Honeytrap</span></div>
+            <div class="stack-item"><span>Apache Guacamole</span></div>
+            <div class="stack-item"><span>PyJWT</span></div>
+            <div class="stack-item"><span>Twilio</span></div>
+            <div class="stack-item"><span>SMTP (Gmail)</span></div>
+            <div class="stack-item"><span>GeoIP</span></div>
+            <div class="stack-item"><span>MITRE ATT&CK</span></div>
+            <div class="stack-item"><span>Supabase Auth</span></div>
+        </div>
+    </section>
+
+    <!-- DOCKER SERVICES -->
+    <section class="section" data-aos="fade-up">
+        <span class="section-label">Deployment</span>
+        <h2>Five <span>Docker Services</span></h2>
+        <p class="section-sub">The entire platform ships as a production-ready Docker Compose stack. One command starts everything.</p>
+        <div class="features" style="margin-top:40px;">
+            <div class="card" data-aos="zoom-in" data-aos-delay="100">
+                <span class="card-icon">⚡</span>
+                <h3>FastAPI Backend</h3>
+                <p>Python 3.11, multi-stage Docker build. Handles all API calls, AI classification, session engine, and AWS orchestration. Port 8000.</p>
+            </div>
+            <div class="card" data-aos="zoom-in" data-aos-delay="200">
+                <span class="card-icon">📱</span>
+                <h3>MobSF Service</h3>
+                <p>Flask proxy with Docker socket access. Spawns MobSF analysis containers on demand for APK security scanning. Port 5055.</p>
+            </div>
+            <div class="card" data-aos="zoom-in" data-aos-delay="300">
+                <span class="card-icon">🔷</span>
+                <h3>Node.js API</h3>
+                <p>Fastify TypeScript edge-collector API. Handles node registry and rate-limited data ingestion from edge honeypot nodes. Port 3000.</p>
+            </div>
+            <div class="card" data-aos="zoom-in" data-aos-delay="400">
+                <span class="card-icon">🔄</span>
+                <h3>Background Worker</h3>
+                <p>Node.js Supabase sync worker. Runs continuous background synchronization of enriched analytics from SQLite to the cloud database.</p>
+            </div>
+            <div class="card" data-aos="zoom-in" data-aos-delay="500">
+                <span class="card-icon">🌐</span>
+                <h3>Nginx Frontend</h3>
+                <p>Nginx 1.25 Alpine serving the 30+ page static dashboard. Optimized caching for assets, no-cache for HTML. Port 5500.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA -->
+    <div class="cta-banner" data-aos="zoom-in">
+        <h2>Deploy the Full Stack in Minutes</h2>
+        <p>Clone the repo, run <code style="background:rgba(0,198,255,0.15);padding:3px 10px;border-radius:6px;font-family:monospace;">./setup.sh</code>, and all five services start automatically — with OS detection, env setup, and health checks.</p>
+        <div class="cta-btns">
+            <a href="docs.html" class="btn btn-primary">Setup Guide</a>
+            <a href="login.html" class="btn btn-outline">Open Dashboard</a>
+        </div>
     </div>
 
-    <footer>
-        © 2026 Shadow Trust Project. All Rights Reserved.
-    </footer>
+</div>
 
-    <!-- AOS Animation Script Iteration -->
-    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
-    <script>
-        AOS.init({
-            duration: 800,
-            once: true,
-            offset: 100
-        });
-    </script>
+<!-- FOOTER -->
+<footer>
+    <div class="footer-grid">
+        <div class="footer-brand">
+            <span class="logo">Shadow Trust</span>
+            <p>AI-powered Security Operations Center with honeypot deception, malware analysis, and real-time threat intelligence.</p>
+        </div>
+        <div class="footer-col">
+            <h4>Platform</h4>
+            <ul>
+                <li><a href="features.html">Features</a></li>
+                <li><a href="architecture.html">Architecture</a></li>
+                <li><a href="usecases.html">Use Cases</a></li>
+                <li><a href="docs.html">Documentation</a></li>
+                <li><a href="status.html">System Status</a></li>
+            </ul>
+        </div>
+        <div class="footer-col">
+            <h4>Access</h4>
+            <ul>
+                <li><a href="login.html">Sign In</a></li>
+                <li><a href="register.html">Register</a></li>
+                <li><a href="dashboard.html">Dashboard</a></li>
+                <li><a href="http://localhost:8000/docs" target="_blank">API Docs</a></li>
+            </ul>
+        </div>
+    </div>
+    <div class="footer-bottom">
+        <p>© 2026 Shadow Trust. All Rights Reserved.</p>
+        <div class="footer-status"><span class="dot"></span> All Systems Operational</div>
+    </div>
+</footer>
+
+<script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+<script>AOS.init({ duration: 750, once: true, offset: 80 });</script>
 </body>
-
 </html>
