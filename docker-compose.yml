@@ -1,0 +1,141 @@
+# ──────────────────────────────────────────────────────────────────────────────
+#  Shadow Trust  ·  Shadow Trust SOC Honeynet
+#  docker compose up --build          ← first time
+#  docker compose up -d               ← subsequent starts
+#  ./setup.sh                         ← recommended first-time wizard
+# ──────────────────────────────────────────────────────────────────────────────
+#
+# Services
+#   backend    FastAPI threat-intelligence API          :8000
+#   mobsf      MobSF APK-analysis proxy (Flask)         :5055
+#   node_api   Fastify edge-node collector API          :3000
+#   worker     Supabase background sync worker          (internal)
+#   frontend   Nginx static dashboard                   :5500
+#
+# Ports are overridable via root .env:
+#   BACKEND_PORT, MOBSF_PORT, NODE_API_PORT, FRONTEND_PORT
+#
+# macOS / Windows
+#   MOBSF_DOCKER_HOST is set to host.docker.internal by setup.sh automatically.
+#   On Linux it defaults to 172.17.0.1 (docker bridge gateway).
+
+services:
+
+  # ── FastAPI Backend ──────────────────────────────────────────────────────────
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    image: soc/backend:latest
+    container_name: soc_backend
+    restart: unless-stopped
+    ports:
+      - "${BACKEND_PORT:-8000}:8000"
+    volumes:
+      # SQLite databases — bind-mounted so data persists outside the container.
+      # setup.sh touches these files so Docker doesn't create directories here.
+      - ./backend/ingestion.db:/app/ingestion.db
+      - ./backend/honeynet.db:/app/honeynet.db
+      - ./backend/scans:/app/scans
+    env_file:
+      - path: backend/.env
+        required: true       # run setup.sh first to create this from backend/.env.example
+    networks:
+      - soc_net
+    healthcheck:
+      test: ["CMD", "python", "-c",
+             "import urllib.request; urllib.request.urlopen('http://localhost:8000/')"]
+      interval: 15s
+      timeout: 5s
+      start_period: 15s
+      retries: 5
+
+  # ── MobSF APK Analysis Proxy ─────────────────────────────────────────────────
+  mobsf:
+    build:
+      context: .
+      dockerfile: Dockerfile.mobsf
+    image: soc/mobsf:latest
+    container_name: soc_mobsf
+    restart: unless-stopped
+    ports:
+      - "${MOBSF_PORT:-5055}:5055"
+    volumes:
+      # Docker socket — lets this service spawn MobSF analysis containers
+      - /var/run/docker.sock:/var/run/docker.sock
+      # Persist uploaded APKs and scan results
+      - ./backend/mobsf_service/data:/app/mobsf_service/data
+    environment:
+      # auto-detected by setup.sh — macOS/Win → host.docker.internal, Linux → 172.17.0.1
+      MOBSF_DOCKER_HOST: ${MOBSF_DOCKER_HOST:-localhost}
+    networks:
+      - soc_net
+    depends_on:
+      backend:
+        condition: service_healthy
+
+  # ── Node.js Fastify Edge-Collector API ───────────────────────────────────────
+  node_api:
+    build:
+      context: .
+      dockerfile: Dockerfile.node
+      args:
+        SERVICE: api
+    image: soc/node-api:latest
+    container_name: soc_node_api
+    restart: unless-stopped
+    ports:
+      # Container runs on 8000 (default PORT in .env); mapped to 3000 on host
+      - "${NODE_API_PORT:-3000}:8000"
+    env_file:
+      - path: services/api/.env
+        required: false      # created by setup.sh from services/api/.env.example
+    environment:
+      HOST: "0.0.0.0"
+    networks:
+      - soc_net
+    depends_on:
+      backend:
+        condition: service_healthy
+
+  # ── Node.js Supabase Background Worker ───────────────────────────────────────
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile.node
+      args:
+        SERVICE: worker
+    image: soc/worker:latest
+    container_name: soc_worker
+    restart: unless-stopped
+    # No exposed port — background process only
+    env_file:
+      - path: services/worker/.env
+        required: false      # created by setup.sh from services/worker/.env.example
+    networks:
+      - soc_net
+    depends_on:
+      backend:
+        condition: service_healthy
+    # Override CMD for the worker entrypoint
+    command: ["node", "dist/worker.js"]
+
+  # ── Nginx Frontend Dashboard ─────────────────────────────────────────────────
+  frontend:
+    image: nginx:1.25-alpine
+    container_name: soc_frontend
+    restart: unless-stopped
+    ports:
+      - "${FRONTEND_PORT:-5500}:5500"
+    volumes:
+      - ./frontend:/usr/share/nginx/html:ro
+      - ./frontend/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    networks:
+      - soc_net
+    depends_on:
+      backend:
+        condition: service_healthy
+
+networks:
+  soc_net:
+    driver: bridge

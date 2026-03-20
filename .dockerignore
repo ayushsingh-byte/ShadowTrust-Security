@@ -1,0 +1,49 @@
+# ── Python ────────────────────────────────────────────────────────────────────
+**/__pycache__
+**/*.pyc
+**/*.pyo
+**/.pytest_cache
+backend/.venv
+backend/venv
+.venv
+
+# ── Node ──────────────────────────────────────────────────────────────────────
+**/node_modules
+services/api/dist
+services/worker/dist
+**/*.tsbuildinfo
+
+# ── Databases (bind-mounted as volumes at runtime) ────────────────────────────
+backend/*.db
+backend/**/*.db
+database/*.db
+
+# ── Logs / runtime artifacts ──────────────────────────────────────────────────
+backend/*.log
+backend/nohup.out
+**/*.log
+
+# ── MobSF uploaded files (bind-mounted as volume) ─────────────────────────────
+backend/mobsf_service/data/
+
+# ── Scan outputs (runtime) ────────────────────────────────────────────────────
+backend/scans/
+
+# .env files are committed to the private repo — keep them out of image layers
+# (they are passed at runtime via docker compose env_file, not COPY'd)
+**/.env
+!**/.env.example
+
+# ── OS / Editor ───────────────────────────────────────────────────────────────
+.DS_Store
+**/.DS_Store
+.idea
+.vscode
+*.swp
+
+# ── Git ───────────────────────────────────────────────────────────────────────
+.git
+.gitignore
+
+# ── Docs ──────────────────────────────────────────────────────────────────────
+*.md

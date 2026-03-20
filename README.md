@@ -1,7 +1,7 @@
 <div align="center">
-  <img src="frontend/hero_image.png" alt="Shadow Trust - SentinelHive" width="100%">
+  <img src="frontend/hero_image.png" alt="Shadow Trust" width="100%">
   
-  # 🛡️ Shadow Trust - SentinelHive
+  # 🛡️ Shadow Trust
   
   **A Complete, Modular Threat Intelligence & Honeypot Platform with AI-Based Attack Classification**
 
@@ -10,7 +10,7 @@
 ---
 
 ## 🌟 Overview
-Shadow Trust (SentinelHive) is a next-generation Threat Intelligence Platform designed with a **map-first, intelligence-driven approach**. It combines hybrid edge-to-cloud architecture, seamless global threat monitoring, and advanced analytics to give you unprecedented visibility into cyber attacks.
+Shadow Trust is a next-generation Threat Intelligence Platform designed with a **map-first, intelligence-driven approach**. It combines hybrid edge-to-cloud architecture, seamless global threat monitoring, and advanced analytics to give you unprecedented visibility into cyber attacks.
 
 <div align="center">
   <img src="frontend/architecture_hero.png" alt="Architecture" width="100%">

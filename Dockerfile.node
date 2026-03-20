@@ -1,0 +1,37 @@
+# ── Node.js service builder (services/api  OR  services/worker) ──────────────
+# Usage:
+#   docker build --build-arg SERVICE=api    -t soc-node-api    -f Dockerfile.node .
+#   docker build --build-arg SERVICE=worker -t soc-node-worker -f Dockerfile.node .
+
+ARG SERVICE=api
+
+# ── Stage 1: Build ────────────────────────────────────────────────────────────
+FROM node:20-alpine AS builder
+ARG SERVICE
+WORKDIR /build
+
+# Copy only manifests first for layer-cache efficiency
+COPY services/${SERVICE}/package*.json ./
+
+# Install all deps (including devDeps for TypeScript compile)
+RUN npm install --legacy-peer-deps
+
+# Copy source and compile
+COPY services/${SERVICE}/ .
+RUN npm run build
+
+
+# ── Stage 2: Runtime — production-only deps ───────────────────────────────────
+FROM node:20-alpine
+ARG SERVICE
+ENV NODE_ENV=production
+WORKDIR /app
+
+# Copy compiled output and production node_modules
+COPY --from=builder /build/dist ./dist
+COPY --from=builder /build/node_modules ./node_modules
+
+# The start script is always `node dist/<entrypoint>.js`
+# api  → dist/index.js   (PORT from env, default 8000 mapped to 3000 externally)
+# worker → dist/worker.js (no exposed port)
+CMD ["node", "dist/index.js"]

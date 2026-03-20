@@ -1,0 +1,35 @@
+# ── Stage 1: Build — install Python dependencies ─────────────────────────────
+FROM python:3.11-slim AS builder
+
+WORKDIR /build
+
+# Install build toolchain
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy requirements first so Docker caches this layer
+COPY backend/requirements.txt .
+
+# Install into an isolated prefix so we can copy cleanly to the final stage
+RUN pip install --no-cache-dir --prefix=/install -r requirements.txt
+
+
+# ── Stage 2: Runtime — lean final image ──────────────────────────────────────
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Pull installed packages from builder
+COPY --from=builder /install /usr/local
+
+# Copy application source
+COPY backend/ .
+
+EXPOSE 8000
+
+# Container health – used by docker compose depends_on: condition: service_healthy
+HEALTHCHECK --interval=15s --timeout=5s --start-period=15s --retries=5 \
+    CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/')"
+
+CMD ["python", "-m", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]

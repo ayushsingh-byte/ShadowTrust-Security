@@ -1,0 +1,38 @@
+# MobSF Flask Proxy Service
+# Needs access to the Docker socket so it can spawn/manage MobSF containers.
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Install Docker CLI (only the client, not the daemon)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ca-certificates curl gnupg \
+    && install -m 0755 -d /etc/apt/keyrings \
+    && curl -fsSL https://download.docker.com/linux/debian/gpg \
+       | gpg --dearmor -o /etc/apt/keyrings/docker.gpg \
+    && chmod a+r /etc/apt/keyrings/docker.gpg \
+    && echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] \
+       https://download.docker.com/linux/debian bookworm stable" \
+       | tee /etc/apt/sources.list.d/docker.list > /dev/null \
+    && apt-get update && apt-get install -y --no-install-recommends docker-ce-cli \
+    && rm -rf /var/lib/apt/lists/*
+
+# Python dependencies (shared with backend)
+COPY backend/requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Application source
+COPY backend/ .
+
+EXPOSE 5055
+
+# macOS/Windows: set MOBSF_DOCKER_HOST=host.docker.internal via .env or compose
+# Linux: default localhost works if using host networking, else use 172.17.0.1
+ENV MOBSF_DOCKER_HOST=localhost
+
+HEALTHCHECK --interval=20s --timeout=5s --start-period=10s --retries=3 \
+    CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:5055/')" || exit 1
+
+CMD ["python", "-c", \
+    "from mobsf_service.app import app; \
+     app.run(host='0.0.0.0', port=5055)"]

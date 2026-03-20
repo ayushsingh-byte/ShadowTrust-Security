@@ -1,4 +1,4 @@
-# SentinelHive — Shadow Trust Platform
+# Shadow Trust Platform
 ## Technical Documentation & Research Reference
 
 > **Classification**: Internal Research Documentation
@@ -39,7 +39,7 @@
 
 ## 1. Executive Summary
 
-**SentinelHive (Shadow Trust)** is a next-generation, hybrid edge-to-cloud Security Operations Center (SOC) platform built around a network of honeypots and AI-driven threat intelligence. It is designed to:
+**Shadow Trust** is a next-generation, hybrid edge-to-cloud Security Operations Center (SOC) platform built around a network of honeypots and AI-driven threat intelligence. It is designed to:
 
 - **Deceive** adversaries using deployable honeypot nodes (Cowrie, Dionaea, Honeytrap)
 - **Capture** attacker telemetry (credentials, payloads, commands, session data)
@@ -58,7 +58,7 @@ The platform operates as a **full-stack Python/JavaScript application** with an 
 
 | Property | Detail |
 |----------|--------|
-| **Project Name** | SentinelHive / Shadow Trust |
+| **Project Name** | Shadow Trust |
 | **Type** | Hybrid Honeypot + Threat Intelligence Platform |
 | **Primary Use** | SOC Operations, Threat Research, Malware Analysis |
 | **Deployment Model** | Edge (on-prem honeypots) + Cloud (AWS EC2, S3, Supabase) |
@@ -1210,5 +1210,5 @@ psutil==5.9.8            # System metrics
 
 ---
 
-*Document generated from source code analysis of SentinelHive v1.0 — Shadow Trust Platform.*
+*Document generated from source code analysis of Shadow Trust v1.0.*
 *For research paper use, bug reports, or architecture review.*

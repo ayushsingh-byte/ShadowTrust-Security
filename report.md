@@ -1,8 +1,8 @@
-# Shadow Trust - SentinelHive: Comprehensive Project Report
+# Shadow Trust: Comprehensive Project Report
 
 ## 1. Executive Overview
 
-**Shadow Trust - SentinelHive** is a next-generation Threat Intelligence and SOC (Security Operations Center) Honeynet Platform designed with a map-first, intelligence-driven approach. It blends a hybrid edge-to-cloud architecture with real-time global threat monitoring, malicious payload analysis, and automated attack classification.
+**Shadow Trust** is a next-generation Threat Intelligence and SOC (Security Operations Center) Honeynet Platform designed with a map-first, intelligence-driven approach. It blends a hybrid edge-to-cloud architecture with real-time global threat monitoring, malicious payload analysis, and automated attack classification.
 
 This report comprehensively details the features currently developed, the planned infrastructure integrations, the comprehensive HTML dashboard tab system, and the underlying AWS data flow architecture detailing the utilization of honeypots, EC2 instances, S3 storage, and AI processing layers.
 
@@ -10,7 +10,7 @@ This report comprehensively details the features currently developed, the planne
 
 ## 2. AWS Architecture & Data Flow System
 
-Based on the strategic architecture of the environment, SentinelHive leverages Amazon Web Services (AWS) extensively for its backend compute, storage, data collection, and threat telemetry workflows.
+Based on the strategic architecture of the environment, Shadow Trust leverages Amazon Web Services (AWS) extensively for its backend compute, storage, data collection, and threat telemetry workflows.
 
 ### 2.1 Identity and Access Management (IAM)
 The connection between the Project Dashboard and AWS is established via strict **IAM User & Security Policies**, utilizing dedicated **Security Groups and Access Keys**. This enforces the principle of least privilege, ensuring the platform only accesses required VPC constraints and compute resources.
@@ -39,7 +39,7 @@ The active Ubuntu Honeypot server runs a trio of specialized deception daemons:
 
 ## 3. Current Completed Features (What Has Been Made)
 
-The current state of SentinelHive reflects a highly functional, visually stunning, and API-connected SOC environment.
+The current state of Shadow Trust reflects a highly functional, visually stunning, and API-connected SOC environment.
 
 1.  **Map-First Intelligence Dashboard:** A deeply interactive tactical command center featuring a global world map, live interception statistics, and threat origin tracking.
 2.  **Honeypot Node Management:** Allows administrators to orchestrate node deployments natively from the UI (e.g., stopping/starting mock services mapped to different geographic sectors).

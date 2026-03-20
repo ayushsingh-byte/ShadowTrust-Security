@@ -30,7 +30,8 @@ coverage.xml
 htmlcov/
 
 # --- Environment / secrets ---
-# NOTE: env files are NOT ignored (user requested to commit them).
+# .env files ARE committed intentionally (private repo, shared team credentials).
+# ⚠  KEEP THIS REPO PRIVATE. Never make it public.
 *.pem
 *.key
 *.p12
@@ -45,7 +46,7 @@ logs/
 *.pid.lock
 
 # --- Databases / local state ---
-# NOTE: database files are NOT ignored (user requested to commit them).
+# .db files ARE committed intentionally so the whole team shares the same seed data.
 
 # Ignore SQLite sidecar files (generated at runtime)
 *.sqlite-journal

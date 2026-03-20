@@ -18,6 +18,9 @@ cleanup() {
   if [[ -n "${FRONTEND_PID:-}" ]] && kill -0 "$FRONTEND_PID" 2>/dev/null; then
     kill "$FRONTEND_PID" 2>/dev/null || true
   fi
+  if [[ -n "${MOBSF_PID:-}" ]] && kill -0 "$MOBSF_PID" 2>/dev/null; then
+    kill "$MOBSF_PID" 2>/dev/null || true
+  fi
 }
 trap cleanup EXIT INT TERM
 
@@ -54,10 +57,13 @@ kill_port_if_in_use() {
   fi
 }
 
-echo "Starting full backend + full frontend..."
+MOBSF_PORT="${MOBSF_PORT:-5055}"
+
+echo "Starting full backend + full frontend + MobSF service..."
 
 kill_port_if_in_use "$BACKEND_PORT"
 kill_port_if_in_use "$FRONTEND_PORT"
+kill_port_if_in_use "$MOBSF_PORT"
 
 # Backend
 ensure_backend_venv
@@ -74,6 +80,16 @@ echo "Starting Backend (FastAPI) on http://localhost:${BACKEND_PORT} ..."
 .venv/bin/python -m uvicorn app.main:app --host "$BACKEND_HOST" --port "$BACKEND_PORT" &
 BACKEND_PID=$!
 
+# MobSF Flask service
+echo "Starting MobSF service on http://localhost:${MOBSF_PORT} ..."
+.venv/bin/pip install flask flask-cors -q 2>/dev/null || true
+.venv/bin/python -c "
+from mobsf_service.app import app
+from mobsf_service.config import SERVICE_HOST, SERVICE_PORT
+app.run(host=SERVICE_HOST, port=SERVICE_PORT)
+" &
+MOBSF_PID=$!
+
 # Frontend
 cd "$FRONTEND_DIR"
 
@@ -81,8 +97,11 @@ echo "Starting Frontend (static server) on http://localhost:${FRONTEND_PORT} ...
 python3 -m http.server "$FRONTEND_PORT" --bind "$FRONTEND_HOST" &
 FRONTEND_PID=$!
 
-echo "Servers are running:"
-echo "- Backend:  http://localhost:${BACKEND_PORT}"
-echo "- Frontend: http://localhost:${FRONTEND_PORT}"
+echo ""
+echo "All services running:"
+echo "  Backend:  http://localhost:${BACKEND_PORT}"
+echo "  MobSF:    http://localhost:${MOBSF_PORT}"
+echo "  Frontend: http://localhost:${FRONTEND_PORT}"
+echo ""
 
-wait "$BACKEND_PID" "$FRONTEND_PID"
+wait "$BACKEND_PID" "$MOBSF_PID" "$FRONTEND_PID"
