@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MedCare Health — Patient Portal</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:'Segoe UI',sans-serif;background:#f5faff;color:#222}
+  nav{background:#fff;border-bottom:3px solid #06b6d4;padding:0 40px;display:flex;align-items:center;justify-content:space-between;height:64px;box-shadow:0 2px 8px rgba(0,0,0,.06)}
+  .logo{font-size:1.3rem;font-weight:700;color:#06b6d4}
+  nav ul{list-style:none;display:flex;gap:28px}
+  nav a{color:#555;text-decoration:none;font-size:0.9rem}
+  nav a:hover{color:#06b6d4}
+  .hero{background:linear-gradient(135deg,#0e7490,#06b6d4);color:#fff;padding:60px 40px;text-align:center}
+  .hero h1{font-size:2.2rem;margin-bottom:12px}
+  .hero p{opacity:.9;font-size:1rem;max-width:580px;margin:0 auto 28px}
+  .btn{background:#fff;color:#0e7490;padding:12px 32px;border:none;border-radius:6px;font-weight:700;cursor:pointer;font-size:0.95rem;text-decoration:none;display:inline-block}
+  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:20px;padding:40px;max-width:1100px;margin:0 auto}
+  .card{background:#fff;border-radius:10px;padding:24px;box-shadow:0 2px 10px rgba(0,0,0,.07);border-top:3px solid #06b6d4}
+  .card-icon{font-size:2rem;margin-bottom:12px}
+  .card h3{font-size:1rem;margin-bottom:8px;color:#0e7490}
+  .card p{font-size:0.83rem;color:#666;line-height:1.6}
+  .emergency{background:#fee2e2;border:1px solid #fca5a5;border-radius:8px;padding:14px 20px;margin:0 40px 20px;font-size:0.85rem;color:#991b1b;display:flex;align-items:center;gap:10px;max-width:1020px}
+  .badge{position:fixed;bottom:16px;right:16px;background:#020c1b;color:#00c6ff;font-size:0.7rem;padding:6px 14px;border-radius:20px;border:1px solid rgba(0,198,255,.4);font-family:monospace}
+  footer{background:#0e7490;color:#a5f3fc;text-align:center;padding:20px;font-size:0.8rem;margin-top:20px}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="logo">🏥 MedCare Health</div>
+  <ul>
+    <li><a href="#">My Health</a></li>
+    <li><a href="#">Appointments</a></li>
+    <li><a href="#">Prescriptions</a></li>
+    <li><a href="#">Lab Results</a></li>
+    <li><a href="#">Billing</a></li>
+  </ul>
+</nav>
+
+<div class="hero">
+  <h1>Your Health, Our Priority</h1>
+  <p>Access your medical records, book appointments, view prescriptions and lab results securely.</p>
+  <a href="#" class="btn">Sign In to Portal</a>
+</div>
+
+<div class="emergency">
+  🚨 <strong>Emergency:</strong> If you are experiencing a medical emergency, call 911 immediately. This portal is for non-emergency use only.
+</div>
+
+<div class="cards">
+  <div class="card"><div class="card-icon">📋</div><h3>Medical Records</h3><p>View your complete medical history, diagnoses, visit summaries, and doctor notes securely.</p></div>
+  <div class="card"><div class="card-icon">📅</div><h3>Appointments</h3><p>Schedule, reschedule or cancel appointments with your GP, specialists, and allied health professionals.</p></div>
+  <div class="card"><div class="card-icon">💊</div><h3>Prescriptions</h3><p>View active prescriptions, request refills, and track your medication history.</p></div>
+  <div class="card"><div class="card-icon">🧪</div><h3>Lab Results</h3><p>Receive and review lab results, imaging reports, and pathology findings as soon as they are available.</p></div>
+</div>
+
+<footer>© 2026 MedCare Health Systems. Patient data is encrypted and protected under HIPAA. | Privacy Policy</footer>
+<div class="badge">🛡️ Protected by Shadow Trust</div>
+
+<script>
+(function(){
+  var ST_KEY="505fd808-1a65-467e-b98e-325d4d1ed97d";
+  var ST_URL="http://localhost:8000/api/v1/sectors/events/ingest";
+  function s(t,x){fetch(ST_URL,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(Object.assign({api_key:ST_KEY,attack_type:t,user_agent:navigator.userAgent,request_path:window.location.pathname},x||{}))}).catch(function(){});}
+  var u=window.location.href;
+  if(/<script|javascript:/i.test(u))s("XSS",{ioc_value:u.slice(0,200),ioc_type:"url",risk_score:8});
+  if(/union\s+select|select.*from|drop\s+table/i.test(u))s("SQLi",{ioc_value:u.slice(0,200),ioc_type:"url",risk_score:9});
+  window.ShadowTrust={report:s};
+})();
+</script>
+</body>
+</html>

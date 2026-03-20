@@ -19,7 +19,22 @@ def load_local_state():
     if os.path.exists(STATE_FILE):
         try:
             with open(STATE_FILE, "r") as f:
-                return json.load(f)
+                state = json.load(f)
+            # Any PROVISIONING entries left over from a previous process run are stuck —
+            # the background task that was polling AWS died with that process.
+            # Mark them ERROR so the frontend can reset cleanly instead of polling forever.
+            changed = False
+            for lab_id, record in state.items():
+                if record.get("status") == "PROVISIONING":
+                    record["status"] = "ERROR"
+                    changed = True
+            if changed:
+                try:
+                    with open(STATE_FILE, "w") as f:
+                        json.dump(state, f)
+                except Exception:
+                    pass
+            return state
         except:
             pass
     return {}

@@ -579,6 +579,10 @@
                         EDUCATION SECTOR</h2>
                 </div>
                 <div style="display:flex; gap:20px; align-items:center;">
+                    <div style="display:flex; gap:8px;">
+                        <button id="tabDashboard" class="soc-btn" style="opacity:1;" onclick="switchTab('dashboard')">DASHBOARD</button>
+                        <button id="tabTargets" class="soc-btn" style="opacity:0.45;" onclick="switchTab('targets')">MANAGE TARGETS</button>
+                    </div>
                     <button class="soc-btn" onclick="closeModal()">CLOSE PANEL</button>
                     <div class="text-mono" style="color:#888;">RISK: <span class="text-red">CRITICAL</span></div>
                 </div>
@@ -586,6 +590,9 @@
 
             <!-- Scrollable Body (SOC Dashboard) -->
             <div class="modal-body">
+
+            <!-- ── DASHBOARD TAB ─────────────────────────────────────────── -->
+            <div id="dashboardTab">
 
                 <!-- ATTACK SUMMARY -->
                 <div class="stat-grid-compact">
@@ -702,7 +709,56 @@
                     </div>
                 </div>
 
-            </div>
+            </div><!-- /dashboardTab -->
+
+            <!-- ── MANAGE TARGETS TAB ────────────────────────────────────── -->
+            <div id="targetsTab" style="display:none;">
+
+                <!-- Add Target Form -->
+                <div class="soc-card" style="margin-bottom:20px;">
+                    <div class="soc-card-header"><span class="card-title">ADD NEW TARGET</span></div>
+                    <div style="padding:18px; display:grid; grid-template-columns:1fr 1fr 1fr auto; gap:12px; align-items:end;">
+                        <div>
+                            <div style="font-size:0.65rem; color:#888; margin-bottom:4px; text-transform:uppercase; letter-spacing:1px;">Name</div>
+                            <input id="tgtName" placeholder="e.g. University Portal" style="width:100%; background:#111; border:1px solid #333; color:#fff; padding:8px 10px; font-family:inherit; font-size:0.8rem;">
+                        </div>
+                        <div>
+                            <div style="font-size:0.65rem; color:#888; margin-bottom:4px; text-transform:uppercase; letter-spacing:1px;">URL</div>
+                            <input id="tgtUrl" placeholder="https://example.com" style="width:100%; background:#111; border:1px solid #333; color:#fff; padding:8px 10px; font-family:inherit; font-size:0.8rem;">
+                        </div>
+                        <div>
+                            <div style="font-size:0.65rem; color:#888; margin-bottom:4px; text-transform:uppercase; letter-spacing:1px;">IP Address</div>
+                            <input id="tgtIp" placeholder="192.168.1.1 (optional)" style="width:100%; background:#111; border:1px solid #333; color:#fff; padding:8px 10px; font-family:inherit; font-size:0.8rem;">
+                        </div>
+                        <button class="soc-btn" onclick="addTarget()" style="height:36px; white-space:nowrap;">+ ADD TARGET</button>
+                    </div>
+                </div>
+
+                <!-- Targets List -->
+                <div class="soc-card" style="padding:0;">
+                    <div class="soc-card-header" style="padding:15px;">
+                        <span class="card-title">MONITORED TARGETS</span>
+                        <span id="targetCount" class="badge badge-green" style="margin-left:10px;">0 targets</span>
+                    </div>
+                    <div id="targetsList" style="padding:0;">
+                        <div style="padding:20px; color:#666; font-size:0.8rem;">Loading targets...</div>
+                    </div>
+                </div>
+
+                <!-- JS Snippet Panel (shown after adding a target) -->
+                <div id="snippetPanel" style="display:none; margin-top:20px;">
+                    <div class="soc-card">
+                        <div class="soc-card-header"><span class="card-title">JS TRACKING SNIPPET</span> <span style="color:#00ff88; font-size:0.7rem; margin-left:10px;">Embed in your site's &lt;head&gt;</span></div>
+                        <div style="padding:15px;">
+                            <pre id="snippetCode" style="background:#000; border:1px solid #333; padding:12px; font-size:0.72rem; color:#00c6ff; white-space:pre-wrap; word-break:break-all; max-height:220px; overflow-y:auto;"></pre>
+                            <button class="soc-btn" style="margin-top:10px;" onclick="copySnippet()">COPY SNIPPET</button>
+                        </div>
+                    </div>
+                </div>
+
+            </div><!-- /targetsTab -->
+
+            </div><!-- /modal-body -->
         </div>
     </div>
 
@@ -863,15 +919,19 @@
                 return;
             }
 
-            // 1. Update Static Modal Header
+            // Store current sector key for targets tab
+            currentSectorKey = type;
+
+            // 3. Update Static Modal Header
             document.getElementById('modalTitle').innerText = config.title;
             document.getElementById('modalTitle').style.color = config.color;
             document.getElementById('modalSectorId').innerText = config.id;
 
-            // 2. Open Modal
+            // 4. Open Modal, always start on dashboard tab
             document.getElementById('sectorModal').classList.add('active');
+            switchTab('dashboard');
 
-            // 3. Fetch Data
+            // 5. Fetch Data
             try {
                 const data = await fetchSectorData(config.apiEndpoint);
                 updateDashboardUI(data, config.color);
@@ -881,7 +941,7 @@
                 updateDashboardUI(null, config.color);
             }
 
-            // 4. Start Live Elements
+            // 6. Start Live Elements
             startLiveLog();
         }
 
@@ -1006,6 +1066,119 @@
             const container = document.getElementById('liveLog');
             container.innerHTML = '<div style="color:#666; padding:10px;">No live data yet.</div>';
         }
+
+        // ── Tab system ────────────────────────────────────────────────────────
+        let currentSectorKey = null;
+
+        function switchTab(tab) {
+            const isDash = tab === 'dashboard';
+            document.getElementById('dashboardTab').style.display = isDash ? '' : 'none';
+            document.getElementById('targetsTab').style.display  = isDash ? 'none' : '';
+            document.getElementById('tabDashboard').style.opacity = isDash ? '1' : '0.45';
+            document.getElementById('tabTargets').style.opacity   = isDash ? '0.45' : '1';
+            if (!isDash && currentSectorKey) loadTargets(currentSectorKey);
+        }
+
+        // ── Targets management ────────────────────────────────────────────────
+        function getApiBase() {
+            const p = window.location.port;
+            return (window.location.protocol === 'file:' || p === '5500' || p === '5501' || p === '3000')
+                ? 'http://localhost:8000/api/v1' : '/api/v1';
+        }
+        function authHeader() { return { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('access_token')}` }; }
+
+        async function loadTargets(sectorKey) {
+            const list = document.getElementById('targetsList');
+            const count = document.getElementById('targetCount');
+            list.innerHTML = '<div style="padding:16px; color:#666; font-size:0.8rem;">Loading...</div>';
+            try {
+                const res = await fetch(`${getApiBase()}/sectors/${sectorKey}/targets`, { headers: authHeader() });
+                if (!res.ok) throw new Error('fetch failed');
+                const targets = await res.json();
+                count.innerText = `${targets.length} target${targets.length !== 1 ? 's' : ''}`;
+                if (!targets.length) {
+                    list.innerHTML = '<div style="padding:16px; color:#666; font-size:0.8rem;">No targets yet. Add a website or IP above.</div>';
+                    return;
+                }
+                list.innerHTML = targets.map(t => `
+                    <div style="display:grid; grid-template-columns:1fr 140px 140px 90px; gap:10px; align-items:center; padding:12px 16px; border-bottom:1px solid #1a1a1a;">
+                        <div>
+                            <div style="font-size:0.85rem; color:#fff; font-weight:600;">${t.name}</div>
+                            <div style="font-size:0.72rem; color:#666; margin-top:2px;">${t.url || ''} ${t.ip ? '· ' + t.ip : ''}</div>
+                        </div>
+                        <div style="font-size:0.65rem; color:#8892a4;">
+                            <div style="color:#888; margin-bottom:3px;">API KEY</div>
+                            <span style="color:#00c6ff; font-family:'JetBrains Mono';">${t.api_key.slice(0,8)}…</span>
+                        </div>
+                        <button class="soc-btn" style="font-size:0.65rem; padding:4px 10px;" onclick="showSnippet('${t.api_key}')">GET SNIPPET</button>
+                        <button class="soc-btn" style="font-size:0.65rem; padding:4px 10px; border-color:#ef4444; color:#ef4444;" onclick="removeTarget('${sectorKey}','${t.id}')">REMOVE</button>
+                    </div>`).join('');
+            } catch(e) {
+                list.innerHTML = '<div style="padding:16px; color:#ef4444; font-size:0.8rem;">Failed to load targets.</div>';
+            }
+        }
+
+        async function addTarget() {
+            const name = document.getElementById('tgtName').value.trim();
+            const url  = document.getElementById('tgtUrl').value.trim();
+            const ip   = document.getElementById('tgtIp').value.trim();
+            if (!name) { showToast('Please enter a target name.', 'error'); return; }
+            if (!url && !ip) { showToast('Please enter a URL or IP address.', 'error'); return; }
+            try {
+                const res = await fetch(`${getApiBase()}/sectors/${currentSectorKey}/targets`, {
+                    method: 'POST',
+                    headers: authHeader(),
+                    body: JSON.stringify({ name, url: url || null, ip: ip || null }),
+                });
+                if (!res.ok) { const e = await res.json(); throw new Error(e.detail || 'Failed'); }
+                const data = await res.json();
+                document.getElementById('tgtName').value = '';
+                document.getElementById('tgtUrl').value = '';
+                document.getElementById('tgtIp').value = '';
+                showToast(`Target "${name}" added successfully.`, 'success');
+                showSnippet(data.api_key);
+                loadTargets(currentSectorKey);
+            } catch(e) {
+                showToast(e.message, 'error');
+            }
+        }
+
+        async function removeTarget(sectorKey, targetId) {
+            try {
+                const res = await fetch(`${getApiBase()}/sectors/${sectorKey}/targets/${targetId}`, {
+                    method: 'DELETE', headers: authHeader(),
+                });
+                if (!res.ok) throw new Error('Failed to remove');
+                showToast('Target removed.', 'success');
+                loadTargets(sectorKey);
+            } catch(e) {
+                showToast('Failed to remove target.', 'error');
+            }
+        }
+
+        function showSnippet(apiKey) {
+            const baseUrl = getApiBase().replace('/api/v1', '');
+            const snippet = `<script>
+(function(){
+  var ST_KEY="${apiKey}";
+  var ST_URL="${baseUrl}/api/v1/sectors/events/ingest";
+  function s(t,x){fetch(ST_URL,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(Object.assign({api_key:ST_KEY,attack_type:t,user_agent:navigator.userAgent,request_path:window.location.pathname},x||{}))}).catch(function(){});}
+  var u=window.location.href;
+  if(/<script|javascript:/i.test(u))s("XSS",{ioc_value:u.slice(0,200),ioc_type:"url",risk_score:8});
+  if(/union\\s+select|select.*from|drop\\s+table/i.test(u))s("SQLi",{ioc_value:u.slice(0,200),ioc_type:"url",risk_score:9});
+  window.ShadowTrust={report:s};
+})();
+<\/script>`;
+            document.getElementById('snippetCode').innerText = snippet;
+            document.getElementById('snippetPanel').style.display = '';
+            document.getElementById('snippetPanel').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function copySnippet() {
+            const code = document.getElementById('snippetCode').innerText;
+            navigator.clipboard.writeText(code).then(() => showToast('Snippet copied to clipboard!', 'success'));
+        }
+
     </script>
 </body>
 

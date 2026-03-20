@@ -246,6 +246,8 @@
                     <button class="soc-btn" onclick="testConnection(event)">VALIDATE KEYS</button>
                     <button class="soc-btn" style="background:#00aeff; color:black; border:none;"
                         onclick="pullS3Logs(event)">PULL S3 LOGS</button>
+                    <button class="soc-btn" style="background:#ff6b35; color:black; border:none;"
+                        onclick="forceRepullS3(event)" title="Re-process ALL files including already-pulled ones">FORCE RE-PULL</button>
                     <button class="soc-btn soc-btn-primary" style="background:#ff9900; color:black; border:none;"
                         onclick="saveAwsConfig(event)">SAVE HUB CONFIGURATION</button>
                 </div>
@@ -368,12 +370,11 @@
             }
         }
 
-        window.pullS3Logs = async function (event) {
-            const btn = event.target;
+        async function _doPullS3(btn, forceRepull) {
             const originalText = btn.innerText;
             const resDiv = document.getElementById('validationResult');
 
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> PULLING S3 LOGS...';
+            btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> ${forceRepull ? 'FORCE RE-PULLING...' : 'PULLING S3 LOGS...'}`;
             resDiv.innerHTML = '';
 
             const accessKey = document.getElementById('awsAccessKey').value;
@@ -392,23 +393,24 @@
                     aws_access_key: accessKey,
                     aws_secret_key: secretKey,
                     aws_region: region,
-                    s3_bucket_3rd: s3Bucket
+                    s3_bucket_3rd: s3Bucket,
+                    force_repull: forceRepull
                 });
 
                 if (response.status === 'success') {
-                    resDiv.innerHTML = `<span style="color:#00ff41;"><i class="fas fa-check"></i> Logs Pull Required!</span>`;
-                    setTimeout(() => {
-                        resDiv.innerHTML = `<span style="color:#00ff41;"><i class="fas fa-check"></i> ${response.message}</span>`;
-                    }, 500);
+                    resDiv.innerHTML = `<span style="color:#00ff41;"><i class="fas fa-check"></i> ${response.message}</span>`;
                 } else {
                     resDiv.innerHTML = `<span style="color:#ff0055;"><i class="fas fa-exclamation-triangle"></i> ${response.message || 'Failed to pull logs'}</span>`;
                 }
             } catch (error) {
-                resDiv.innerHTML = `<span style="color:#ff0055;"><i class="fas fa-exclamation-triangle"></i> Error pulling logs: ${error.message}</span>`;
+                resDiv.innerHTML = `<span style="color:#ff0055;"><i class="fas fa-exclamation-triangle"></i> Error: ${error.message}</span>`;
+            } finally {
+                btn.innerHTML = originalText;
             }
-
-            btn.innerHTML = originalText;
         }
+
+        window.pullS3Logs      = (e) => _doPullS3(e.target, false);
+        window.forceRepullS3   = (e) => _doPullS3(e.target, true);
     </script>
 </body>
 

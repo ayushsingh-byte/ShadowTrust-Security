@@ -407,6 +407,9 @@ class VMLabClient {
         if (this.activeWorkspaceLab !== labId) return; // user closed or switched
         try {
             const response = await apiService.get(`/labs/status/${labId}`);
+            // Treat dead/unknown statuses as terminal failures
+            const terminalStatuses = ['ERROR', 'NOT_FOUND', 'TERMINATED', 'STOPPED'];
+
             if (response.status === 'READY') {
                 document.getElementById('vdiLoaderText').style.display = 'none';
                 const frame = document.getElementById('vdiFrame');
@@ -470,9 +473,25 @@ class VMLabClient {
                         </div>
                     `;
                 }
-            } else if (response.status === 'ERROR') {
-                document.getElementById('vdiSubLoader').innerText = 'FATAL ERROR: AWS Orchestrator failed.';
-                document.getElementById('vdiSubLoader').style.color = 'var(--accent-critical)';
+            } else if (terminalStatuses.includes(response.status)) {
+                // VM is dead — close the workspace panel and reset the button to PROVISION
+                this.closeWorkspace();
+                // Find which profile owned this lab and reset it
+                for (const [profileId, data] of Object.entries(this.instances)) {
+                    if (data.labId === labId) {
+                        delete this.instances[profileId];
+                        this.saveState();
+                        const btn = document.querySelector(`button[data-profile="${profileId}"]`);
+                        if (btn) this.setButtonState(btn, 'DEFAULT', 'PROVISION');
+                        const orb = document.getElementById(`dot_${profileId}`);
+                        if (orb) { orb.style.background = '#555'; orb.style.boxShadow = 'none'; orb.style.animation = 'none'; }
+                        break;
+                    }
+                }
+                const msg = response.status === 'ERROR'
+                    ? 'VM launch failed — AWS Orchestrator error. Check your AWS credentials and AMI settings.'
+                    : `Instance is no longer available (${response.status}). Please provision a new one.`;
+                this.showNotification(msg, 'error');
             } else {
                 setTimeout(() => this.pollVdiStatus(labId), 3000);
             }

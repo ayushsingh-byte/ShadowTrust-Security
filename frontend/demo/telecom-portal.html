@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NexTel — Telecom Management Portal</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:'Segoe UI',sans-serif;background:#f8faff;color:#222}
+  nav{background:#1d4ed8;padding:0 40px;display:flex;align-items:center;justify-content:space-between;height:64px}
+  .logo{font-size:1.3rem;font-weight:700;color:#fff}
+  nav ul{list-style:none;display:flex;gap:28px}
+  nav a{color:#bfdbfe;text-decoration:none;font-size:0.9rem}
+  nav a:hover{color:#fff}
+  .hero{background:linear-gradient(135deg,#1e3a8a,#1d4ed8);color:#fff;padding:56px 40px;text-align:center}
+  .hero h1{font-size:2.2rem;margin-bottom:12px}
+  .hero p{opacity:.9;max-width:560px;margin:0 auto 28px;font-size:1rem}
+  .btn{background:#38bdf8;color:#0c4a6e;padding:12px 32px;border:none;border-radius:6px;font-weight:700;cursor:pointer;font-size:0.95rem;text-decoration:none;display:inline-block}
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;padding:30px 40px;max-width:1100px;margin:0 auto}
+  .stat{background:#fff;border-radius:10px;padding:20px;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,.07);border-top:3px solid #1d4ed8}
+  .stat .val{font-size:1.7rem;font-weight:700;color:#1d4ed8;display:block;margin-bottom:4px}
+  .stat .lbl{font-size:0.75rem;color:#888;text-transform:uppercase;letter-spacing:1px}
+  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:20px;padding:0 40px 40px;max-width:1100px;margin:0 auto}
+  .card{background:#fff;border-radius:10px;padding:24px;box-shadow:0 2px 10px rgba(0,0,0,.07)}
+  .card-icon{font-size:2rem;margin-bottom:12px}
+  .card h3{font-size:1rem;margin-bottom:8px;color:#1e3a8a}
+  .card p{font-size:0.83rem;color:#666;line-height:1.6}
+  .badge{position:fixed;bottom:16px;right:16px;background:#020c1b;color:#00c6ff;font-size:0.7rem;padding:6px 14px;border-radius:20px;border:1px solid rgba(0,198,255,.4);font-family:monospace}
+  footer{background:#1e3a8a;color:#bfdbfe;text-align:center;padding:20px;font-size:0.8rem;margin-top:20px}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="logo">📡 NexTel</div>
+  <ul>
+    <li><a href="#">Network</a></li>
+    <li><a href="#">Subscribers</a></li>
+    <li><a href="#">Billing</a></li>
+    <li><a href="#">Support</a></li>
+    <li><a href="#">Admin Panel</a></li>
+  </ul>
+</nav>
+
+<div class="hero">
+  <h1>Telecom Operations Dashboard</h1>
+  <p>Manage subscriber accounts, monitor network infrastructure, handle billing and technical support from one platform.</p>
+  <a href="#" class="btn">Operator Login</a>
+</div>
+
+<div class="stats">
+  <div class="stat"><span class="val">12.4M</span><div class="lbl">Active Subscribers</div></div>
+  <div class="stat"><span class="val">99.95%</span><div class="lbl">Network Uptime</div></div>
+  <div class="stat"><span class="val">8,412</span><div class="lbl">Base Stations</div></div>
+  <div class="stat"><span class="val">4.8 Tbps</span><div class="lbl">Peak Throughput</div></div>
+</div>
+
+<div class="cards">
+  <div class="card"><div class="card-icon">📶</div><h3>Network Monitoring</h3><p>Real-time visibility into all base stations, fiber links, and core network elements across the country.</p></div>
+  <div class="card"><div class="card-icon">👥</div><h3>Subscriber Management</h3><p>Manage SIM cards, data plans, roaming agreements, and account activations at scale.</p></div>
+  <div class="card"><div class="card-icon">🧾</div><h3>Billing & Revenue</h3><p>Automated billing cycles, dispute management, and revenue assurance reporting.</p></div>
+  <div class="card"><div class="card-icon">🔧</div><h3>Fault Resolution</h3><p>Detect, triage, and resolve network faults with AI-assisted root cause analysis.</p></div>
+</div>
+
+<footer>© 2026 NexTel Communications Ltd. Licensed Telecom Operator. | Privacy Policy | Regulatory Compliance</footer>
+<div class="badge">🛡️ Protected by Shadow Trust</div>
+
+<script>
+(function(){
+  var ST_KEY="2cd86b62-fda8-4433-9038-5e32121b73f2";
+  var ST_URL="http://localhost:8000/api/v1/sectors/events/ingest";
+  function s(t,x){fetch(ST_URL,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(Object.assign({api_key:ST_KEY,attack_type:t,user_agent:navigator.userAgent,request_path:window.location.pathname},x||{}))}).catch(function(){});}
+  var u=window.location.href;
+  if(/<script|javascript:/i.test(u))s("XSS",{ioc_value:u.slice(0,200),ioc_type:"url",risk_score:8});
+  if(/union\s+select|select.*from|drop\s+table/i.test(u))s("SQLi",{ioc_value:u.slice(0,200),ioc_type:"url",risk_score:9});
+  window.ShadowTrust={report:s};
+})();
+</script>
+</body>
+</html>

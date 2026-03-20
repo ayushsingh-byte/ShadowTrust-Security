@@ -187,11 +187,15 @@ function renderOverviewMetrics(stats, health, latencyMs, credentialsKpi) {
 
 async function loadOverview() {
     const start = performance.now();
+    const token = localStorage.getItem('access_token') || localStorage.getItem('authToken');
+
+    // Run ALL fetches in parallel — credentials no longer blocks rendering
     const settled = await Promise.allSettled([
         apiService.get('/dashboard/stats'),
         apiService.get('/admin/health'),
         apiService.get('/attacks/timeline'),
-        apiService.get('/attacks/categories')
+        apiService.get('/attacks/categories'),
+        token ? apiService.get('/analytics/credentials') : Promise.resolve(null),
     ]);
 
     const stats = settled[0].status === 'fulfilled' ? settled[0].value : {
@@ -213,20 +217,9 @@ async function loadOverview() {
         api_version: 'N/A'
     };
 
-    const timeline = settled[2].status === 'fulfilled' ? settled[2].value : [];
+    const timeline  = settled[2].status === 'fulfilled' ? settled[2].value : [];
     const categories = settled[3].status === 'fulfilled' ? settled[3].value : [];
-
-    let credentialsKpi = {};
-    const token = localStorage.getItem('access_token') || localStorage.getItem('authToken');
-    if (token) {
-        try {
-            const credentials = await apiService.get('/analytics/credentials');
-            credentialsKpi = credentials?.kpi || {};
-        } catch (error) {
-            // Credentials intel is optional for overview; do not block rendering.
-            console.warn('Credentials KPI unavailable for admin overview:', error.message || error);
-        }
-    }
+    const credentialsKpi = settled[4].status === 'fulfilled' ? (settled[4].value?.kpi || {}) : {};
 
     const latencyMs = performance.now() - start;
     renderOverviewMetrics(stats, health, latencyMs, credentialsKpi);

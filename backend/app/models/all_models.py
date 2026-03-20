@@ -264,3 +264,45 @@ class AdminActivity(Base):
     timestamp = Column(DateTime, default=datetime.utcnow)
     result = Column(String, default="SUCCESS")  # SUCCESS | FAILED | RATE_LIMITED
     details = Column(Text, nullable=True)        # JSON blob with extra context
+
+
+# ─── Sector Intelligence System ───────────────────────────────────────────────
+
+class SectorTarget(Base):
+    """A website or IP address assigned to a sector for monitoring."""
+    __tablename__ = "sector_targets"
+
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    sector_key = Column(String, index=True, nullable=False)  # education, defence, medicare, etc.
+    name = Column(String, nullable=False)
+    url = Column(String, nullable=True)
+    ip = Column(String, nullable=True)
+    description = Column(String, nullable=True)
+    api_key = Column(String, unique=True, index=True, nullable=False, default=lambda: str(uuid.uuid4()))
+    active = Column(Boolean, default=True)
+    added_at = Column(DateTime, default=datetime.utcnow)
+
+    events = relationship("SectorEvent", back_populates="target", cascade="all, delete-orphan")
+
+
+class SectorEvent(Base):
+    """An attack/security event ingested from a sector target."""
+    __tablename__ = "sector_events"
+
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    sector_key = Column(String, index=True, nullable=False)
+    target_id = Column(String, ForeignKey("sector_targets.id", ondelete="SET NULL"), nullable=True)
+    target_url = Column(String, nullable=True)
+    attacker_ip = Column(String, index=True, nullable=False)
+    country = Column(String, nullable=True)
+    attack_type = Column(String, nullable=True)  # SQLi, XSS, RCE, BruteForce, Scan, Other
+    commands = Column(JSON, nullable=True)        # list of captured commands
+    ioc_value = Column(String, nullable=True)
+    ioc_type = Column(String, nullable=True)      # ip, domain, hash, url
+    risk_score = Column(Float, default=0.0)
+    user_agent = Column(String, nullable=True)
+    request_path = Column(String, nullable=True)
+    raw_payload = Column(Text, nullable=True)
+    timestamp = Column(DateTime, default=datetime.utcnow, index=True)
+
+    target = relationship("SectorTarget", back_populates="events")

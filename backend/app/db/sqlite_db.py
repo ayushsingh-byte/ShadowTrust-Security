@@ -29,6 +29,9 @@ async def init_db():
         except Exception as e:
             print(f"[MIGRATION] Column check skipped: {e}")
 
+        # --- Sector tables are created automatically via create_all ---
+        print("[INIT] Sector intelligence tables ready (sector_targets, sector_events).")
+
     # --- Seed default admin user ---
     await _seed_admin()
 

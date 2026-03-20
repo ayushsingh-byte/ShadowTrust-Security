@@ -3,7 +3,15 @@ from pydantic import BaseModel, Field
 from typing import Optional, Dict, Any
 import os
 import boto3
+from botocore.config import Config as BotoConfig
 from botocore.exceptions import ClientError
+
+# Timeout applied to every boto3 client — prevents buttons hanging forever
+_BOTO_CFG = BotoConfig(
+    connect_timeout=8,
+    read_timeout=20,
+    retries={"max_attempts": 1},
+)
 import logging
 import json
 import uuid
@@ -31,6 +39,7 @@ class AWSDebugRequest(AWSTestRequest):
 
 class AWSS3PullRequest(AWSTestRequest):
     s3_bucket_3rd: str
+    force_repull: bool = False  # if True, re-process files already in S3SyncState
 
 class ConfigSaveRequest(BaseModel):
     aws_access_key: str
@@ -74,7 +83,8 @@ async def test_aws_connection(request: AWSTestRequest):
             'sts',
             region_name=request.aws_region,
             aws_access_key_id=request.aws_access_key,
-            aws_secret_access_key=request.aws_secret_key
+            aws_secret_access_key=request.aws_secret_key,
+            config=_BOTO_CFG,
         )
         
         # Call STS to verify identity
@@ -118,7 +128,7 @@ async def full_aws_diagnostic(request: AWSDebugRequest):
 
     # Test 1: STS
     try:
-        sts = session.client('sts')
+        sts = session.client('sts', config=_BOTO_CFG)
         sts_res = sts.get_caller_identity()
         results.append({"name": "STS Authentication", "status": "PASS", "info": f"Account: {sts_res.get('Account')}"})
     except Exception as e:
@@ -127,7 +137,7 @@ async def full_aws_diagnostic(request: AWSDebugRequest):
 
     # Test 2: EC2 Access
     try:
-        ec2 = session.client('ec2')
+        ec2 = session.client('ec2', config=_BOTO_CFG)
         ec2.describe_instances(MaxResults=5)
         results.append({"name": "EC2 Describe Access", "status": "PASS", "info": "Can read EC2 inventory"})
     except Exception as e:
@@ -136,7 +146,7 @@ async def full_aws_diagnostic(request: AWSDebugRequest):
     # Test 3: S3 Bucket Access
     if request.s3_bucket:
         try:
-            s3 = session.client('s3')
+            s3 = session.client('s3', config=_BOTO_CFG)
             s3.head_bucket(Bucket=request.s3_bucket)
             results.append({"name": f"S3 Access ({request.s3_bucket})", "status": "PASS", "info": "Bucket found and accessible"})
         except Exception as e:
@@ -145,7 +155,7 @@ async def full_aws_diagnostic(request: AWSDebugRequest):
     # Test 4: IAM Instance Profile Validation
     if request.iam_profile:
         try:
-            iam = session.client('iam')
+            iam = session.client('iam', config=_BOTO_CFG)
             iam.get_instance_profile(InstanceProfileName=request.iam_profile)
             results.append({"name": f"IAM Profile ({request.iam_profile})", "status": "PASS", "info": "Profile exists and is accessible"})
         except Exception as e:
@@ -160,11 +170,14 @@ async def full_aws_diagnostic(request: AWSDebugRequest):
         "region": request.aws_region
     }
 
-# Binary/non-log extensions to skip when scanning the bucket
-_SKIP_EXTENSIONS = {'.png', '.jpg', '.jpeg', '.gif', '.bmp', '.ico',
-                    '.zip', '.tar', '.gz', '.bz2', '.tgz',
-                    '.csv', '.md', '.rst', '.py', '.sh', '.yml', '.yaml',
-                    '.pdf', '.docx', '.xlsx'}
+# Only skip true binary/non-log file types.
+# Removed: .csv, .yml, .yaml, .log, .md, .rst, .py, .sh
+# — honeypots commonly export logs in these formats.
+_SKIP_EXTENSIONS = {
+    '.png', '.jpg', '.jpeg', '.gif', '.bmp', '.ico',
+    '.zip', '.tar', '.gz', '.bz2', '.tgz',
+    '.pdf', '.docx', '.xlsx', '.mp4', '.mp3', '.exe', '.bin',
+}
 
 def _extract_src_ip(event: dict) -> str:
     """
@@ -205,7 +218,7 @@ async def pull_s3_logs(request: AWSS3PullRequest, db: AsyncSession = Depends(get
             aws_secret_access_key=request.aws_secret_key,
             region_name=request.aws_region
         )
-        s3 = boto_session.client('s3')
+        s3 = boto_session.client('s3', config=_BOTO_CFG)
         bucket_name = request.s3_bucket_3rd
 
         # Load already-processed file keys from DB to avoid re-ingesting
@@ -223,7 +236,10 @@ async def pull_s3_logs(request: AWSS3PullRequest, db: AsyncSession = Depends(get
 
         # Sort newest first; limit to 1 000 unprocessed files per pull
         files = sorted(all_files, key=lambda x: x['LastModified'], reverse=True)
-        unprocessed_files = [f for f in files if f['Key'] not in processed_db_keys]
+        if request.force_repull:
+            unprocessed_files = files  # ignore already-processed tracking
+        else:
+            unprocessed_files = [f for f in files if f['Key'] not in processed_db_keys]
 
         logs_processed = 0
         skipped_files  = 0
@@ -322,10 +338,9 @@ async def pull_s3_logs(request: AWSS3PullRequest, db: AsyncSession = Depends(get
                 if src_ip == "0.0.0.0":
                     continue
 
+                # Use DB-level unique constraint (signature column) for dedup
+                # instead of the in-memory deque which blocks re-pulls mid-session
                 signature = f"{src_ip}:{target_port}:{dt.isoformat()}"
-                if signature in telemetry_engine.recent_signatures:
-                    continue
-                telemetry_engine.recent_signatures.append(signature)
 
                 # ── Honeypot type label ───────────────────────────────────────
                 evt_lower = event_type_raw.lower()
