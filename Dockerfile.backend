@@ -26,6 +26,10 @@ COPY --from=builder /install /usr/local
 # Copy application source
 COPY backend/ .
 
+# Ensure SQLite DB files exist as FILES (not directories) before bind-mount kicks in.
+# Without this, if the host path doesn't exist, Docker creates a directory and SQLite crashes.
+RUN touch /app/ingestion.db /app/honeynet.db
+
 EXPOSE 8000
 
 # Container health – used by docker compose depends_on: condition: service_healthy
