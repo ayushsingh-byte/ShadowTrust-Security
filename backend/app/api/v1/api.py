@@ -56,3 +56,9 @@ api_router.include_router(credentials_router, prefix="/credentials", tags=["cred
 
 from app.api.v1.endpoints.sectors import router as sectors_router
 api_router.include_router(sectors_router, prefix="/sectors", tags=["sectors"])
+
+from app.api.v1.endpoints.attacks_api import router as attacks_router
+api_router.include_router(attacks_router, prefix="/attacks", tags=["attacks"])
+
+from app.api.v1.endpoints.honeypots_api import router as honeypots_router
+api_router.include_router(honeypots_router, prefix="/honeypots", tags=["honeypots"])

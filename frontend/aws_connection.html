@@ -279,6 +279,7 @@
             const originalText = btn.innerText;
             const resDiv = document.getElementById('validationResult');
 
+            btn.disabled = true;
             btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> VALIDATING VIA STS...';
             resDiv.innerHTML = '';
 
@@ -308,9 +309,10 @@
                 }
             } catch (error) {
                 resDiv.innerHTML = `<span style="color:#ff0055;"><i class="fas fa-exclamation-triangle"></i> ${error.message}</span>`;
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = originalText;
             }
-
-            btn.innerHTML = originalText;
         }
 
         window.saveAwsConfig = async function (event) {
@@ -374,6 +376,7 @@
             const originalText = btn.innerText;
             const resDiv = document.getElementById('validationResult');
 
+            btn.disabled = true;
             btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> ${forceRepull ? 'FORCE RE-PULLING...' : 'PULLING S3 LOGS...'}`;
             resDiv.innerHTML = '';
 
@@ -405,6 +408,7 @@
             } catch (error) {
                 resDiv.innerHTML = `<span style="color:#ff0055;"><i class="fas fa-exclamation-triangle"></i> Error: ${error.message}</span>`;
             } finally {
+                btn.disabled = false;
                 btn.innerHTML = originalText;
             }
         }

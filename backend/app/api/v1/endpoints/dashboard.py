@@ -85,7 +85,9 @@ async def get_dashboard_stats(db: AsyncSession = Depends(get_db)):
     # --- Advanced Analytics ---
 
     # 4. Traffic Chart (Last 60 Minutes)
-    now = datetime.utcnow()
+    latest_res = await db.execute(select(RawEventModel.timestamp).order_by(desc(RawEventModel.timestamp)).limit(1))
+    latest_ts = latest_res.scalar()
+    now = latest_ts if latest_ts else datetime.utcnow()
     one_hour_ago = now - timedelta(hours=1)
     
     # Get all events in the last hour
@@ -263,7 +265,9 @@ async def get_dashboard_stats(db: AsyncSession = Depends(get_db)):
 
 @router.get("/geo")
 async def get_geo_stats(db: AsyncSession = Depends(get_db)):
-    now = datetime.utcnow()
+    latest_res = await db.execute(select(RawEventModel.timestamp).order_by(desc(RawEventModel.timestamp)).limit(1))
+    latest_ts = latest_res.scalar()
+    now = latest_ts if latest_ts else datetime.utcnow()
     thirty_days_ago = now - timedelta(days=30)
     
     # Active Sources

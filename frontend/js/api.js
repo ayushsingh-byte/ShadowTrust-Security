@@ -48,7 +48,7 @@ class ApiService {
         }
     }
 
-    async _request(endpoint, method, data = null) {
+    async _request(endpoint, method, data = null, timeoutMs = 90000) {
         const url = `${this.baseUrl}${endpoint}`;
         const headers = {
             'Content-Type': 'application/json',
@@ -65,8 +65,13 @@ class ApiService {
             config.body = JSON.stringify(data);
         }
 
+        const controller = new AbortController();
+        config.signal = controller.signal;
+        const timer = setTimeout(() => controller.abort(), timeoutMs);
+
         try {
             const response = await fetch(url, config);
+            clearTimeout(timer);
 
             // Handle 401 Unauthorized (Token Expired)
             if (response.status === 401) {
@@ -84,6 +89,12 @@ class ApiService {
 
             return await response.json();
         } catch (error) {
+            clearTimeout(timer);
+            if (error.name === 'AbortError') {
+                const timeoutError = new Error(`Request timed out after ${timeoutMs / 1000}s`);
+                console.error(`[API] ${method} ${endpoint} Timed Out`);
+                throw timeoutError;
+            }
             console.error(`[API] ${method} ${endpoint} Failed:`, error);
             throw error;
         }

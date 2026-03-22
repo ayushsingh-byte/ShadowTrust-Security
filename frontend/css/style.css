@@ -366,6 +366,24 @@ h6 {
     border: 1px solid var(--accent-critical);
 }
 
+.badge-orange {
+    background: rgba(249, 115, 22, 0.15);
+    color: #f97316;
+    border: 1px solid #f97316;
+}
+
+.badge-teal {
+    background: rgba(20, 184, 166, 0.15);
+    color: #14b8a6;
+    border: 1px solid #14b8a6;
+}
+
+.badge-gray {
+    background: rgba(136, 146, 164, 0.15);
+    color: #8892a4;
+    border: 1px solid #8892a4;
+}
+
 /* Toggles / Misc */
 .toggle-btn {
     color: var(--text-secondary) !important;

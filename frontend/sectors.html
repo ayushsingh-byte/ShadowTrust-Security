@@ -513,52 +513,37 @@
 
                 <!-- 7. ENERGY GRID -->
                 <div class="soc-card" id="card-energy" onclick="openSector('energy')"
-                    style="height:300px; cursor:pointer; position:relative; overflow:hidden; border-color: #333; opacity: 0.8 !important;">
-                    <div class="rbac-lock-overlay"><i class="fas fa-lock" style="font-size: 3rem; color: #fff;"></i>
-                    </div>
+                    style="height:300px; cursor:pointer; position:relative; overflow:hidden;">
                     <div
                         style="position:relative; z-index:2; height:100%; display:flex; flex-direction:column; justify-content:center; align-items:center;">
-                        <i class="fas fa-bolt" style="font-size:4rem; color:#555; margin-bottom:1rem;"></i>
-                        <h2 style="color:#555;">ENERGY GRID</h2>
+                        <i class="fas fa-bolt" style="font-size:4rem; color:#f97316; margin-bottom:1rem;"></i>
+                        <h2 style="color:#f97316;">ENERGY GRID</h2>
                         <p class="text-muted">Power Plants & Utilities</p>
-                        <div style="margin-top:1rem;" class="badge badge-gray soc-card-status-badge">LOCKED</div>
-                    </div>
-                    <div
-                        style="position:absolute; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.5);">
+                        <div style="margin-top:1rem;" class="badge badge-orange soc-card-status-badge">ACTIVE</div>
                     </div>
                 </div>
 
                 <!-- 8. TELECOM -->
                 <div class="soc-card" id="card-telecom" onclick="openSector('telecom')"
-                    style="height:300px; cursor:pointer; position:relative; overflow:hidden; border-color: #333; opacity: 0.8 !important;">
-                    <div class="rbac-lock-overlay"><i class="fas fa-lock" style="font-size: 3rem; color: #fff;"></i>
-                    </div>
+                    style="height:300px; cursor:pointer; position:relative; overflow:hidden;">
                     <div
                         style="position:relative; z-index:2; height:100%; display:flex; flex-direction:column; justify-content:center; align-items:center;">
-                        <i class="fas fa-broadcast-tower" style="font-size:4rem; color:#555; margin-bottom:1rem;"></i>
-                        <h2 style="color:#555;">TELECOM</h2>
+                        <i class="fas fa-broadcast-tower" style="font-size:4rem; color:#8b5cf6; margin-bottom:1rem;"></i>
+                        <h2 style="color:#8b5cf6;">TELECOM</h2>
                         <p class="text-muted">ISP & 5G Infrastructure</p>
-                        <div style="margin-top:1rem;" class="badge badge-gray soc-card-status-badge">LOCKED</div>
-                    </div>
-                    <div
-                        style="position:absolute; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.5);">
+                        <div style="margin-top:1rem;" class="badge badge-purple soc-card-status-badge">ACTIVE</div>
                     </div>
                 </div>
 
                 <!-- 9. TRANSPORT -->
                 <div class="soc-card" id="card-transport" onclick="openSector('transport')"
-                    style="height:300px; cursor:pointer; position:relative; overflow:hidden; border-color: #333; opacity: 0.8 !important;">
-                    <div class="rbac-lock-overlay"><i class="fas fa-lock" style="font-size: 3rem; color: #fff;"></i>
-                    </div>
+                    style="height:300px; cursor:pointer; position:relative; overflow:hidden;">
                     <div
                         style="position:relative; z-index:2; height:100%; display:flex; flex-direction:column; justify-content:center; align-items:center;">
-                        <i class="fas fa-plane" style="font-size:4rem; color:#555; margin-bottom:1rem;"></i>
-                        <h2 style="color:#555;">TRANSPORT</h2>
+                        <i class="fas fa-plane" style="font-size:4rem; color:#14b8a6; margin-bottom:1rem;"></i>
+                        <h2 style="color:#14b8a6;">TRANSPORT</h2>
                         <p class="text-muted">Airport & Traffic Control</p>
-                        <div style="margin-top:1rem;" class="badge badge-gray soc-card-status-badge">LOCKED</div>
-                    </div>
-                    <div
-                        style="position:absolute; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.5);">
+                        <div style="margin-top:1rem;" class="badge badge-teal soc-card-status-badge">ACTIVE</div>
                     </div>
                 </div>
 
@@ -811,26 +796,23 @@
             'energy': {
                 title: 'ENERGY GRID',
                 id: 'SEC-NRG-03',
-                color: '#555',
+                color: '#f97316',
                 apiEndpoint: '/sectors/energy/stats',
-                minLevel: 3,
-                isComingSoon: true
+                minLevel: 3
             },
             'telecom': {
                 title: 'TELECOM SECTOR',
                 id: 'SEC-TEL-07',
-                color: '#555',
+                color: '#8b5cf6',
                 apiEndpoint: '/sectors/telecom/stats',
-                minLevel: 2,
-                isComingSoon: true
+                minLevel: 2
             },
             'transport': {
                 title: 'TRANSPORT SECTOR',
                 id: 'SEC-TRA-08',
-                color: '#555',
+                color: '#14b8a6',
                 apiEndpoint: '/sectors/transport/stats',
-                minLevel: 2,
-                isComingSoon: true
+                minLevel: 2
             }
         };
 
