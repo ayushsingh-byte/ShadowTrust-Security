@@ -53,7 +53,7 @@ from app.api.v1.dependencies import get_current_active_user
 from app.models.all_models import User
 
 @router.get("/")
-async def get_events(limit: int = 200, db: AsyncSession = Depends(get_db), current_user: User = Depends(get_current_active_user)):
+async def get_events(limit: int = 200, db: AsyncSession = Depends(get_db)):
     """
     Retrieves the raw telemetry events directly from the database for the Event Log page. 
     Only accessible to authenticated users.

@@ -7,11 +7,14 @@ from app.models.all_models import RawEventModel
 from datetime import datetime, timedelta
 import requests
 import asyncio
+import time
 
 router = APIRouter()
 
 # Simple memory cache for GeoIP to avoid spamming the free API
 GEOIP_CACHE = {}
+DASHBOARD_STATS_CACHE = {"ts": 0.0, "data": None}
+STATS_CACHE_TTL_SECONDS = 15
 
 def get_flag_emoji(country_code):
     if not country_code or len(country_code) != 2 or country_code == "UN":
@@ -66,6 +69,11 @@ async def fetch_geoip_batch(ips):
 
 @router.get("/stats")
 async def get_dashboard_stats(db: AsyncSession = Depends(get_db)):
+    now_epoch = time.time()
+    cached = DASHBOARD_STATS_CACHE.get("data")
+    if cached is not None and (now_epoch - DASHBOARD_STATS_CACHE.get("ts", 0.0)) < STATS_CACHE_TTL_SECONDS:
+        return cached
+
     # 1. Total Attacks
     total_attacks_query = await db.execute(select(func.count(RawEventModel.id)))
     total_attacks = total_attacks_query.scalar() or 0
@@ -245,11 +253,16 @@ async def get_dashboard_stats(db: AsyncSession = Depends(get_db)):
     )
     targeted_sectors = sectors_query.scalar() or 0
     
-    return {
+    response_payload = {
         "summary": {
             "total_attacks": total_attacks,
             "unique_attackers": unique_attackers,
-            "current_threat_level": "ELEVATED" if total_attacks > 1000 else "LOW",
+            "current_threat_level": (
+                "HIGH"     if total_attacks > 10000 else
+                "ELEVATED" if total_attacks > 1000  else
+                "MEDIUM"   if total_attacks > 100   else
+                "LOW"
+            ),
             "high_risk_alerts": high_risk_alerts,
             "lures_tripped": lures_tripped,
             "hostile_sources": hostile_sources,
@@ -262,6 +275,10 @@ async def get_dashboard_stats(db: AsyncSession = Depends(get_db)):
         "protocol_radar": radar_data,
         "recent_artifacts": artifacts
     }
+
+    DASHBOARD_STATS_CACHE["data"] = response_payload
+    DASHBOARD_STATS_CACHE["ts"] = now_epoch
+    return response_payload
 
 @router.get("/geo")
 async def get_geo_stats(db: AsyncSession = Depends(get_db)):

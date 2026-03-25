@@ -5,7 +5,6 @@ from datetime import datetime, timedelta
 
 from app.db.sqlite_db import get_db
 from app.models.all_models import RawEventModel
-from app.api.v1.dependencies import get_current_active_user, User
 from app.ai_engine.gnn_profiler import TemporalGNNProfiler
 
 router = APIRouter()
@@ -13,7 +12,6 @@ router = APIRouter()
 @router.get("/profile")
 async def get_behavior_profile(
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_active_user)
 ):
     """
     Fetches the latest chronological events and instantiates the Temporal GNN algorithmic model

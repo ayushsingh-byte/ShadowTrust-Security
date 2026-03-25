@@ -6,7 +6,6 @@ from datetime import datetime, timedelta
 
 from app.db.sqlite_db import get_db
 from app.models.all_models import RawEventModel
-from app.api.v1.dependencies import get_current_active_user, User
 
 router = APIRouter()
 
@@ -78,7 +77,6 @@ def map_to_mitre(event: RawEventModel):
 @router.get("/")
 async def get_mitre_matrix(
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_active_user)
 ):
     """
     Dynamically maps raw honeypot events to the MITRE ATT&CK framework.

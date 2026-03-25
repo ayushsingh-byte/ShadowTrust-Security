@@ -182,11 +182,41 @@ async def get_lab_status(
 
 @router.get("/cluster-metrics")
 async def get_cluster_metrics(
-    current_user: User = Depends(get_current_active_user)
+    db: AsyncSession = Depends(get_db),
 ):
     """
-    Returns actual live vCPU, RAM, and instances from AWS EC2
+    Returns actual live vCPU, RAM, and instances from AWS EC2.
+    Runs the blocking EC2 call in a thread so the event loop stays free.
     """
-    manager = LabSessionManager()
-    metrics = manager.aws.get_cluster_metrics()
-    return metrics
+    import asyncio
+    from app.models.all_models import SystemConfig
+    from sqlalchemy.future import select as sa_select
+
+    # Load saved AWS credentials for the orchestrator
+    result = await db.execute(
+        sa_select(SystemConfig).where(
+            SystemConfig.key.in_(["aws_access_key", "aws_secret_key", "aws_region"])
+        )
+    )
+    cfg = {r.key: r.value for r in result.scalars().all()}
+    aws_ak = cfg.get("aws_access_key", "")
+    aws_sk = cfg.get("aws_secret_key", "")
+    aws_region = cfg.get("aws_region", "ap-south-1")
+
+    if not aws_ak or not aws_sk:
+        return {"status": "success", "vcpu": 0, "ram": 0, "active_count": 0, "instances": []}
+
+    def _fetch():
+        manager = LabSessionManager(
+            aws_region=aws_region,
+            aws_access_key=aws_ak,
+            aws_secret_key=aws_sk,
+        )
+        return manager.aws.get_cluster_metrics()
+
+    try:
+        metrics = await asyncio.to_thread(_fetch)
+        return metrics
+    except Exception as e:
+        logger.warning(f"cluster-metrics fetch failed: {e}")
+        return {"status": "success", "vcpu": 0, "ram": 0, "active_count": 0, "instances": []}

@@ -732,7 +732,7 @@
         // Live geo events are loaded from the backend; no client-side fake/simulated data.
 
         // --- DYNAMIC NODE FETCHING ---
-        const API_BASE_URL = 'http://localhost:8000/api/v1';
+        // API calls go through apiService (imported above) which auto-resolves the base URL
 
         function formatCompactNumber(value) {
             const num = Number(value || 0);
@@ -977,6 +977,11 @@
 
             } catch (error) {
                 console.error('Failed to fetch dashboard stats:', error);
+                // Show a non-blocking indicator so users know data failed to load
+                const feedEl = document.getElementById('liveFeed');
+                if (feedEl && feedEl.children.length === 0) {
+                    feedEl.innerHTML = '<div style="color:#ff3333; font-size:0.8rem; padding:8px; font-family:\'JetBrains Mono\',monospace;"><i class="fas fa-exclamation-triangle"></i> Data load failed — backend may be starting. Auto-retrying...</div>';
+                }
             }
         }
 
@@ -1107,10 +1112,10 @@
 
         // Fetch initially and loop
         fetchNodes();
-        setInterval(fetchNodes, 5000);
+        setInterval(fetchNodes, 12000);
 
         fetchHoneypotStats();
-        setInterval(fetchHoneypotStats, 10000);
+        setInterval(fetchHoneypotStats, 20000);
 
         // Protocol Radar Chart (Tactical)
         const radarCtx = document.getElementById('protocolRadar').getContext('2d');
@@ -1215,7 +1220,8 @@
                             aws_access_key: localStorage.getItem('_st_aws_access_key') || '',
                             aws_secret_key: localStorage.getItem('_st_aws_secret_key') || '',
                             aws_region:     localStorage.getItem('_st_aws_region')      || 'ap-south-1',
-                            s3_bucket_3rd:  localStorage.getItem('_st_s3_bucket')       || 'honeynet-telemetry-logs'
+                            s3_bucket_3rd:  localStorage.getItem('_st_s3_bucket')       || 'honeynet-telemetry-logs',
+                            force_repull: true
                         });
                     } catch (e) {
                         console.error('Failed to trigger S3 manual sync on intelligence refresh:', e);

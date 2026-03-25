@@ -1,17 +1,25 @@
 import boto3
+from botocore.config import Config as BotoConfig
 from botocore.exceptions import ClientError, BotoCoreError
 import logging
 from typing import Dict, Any, Optional
 
 logger = logging.getLogger(__name__)
 
+# Short timeouts — prevents blocking the FastAPI event loop on AWS failures
+_BOTO_CFG = BotoConfig(
+    connect_timeout=8,
+    read_timeout=15,
+    retries={"max_attempts": 1},
+)
+
 class AWSOrchestrator:
     def __init__(self, region_name='ap-south-1', aws_access_key=None, aws_secret_key=None):
         self.region_name = region_name
         self.aws_access_key = aws_access_key
         self.aws_secret_key = aws_secret_key
-        
-        client_kwargs = {'region_name': region_name}
+
+        client_kwargs = {'region_name': region_name, 'config': _BOTO_CFG}
         if aws_access_key and aws_secret_key:
             client_kwargs['aws_access_key_id'] = aws_access_key
             client_kwargs['aws_secret_access_key'] = aws_secret_key

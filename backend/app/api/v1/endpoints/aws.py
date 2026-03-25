@@ -19,6 +19,7 @@ import re
 from datetime import datetime
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+from sqlalchemy import update
 
 from app.db.sqlite_db import get_db
 from app.models.all_models import RawEventModel, SystemConfig, S3SyncState
@@ -40,6 +41,17 @@ class AWSDebugRequest(AWSTestRequest):
 class AWSS3PullRequest(AWSTestRequest):
     s3_bucket_3rd: str
     force_repull: bool = False  # if True, re-process files already in S3SyncState
+
+
+async def _load_saved_aws_config(db: AsyncSession) -> Dict[str, str]:
+    """Load persisted AWS config values from SystemConfig as a lightweight fallback."""
+    result = await db.execute(
+        select(SystemConfig).where(
+            SystemConfig.key.in_(["aws_access_key", "aws_secret_key", "aws_region", "s3_bucket", "s3_bucket_3rd"])
+        )
+    )
+    rows = result.scalars().all()
+    return {row.key: (row.value or "") for row in rows}
 
 class ConfigSaveRequest(BaseModel):
     aws_access_key: str
@@ -135,62 +147,60 @@ async def full_aws_diagnostic(request: AWSDebugRequest):
     """
     Executes a comprehensive battery of tests against the AWS environment.
     Tests: 1. STS Identify, 2. EC2 Describe access, 3. S3 Bucket access, 4. IAM Profile Validation.
-    Returns a unified diagnostic report.
+    All blocking boto3 calls run in a thread so the event loop stays free.
     """
-    results = []
+    import asyncio
 
-    try:
-        session = boto3.Session(
-            aws_access_key_id=request.aws_access_key,
-            aws_secret_access_key=request.aws_secret_key,
-            region_name=request.aws_region
-        )
-    except Exception as e:
-        return {"status": "error", "message": f"Failed to initialize Boto3 session: {str(e)}", "results": results}
-
-    # Test 1: STS
-    try:
-        sts = session.client('sts', config=_BOTO_CFG)
-        sts_res = sts.get_caller_identity()
-        results.append({"name": "STS Authentication", "status": "PASS", "info": f"Account: {sts_res.get('Account')}"})
-    except Exception as e:
-        results.append({"name": "STS Authentication", "status": "FAIL", "info": str(e)})
-        return {"status": "failed", "results": results} # Stop here if auth fails entirely
-
-    # Test 2: EC2 Access
-    try:
-        ec2 = session.client('ec2', config=_BOTO_CFG)
-        ec2.describe_instances(MaxResults=5)
-        results.append({"name": "EC2 Describe Access", "status": "PASS", "info": "Can read EC2 inventory"})
-    except Exception as e:
-        results.append({"name": "EC2 Describe Access", "status": "FAIL", "info": str(e)})
-
-    # Test 3: S3 Bucket Access
-    if request.s3_bucket:
+    def _run_diagnostics():
+        results = []
         try:
-            s3 = session.client('s3', config=_BOTO_CFG)
-            s3.head_bucket(Bucket=request.s3_bucket)
-            results.append({"name": f"S3 Access ({request.s3_bucket})", "status": "PASS", "info": "Bucket found and accessible"})
+            session = boto3.Session(
+                aws_access_key_id=request.aws_access_key,
+                aws_secret_access_key=request.aws_secret_key,
+                region_name=request.aws_region
+            )
         except Exception as e:
-            results.append({"name": f"S3 Access ({request.s3_bucket})", "status": "FAIL", "info": str(e)})
+            return {"status": "error", "message": f"Failed to initialize Boto3 session: {str(e)}", "results": results}
 
-    # Test 4: IAM Instance Profile Validation
-    if request.iam_profile:
+        # Test 1: STS
         try:
-            iam = session.client('iam', config=_BOTO_CFG)
-            iam.get_instance_profile(InstanceProfileName=request.iam_profile)
-            results.append({"name": f"IAM Profile ({request.iam_profile})", "status": "PASS", "info": "Profile exists and is accessible"})
+            sts = session.client('sts', config=_BOTO_CFG)
+            sts_res = sts.get_caller_identity()
+            results.append({"name": "STS Authentication", "status": "PASS", "info": f"Account: {sts_res.get('Account')}"})
         except Exception as e:
-            results.append({"name": f"IAM Profile ({request.iam_profile})", "status": "FAIL", "info": str(e)})
+            results.append({"name": "STS Authentication", "status": "FAIL", "info": str(e)})
+            return {"status": "failed", "results": results}
 
-    # Determine overall status
-    overall_status = "error" if any(r["status"] == "FAIL" for r in results) else "success"
-    
-    return {
-        "status": overall_status,
-        "results": results,
-        "region": request.aws_region
-    }
+        # Test 2: EC2 Access
+        try:
+            ec2 = session.client('ec2', config=_BOTO_CFG)
+            ec2.describe_instances(MaxResults=5)
+            results.append({"name": "EC2 Describe Access", "status": "PASS", "info": "Can read EC2 inventory"})
+        except Exception as e:
+            results.append({"name": "EC2 Describe Access", "status": "FAIL", "info": str(e)})
+
+        # Test 3: S3 Bucket Access
+        if request.s3_bucket:
+            try:
+                s3 = session.client('s3', config=_BOTO_CFG)
+                s3.head_bucket(Bucket=request.s3_bucket)
+                results.append({"name": f"S3 Access ({request.s3_bucket})", "status": "PASS", "info": "Bucket found and accessible"})
+            except Exception as e:
+                results.append({"name": f"S3 Access ({request.s3_bucket})", "status": "FAIL", "info": str(e)})
+
+        # Test 4: IAM Instance Profile Validation
+        if request.iam_profile:
+            try:
+                iam = session.client('iam', config=_BOTO_CFG)
+                iam.get_instance_profile(InstanceProfileName=request.iam_profile)
+                results.append({"name": f"IAM Profile ({request.iam_profile})", "status": "PASS", "info": "Profile exists and is accessible"})
+            except Exception as e:
+                results.append({"name": f"IAM Profile ({request.iam_profile})", "status": "FAIL", "info": str(e)})
+
+        overall_status = "error" if any(r["status"] == "FAIL" for r in results) else "success"
+        return {"status": overall_status, "results": results, "region": request.aws_region}
+
+    return await asyncio.to_thread(_run_diagnostics)
 
 # Only skip true binary/non-log file types.
 # Removed: .csv, .yml, .yaml, .log, .md, .rst, .py, .sh
@@ -235,7 +245,7 @@ _ML_RISK_MAP = {
 }
 
 
-def _s3_fetch_and_parse(request: "AWSS3PullRequest", processed_db_keys: set):
+def _s3_fetch_and_parse(request: "AWSS3PullRequest", processed_state_by_key: Dict[str, datetime]):
     """
     Synchronous S3 list + download + parse.  Runs in a thread-pool executor so
     it never blocks the FastAPI / asyncio event loop.  Returns plain Python
@@ -259,16 +269,35 @@ def _s3_fetch_and_parse(request: "AWSS3PullRequest", processed_db_keys: set):
         return [], [], 0, 0
 
     files = sorted(all_files, key=lambda x: x['LastModified'], reverse=True)
-    unprocessed_files = files if request.force_repull else [
-        f for f in files if f['Key'] not in processed_db_keys
-    ]
+    if request.force_repull:
+        candidate_files = files
+    else:
+        candidate_files = []
+        for obj in files:
+            key = obj['Key']
+            processed_at = processed_state_by_key.get(key)
+            if processed_at is None:
+                candidate_files.append(obj)
+                continue
+
+            last_modified = obj.get('LastModified')
+            try:
+                # Normalize to naive UTC — processed_at is naive UTC, boto3 LastModified is
+                # timezone-aware UTC. Stripping tzinfo makes the comparison safe and avoids
+                # a TypeError that would silently re-process all files every cycle.
+                lm = last_modified.replace(tzinfo=None) if (last_modified and last_modified.tzinfo) else last_modified
+                if lm and lm > processed_at:
+                    candidate_files.append(obj)
+            except Exception:
+                # Fallback: process to avoid missing fresh data.
+                candidate_files.append(obj)
 
     logs_processed = 0
     skipped_files  = 0
     db_events: list = []
-    db_states: list = []
+    touched_keys = set()
 
-    for obj in unprocessed_files[:1000]:
+    for obj in candidate_files[:1000]:
         key = obj['Key']
 
         if key.endswith('/'):
@@ -278,12 +307,11 @@ def _s3_fetch_and_parse(request: "AWSS3PullRequest", processed_db_keys: set):
         if ext in _SKIP_EXTENSIONS:
             continue
 
-        db_states.append(S3SyncState(file_key=key))
-        telemetry_engine.processed_s3_keys.add(key)
-
         try:
             file_obj = s3.get_object(Bucket=bucket_name, Key=key)
             content  = file_obj['Body'].read().decode('utf-8', errors='ignore')
+            touched_keys.add(key)
+            telemetry_engine.processed_s3_keys.add(key)
         except Exception as fetch_err:
             logger.warning(f"Could not fetch s3://{bucket_name}/{key}: {fetch_err}")
             skipped_files += 1
@@ -379,7 +407,7 @@ def _s3_fetch_and_parse(request: "AWSS3PullRequest", processed_db_keys: set):
             ))
             logs_processed += 1
 
-    return db_events, db_states, logs_processed, skipped_files
+    return db_events, touched_keys, logs_processed, skipped_files
 
 
 @router.post("/pull-s3-logs", response_model=Dict[str, Any])
@@ -392,25 +420,48 @@ async def pull_s3_logs(request: AWSS3PullRequest, db: AsyncSession = Depends(get
     import asyncio
 
     try:
+        saved_cfg = await _load_saved_aws_config(db)
+        effective_request = AWSS3PullRequest(
+            aws_access_key=(request.aws_access_key or saved_cfg.get("aws_access_key", "")).strip(),
+            aws_secret_key=(request.aws_secret_key or saved_cfg.get("aws_secret_key", "")).strip(),
+            aws_region=(request.aws_region or saved_cfg.get("aws_region", "ap-south-1")).strip() or "ap-south-1",
+            s3_bucket_3rd=(request.s3_bucket_3rd or saved_cfg.get("s3_bucket_3rd") or saved_cfg.get("s3_bucket") or "").strip(),
+            force_repull=request.force_repull,
+        )
+
+        if not effective_request.aws_access_key or not effective_request.aws_secret_key or not effective_request.s3_bucket_3rd:
+            raise HTTPException(
+                status_code=400,
+                detail="Missing AWS credentials or S3 bucket. Configure AWS first in AWS Connection page.",
+            )
+
         # Load already-processed file keys (fast async DB read)
-        processed_query = await db.execute(select(S3SyncState.file_key))
-        processed_db_keys = set(processed_query.scalars().all())
+        processed_query = await db.execute(select(S3SyncState.file_key, S3SyncState.processed_at))
+        processed_state_by_key = {row.file_key: row.processed_at for row in processed_query}
 
         # ── Run ALL blocking S3 work in a thread — keeps event loop free ──────
         try:
-            db_events, db_states, logs_processed, skipped_files = await asyncio.to_thread(
-                _s3_fetch_and_parse, request, processed_db_keys
+            db_events, touched_keys, logs_processed, skipped_files = await asyncio.to_thread(
+                _s3_fetch_and_parse, effective_request, processed_state_by_key
             )
         except ClientError as ce:
             error_message = ce.response.get('Error', {}).get('Message', str(ce))
             raise HTTPException(status_code=400, detail=f"S3 Access Error: {error_message}")
 
-        if not db_states and not db_events:
-            return {"status": "success", "message": "No new objects found in S3 bucket.", "inserted_count": 0}
+        if not touched_keys and not db_events:
+            return {"status": "success", "message": "No new or updated objects found in S3 bucket.", "inserted_count": 0}
 
         # ── Async DB writes ───────────────────────────────────────────────────
-        for state in db_states:
-            db.add(state)
+        now_utc = datetime.utcnow()
+        for key in touched_keys:
+            if key in processed_state_by_key:
+                await db.execute(
+                    update(S3SyncState)
+                    .where(S3SyncState.file_key == key)
+                    .values(processed_at=now_utc)
+                )
+            else:
+                db.add(S3SyncState(file_key=key, processed_at=now_utc))
         try:
             await db.commit()
         except Exception:
@@ -432,9 +483,9 @@ async def pull_s3_logs(request: AWSS3PullRequest, db: AsyncSession = Depends(get
         logger.info(f"S3 pull complete: {logs_processed} events ingested, {skipped_files} files skipped.")
         return {
             "status": "success",
-            "message": f"Successfully ingested {logs_processed} events from {len(db_states)} files.",
+            "message": f"Successfully ingested {logs_processed} events from {len(touched_keys)} files.",
             "inserted_count": logs_processed,
-            "files_scanned": len(db_states),
+            "files_scanned": len(touched_keys),
             "files_skipped": skipped_files,
         }
 

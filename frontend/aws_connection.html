@@ -315,10 +315,29 @@
             }
         }
 
+        // Inline toast — replaces blocking alert() calls
+        function showToast(msg, isError = false) {
+            let toast = document.getElementById('_cfg_toast');
+            if (!toast) {
+                toast = document.createElement('div');
+                toast.id = '_cfg_toast';
+                toast.style.cssText = 'position:fixed;bottom:24px;right:24px;z-index:99999;padding:12px 20px;border-radius:4px;font-family:"JetBrains Mono",monospace;font-size:0.85rem;max-width:420px;transition:opacity 0.4s;';
+                document.body.appendChild(toast);
+            }
+            toast.style.background   = isError ? 'rgba(255,51,51,0.15)' : 'rgba(0,198,255,0.12)';
+            toast.style.border       = isError ? '1px solid #ff3333' : '1px solid #00c6ff';
+            toast.style.color        = isError ? '#ff6666' : '#00c6ff';
+            toast.style.opacity      = '1';
+            toast.innerHTML          = `<i class="fas fa-${isError ? 'exclamation-triangle' : 'check-circle'}"></i> ${msg}`;
+            clearTimeout(toast._timer);
+            toast._timer = setTimeout(() => { toast.style.opacity = '0'; }, 4000);
+        }
+
         window.saveAwsConfig = async function (event) {
             const btn = event.target;
             const originalText = btn.innerText;
             btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> SAVING TO VAULT...';
+            btn.disabled = true;
 
             const map = {
                 'awsAccessKey': '_st_aws_access_key',
@@ -335,23 +354,21 @@
 
             for (const [domId, lsKey] of Object.entries(map)) {
                 const el = document.getElementById(domId);
-                if (el) {
-                    localStorage.setItem(lsKey, el.value.trim()); // Save empty strings if user clears field
-                }
+                if (el) localStorage.setItem(lsKey, el.value.trim());
             }
 
-            // Also keep the legacy names for vm_client compatibility
+            // Keep legacy keys for vm_client compatibility
             localStorage.setItem('_st_aws_ak', document.getElementById('awsAccessKey').value);
             localStorage.setItem('_st_aws_sk', document.getElementById('awsSecretKey').value);
             localStorage.setItem('_st_aws_sg', document.getElementById('securityGroupId').value);
 
             try {
-                // Send to backend vault for the autonomous Python workers
                 await window.apiService.post('/aws/config', {
                     aws_access_key: document.getElementById('awsAccessKey').value,
                     aws_secret_key: document.getElementById('awsSecretKey').value,
                     aws_region: document.getElementById('awsRegion').value || 'ap-south-1',
                     s3_bucket: document.getElementById('s3Bucket').value,
+                    s3_bucket_3rd: document.getElementById('s3Bucket').value,
                     subnet_id: document.getElementById('subnetId').value,
                     security_group_id: document.getElementById('securityGroupId').value,
                     iam_profile: document.getElementById('iamProfile').value,
@@ -361,14 +378,12 @@
                 });
 
                 btn.innerHTML = '<i class="fas fa-check"></i> SAVED';
-                alert("Master Configuration Hub Synchronized. Virtual Lab and Autonomous S3 Workers will now deploy using these variables.");
-
-                setTimeout(() => {
-                    btn.innerText = originalText;
-                }, 2000);
+                showToast('Configuration saved. S3 workers and Virtual Lab will use these credentials.');
+                setTimeout(() => { btn.innerHTML = originalText; btn.disabled = false; }, 2500);
             } catch (err) {
-                alert("Failed to sync configuration to backend vault: " + err.message);
-                btn.innerText = originalText;
+                showToast('Failed to sync to backend vault: ' + err.message, true);
+                btn.innerHTML = originalText;
+                btn.disabled = false;
             }
         }
 

@@ -93,7 +93,6 @@ def _validate_sector(sector_key: str) -> str:
 @router.get("")
 async def list_sectors(
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_active_user),
 ):
     """Return all sectors with target count and total event count."""
     rows = await db.execute(

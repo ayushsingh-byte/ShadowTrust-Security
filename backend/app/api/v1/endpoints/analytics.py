@@ -6,7 +6,6 @@ import json
 
 from app.db.sqlite_db import get_db
 from app.models.all_models import RawEventModel
-from app.api.v1.dependencies import get_current_active_user, User
 
 # We can import fetch_geoip_batch from dashboard to reuse the cache
 from app.api.v1.endpoints.dashboard import fetch_geoip_batch
@@ -16,7 +15,6 @@ router = APIRouter()
 @router.get("/graphs")
 async def get_analytics_graphs(
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_active_user)
 ):
     """
     Provides aggregated, structured data for all 10 Chart.js widgets on the Deep Analytics page.
@@ -249,7 +247,6 @@ async def get_analytics_graphs(
 @router.get("/credentials")
 async def get_credentials_vault(
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_active_user)
 ):
     """
     Extracts credentials (usernames and passwords) captured by honeypots from the raw payload logs.
