@@ -119,16 +119,14 @@ class VMLabClient {
                 }
 
             } catch (error) {
-                console.warn(`[VMLab] Could not verify status for ${profileId}. Keeping state.`, error);
+                console.warn(`[VMLab] Could not verify status for ${profileId}. Clearing stale state.`, error);
 
-                // If backend is unreachable, we keep the UI in its current logical state
-                if (btn && instanceData.labId) {
-                    // Try to guess based on existing UI state or assume it's still active if we don't know
-                    // Let's just leave it alone or set to ACTIVE so user doesn't lose the button
-                    this.setButtonState(btn, 'ACTIVE', 'CONNECT TERMINAL');
-                    const orb = document.getElementById(`dot_${profileId}`);
-                    if (orb) { orb.style.background = 'var(--accent-primary)'; orb.style.boxShadow = '0 0 10px var(--accent-primary)'; }
-                }
+                // Backend unreachable — cannot confirm instance is alive, so clear the stale entry
+                delete this.instances[profileId];
+                this.saveState();
+                if (btn) this.setButtonState(btn, 'DEFAULT', 'PROVISION');
+                const orb = document.getElementById(`dot_${profileId}`);
+                if (orb) { orb.style.background = '#555'; orb.style.boxShadow = 'none'; orb.style.animation = 'none'; }
                 continue;
             }
         }
@@ -455,18 +453,21 @@ class VMLabClient {
                         setTimeout(() => { hint.style.display = 'none'; }, 4200);
                     }
                 } else {
-                    // Lab is READY but Guacamole connection was not registered (Guacamole may be offline)
+                    // Lab is READY but Guacamole connection was not registered (Guacamole may have been offline during provisioning)
                     frame.style.display = 'none';
                     const loader = document.getElementById('vdiLoaderText');
                     loader.style.display = 'block';
                     loader.innerHTML = `
                         <i class="fas fa-exclamation-triangle" style="font-size:2rem;color:var(--accent-secondary);margin-bottom:10px;"></i>
                         <div style="color:var(--accent-secondary)">INSTANCE READY — NO BROWSER SESSION</div>
-                        <div style="font-size:0.8rem;color:#888;margin-top:8px;">Guacamole is offline. Connect directly:</div>
+                        <div style="font-size:0.8rem;color:#888;margin-top:8px;">Guacamole session was not registered. Instance is running.</div>
                         <div style="font-size:0.85rem;color:var(--text-primary);margin-top:6px;font-family:var(--font-mono);">
-                            IP: <span style="color:var(--accent-primary)">${response.instance_id || 'See AWS Console'}</span>
+                            IP: <span style="color:var(--accent-primary)">${response.private_ip || response.instance_id || 'See AWS Console'}</span>
                         </div>
-                        <div style="margin-top:12px;">
+                        <div style="margin-top:12px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap;">
+                            <button onclick="window.vmClient.reattachGuacamole('${labId}')" class="soc-btn" style="font-size:0.75rem;padding:8px 14px;cursor:pointer;">
+                                <i class="fas fa-sync"></i> Retry Connection
+                            </button>
                             <a href="http://localhost:8080/guacamole/" target="_blank" class="soc-btn" style="font-size:0.75rem;padding:8px 14px;">
                                 <i class="fas fa-external-link-alt"></i> Open Guacamole
                             </a>
@@ -498,6 +499,23 @@ class VMLabClient {
         } catch (e) {
             console.error('Polling error', e);
             setTimeout(() => this.pollVdiStatus(labId), 3000);
+        }
+    }
+
+    async reattachGuacamole(labId) {
+        this.showNotification('Re-registering Guacamole session...', 'success');
+        const loader = document.getElementById('vdiLoaderText');
+        if (loader) {
+            loader.innerHTML = `<i class="fas fa-spinner fa-spin" style="font-size:2rem;color:var(--accent-primary);margin-bottom:10px;"></i><div style="color:#aaa;margin-top:8px;">Re-registering browser session...</div>`;
+        }
+        try {
+            await apiService.post(`/labs/reattach/${labId}`, {});
+            // Give the background task ~3s to write to Guacamole DB, then re-poll
+            setTimeout(() => this.pollVdiStatus(labId), 3000);
+        } catch (e) {
+            this.showNotification(`Reattach failed: ${e.message}`, 'error');
+            // Reset display to show the error state again
+            setTimeout(() => this.pollVdiStatus(labId), 1000);
         }
     }
 

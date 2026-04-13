@@ -20,13 +20,15 @@ def load_local_state():
         try:
             with open(STATE_FILE, "r") as f:
                 state = json.load(f)
-            # Any PROVISIONING entries left over from a previous process run are stuck —
-            # the background task that was polling AWS died with that process.
-            # Mark them ERROR so the frontend can reset cleanly instead of polling forever.
+            # Any PROVISIONING/READY/RUNNING entries left over from a previous process run
+            # are unverifiable — the background workers that were tracking them are dead
+            # and we cannot confirm the EC2 instances are still alive without an AWS call.
+            # Mark them TERMINATED so the frontend resets cleanly instead of showing stale
+            # "CONNECT TERMINAL" buttons for instances that may no longer exist.
             changed = False
             for lab_id, record in state.items():
-                if record.get("status") == "PROVISIONING":
-                    record["status"] = "ERROR"
+                if record.get("status") in ("PROVISIONING", "READY", "RUNNING"):
+                    record["status"] = "TERMINATED"
                     changed = True
             if changed:
                 try:

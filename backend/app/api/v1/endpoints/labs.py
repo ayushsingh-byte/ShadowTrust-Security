@@ -1,3 +1,4 @@
+import logging
 from fastapi import APIRouter, HTTPException, BackgroundTasks, Depends
 from pydantic import BaseModel
 from typing import Dict, Any, Optional
@@ -7,7 +8,9 @@ from sqlalchemy.future import select
 from app.db.sqlite_db import get_db, AsyncSessionLocal
 from app.models.all_models import User, VMInstance
 from app.api.v1.dependencies import get_current_active_user
-from app.services.session_manager import LabSessionManager
+from app.services.session_manager import LabSessionManager, GLOBAL_LAB_STATE, save_local_state
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -220,3 +223,62 @@ async def get_cluster_metrics(
     except Exception as e:
         logger.warning(f"cluster-metrics fetch failed: {e}")
         return {"status": "success", "vcpu": 0, "ram": 0, "active_count": 0, "instances": []}
+
+
+@router.post("/reattach/{lab_id}")
+async def reattach_guacamole(
+    lab_id: str,
+    background_tasks: BackgroundTasks,
+    current_user: User = Depends(get_current_active_user)
+):
+    """
+    Re-registers a Guacamole connection for a READY lab that has no browser session.
+    Called when a lab is READY but guacamole_connection_id is null (e.g. Guacamole was
+    down when the EC2 instance first came online).
+    """
+    record = GLOBAL_LAB_STATE.get(lab_id)
+    if not record:
+        raise HTTPException(status_code=404, detail="Lab not found in active state")
+
+    status = record.get("status", "").upper()
+    private_ip = record.get("private_ip")
+
+    if status not in ["READY", "RUNNING"]:
+        raise HTTPException(status_code=400, detail=f"Lab is not READY (current: {status})")
+
+    if not private_ip:
+        raise HTTPException(status_code=400, detail="Lab has no IP address recorded — cannot create Guacamole connection")
+
+    if record.get("guacamole_connection_id"):
+        return {"status": "already_connected", "guacamole_connection_id": record["guacamole_connection_id"]}
+
+    async def _reattach():
+        manager = LabSessionManager()
+        protocol   = record.get("protocol", "rdp")
+        profile_id = record.get("profile_id", "")
+        port       = "22" if protocol == "ssh" else "3389"
+
+        if "kali" in profile_id:
+            username, password = "kali", "kali"
+        elif "malware" in profile_id:
+            username, password = "Administrator", "N1oHa9gwwPqU8b?0E(K4Mv2&Y&iu&u85"
+        else:
+            username, password = "Administrator", "2aA.XlugId5KDkwu!pc5!@UygmmVkvov"
+
+        guac_id = manager.guac.create_connection(
+            lab_id=lab_id,
+            private_ip=private_ip,
+            protocol=protocol,
+            port=port,
+            username=username,
+            password=password
+        )
+        if guac_id:
+            GLOBAL_LAB_STATE[lab_id]["guacamole_connection_id"] = guac_id
+            save_local_state(GLOBAL_LAB_STATE)
+            logger.info(f"Reattached Guacamole connection #{guac_id} for lab {lab_id} at {private_ip}")
+        else:
+            logger.warning(f"Reattach failed for lab {lab_id} — Guacamole DB still unreachable")
+
+    background_tasks.add_task(_reattach)
+    return {"status": "reattaching", "message": "Guacamole connection is being re-registered. Poll /status in ~3 seconds."}

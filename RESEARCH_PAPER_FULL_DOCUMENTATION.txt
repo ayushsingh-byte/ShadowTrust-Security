@@ -1,0 +1,2703 @@
+================================================================================
+   SHADOW TRUST — AI-POWERED SOC HONEYNET PLATFORM
+   COMPREHENSIVE TECHNICAL DOCUMENTATION FOR RESEARCH PAPER
+   (60+ Page Reference Document)
+================================================================================
+
+Document Version  : 1.0
+Platform Name     : Shadow Trust
+Platform Subtitle : AI-Powered Security Operations Center & Threat Intelligence Platform
+Date Compiled     : 2026-03-31
+Total Source Files: 80+ files | ~53,000 lines of code
+Compiled By       : Auto-extracted from live codebase for research/academic use
+
+================================================================================
+TABLE OF CONTENTS
+================================================================================
+
+PART 1  — PROJECT OVERVIEW & MOTIVATION
+PART 2  — SYSTEM ARCHITECTURE
+PART 3  — TECHNOLOGY STACK & DEPENDENCIES
+PART 4  — DATABASE SCHEMAS & DATA MODELS
+PART 5  — ALGORITHMS (COMPLETE CODE + EXPLANATIONS)
+  5.1   AI Attack Classification Engine
+  5.2   MITRE ATT&CK Mapping Algorithm
+  5.3   Temporal GNN Behavioral Profiler
+  5.4   Static Binary Analysis Engine
+  5.5   CAPE Sandbox Engine & Heuristic Simulation
+  5.6   APK Intelligence Engine
+  5.7   Secret Detection Engine
+  5.8   URL Threat Intelligence Engine
+  5.9   Session Correlation Engine
+  5.10  Background Sync Pipeline
+  5.11  Shannon Entropy Algorithm
+  5.12  Risk Scoring Algorithms
+PART 6  — DATA PIPELINES & DATA FLOW
+PART 7  — API REFERENCE (ALL ENDPOINTS)
+PART 8  — SECURITY ARCHITECTURE
+PART 9  — HONEYPOT NETWORK DESIGN
+PART 10 — CLOUD ORCHESTRATION (AWS)
+PART 11 — FRONTEND ARCHITECTURE (30+ PAGES)
+PART 12 — NOTIFICATION & ALERTING SYSTEM
+PART 13 — DATASETS USED
+PART 14 — DEPLOYMENT ARCHITECTURE (DOCKER)
+PART 15 — PERFORMANCE CHARACTERISTICS
+PART 16 — RESEARCH CONTRIBUTIONS & NOVELTY
+PART 17 — RELATED WORK & COMPARISON
+PART 18 — RAW CODE APPENDIX
+
+================================================================================
+PART 1 — PROJECT OVERVIEW & MOTIVATION
+================================================================================
+
+1.1 ABSTRACT
+------------
+Shadow Trust is a full-stack, production-grade, AI-powered Security Operations
+Center (SOC) and Threat Intelligence Platform built around a distributed honeynet
+architecture. The system combines low-interaction and medium-interaction honeypots
+(Cowrie SSH/Telnet, Dionaea malware capture, Honeytrap multi-port) with a
+cloud-native analytics backend, a 30+ page operator dashboard, a 4-stage automated
+malware analysis pipeline, a Temporal Graph Neural Network (GNN) behavioral profiler,
+MITRE ATT&CK framework integration, AWS cloud orchestration for dynamic VM
+provisioning, multi-channel alerting (Email + WhatsApp), and a 6-tier Role-Based
+Access Control (RBAC) system.
+
+1.2 MOTIVATION
+--------------
+Traditional Security Operations Centers (SOCs) rely on reactive, signature-based
+intrusion detection systems (IDS) that fail to detect novel or polymorphic threats.
+The research gap addressed by Shadow Trust is:
+
+  (a) Passive vs. Active Intelligence: Honeypots traditionally log attacks but
+      don't analyze them in real-time. Shadow Trust closes this gap by running an
+      AI classification engine, session correlator, and malware analyzer
+      concurrently with event ingestion.
+
+  (b) Fragmented Tooling: Analysts typically juggle 8-12 disparate tools
+      (Wireshark, VirusTotal, MITRE Navigator, sandbox, GeoIP, etc.). Shadow Trust
+      unifies all of these into a single operator console.
+
+  (c) Lack of Mobile Threat Coverage: Existing SOC platforms focus on network-level
+      and Windows binary analysis. Shadow Trust adds a dedicated APK (Android
+      Package) intelligence engine.
+
+  (d) Edge-Cloud Architecture Gap: Most honeypots either store data purely locally
+      or require constant cloud connectivity. Shadow Trust implements an
+      "edge-first" SQLite architecture with eventual-consistency S3 sync — allowing
+      offline honeypot operation.
+
+1.3 PLATFORM NAME & BRANDING
+-----------------------------
+Internal Code Name : Shadow Trust
+Version            : 2.0.0
+API Title          : "Shadow Trust AI Honeypot"
+Default Admin      : admin@gmail.com / admin
+Default Port       : 8000 (Backend), 5500 (Frontend), 3000 (Edge API), 5055 (MobSF)
+
+================================================================================
+PART 2 — SYSTEM ARCHITECTURE
+================================================================================
+
+2.1 HIGH-LEVEL ARCHITECTURE OVERVIEW
+--------------------------------------
+Shadow Trust is structured in 5 horizontal layers:
+
+  LAYER 1 — CAPTURE LAYER (Honeypots)
+  ┌────────────────────────────────────────────────────────┐
+  │  Cowrie (SSH/Telnet) │ Dionaea (Malware) │ Honeytrap  │
+  │  Port 22/23           │ Multiple Ports   │ Custom      │
+  └────────────────────────────────────────────────────────┘
+               ↓ Raw log events (JSON/syslog)
+
+  LAYER 2 — EDGE INGESTION LAYER
+  ┌────────────────────────────────────────────────────────┐
+  │  FastAPI /api/v1/events/ingest  (Port 8000)            │
+  │  Node.js Fastify Collector      (Port 3000)            │
+  │  SQLite ingestion.db (PENDING → SYNCED)                │
+  └────────────────────────────────────────────────────────┘
+               ↓ Background workers (10s cycle)
+
+  LAYER 3 — ANALYSIS LAYER
+  ┌────────────────────────────────────────────────────────┐
+  │  AI Engine (classifier.py)  — Attack type detection    │
+  │  Session Engine             — Attacker session grouping│
+  │  GNN Profiler               — Behavioral graph analysis│
+  │  Malware Pipeline           — 4-stage analysis         │
+  │  URL Scanner                — Multi-engine reputation  │
+  └────────────────────────────────────────────────────────┘
+               ↓ Structured Events (SQLite + S3)
+
+  LAYER 4 — CLOUD SYNC LAYER
+  ┌────────────────────────────────────────────────────────┐
+  │  AWS S3 (Telemetry logs)                               │
+  │  Supabase PostgreSQL (Real-time sync)                  │
+  │  AWS EC2 (Dynamic VM provisioning)                     │
+  │  AWS SSM (Remote session management)                   │
+  └────────────────────────────────────────────────────────┘
+               ↓ Dashboard API calls
+
+  LAYER 5 — PRESENTATION LAYER
+  ┌────────────────────────────────────────────────────────┐
+  │  Nginx Static Server (Port 5500)                       │
+  │  30+ HTML pages with Vanilla JS                        │
+  │  Leaflet.js GeoIP Map                                  │
+  │  Chart.js Visualizations                               │
+  │  Vis.js Network Graph (GNN)                            │
+  └────────────────────────────────────────────────────────┘
+
+2.2 MICROSERVICES BREAKDOWN
+-----------------------------
+The platform is split into 5 containerized microservices:
+
+  SERVICE 1: backend (FastAPI)
+    - Image    : Python 3.11 multi-stage Docker build
+    - Port     : 8000
+    - Role     : Core API, all detection logic, DB access
+    - Workers  : 3 background async tasks (sync, session, telemetry)
+
+  SERVICE 2: mobsf (Flask Proxy)
+    - Image    : Custom Flask + MobSF integration
+    - Port     : 5055
+    - Role     : APK analysis proxy to MobSF Docker container
+    - Mounts   : /var/run/docker.sock (for spawning MobSF containers)
+
+  SERVICE 3: node_api (Fastify)
+    - Image    : Node.js 20 Alpine
+    - Port     : 3000
+    - Role     : Edge event collector with Zod schema validation
+    - Language : TypeScript
+
+  SERVICE 4: worker (Background)
+    - Image    : Node.js 20 Alpine
+    - Port     : None (internal only)
+    - Role     : Supabase real-time sync worker
+    - Language : TypeScript
+
+  SERVICE 5: frontend (Nginx)
+    - Image    : Nginx Alpine
+    - Port     : 5500
+    - Role     : Static file serving for HTML5 dashboard
+    - Content  : 30+ HTML pages, CSS, JavaScript
+
+2.3 DATA FLOW DIAGRAM
+-----------------------
+The complete lifecycle of an attack event:
+
+  [Attacker] → [Honeypot] → [Raw Event JSON]
+       ↓
+  POST /api/v1/events/ingest
+       ↓
+  Pydantic Schema Validation
+       ↓
+  SQLite raw_events (sync_status=PENDING)
+       ↓ (10s background cycle)
+  SyncManager.run_sync_cycle()
+       ↓
+  AIEngine.analyze_log(payload, ip, port)
+       ↓ (signature + behavioral detection)
+  Attack Type + Severity + MITRE Mapping
+       ↓ (60s background cycle)
+  SessionEngine.process_unmapped_events()
+       ↓
+  AttackerSession (grouped by IP + 30-min window)
+       ↓
+  StructuredEvent (linked to session)
+       ↓ (5-min background cycle)
+  AWS S3 Telemetry Export (JSON lines)
+       ↓ (on dashboard load)
+  GeoIP Enrichment (ip-api.com batch)
+       ↓
+  Dashboard Display + Real-time Supabase Pub/Sub
+       ↓ (if risk_score >= threshold)
+  SMTP Email Alert + Twilio WhatsApp Alert
+
+================================================================================
+PART 3 — TECHNOLOGY STACK & DEPENDENCIES
+================================================================================
+
+3.1 BACKEND DEPENDENCIES (requirements.txt)
+---------------------------------------------
+
+  FRAMEWORK:
+    fastapi          >= 0.109.0   # ASGI web framework
+    uvicorn          >= 0.27.0    # ASGI server (lifespan support)
+    pydantic         >= 2.6.0     # Data validation & settings
+    pydantic-settings >= 2.1.0   # .env config loader
+
+  DATABASE / ORM:
+    sqlalchemy       >= 2.0.0    # ORM (async mode)
+    aiosqlite        >= 0.19.0   # Async SQLite driver
+    greenlet                     # SQLAlchemy async support
+
+  AUTHENTICATION:
+    PyJWT            == 2.10.1   # JWT encode/decode (HS256)
+    passlib                      # Password hashing wrapper
+    bcrypt                       # bcrypt password hashing
+
+  CLOUD:
+    boto3            >= 1.34.0   # AWS SDK (EC2, S3, IAM, SSM)
+    requests         >= 2.31.0   # HTTP client
+
+  NOTIFICATIONS:
+    twilio           >= 9.0.0    # WhatsApp alerts via Twilio API
+    jinja2           == 3.1.3    # Email HTML template rendering
+    python-multipart == 0.0.9    # File upload support
+
+  REAL-TIME:
+    websockets       >= 14.0     # WebSocket support
+    supabase                     # Supabase Python client
+
+  SYSTEM:
+    psutil           == 5.9.8    # System metrics (CPU/RAM)
+    python-dotenv    == 1.0.0    # .env file loading
+    email-validator  == 2.1.0.post1  # Email validation
+
+  APK ANALYSIS SERVICE:
+    flask            >= 3.1.0    # MobSF proxy service
+    flask-cors       >= 5.0.0    # CORS for MobSF service
+
+3.2 FRONTEND DEPENDENCIES (CDN-loaded)
+----------------------------------------
+  Leaflet.js    2.x   — Interactive geolocation maps
+  Chart.js      4.x   — Canvas-based data visualization
+  Vis.js              — Network/graph visualization for GNN
+  Animate.css         — CSS animations
+  FontAwesome   6.x   — Icon library
+  Custom CSS          — "Neon Dark" theme (cyan #00f3ff / magenta #bc13fe)
+
+3.3 NODE.JS SERVICES STACK
+----------------------------
+  Runtime    : Node.js 20 LTS
+  Framework  : Fastify (high-performance HTTP)
+  Validation : Zod (runtime schema validation)
+  Language   : TypeScript (compiled)
+  DB Client  : Supabase JS SDK (@supabase/supabase-js)
+
+3.4 CONTAINERIZATION STACK
+----------------------------
+  Docker Compose version: 3.8+
+  Base Images:
+    python:3.11-slim     (backend)
+    python:3.11-slim     (mobsf)
+    node:20-alpine       (node_api, worker)
+    nginx:alpine         (frontend)
+  Networks: soc_net (bridge)
+  Volumes : ingestion.db, honeynet.db, scans/, mobsf_service/data/
+
+3.5 CLOUD SERVICES USED
+-------------------------
+  AWS EC2         — VM instance launch/terminate for lab environments
+  AWS S3          — Telemetry log archival (JSON lines format)
+  AWS IAM         — Role/credential management
+  AWS SSM         — Session Manager for browser-based console access
+  Supabase        — PostgreSQL + Auth + Real-time pub/sub
+  ip-api.com      — Batch GeoIP enrichment (free tier)
+  Twilio          — WhatsApp messaging API
+  MobSF           — Mobile Security Framework (APK analysis)
+  CAPE Sandbox    — Malware sandbox (optional, has simulation fallback)
+
+================================================================================
+PART 4 — DATABASE SCHEMAS & DATA MODELS
+================================================================================
+
+4.1 SQLITE EDGE DATABASE SCHEMA
+---------------------------------
+File: database/schema_sqlite.sql
+Primary DB: ingestion.db
+Secondary DB: honeynet.db
+ORM: SQLAlchemy 2.0 (async mode with aiosqlite)
+
+--- TABLE: users ---
+CREATE TABLE users (
+    id                      TEXT PRIMARY KEY,  -- UUID v4
+    username                TEXT UNIQUE NOT NULL,
+    email                   TEXT UNIQUE NOT NULL,
+    password_hash           TEXT NOT NULL,     -- bcrypt hash
+    first_name              TEXT,
+    last_name               TEXT,
+    department              TEXT,
+    clearance_level         INTEGER,           -- 1, 2, 3
+    requested_clearance_level INTEGER,
+    role                    TEXT,              -- SUPER_ADMIN|ANALYST|AUDITOR|OPERATIVE|SPECIALIST|OVERSEER
+    status                  TEXT DEFAULT 'PENDING', -- ACTIVE|PENDING|BLOCKED
+    otp_code                TEXT,
+    otp_expires_at          DATETIME,
+    system_code             TEXT,              -- Admin Access Code (XXX-XXX format)
+    created_at              DATETIME DEFAULT CURRENT_TIMESTAMP,
+    last_login              DATETIME
+);
+
+--- TABLE: nodes ---
+CREATE TABLE nodes (
+    node_id         TEXT PRIMARY KEY,
+    name            TEXT NOT NULL,
+    type            TEXT,                 -- cowrie|dionaea|honeytrap
+    sector          TEXT,                 -- education|defence|finance|etc.
+    ip_address      TEXT,
+    os              TEXT,
+    status          TEXT DEFAULT 'OFFLINE', -- ONLINE|OFFLINE
+    uptime_seconds  INTEGER DEFAULT 0,
+    risk_level      TEXT DEFAULT 'LOW',  -- LOW|MEDIUM|HIGH|CRITICAL
+    last_activity   DATETIME,
+    created_at      DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+--- TABLE: node_metrics ---
+CREATE TABLE node_metrics (
+    node_id             TEXT PRIMARY KEY REFERENCES nodes(node_id),
+    total_attacks_24h   INTEGER DEFAULT 0,
+    unique_attackers_24h INTEGER DEFAULT 0,
+    top_attack_type     TEXT,
+    updated_at          DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+--- TABLE: raw_events (HIGH FREQUENCY INGESTION TABLE) ---
+CREATE TABLE raw_events (
+    id              TEXT PRIMARY KEY,     -- UUID v4
+    timestamp       DATETIME DEFAULT CURRENT_TIMESTAMP,
+    attacker_ip     TEXT NOT NULL,        -- Indexed
+    target_port     INTEGER,
+    protocol        TEXT,                 -- tcp|udp|ssh|http|ftp
+    honeypot_type   TEXT,                 -- cowrie|dionaea|honeytrap
+    session_id      TEXT,                 -- Indexed, FK to attacker_sessions
+    event_type      TEXT,                 -- SSH_BRUTE_FORCE|SQL_INJECTION|etc.
+    commands        TEXT,                 -- Commands run by attacker
+    uploaded_files  TEXT,                 -- Files dropped by attacker
+    ports_scanned   TEXT,                 -- Comma-separated ports scanned
+    geoip_data      JSON,                 -- Enriched GeoIP data
+    risk_score      REAL DEFAULT 0.0,     -- 0.0 to 100.0
+    raw_payload     TEXT,                 -- Original raw log line
+    sync_status     TEXT DEFAULT 'PENDING', -- PENDING|SYNCED (Indexed)
+    signature       TEXT UNIQUE           -- Dedup hash
+);
+
+--- TABLE: structured_events ---
+CREATE TABLE structured_events (
+    id              TEXT PRIMARY KEY,
+    raw_event_id    TEXT UNIQUE NOT NULL, -- FK to raw_events.id
+    session_id      TEXT REFERENCES attacker_sessions(session_id),
+    timestamp       DATETIME NOT NULL,
+    honeypot_type   TEXT,
+    event_type      TEXT,
+    details         JSON                  -- Normalized event details
+);
+
+--- TABLE: attacker_sessions ---
+CREATE TABLE attacker_sessions (
+    session_id      TEXT PRIMARY KEY,
+    attacker_ip     TEXT NOT NULL,
+    first_seen      DATETIME NOT NULL,
+    last_seen       DATETIME NOT NULL,
+    risk_level      TEXT,                 -- LOW|MEDIUM|HIGH|CRITICAL
+    total_events    INTEGER DEFAULT 0,
+    geoip_country   TEXT
+);
+
+--- TABLE: alerts ---
+CREATE TABLE alerts (
+    id          TEXT PRIMARY KEY,
+    node_id     TEXT REFERENCES nodes(node_id),
+    title       TEXT NOT NULL,
+    description TEXT,
+    severity    TEXT,                     -- LOW|MEDIUM|HIGH|CRITICAL
+    timestamp   DATETIME DEFAULT CURRENT_TIMESTAMP,
+    status      TEXT DEFAULT 'NEW'        -- NEW|INVESTIGATING|RESOLVED
+);
+
+--- TABLE: vm_profiles ---
+CREATE TABLE vm_profiles (
+    id              TEXT PRIMARY KEY,
+    profile_name    TEXT NOT NULL,
+    ami_id          TEXT NOT NULL,        -- AWS AMI ID
+    instance_type   TEXT NOT NULL,        -- t2.micro|t3.medium|etc.
+    launch_template_id TEXT,
+    created_at      DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+--- TABLE: vm_instances ---
+CREATE TABLE vm_instances (
+    id              TEXT PRIMARY KEY,
+    instance_id     TEXT UNIQUE NOT NULL, -- AWS EC2 instance ID
+    profile_id      TEXT REFERENCES vm_profiles(id),
+    status          TEXT NOT NULL,        -- PROVISIONING|READY|STOPPED|TERMINATED|ERROR
+    public_ip       TEXT,
+    private_ip      TEXT,
+    session_id      TEXT,
+    launched_at     DATETIME DEFAULT CURRENT_TIMESTAMP,
+    terminated_at   DATETIME
+);
+
+--- TABLE: credential_tokens ---
+CREATE TABLE credential_tokens (
+    id                  TEXT PRIMARY KEY,
+    user_id             TEXT,
+    username            TEXT NOT NULL,
+    token               TEXT UNIQUE NOT NULL, -- Indexed
+    issued_by           TEXT REFERENCES users(id),
+    issued_at           DATETIME DEFAULT CURRENT_TIMESTAMP,
+    expires_at          DATETIME NOT NULL,
+    used                BOOLEAN DEFAULT FALSE,
+    used_at             DATETIME,
+    force_password_change BOOLEAN DEFAULT TRUE
+);
+
+--- TABLE: credential_audit_log ---
+CREATE TABLE credential_audit_log (
+    id              TEXT PRIMARY KEY,
+    username        TEXT NOT NULL,
+    recipient_email TEXT,
+    recipient_phone TEXT,
+    issued_by       TEXT REFERENCES users(id),
+    issuer_name     TEXT,
+    timestamp       DATETIME DEFAULT CURRENT_TIMESTAMP,
+    delivery_method TEXT NOT NULL,        -- EMAIL|WHATSAPP|BOTH
+    email_status    TEXT DEFAULT 'NOT_SENT', -- SENT|FAILED|NOT_SENT|SIMULATED
+    whatsapp_status TEXT DEFAULT 'NOT_SENT',
+    token_id        TEXT REFERENCES credential_tokens(id),
+    token_status    TEXT DEFAULT 'GENERATED', -- GENERATED|USED|EXPIRED|NONE
+    custom_message  TEXT,
+    admin_ip        TEXT
+);
+
+--- TABLE: admin_activity_log ---
+CREATE TABLE admin_activity_log (
+    id              TEXT PRIMARY KEY,
+    admin_id        TEXT REFERENCES users(id),
+    admin_username  TEXT,
+    action          TEXT NOT NULL,        -- ISSUE_CREDENTIALS|RESET_PASSWORD|etc.
+    affected_user   TEXT,
+    ip_address      TEXT,
+    timestamp       DATETIME DEFAULT CURRENT_TIMESTAMP,
+    result          TEXT DEFAULT 'SUCCESS', -- SUCCESS|FAILED|RATE_LIMITED
+    details         TEXT                  -- JSON blob
+);
+
+--- TABLE: sector_targets ---
+CREATE TABLE sector_targets (
+    id          TEXT PRIMARY KEY,
+    sector_key  TEXT NOT NULL,            -- education|defence|healthcare|finance|etc.
+    name        TEXT NOT NULL,
+    url         TEXT,
+    ip          TEXT,
+    description TEXT,
+    api_key     TEXT UNIQUE NOT NULL,     -- UUID-based authentication key
+    active      BOOLEAN DEFAULT TRUE,
+    added_at    DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+--- TABLE: sector_events ---
+CREATE TABLE sector_events (
+    id          TEXT PRIMARY KEY,
+    sector_key  TEXT NOT NULL,
+    target_id   TEXT REFERENCES sector_targets(id),
+    target_url  TEXT,
+    attacker_ip TEXT NOT NULL,
+    country     TEXT,
+    attack_type TEXT,                     -- SQLi|XSS|RCE|BruteForce|Scan|Other
+    commands    JSON,
+    ioc_value   TEXT,
+    ioc_type    TEXT,                     -- ip|domain|hash|url
+    risk_score  REAL DEFAULT 0.0,
+    user_agent  TEXT,
+    request_path TEXT,
+    raw_payload TEXT,
+    timestamp   DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+--- TABLE: s3_sync_state ---
+CREATE TABLE s3_sync_state (
+    id          TEXT PRIMARY KEY,
+    file_key    TEXT UNIQUE NOT NULL,     -- S3 object key
+    processed_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+--- TABLE: iocs ---
+CREATE TABLE iocs (
+    id          TEXT PRIMARY KEY,
+    node_id     TEXT REFERENCES nodes(node_id),
+    type        TEXT,                     -- ip|domain|hash_md5|hash_sha256
+    value       TEXT NOT NULL,
+    detected_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+--- TABLE: captured_payloads ---
+CREATE TABLE captured_payloads (
+    id          TEXT PRIMARY KEY,
+    node_id     TEXT REFERENCES nodes(node_id),
+    command     TEXT,
+    file_hash   TEXT,
+    timestamp   DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+--- TABLE: system_settings ---
+CREATE TABLE system_settings (
+    key         TEXT PRIMARY KEY,
+    value       JSON NOT NULL,
+    updated_at  DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+--- TABLE: system_config ---
+CREATE TABLE system_config (
+    key         TEXT PRIMARY KEY,
+    value       TEXT,
+    updated_at  DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+--- TABLE: access_logs ---
+CREATE TABLE access_logs (
+    id              TEXT PRIMARY KEY,
+    admin_id        TEXT REFERENCES users(id),
+    target_user_id  TEXT REFERENCES users(id),
+    action          TEXT,                 -- APPROVE|DENY|REVOKE|ELEVATE
+    details         TEXT,
+    timestamp       DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+--- TABLE: events (node-linked events) ---
+CREATE TABLE events (
+    id          TEXT PRIMARY KEY,
+    node_id     TEXT REFERENCES nodes(node_id),
+    src_ip      TEXT,
+    type        TEXT,
+    protocol    TEXT,
+    payload     TEXT,
+    timestamp   DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+--- TABLE: attacks ---
+CREATE TABLE attacks (
+    id          TEXT PRIMARY KEY,
+    log_id      TEXT REFERENCES events(id),
+    type        TEXT,
+    severity    TEXT,                     -- LOW|MEDIUM|HIGH|CRITICAL
+    mitre_tactic TEXT,
+    mitre_id    TEXT,
+    timestamp   DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+4.2 ORM RELATIONSHIP MAP
+--------------------------
+Node        → (1:1) NodeMetrics
+Node        → (1:N) Event
+Node        → (1:N) Alert
+User        → (1:N) CredentialToken  [issued_by]
+User        → (1:N) CredentialAuditLog [issued_by]
+User        → (1:N) AdminActivity [admin_id]
+AttackerSession → (1:N) StructuredEvent
+SectorTarget    → (1:N) SectorEvent
+VMProfile       → (1:N) VMInstance
+
+4.3 CACHING LAYER
+------------------
+File-based JSON caches:
+  scans/cape_cache.json      — SHA-256 keyed sandbox results (max 500 entries, FIFO)
+  scans/full_reports.json    — Full malware analysis reports (max 1000 entries)
+  .lab_state.json            — VM lab provisioning state (in-memory + file persistence)
+
+Memory caches (in-process):
+  AIEngine.history           — Per-IP event history for behavioral detection (dict)
+  Dashboard stats            — 15-second TTL cache
+  GeoIP batch                — Request-scoped cache
+
+================================================================================
+PART 5 — ALGORITHMS (COMPLETE CODE + EXPLANATIONS)
+================================================================================
+
+5.1 AI ATTACK CLASSIFICATION ENGINE
+--------------------------------------
+File   : backend/ai_engine/classifier.py
+Class  : AIEngine
+Lines  : 124
+Type   : Hybrid (Signature-based + Behavioral/Stateful)
+
+DESCRIPTION:
+  The AIEngine is the core threat detection algorithm of Shadow Trust. It operates
+  in two phases:
+    Phase 1 — Signature-based analysis using regular expressions against payloads.
+    Phase 2 — Stateful behavioral analysis using a sliding-window time-series over
+               per-IP event history stored in an in-memory dictionary.
+
+ATTACK TYPES DETECTED:
+  1. SQL_INJECTION     — Pattern: SELECT|UNION|INSERT|DELETE|UPDATE|DROP|--|#
+  2. XSS               — Pattern: <script|javascript:|onload=|onerror=|alert(
+  3. PATH_TRAVERSAL    — Pattern: ../|..\|/etc/passwd|c:\windows
+  4. COMMAND_INJECTION — Pattern: ;|\|`|$( |&&
+  5. SSH_BRUTE_FORCE   — Pattern: Failed password|Invalid user|authentication failure
+  6. NMAP_SCAN         — Behavioral: 5+ distinct ports in 10 seconds
+  7. DDOS              — Behavioral: 20+ requests in 5 seconds
+  8. BRUTE_FORCE       — Behavioral: 5+ auth failures in 60 seconds
+
+SEVERITY MAPPING:
+  CRITICAL : SQL_INJECTION, COMMAND_INJECTION, DDOS
+  HIGH     : XSS, SSH_BRUTE_FORCE, NMAP_SCAN, BRUTE_FORCE
+  MEDIUM   : PATH_TRAVERSAL
+  LOW      : Normal traffic (no match)
+  INFO     : NORMAL (no detected attack)
+
+BEHAVIORAL DETECTION THRESHOLDS:
+  PORT_SCAN_THRESHOLD  = 5  distinct ports
+  PORT_SCAN_WINDOW     = 10 seconds
+  DDOS_THRESHOLD       = 20 requests
+  DDOS_WINDOW          = 5  seconds
+  BRUTE_FORCE_THRESHOLD= 5  failed attempts
+  BRUTE_FORCE_WINDOW   = 60 seconds
+
+HISTORY CLEANUP:
+  Events older than 60 seconds are pruned from the in-memory history dict.
+  If an IP's history becomes empty after pruning, the IP key is deleted to
+  prevent unbounded memory growth.
+
+ALGORITHM PSEUDOCODE:
+  function analyze_log(payload, ip, port):
+    attacks = []
+    severity = "LOW"
+
+    // Phase 1: Signature Matching
+    for each (attack_name, regex_pattern) in self.rules:
+      if regex_pattern matches payload:
+        attacks.append(attack_name)
+        severity = max(severity, severity_of(attack_name))
+
+    // Phase 2: Behavioral (Stateful)
+    if ip is not None:
+      self.history[ip].append({timestamp: now, port: port, payload: payload})
+      cleanup_old_events(ip, window=60s)
+
+      // Check DDoS
+      recent = events in last 5 seconds
+      if len(recent) > 20: attacks.append("DDOS")
+
+      // Check Port Scan
+      scan_events = events in last 10 seconds
+      distinct_ports = unique port values in scan_events
+      if len(distinct_ports) > 5: attacks.append("NMAP_SCAN")
+
+      // Check Brute Force
+      auth_fails = events in last 60s matching SSH_BRUTE_FORCE pattern
+      if len(auth_fails) > 5: attacks.append("BRUTE_FORCE")
+
+    if len(attacks) == 0:
+      return {type: "NORMAL", severity: "INFO", mitre: None}
+
+    primary = attacks[-1]  // Behavioral overrides signature
+    mitre = map_attack_to_mitre(primary)
+    return {type: primary, severity: severity, mitre: mitre}
+
+FULL SOURCE CODE:
+  import re
+  from collections import defaultdict
+  from datetime import datetime
+  from typing import Optional, Dict
+
+  class AIEngine:
+      def __init__(self):
+          self.rules = {
+              "SQL_INJECTION": r"(?i)(SELECT|UNION|INSERT|DELETE|UPDATE|DROP|--|#|/\*|HAVING|EXEC)",
+              "XSS": r"(?i)(<script|javascript:|onload=|onerror=|alert\(|document\.cookie)",
+              "PATH_TRAVERSAL": r"(?i)(\.\./|\.\.\\|/etc/passwd|c:\\windows)",
+              "COMMAND_INJECTION": r"(?i)(;|\||`|\$\(|\&\&)",
+              "SSH_BRUTE_FORCE": r"(?i)(Failed password|Invalid user|authentication failure)"
+          }
+          self.history = defaultdict(list)
+          self.PORT_SCAN_THRESHOLD = 5
+          self.PORT_SCAN_WINDOW = 10
+          self.DDOS_THRESHOLD = 20
+          self.DDOS_WINDOW = 5
+          self.BRUTE_FORCE_THRESHOLD = 5
+          self.BRUTE_FORCE_WINDOW = 60
+
+      def _cleanup_history(self, ip):
+          now = datetime.now()
+          self.history[ip] = [e for e in self.history[ip]
+                              if (now - e["timestamp"]).total_seconds() < self.BRUTE_FORCE_WINDOW]
+          if not self.history[ip]:
+              del self.history[ip]
+
+      def _detect_behavioral(self, ip):
+          if ip not in self.history: return None
+          events = self.history[ip]
+          if not events: return None
+          now = datetime.now()
+
+          # DDoS
+          recent = [e for e in events if (now - e["timestamp"]).total_seconds() < self.DDOS_WINDOW]
+          if len(recent) > self.DDOS_THRESHOLD: return "DDOS"
+
+          # Port Scan
+          scan_events = [e for e in events if (now - e["timestamp"]).total_seconds() < self.PORT_SCAN_WINDOW]
+          distinct_ports = {e["port"] for e in scan_events if e["port"]}
+          if len(distinct_ports) > self.PORT_SCAN_THRESHOLD: return "NMAP_SCAN"
+
+          # Brute Force
+          auth_fails = [e for e in events
+                       if (now - e["timestamp"]).total_seconds() < self.BRUTE_FORCE_WINDOW
+                       and re.search(self.rules["SSH_BRUTE_FORCE"], e["payload"])]
+          if len(auth_fails) > self.BRUTE_FORCE_THRESHOLD: return "BRUTE_FORCE"
+
+          return None
+
+      def analyze_log(self, payload, ip=None, port=None):
+          detected_attacks = []
+          severity = "LOW"
+
+          for attack_name, pattern in self.rules.items():
+              if re.search(pattern, payload):
+                  detected_attacks.append(attack_name)
+                  if attack_name in ["SQL_INJECTION", "COMMAND_INJECTION"]: severity = "CRITICAL"
+                  elif attack_name in ["XSS", "SSH_BRUTE_FORCE"]: severity = "HIGH"
+                  else: severity = "MEDIUM"
+
+          if ip:
+              self.history[ip].append({"timestamp": datetime.now(), "port": port, "payload": payload})
+              self._cleanup_history(ip)
+              behavioral_attack = self._detect_behavioral(ip)
+              if behavioral_attack:
+                  detected_attacks.append(behavioral_attack)
+                  if behavioral_attack == "DDOS": severity = "CRITICAL"
+                  elif behavioral_attack in ["NMAP_SCAN", "BRUTE_FORCE"]: severity = "HIGH"
+
+          if not detected_attacks:
+              return {"type": "NORMAL", "severity": "INFO", "mitre": None}
+
+          primary_attack = detected_attacks[-1]
+          from .mitre_map import map_attack_to_mitre
+          mitre_info = map_attack_to_mitre(primary_attack)
+          return {"type": primary_attack, "severity": severity, "mitre": mitre_info}
+
+---
+
+5.2 MITRE ATT&CK MAPPING ALGORITHM
+-------------------------------------
+File  : backend/ai_engine/mitre_map.py
+Type  : Deterministic Lookup Table
+Lines : 46
+
+DESCRIPTION:
+  Maps each detected attack type to the corresponding MITRE ATT&CK Enterprise
+  Framework technique ID, technique name, and tactic. This enables automated
+  threat intelligence correlation and compliance reporting.
+
+MITRE ATT&CK MAPPING TABLE:
+  Attack Type        → MITRE ID    Technique Name                      Tactic
+  ─────────────────────────────────────────────────────────────────────────────
+  SQL_INJECTION      → T1190       Exploit Public-Facing Application    Initial Access
+  XSS                → T1059.007   JavaScript Interpreter               Execution
+  PATH_TRAVERSAL     → T1006       Direct Volume Access                 Defense Evasion
+  COMMAND_INJECTION  → T1059       Command and Scripting Interpreter    Execution
+  SSH_BRUTE_FORCE    → T1110       Brute Force                          Credential Access
+  NMAP_SCAN          → T1595.001   Active Scanning: Scanning IP Blocks  Reconnaissance
+  DDOS               → T1498       Network Denial of Service            Impact
+  BRUTE_FORCE        → T1110       Brute Force                          Credential Access
+
+FULL SOURCE CODE:
+  def map_attack_to_mitre(attack_type: str):
+      mapping = {
+          "SQL_INJECTION":    {"id": "T1190", "name": "Exploit Public-Facing Application", "tactic": "Initial Access"},
+          "XSS":              {"id": "T1059.007", "name": "Command and Scripting Interpreter: JavaScript", "tactic": "Execution"},
+          "PATH_TRAVERSAL":   {"id": "T1006", "name": "Direct Volume Access", "tactic": "Defense Evasion"},
+          "COMMAND_INJECTION":{"id": "T1059", "name": "Command and Scripting Interpreter", "tactic": "Execution"},
+          "SSH_BRUTE_FORCE":  {"id": "T1110", "name": "Brute Force", "tactic": "Credential Access"},
+          "NMAP_SCAN":        {"id": "T1595.001", "name": "Active Scanning: Scanning IP Blocks", "tactic": "Reconnaissance"},
+          "DDOS":             {"id": "T1498", "name": "Network Denial of Service", "tactic": "Impact"},
+          "BRUTE_FORCE":      {"id": "T1110", "name": "Brute Force", "tactic": "Credential Access"},
+      }
+      return mapping.get(attack_type, None)
+
+---
+
+5.3 TEMPORAL GRAPH NEURAL NETWORK (GNN) BEHAVIORAL PROFILER
+--------------------------------------------------------------
+File  : backend/app/ai_engine/gnn_profiler.py
+Class : TemporalGNNProfiler
+Lines : 230
+Type  : Simulated Temporal GNN (Graph Degree Centrality)
+
+DESCRIPTION:
+  This module implements an algorithmic simulation of a Temporal Graph Neural
+  Network (GNN). Rather than using a trained deep learning model (which would
+  require a large labeled dataset), it constructs an entity-relationship graph
+  from chronological honeypot telemetry and performs graph analytics on the
+  resulting structure.
+
+  A true Temporal GNN would use message-passing neural networks across time-evolving
+  graphs. This implementation approximates those outputs through:
+    1. Graph construction from event stream
+    2. Degree centrality calculation
+    3. Rule-based behavioral scoring
+    4. Threat actor profiling
+
+GRAPH STRUCTURE:
+  Node Types:
+    - SYSTEM_ROOT  : Honeynet Core (star shape, red)
+    - IP_<ip>      : Attacker nodes (diamond, cyan)
+    - PORT_<port>  : Service nodes (circle, magenta)
+    - CMD_<cmd>    : Command nodes (square, yellow)
+    - FILE_<name>  : Payload/file nodes (hexagon, red)
+
+  Edge Types:
+    - IP → PORT    : "targets" (attacker targets a service)
+    - PORT → SYSTEM: "hosted_by" (service is on the honeynet)
+    - PORT → CMD   : "spawns" (service spawned a command)
+    - IP → FILE    : "drops" (attacker drops a file)
+
+GRAPH ANALYTICS (Degree Centrality):
+  For each node n:
+    degree(n) = count of edges incident on n
+
+  max_degree = maximum degree across all nodes
+  edge_count = total number of directed edges in graph
+
+THREAT ACTOR CLASSIFICATION (Rule-Based):
+  The algorithm classifies observed activity into known APT group profiles
+  based on graph topology and MITRE technique signatures:
+
+  IF edge_count > 50 AND T1027 detected AND T1059 detected:
+    → actor = "FANCY BEAR" (APT28, GRU-linked)
+    → confidence = 88.7 + (max_degree % 10)
+    → kill chain stage = "Exploit (ACTIVE)"
+
+  ELIF edge_count > 30 AND T1105 (file drops) detected:
+    → actor = "LAZARUS" (North Korea-linked)
+    → confidence = 76.4 + (max_degree % 10)
+    → kill chain stage = "Deliver (ACTIVE)"
+
+  ELIF max_degree > 15:
+    → actor = "SANDWORM" (APT44, Russian GRU)
+    → confidence = 82.1
+    → kill chain stage = "Weaponize (ACTIVE)"
+
+  ELSE:
+    → actor = "UNKNOWN AUTOMATED" (opportunistic scanner)
+    → confidence = 99.1
+    → kill chain stage = "Recon (ACTIVE)"
+
+APT PROFILE DEFINITIONS:
+  FANCY BEAR    : aggression=80, obfuscation=60, targets=GOV/MILITARY, lateral=SMB/WMI
+  LAZARUS       : aggression=90, obfuscation=40, targets=FINANCIAL,    lateral=SMB
+  SANDWORM      : aggression=95, obfuscation=30, targets=ICP/CRITICAL, lateral=RDP/SSH
+  UNKNOWN AUTO  : aggression=40, obfuscation=10, targets=OPPORTUNISTIC,lateral=SCANNING
+
+MITRE TECHNIQUE MAPPING WITHIN GNN:
+  Command execution detected         → T1059 (Execution)
+  PowerShell usage                   → T1059.001
+  Base64/XOR obfuscation             → T1027 (Defense Evasion)
+  File drops                         → T1105 (Ingress Tool Transfer)
+  SSH brute force / password attempt → T1078 (Valid Accounts) + T1098 (Account Manipulation)
+  Web port (80/443/8080) attack      → T1190 (Exploit Public-Facing App)
+  SQL patterns                       → T1485 (Data Destruction potential)
+  Port scan / SMB (445)              → T1133 (External Remote Services)
+
+KILL CHAIN STAGES:
+  Index 0: Reconnaissance
+  Index 1: Weaponization
+  Index 2: Delivery
+  Index 3: Exploitation
+  Index 4: Installation/C2
+
+SEVERITY CLASSIFICATION OF MITRE TECHNIQUES:
+  CRITICAL: T1190, T1059, T1573, T1068, T1486
+  HIGH    : T1133, T1098, T1055, T1070, T1071, T1090
+  MEDIUM  : All others
+
+---
+
+5.4 STATIC BINARY ANALYSIS ENGINE
+------------------------------------
+File  : backend/app/services/static_analyzer.py
+Class : StaticAnalyzer
+Lines : 416
+Type  : Multi-format binary inspection
+
+DESCRIPTION:
+  The StaticAnalyzer performs deep static analysis of uploaded binary/script
+  files without executing them. It supports PE (Windows EXE/DLL), ELF (Linux),
+  PDF, Script files (Bash/Python/JS/PowerShell/etc.), and APK. It uses pure
+  Python struct unpacking to parse binary file headers.
+
+FILE TYPE DETECTION (magic bytes):
+  b"MZ"           → PE (Windows Portable Executable)
+  b"\x7fELF"      → ELF (Linux/Unix Executable)
+  b"%PDF"         → PDF Document
+  b"PK\x03\x04"   → ZIP/APK/DOCX (PKZip signature)
+  Extension match  → Script files (.sh, .py, .js, .bat, .ps1, .lua, .rb, .pl)
+  Default         → Binary blob
+
+SUSPICIOUS API CLASSIFICATIONS (6 categories):
+  INJECTION_APIS (Process Injection):
+    VirtualAllocEx, WriteProcessMemory, CreateRemoteThread,
+    NtUnmapViewOfSection, ZwUnmapViewOfSection, NtCreateSection,
+    MapViewOfSection, OpenProcess, RtlCreateUserThread,
+    NtQueueApcThread, SetThreadContext, SuspendThread,
+    ResumeThread, QueueUserAPC, CreateProcessInternals
+
+  NETWORK_APIS (C2/Exfiltration):
+    socket, connect, send, recv, WSAStartup, WSAConnect,
+    InternetOpenA, InternetOpenUrlA, InternetReadFile,
+    URLDownloadToFile, WinHttpOpen, WinHttpConnect,
+    WinHttpSendRequest, HttpSendRequestA, getaddrinfo,
+    gethostbyname, inet_addr, WSASend, WSARecv,
+    FtpOpenFile, FtpPutFile, NetShareEnum
+
+  PERSISTENCE_APIS (Startup/Registry):
+    RegSetValueEx, RegCreateKeyEx, RegOpenKeyEx,
+    OpenSCManager, CreateServiceA, StartServiceA,
+    ChangeServiceConfig, SHSetValue, SHRegSetPath,
+    WritePrivateProfileString, SetFileTime, CopyFileA,
+    MoveFileExA, CreateTaskScheduler
+
+  PRIVILEGE_APIS (Token Manipulation):
+    AdjustTokenPrivileges, OpenProcessToken,
+    LookupPrivilegeValue, CreateProcessWithLogon,
+    ImpersonateLoggedOnUser, DuplicateTokenEx,
+    SetTokenInformation, LogonUser, LsaLogonUser
+
+  CRYPTO_APIS (Encryption):
+    CryptEncrypt, CryptDecrypt, CryptGenKey,
+    BCryptEncrypt, BCryptDecrypt,
+    BCryptGenerateSymmetricKey, NCryptEncrypt,
+    CryptAcquireContext, CryptImportKey,
+    CryptExportKey, CryptHashData
+
+  EVASION_APIS (Anti-Analysis):
+    IsDebuggerPresent, CheckRemoteDebuggerPresent,
+    NtQueryInformationProcess, FindWindow,
+    GetTickCount, Sleep, timeGetTime,
+    QueryPerformanceCounter, GetSystemInfo,
+    ExitProcess, TerminateProcess, DeleteFileA, ClearEventLog
+
+PACKER DETECTION SIGNATURES:
+  Packer Name    | Binary Signatures
+  ─────────────────────────────────────────────────────
+  UPX            | b"UPX0", b"UPX1", b"UPX2", b"UPX!"
+  MPRESS         | b"MPRESS1", b"MPRESS2", b".MPRESS"
+  Themida        | b"Themida", b".themida", b"WinLicense"
+  NsPack         | b"NsPack", b"nSPack", b"NS_PACKER"
+  PECompact      | b"PEC2", b"PECompact"
+  ASPack         | b"ASPack", b"ASProtect"
+  MoleBox        | b"MoleBox"
+  Enigma         | b"Enigma Protector"
+  VMProtect      | b"VMProtect", b".vmp0", b".vmp1"
+  Obsidium       | b"Obsidium"
+  ExeCryptor     | b"ExeCryptor"
+  PELOCK         | b"PELOck", b".pelock"
+
+  High-entropy fallback: entropy > 7.2 → "Unknown Packer (High Entropy)"
+
+PE HEADER PARSING (struct-based, no external libraries):
+  Step 1: Read DOS header → PE offset (struct.unpack_from("<I", data, 0x3c))
+  Step 2: Parse COFF header (machine type, section count, timestamp)
+  Step 3: Parse Optional Header (entry point, image base, PE32 vs PE32+)
+  Step 4: Parse Section Table (up to 16 sections, entropy per section)
+  Step 5: Scan imports for suspicious APIs (byte pattern matching)
+  Step 6: Extract DLL names via regex ([\w\-]+\.(dll|exe))
+  Step 7: Calculate control flow complexity (HIGH/MEDIUM/LOW)
+
+PE ARCHITECTURE MAPPING:
+  0x014c → "x86 (i386)"
+  0x8664 → "x86-64 (AMD64)"
+  0xAA64 → "ARM64"
+  0x01c0 → "ARM (Thumb)"
+  0x0200 → "IA-64 (Itanium)"
+
+SECTION ENTROPY RISK SCORING:
+  entropy >= 7.5 → CRITICAL (strongly packed/encrypted)
+  entropy >= 7.0 → HIGH     (likely packed)
+  entropy >= 6.0 → MEDIUM   (possibly compressed)
+  entropy <  6.0 → LOW      (normal)
+
+STRING EXTRACTION & CATEGORIZATION:
+  Regex: rb'[ -~]{6,}'  (printable ASCII, min 6 chars)
+  Max strings extracted: 120
+  Categories:
+    "network"    — matches .com, .net, .io, ftp://, smtp://
+    "filesystem" — matches /tmp, c:\, appdata, \system32, .exe, .dll
+    "registry"   — matches hkey, software\, currentversion, run\
+    "crypto"     — matches aes, rsa, des, encrypt, decrypt, cipher, base64
+    "suspicious" — matches eval, exec, cmd, shell, powershell, wget, curl
+    "urls"       — matches https?://
+    "other"      — everything else
+
+LINUX ELF SUSPICIOUS PATTERNS:
+  PTRACE_ATTACH, ptrace, /proc/self, mprotect, mmap,
+  /dev/mem, LD_PRELOAD, dlopen, fork(, execve(
+
+CONTROL FLOW COMPLEXITY:
+  total_suspicious_apis > 8 → HIGH
+  total_suspicious_apis > 3 → MEDIUM
+  else                      → LOW
+
+---
+
+5.5 CAPE SANDBOX ENGINE & HEURISTIC SIMULATION
+-------------------------------------------------
+File  : backend/app/services/sandbox_engine.py
+Class : CAPESandboxEngine
+Lines : 681
+Type  : Production sandbox integration with heuristic fallback
+
+DESCRIPTION:
+  The CAPESandboxEngine is a dual-mode malware sandbox:
+    Mode 1 (Production): Submits sample to a real CAPE (Automated Malware Analysis)
+                         sandbox instance via REST API. Polls for results up to 90s.
+    Mode 2 (Simulation): When CAPE_URL env var is not set, runs an advanced
+                         heuristic simulation that produces CAPE-schema-compatible
+                         output. Used for demo/development environments.
+
+  All results are cached by SHA-256 hash to prevent re-processing identical samples.
+  Cache is stored in scans/cape_cache.json with a max size of 500 entries (FIFO).
+
+MITRE TECHNIQUE CATALOG (20 techniques mapped):
+  T1059 → Command and Scripting Interpreter
+  T1055 → Process Injection
+  T1082 → System Information Discovery
+  T1083 → File and Directory Discovery
+  T1071 → Application Layer Protocol (C2)
+  T1547 → Boot or Logon Autostart Execution
+  T1105 → Ingress Tool Transfer
+  T1027 → Obfuscated Files or Information
+  T1140 → Deobfuscate/Decode Files
+  T1190 → Exploit Public-Facing Application
+  T1486 → Data Encrypted for Impact (Ransomware)
+  T1112 → Modify Registry
+  T1070 → Indicator Removal on Host
+  T1016 → System Network Configuration Discovery
+  T1049 → System Network Connections Discovery
+  T1021 → Remote Services (Lateral Movement)
+  T1078 → Valid Accounts
+  T1136 → Create Account
+  T1566 → Phishing
+  T1003 → OS Credential Dumping
+
+BEHAVIORAL BYTE PATTERN → MITRE MAPPING (45 mappings):
+  b"/bin/sh"               → T1059
+  b"/bin/bash"             → T1059
+  b"cmd.exe"               → T1059
+  b"powershell"            → T1059, T1027
+  b"CreateRemoteThread"    → T1055
+  b"VirtualAllocEx"        → T1055
+  b"WriteProcessMemory"    → T1055
+  b"HKEY_LOCAL_MACHINE\..."→ T1547, T1112
+  b"RegSetValueEx"         → T1112
+  b"wget"                  → T1105
+  b"curl "                 → T1105
+  b"base64"                → T1027, T1140
+  b"encrypt"               → T1486
+  b".locked"               → T1486
+  b"bitcoin"               → T1486
+  b"monero"                → T1486
+  b"socket"                → T1071
+  b"connect("              → T1071
+  b"WSAConnect"            → T1071, T1049
+  b"nc -e"                 → T1059, T1021
+  b"mkfifo"                → T1059
+  b"WNetAddConnection"     → T1021
+  b"net user"              → T1136
+  b"mimikatz"              → T1003
+  b"lsass"                 → T1003
+  b"GetAdaptersInfo"       → T1016
+  b"ipconfig"              → T1016
+  b"DeleteFile"            → T1070
+  b"ClearEventLog"         → T1070
+
+THREAT FAMILY CLASSIFICATION (8 families, 60+ byte patterns):
+  Ransomware      : encrypt, .locked, bitcoin, ransom, CryptoLocker, WannaCry, monero, decrypt
+  RAT/Backdoor    : CreateRemoteThread, VirtualAllocEx, shell32, reverse_shell, netcat, meterpreter
+  Botnet/Downloader: wget, curl, socket, connect(, C2, botnet, bot_id
+  Trojan          : /bin/bash, cmd.exe, powershell, svchost, RunDll32
+  Spyware/Stealer : mimikatz, lsass, password, keylog, clipboard
+  Rootkit         : NtSetSystemInformation, DKOM, rootkit, driver, kernel32
+  Worm            : WNetAddConnection, SMB, EternalBlue, spreader, AutoRun
+  Adware          : AdSense, adware, popup, banner, track
+
+RISK SCORE FORMULA:
+  indicator_count = number of unique behavioral indicators found
+  score = min(100, indicator_count * 10
+              + (15 if entropy > 6.5 else 0)
+              + (12 if packer detected else 0))
+  score = max(15, score)  // always show non-zero
+
+  risk_level thresholds:
+    LOW      : score <  30
+    MEDIUM   : 30 <= score < 55
+    HIGH     : 55 <= score < 80
+    CRITICAL : score >= 80
+
+PROCESS TREE SYNTHESIS (per threat family):
+  Trojan/RAT:
+    sample.exe (pid 4420)
+      ├─ cmd.exe /c whoami && ipconfig (pid 4421)
+      └─ svchost.exe -k netsvcs (injected) (pid 4422)
+
+  Ransomware:
+    sample.exe (pid 4420)
+      ├─ vssadmin.exe delete shadows /all /quiet (pid 4421)
+      ├─ wmic.exe shadowcopy delete (pid 4422)
+      └─ notepad.exe README_DECRYPT.txt (pid 4423)
+
+  Botnet/Downloader:
+    sample.exe (pid 4420)
+      ├─ powershell.exe -enc [base64 dropper payload] (pid 4421)
+      └─ rundll32.exe C:\Windows\Temp\x.dll,DllMain (pid 4422)
+
+NETWORK INTELLIGENCE EXTRACTION:
+  - URL extraction : regex r'https?://[^\s"><\'\\]+'
+  - IP extraction  : regex r'\b(?:\d{1,3}\.){3}\d{1,3}\b'
+  - RFC1918 filter : removes 192.168.*, 10.*, 172.16.*, 127.*, 0.0.0.0
+  - Domain extraction: regex r'[a-z0-9\-]+\.[a-z]{2,6}(?:\.[a-z]{2})?'
+  - C2 port detection: [1337, 4444, 8888, 9999, 31337, 6667, 443, 80]
+  - Suspicious domains: contain 'c2','cc','bot','malware','update','cdn','payload','cmd'
+
+SYNTHETIC C2 FALLBACK (for known malware families):
+  "185.220.101.47" → port 4444, TCP (known Tor exit/C2 IP)
+  "91.108.56.11"   → port 443, TLS
+
+APK/OFFICE SPECIFIC INDICATORS:
+  RECEIVE_BOOT_COMPLETED → T1547 (Boot persistence)
+  READ_CONTACTS / READ_SMS → T1003 (Data collection)
+  SEND_SMS / WRITE_SMS → T1071 (SMS C2)
+  INTERNET → T1071 (Network access)
+  CAMERA / RECORD_AUDIO → T1003 (Spyware)
+  DexClassLoader / loadClass → T1059 (Dynamic code)
+  Cipher / SecretKey → T1486 (Encryption)
+  AES / RSA / DES → T1027 (Crypto obfuscation)
+
+SIMULATION ENGINE VERSION: 2
+  Versioned to allow cache invalidation when simulation logic is updated.
+  Cached entries with sim_engine_version != 2 are treated as stale.
+
+---
+
+5.6 APK INTELLIGENCE ENGINE
+------------------------------
+File  : backend/app/services/apk_engine.py
+Class : APKEngine
+Lines : 360
+Type  : Android APK static analysis (no external tools)
+
+DESCRIPTION:
+  The APKEngine performs complete Android APK analysis by treating the APK as a
+  ZIP archive and analyzing:
+    1. AndroidManifest.xml (binary XML parsing)
+    2. DEX bytecode files (classes.dex, classes2.dex, etc.)
+    3. Asset files (assets/ directory)
+    4. Native libraries (.so files)
+    5. Resource XML files
+    6. String resources (res/values/strings.xml)
+
+  No external tools (jadx, apktool, androguard) are required — all analysis
+  is pure Python using zipfile, struct, and regex.
+
+PERMISSION RISK CLASSIFICATION (2 tiers):
+
+  CRITICAL PERMISSIONS (20 defined):
+    SEND_SMS               → SMS Sending (premium SMS fraud)
+    RECEIVE_SMS            → SMS Intercept (2FA bypass)
+    READ_SMS               → SMS Read (credential harvesting)
+    BIND_DEVICE_ADMIN      → Full device control
+    INSTALL_PACKAGES       → Dropper capability
+    DELETE_PACKAGES        → App removal capability
+    READ_CONTACTS          → Contact harvesting
+    RECORD_AUDIO           → Microphone (spyware)
+    CAMERA                 → Camera access (spyware)
+    ACCESS_FINE_LOCATION   → GPS tracking
+    READ_CALL_LOG          → Call log access
+    PROCESS_OUTGOING_CALLS → Call intercept
+    WRITE_SETTINGS         → System modification
+    BIND_ACCESSIBILITY_SERVICE → Keylogging
+    USE_CREDENTIALS        → Credential access
+    WRITE_CONTACTS         → Contact modification
+    READ_EXTERNAL_STORAGE  → Storage read
+    WRITE_EXTERNAL_STORAGE → Storage write
+    RECEIVE_BOOT_COMPLETED → Boot persistence
+    WAKE_LOCK              → Background CPU operation
+
+  HIGH PERMISSIONS (9 defined):
+    INTERNET, ACCESS_NETWORK_STATE, CHANGE_NETWORK_STATE,
+    CHANGE_WIFI_STATE, VIBRATE, REQUEST_INSTALL_PACKAGES,
+    FOREGROUND_SERVICE, DISABLE_KEYGUARD, SYSTEM_ALERT_WINDOW
+
+DEX CODE PATTERN SCANNER (20 patterns):
+  Pattern                                  | Indicator              | Severity
+  ─────────────────────────────────────────────────────────────────────────────
+  DexClassLoader|PathClassLoader           | DynamicDexLoading      | CRITICAL
+  java.lang.reflect.Method                 | ReflectionUsage        | HIGH
+  Runtime.getRuntime().exec|ProcessBuilder | RuntimeExecution       | HIGH
+  Cipher.getInstance|SecretKeySpec         | CryptographicOps       | MEDIUM
+  Base64.encode|decode                     | Base64Encoding         | MEDIUM
+  TelephonyManager|getDeviceId             | DeviceIdentifiers      | HIGH
+  sendTextMessage|SmsManager               | SMSSending             | CRITICAL
+  addJavascriptInterface|loadUrl           | WebViewXSS             | HIGH
+  AccessibilityService|performGlobalAction | AccessibilityAbuse     | CRITICAL
+  DevicePolicyManager                      | DeviceAdminUsage       | CRITICAL
+  SharedPreferences                        | LocalStorage           | LOW
+  getExternalStorage                       | ExternalStorageAccess  | MEDIUM
+  PhoneStateListener|BluetoothAdapter      | HardwareAccess         | MEDIUM
+  System.loadLibrary|System.load           | NativeLibraryLoad      | HIGH
+  .getMethod(|.getDeclaredMethod(          | PrivateReflection      | HIGH
+  nativeMethod|JNI_OnLoad                  | JNIUsage               | MEDIUM
+  setComponentEnabledSetting               | ComponentHiding        | HIGH
+  ContactsContract                         | ContactsAccess         | HIGH
+  SmsObserver|ContentObserver              | SMSObserver            | CRITICAL
+  NotificationListenerService              | NotificationSnooping   | HIGH
+
+THREAT FAMILY CLASSIFICATION (APK):
+  BIND_DEVICE_ADMIN in critical_perms         → "Mobile RAT/Banker"
+  SEND_SMS in critical_perms                  → "SMS Fraud/Premium Dialer"
+  BIND_ACCESSIBILITY_SERVICE in critical_perms→ "SpyWare/Keylogger"
+  Any READ* permission in critical_perms      → "Data Harvester"
+  DynamicDexLoading in DEX findings           → "Dropper"
+
+RISK SCORE CALCULATION:
+  base_score = len(critical_perms) * 4
+             + len(high_perms) * 2
+             + len(medium_perms) * 1
+  bonus      = len(CRITICAL DEX findings) * 5
+             + len(HIGH DEX findings) * 2
+             + len(unique_secrets) * 3
+  risk_score = base_score + bonus
+
+  risk_level:
+    LOW      : < 15
+    MEDIUM   : 15-29
+    HIGH     : 30-49
+    CRITICAL : >= 50
+
+---
+
+5.7 SECRET DETECTION ENGINE
+------------------------------
+File  : backend/app/services/secret_detector.py
+Class : SecretDetector
+Lines : 148
+Type  : Regex-based secret scanning (50+ patterns)
+
+DESCRIPTION:
+  The SecretDetector scans binary/text content for 50+ types of hardcoded
+  secrets embedded in malware samples, configuration files, or APK packages.
+  It uses a registry of (pattern, type_name, severity) tuples and performs
+  case-insensitive regex matching.
+
+SECRET PATTERN REGISTRY (45 patterns, grouped by category):
+
+  Cloud Infrastructure Credentials:
+    Google API Key        → AIza[0-9A-Za-z\-_]{35}               CRITICAL
+    Firebase FCM Key      → AAAA[A-Za-z0-9_-]{7}:[...]{140}      CRITICAL
+    AWS Access Key ID     → (?<![A-Z0-9])AKIA[0-9A-Z]{16}        CRITICAL
+    AWS Secret Access Key → aws_secret_access_key[...]{40}        CRITICAL
+    Mailchimp API Key     → [0-9a-f]{32}-us[0-9]{1,2}            HIGH
+    SendGrid API Key      → SG\.[...]{22}\.[...]{43}              HIGH
+    Mailgun API Key       → key-[a-zA-Z0-9]{32}                   HIGH
+    Stripe Live Key       → sk_live_[0-9a-z]{24}                  CRITICAL
+    Stripe Test Key       → sk_test_[0-9a-z]{24}                  HIGH
+    Twilio Account SID    → AC[a-z0-9]{32}                        HIGH
+    Twilio API Key        → SK[a-z0-9]{32}                        HIGH
+    GitHub Token          → (ghp|gho|ghu|ghs|ghr)_[...]{36}      CRITICAL
+    Slack Bot Token       → v1\.[...]{86}==                       HIGH
+    Slack API Token       → xox[baprs]-[...]-[...]-[...]          HIGH
+    GCP Credential        → gcp_[a-zA-Z0-9_-]{24}                CRITICAL
+
+  Cryptographic Material:
+    RSA Private Key       → -----BEGIN RSA PRIVATE KEY-----       CRITICAL
+    EC Private Key        → -----BEGIN EC PRIVATE KEY-----        CRITICAL
+    OpenSSH Private Key   → -----BEGIN OPENSSH PRIVATE KEY-----   CRITICAL
+    PGP Private Key       → -----BEGIN PGP PRIVATE KEY BLOCK----- CRITICAL
+    DSA Private Key       → -----BEGIN DSA PRIVATE KEY-----       CRITICAL
+
+  JWT / Auth Tokens:
+    JWT Token             → eyJ[...]{10}\.[...]{10}\.[...]{10}    HIGH
+    Bearer Auth Token     → Bearer\s+[...]+                       HIGH
+    Basic Auth Header     → Basic\s+[...]+                        HIGH
+
+  Database URIs:
+    MongoDB URI           → mongodb(?:\+srv)?://[...]{10,}        CRITICAL
+    PostgreSQL URI        → postgresql://[...]{10,}               CRITICAL
+    MySQL URI             → mysql://[...]{10,}                    CRITICAL
+    Redis URI             → redis://[...]{10,}                    HIGH
+    JDBC Connection       → jdbc:[...]+://[...]{10,}              CRITICAL
+
+  Hardcoded Credentials:
+    Hardcoded Password    → password\s*[=:]\s*"...[6-64chars]"    CRITICAL
+    Hardcoded Username    → username\s*[=:]\s*"...[3-32chars]"    MEDIUM
+    Hardcoded API Key     → api_key\s*[=:]\s*"...[8-64chars]"     HIGH
+    Hardcoded Secret      → secret\s*[=:]\s*"...[8-64chars]"      HIGH
+    Hardcoded Token       → token\s*[=:]\s*"...[8+ chars]"        HIGH
+    Hardcoded Private Key → private_key\s*[=:]\s*"...[10+chars]"  CRITICAL
+
+  Network Infrastructure:
+    IP-Based URL          → https?://\d+\.\d+\.\d+\.\d+          HIGH
+    Dark Web URL          → https?://[...].onion/.i2p             CRITICAL
+    Suspicious TLD URL    → https?://[...].tk/.ml/.ga/.cf/.cc     HIGH
+    IP:Port Endpoint      → IP_ADDRESS:PORT (4-5 digit port)      HIGH
+
+VALUE MASKING ALGORITHM:
+  For display security, found values are masked:
+    keep_prefix = 6 chars
+    keep_suffix = 4 chars
+    middle      = "●" * min(12, len(value) - 10)
+    Example: "AKIAIOSFODNN7EXAMPLE" → "AKIAIO●●●●●●MPLE"
+
+DEDUPLICATION:
+  Key = (secret_type, raw_val[:12])
+  Prevents reporting the same secret twice.
+
+OUTPUT FORMAT:
+  {
+    "type"       : secret_type string,
+    "severity"   : CRITICAL|HIGH|MEDIUM|LOW,
+    "masked"     : masked value string,
+    "raw_prefix" : first 20 chars of matched value,
+    "context"    : 60 chars before+after match,
+    "position"   : byte offset in file,
+    "source"     : filename
+  }
+  Cap: 50 findings maximum, sorted by severity.
+
+---
+
+5.8 URL THREAT INTELLIGENCE ENGINE
+-------------------------------------
+File  : backend/app/services/url_scan_service.py
+Class : URLScanService
+Lines : 387
+Type  : Multi-layer URL heuristics + live probing
+
+DESCRIPTION:
+  The URLScanService performs multi-engine URL threat analysis combining:
+    1. Structural heuristics (50+ rule-based patterns)
+    2. Live DNS A-record resolution (socket.getaddrinfo)
+    3. SSL/TLS certificate inspection (ssl module)
+    4. HTTP response and redirect chain probing (urllib)
+    5. Simulated VirusTotal multi-engine scoring (deterministic hash-based)
+    6. Phishing keyword detection (24 weighted keywords)
+    7. Homograph/IDN attack detection (Punycode check)
+    8. Domain entropy analysis (Shannon entropy)
+    9. WHOIS-style domain age estimation (deterministic simulation)
+
+RISK SCORE ACCUMULATION (additive, capped at 100):
+  Rule                                    | Score Added
+  ─────────────────────────────────────────────────────
+  HTTP (not HTTPS)                        | +15
+  Suspicious TLD (.tk .ml .ga .cc etc.)   | +25
+  @ symbol in URL                         | +35
+  Bare IP address as hostname             | +30
+  Subdomain depth > 4                     | +20
+  URL length > 75 chars                   | +10
+  Each phishing keyword (weighted 10-25)  | +kw_score
+  Domain entropy > 3.8 (DGA-like)         | +15
+  Punycode/IDN homograph                  | +30
+  Digit ratio in domain > 40%             | +12
+  3+ hyphens in domain                    | +10
+  Suspicious path (/wp-login, /.env, etc.)| +20 each
+  Query string > 200 chars                | +10
+  DNS resolution failure                  | +10
+  Invalid SSL certificate                 | +20
+  HTTP error response (4xx)               | +5
+  Redirect to different domain            | +15
+  Domain age < 30 days                    | +25
+  Domain age 30-180 days                  | +10
+  Whitelisted domain (discount)           | -60
+
+RISK LEVEL THRESHOLDS:
+  score <  30 → SAFE
+  30 <= score < 65 → SUSPICIOUS
+  score >= 65 → MALICIOUS
+
+PHISHING KEYWORD WEIGHTS (24 keywords):
+  login(12), signin(12), verify(15), verification(15),
+  account(10), update(10), secure(12), banking(20),
+  paypal(25), apple(18), amazon(18), microsoft(18),
+  gmail(18), netflix(18), crypto(20), wallet(18),
+  password(20), admin(15), confirm(12), recover(12),
+  reward(15), prize(20), urgent(18), click-here(15)
+
+SHANNON ENTROPY FOR DOMAIN ANALYSIS:
+  H(domain) = -Σ p(c) * log₂(p(c))
+  where p(c) = frequency of character c / total domain length
+  Threshold: H > 3.8 → likely DGA (Domain Generation Algorithm) domain
+
+SUSPICIOUS TLDs (13 defined):
+  .tk .ml .ga .cf .gq  (free / disposable)
+  .xyz .top .cc .pw .icu (spam-heavy)
+  .onion .i2p           (dark web)
+  .su                   (Soviet-era, abuse-heavy)
+  .zip .mov             (Google's controversial new TLDs)
+
+VIRUSTOTAL SIMULATION ENGINE:
+  Deterministic seeding using MD5 hash of URL string.
+  15 simulated AV engines:
+    Google SafeBrowsing, Kaspersky, BitDefender, ESET, Sophos,
+    Avast, ClamAV, Avira, Malwarebytes, Fortinet, OpenPhish,
+    PhishTank, URLhaus, Sucuri SiteCheck, Webroot BrightCloud
+  Detection count = max(0, int((score/100) * 15 * (0.6 + rng.random()*0.4)))
+
+WHITELIST (18 trusted domains):
+  google.com, github.com, microsoft.com, apple.com, amazon.com,
+  cloudflare.com, fastly.com, akamai.com, cdn.jsdelivr.net,
+  stackoverflow.com, wikipedia.org, mozilla.org, python.org,
+  npmjs.com, pypi.org, reddit.com, twitter.com, youtube.com
+
+---
+
+5.9 SESSION CORRELATION ENGINE
+---------------------------------
+File  : backend/app/services/session_engine.py
+Class : SessionEngine
+Type  : IP-based event grouping with time-window correlation
+
+DESCRIPTION:
+  The SessionEngine processes raw events that have not yet been assigned to a
+  session and groups them into attacker sessions. It runs as a background task
+  every 60 seconds.
+
+SESSION CORRELATION ALGORITHM:
+  1. Fetch all raw_events where session_id IS NULL (unmapped)
+  2. Group events by attacker_ip
+  3. For each IP group, sorted by timestamp:
+     a. Find existing open session for this IP (last_seen within 30 minutes)
+     b. If found: extend session (update last_seen, increment total_events)
+     c. If not found: create new AttackerSession
+        - session_id = UUID v4
+        - first_seen = earliest event timestamp
+        - last_seen  = latest event timestamp
+        - risk_level = calculated from event types
+        - geoip_country = from geoip_data if available
+  4. Mark events as session-correlated (update session_id)
+
+SESSION TIMEOUT: 30 minutes (configurable)
+
+---
+
+5.10 BACKGROUND SYNC PIPELINE
+--------------------------------
+File  : backend/app/services/sync_manager.py
+Class : SyncManager
+Type  : Async batch processor
+
+DESCRIPTION:
+  The SyncManager is a background worker that runs every 10 seconds and
+  transforms raw honeypot telemetry into normalized StructuredEvents.
+
+SYNC ALGORITHM:
+  Every 10 seconds:
+    1. Fetch raw_events WHERE sync_status = 'PENDING' LIMIT 100
+    2. For each raw event:
+       a. Create StructuredEvent with normalized details JSON:
+          {commands, uploaded_files, ports_scanned, geoip,
+           risk_score, protocol, target_port, attacker_ip}
+       b. Set session_id from raw_event.session_id (may be NULL)
+       c. Copy timestamp, honeypot_type, event_type
+    3. db.add_all(structured_events)
+    4. UPDATE raw_events SET sync_status='SYNCED' WHERE id IN (batch)
+    5. db.commit()
+
+BATCH SIZE: 100 events per cycle
+CYCLE INTERVAL: 10 seconds
+ERROR HANDLING: On failure, events remain PENDING for retry next cycle
+
+---
+
+5.11 SHANNON ENTROPY ALGORITHM
+---------------------------------
+Used in: static_analyzer.py, sandbox_engine.py, url_scan_service.py
+Type   : Information theory measure
+
+FORMULA:
+  H(X) = -Σ p(xᵢ) * log₂(p(xᵢ))
+  where:
+    X = byte sequence (for binary) or char sequence (for domain)
+    p(xᵢ) = frequency of byte/char xᵢ / total length
+    Sum over all unique byte values
+
+IMPLEMENTATION (Python):
+  def _calculate_entropy(data: bytes) -> float:
+      if not data: return 0.0
+      counter = Counter(data)
+      entropy = 0.0
+      for count in counter.values():
+          p = count / len(data)
+          entropy -= p * math.log2(p)
+      return round(entropy, 3)
+
+INTERPRETATION:
+  entropy = 0.0  → Completely uniform data (all same byte)
+  entropy = 8.0  → Maximum entropy (perfectly random distribution)
+  entropy > 7.2  → Strongly suggests packing or encryption
+  entropy > 6.5  → Elevated; possible compression
+  entropy > 3.8  → For domains: suggests DGA/randomly generated name
+
+MAX POSSIBLE ENTROPY for a byte array: log₂(256) = 8.0 bits/byte
+
+---
+
+5.12 RISK SCORING ALGORITHMS
+-------------------------------
+
+A. Permission-Based Risk Score (APK):
+  score = Σ(4 × critical_permissions)
+        + Σ(2 × high_permissions)
+        + Σ(1 × medium_permissions)
+        + Σ(5 × CRITICAL_dex_findings)
+        + Σ(2 × HIGH_dex_findings)
+        + Σ(3 × unique_secrets)
+
+B. Behavioral Risk Score (Sandbox):
+  score = min(100, indicator_count × 10
+                 + (15 if entropy > 6.5)
+                 + (12 if packer detected))
+  score = max(15, score)
+
+C. URL Risk Score (additive, see 5.8 above)
+
+D. Severity → Risk Level mapping (used across system):
+  LOW      : score < 30
+  MEDIUM   : 30 ≤ score < 55
+  HIGH     : 55 ≤ score < 80
+  CRITICAL : score ≥ 80
+
+================================================================================
+PART 6 — DATA PIPELINES & DATA FLOW
+================================================================================
+
+6.1 COMPLETE ATTACK EVENT LIFECYCLE (9 STAGES)
+------------------------------------------------
+
+STAGE 1: CAPTURE
+  Actor  : Honeypot (Cowrie/Dionaea/Honeytrap)
+  Action : Attack hits exposed service port
+  Output : JSON log entry → {timestamp, src_ip, port, protocol, payload, commands}
+  Storage: Local honeypot log file or direct API push
+
+STAGE 2: INGEST
+  Actor  : FastAPI /api/v1/events/ingest (POST)
+  Action : Pydantic schema validation → SQLite write
+  Output : raw_events record with sync_status=PENDING
+  Latency: < 5ms (async SQLite write)
+
+STAGE 3: CLASSIFY
+  Actor  : Background SyncManager (10s cycle)
+  Action : AIEngine.analyze_log(payload, ip, port)
+           → Signature detection (5 regex patterns)
+           → Behavioral detection (3 time-window checks)
+  Output : attack_type, severity, mitre_id
+  Updates: raw_events.event_type, raw_events.risk_score
+
+STAGE 4: CORRELATE
+  Actor  : Background SessionEngine (60s cycle)
+  Action : Group events by IP within 30-minute time windows
+  Output : attacker_sessions records
+  Updates: raw_events.session_id → AttackerSession.session_id
+
+STAGE 5: SYNCHRONIZE
+  Actor  : SyncManager batch processor
+  Action : Normalize raw_events → structured_events
+  Output : structured_events records with JSON details
+  Updates: raw_events.sync_status = 'SYNCED'
+
+STAGE 6: EXPORT
+  Actor  : AWS Telemetry Service (5-minute cycle)
+  Action : Upload structured_events to S3 as JSON lines
+  Output : S3 objects in honeynet-telemetry-logs/ bucket
+  Format : Newline-delimited JSON (NDJSON)
+
+STAGE 7: ENRICH
+  Actor  : Dashboard API (on request)
+  Action : Batch GeoIP lookup via ip-api.com
+  Output : Country, city, ASN, ISP, lat/lon added to events
+  Cache  : Request-scoped (no persistent GeoIP cache)
+
+STAGE 8: DISPLAY
+  Actor  : Frontend JavaScript
+  Action : Periodic API polling (15s for stats, on-demand for events)
+  Output : Charts, tables, map markers, risk indicators
+  Real-time: Supabase WebSocket pub/sub for live event feed
+
+STAGE 9: ALERT
+  Actor  : Alert Service (triggered on risk threshold breach)
+  Action : Render Jinja2 template → SMTP email + Twilio WhatsApp
+  Output : Email notification + WhatsApp message
+  Logging: credential_audit_log + admin_activity_log
+
+6.2 MALWARE ANALYSIS PIPELINE (4 STAGES)
+------------------------------------------
+
+STAGE 1: UPLOAD & HASH
+  - Accept multipart file upload via POST /api/v1/malware/upload
+  - Calculate SHA-256 hash of file bytes
+  - Check cache (scans/full_reports.json) — return cached if found
+  - Save file to scans/<sha256>.<ext>
+
+STAGE 2: STATIC ANALYSIS (StaticAnalyzer)
+  - Detect file type by magic bytes
+  - Route to format-specific analyzer (PE/ELF/PDF/Script/APK)
+  - Extract: architecture, sections, imports, strings
+  - Detect packers, suspicious APIs, entropy
+  - Output: StaticReport dict
+
+STAGE 3: SANDBOX DETONATION (CAPESandboxEngine)
+  - Check cache by SHA-256 (scans/cape_cache.json)
+  - If CAPE_URL configured: submit to real CAPE → poll 18×5s = 90s max
+  - Else: run heuristic simulation engine
+  - Output: threat_family, risk_score, mitre_techniques,
+            behavior_profile, network_intel, process_tree, signatures
+
+STAGE 4: SUPPLEMENTAL ANALYSES (parallel)
+  - Secret Detector: 50+ regex patterns on raw bytes
+  - APK Engine (if .apk): manifest, DEX, permissions, components
+  - MobSF (if configured): deep APK analysis via MobSF API
+
+FINAL OUTPUT (full_report dict):
+  {sha256, filename, file_size, upload_timestamp,
+   static: StaticReport,
+   sandbox: SandboxReport,
+   secrets: SecretFindings,
+   apk: APKReport (if applicable)}
+
+================================================================================
+PART 7 — API REFERENCE (ALL ENDPOINTS)
+================================================================================
+
+BASE URL: http://localhost:8000/api/v1
+
+7.1 AUTHENTICATION ENDPOINTS (/api/v1/auth)
+---------------------------------------------
+POST /register
+  Body: {username, email, password, first_name, last_name, department, clearance_level}
+  Response: {user_id, status: "PENDING", message}
+  Logic: Hash password with bcrypt, set status=PENDING, assign default role
+         based on clearance_level: {1:"OPERATIVE", 2:"SPECIALIST", 3:"OVERSEER"}
+
+POST /login
+  Body: {email, password}
+  Response: {access_token, token_type: "bearer", user: {...}}
+  JWT Payload: {sub: email, role: role, clearance: level, user_id: uuid}
+  Algorithm: HS256, Expiry: ACCESS_TOKEN_EXPIRE_MINUTES (default 60 min)
+
+POST /verify-otp
+  Body: {email, otp_code}
+  Response: {success: true}
+  Note: OTP verification step (bypassed in dev mode)
+
+POST /forgot-password
+  Body: {email}
+  Response: {message: "Reset email sent if address is registered"}
+  Logic: Generates UUID token, sends SMTP email with reset link
+
+POST /reset-password
+  Body: {token, new_password}
+  Response: {success: true}
+
+POST /admin-login
+  Body: {email, system_code}
+  Response: {access_token, ...}
+  Note: Requires matching system_code (XXX-XXX format) in users table
+
+POST /activate-account
+  Body: {token, email, new_password}
+  Response: {access_token, user: {...}}
+  Logic: Validates one-time credential_token, activates account,
+         forces password change if force_password_change=True
+
+POST /dev-bypass
+  Body: {} (no auth required)
+  Response: {access_token for admin@gmail.com}
+  Note: Development convenience endpoint — should be disabled in production
+
+7.2 EVENT INGESTION (/api/v1/events)
+--------------------------------------
+POST /ingest
+  Body: {
+    attacker_ip, target_port, protocol, honeypot_type,
+    commands (optional), uploaded_files (optional),
+    ports_scanned (optional), geoip_data (optional),
+    raw_payload (optional)
+  }
+  Response: {status: "success", inserted_count: N}
+  Logic: Validates schema, deduplicates via signature hash,
+         stores to raw_events with sync_status=PENDING
+
+GET /
+  Query: ?limit=200
+  Response: [{event...}, ...]
+  Auth: Required (any role)
+
+GET /{event_id}/analyze
+  Response: {event, ai_analysis: {type, severity, mitre}}
+  Logic: On-demand AIEngine analysis of specific event
+
+7.3 DASHBOARD (/api/v1/dashboard)
+-----------------------------------
+GET /stats
+  Response: {
+    total_attacks, unique_attackers, active_nodes,
+    critical_events_24h, attack_types: {type: count},
+    traffic_over_time: [{timestamp, count}],
+    top_attackers: [{ip, count, country}],
+    severity_distribution: {LOW, MEDIUM, HIGH, CRITICAL},
+    geo_data: [{ip, country, lat, lon, count}]
+  }
+  Cache: 15-second TTL
+
+GET /geo
+  Response: [{ip, country, city, lat, lon, asn, isp, attacks}]
+  Source: ip-api.com batch endpoint
+
+7.4 MALWARE ANALYSIS (/api/v1/malware)
+----------------------------------------
+POST /upload
+  Body: multipart/form-data with file field
+  Response: {sha256, filename, report: FullMalwareReport}
+
+GET /report/{sha256}
+  Response: FullMalwareReport (from cache)
+
+GET /secrets/{sha256}
+  Response: {findings: [...], summary: {CRITICAL, HIGH, MEDIUM, LOW}, total}
+
+GET /apk-intel/{sha256}
+  Response: APKReport
+
+GET /static/{sha256}
+  Response: StaticAnalysisReport
+
+GET /history
+  Query: ?limit=200
+  Response: [{sha256, filename, threat_family, risk_level, analyzed_at}]
+
+GET /family-distribution
+  Response: {Ransomware: 5, RAT/Backdoor: 12, ...}
+
+POST /launch-ida
+  Body: {sha256}
+  Response: {ida_report: IDAStaticAnalysis}
+
+POST /analyze/apk
+  Body: multipart/form-data (APK file)
+  Response: {mobsf_report: {...}}
+
+7.5 AWS ORCHESTRATION (/api/v1/aws)
+--------------------------------------
+POST /test
+  Body: {access_key, secret_key, region}
+  Response: {valid: true, account_id, arn}
+  Logic: AWS STS GetCallerIdentity
+
+GET /ec2/list
+  Response: [{instance_id, state, public_ip, tags, launch_time}]
+
+GET /s3/list-buckets
+  Response: [{name, creation_date, region}]
+
+GET /iam/roles
+  Response: [{role_name, arn, description}]
+
+GET /cluster-health
+  Response: {
+    total_instances, running_instances,
+    vcpu_used, vcpu_limit, ram_used_gb, ram_limit_gb,
+    region, service_quotas
+  }
+
+7.6 VM MANAGEMENT (/api/v1/vm)
+--------------------------------
+POST /launch
+  Body: {ami_id, instance_type, subnet_id, security_group_id,
+          environment_type, protocol: "rdp"|"ssh"}
+  Response: {lab_id, instance_id, status: "provisioning"}
+  Logic: 4-stage async provisioning:
+    1. EC2 RunInstances
+    2. Poll for RUNNING state + IP (5 min max)
+    3. Poll for 2/2 status checks (12 min max for Windows cold-boot)
+    4. Create Guacamole connection → return READY
+
+POST /{instance_id}/terminate
+  Response: {success: true}
+
+POST /{instance_id}/status
+  Response: {state, public_ip, status_checks}
+
+7.7 USER MANAGEMENT (/api/v1/users)
+--------------------------------------
+GET /me
+  Response: {user profile including role and clearance}
+
+GET /list
+  Auth: SUPER_ADMIN only
+  Response: [{user...}]
+
+PATCH /{user_id}/role
+  Body: {role: "ANALYST"|"AUDITOR"|"SPECIALIST"|"OVERSEER"|"OPERATIVE"}
+  Auth: SUPER_ADMIN only
+
+PATCH /{user_id}/clearance
+  Body: {clearance_level: 1|2|3}
+  Auth: SUPER_ADMIN only
+
+POST /{user_id}/approve
+  Auth: SUPER_ADMIN/OVERSEER
+  Response: {user activated}
+
+POST /{user_id}/revoke
+  Auth: SUPER_ADMIN
+  Response: {user blocked}
+
+7.8 CREDENTIALS (/api/v1/credentials)
+----------------------------------------
+GET /captured
+  Response: [{attacker_ip, username, password, port, timestamp}]
+
+POST /issue
+  Body: {username, email, phone (opt), expiry_hours, delivery_method, custom_message}
+  Response: {token_id, delivery_status}
+  Logic: Generate UUID token → email/WhatsApp delivery → audit log
+
+GET /history
+  Response: [{username, delivery_method, email_status, whatsapp_status, timestamp}]
+
+POST /resend
+  Body: {token_id}
+  Response: {delivery_status}
+
+7.9 SECTORS (/api/v1/sectors)
+-------------------------------
+GET /targets
+GET /targets  POST: {sector_key, name, url, ip, description}
+GET /events
+GET /stats/{sector_key}
+
+7.10 ANALYTICS (/api/v1/analytics)
+-------------------------------------
+GET /trends         — Attack count over time
+GET /top-attacks    — Top attack types by frequency
+GET /risk-distribution — Risk level breakdown
+GET /protocol-breakdown — Protocol usage
+
+7.11 MITRE ATT&CK (/api/v1/mitre)
+------------------------------------
+GET /matrix            — Full MITRE enterprise matrix
+GET /techniques/{id}   — Map event to technique
+
+7.12 ADMIN (/api/v1/admin)
+----------------------------
+GET /system-config     — System settings
+PUT /system-config     — Update alert thresholds, SMTP, etc.
+GET /audit-log         — Admin activity history
+
+================================================================================
+PART 8 — SECURITY ARCHITECTURE
+================================================================================
+
+8.1 AUTHENTICATION SYSTEM
+---------------------------
+Type       : Stateless JWT (JSON Web Token)
+Algorithm  : HS256 (HMAC with SHA-256)
+Header     : Authorization: Bearer <TOKEN>
+
+JWT Payload Structure:
+  {
+    "sub"       : "user@email.com",  // Subject (email)
+    "role"      : "ANALYST",          // User role
+    "clearance" : 2,                  // Clearance level (1-3)
+    "user_id"   : "uuid-v4",
+    "exp"       : 1234567890          // Unix timestamp expiry
+  }
+
+Password Hashing:
+  Algorithm : bcrypt (cost factor 12)
+  Library   : bcrypt Python package
+  Format    : $2b$12$<22-char-salt><31-char-hash>
+
+OTP Generation:
+  Format : 6-digit numeric code
+  Method : random.choices(string.digits, k=6)
+
+Admin System Code:
+  Format : XXX-XXX (uppercase letters + digits)
+  Method : random.choices(string.ascii_uppercase + string.digits, k=3) × 2
+
+8.2 6-TIER ROLE-BASED ACCESS CONTROL (RBAC)
+---------------------------------------------
+Role          | Clearance | Permissions
+────────────────────────────────────────────────────────────────────────────
+SUPER_ADMIN   | 3         | Full access, user management, system config,
+              |           | RBAC assignment, audit logs, all analytics
+OVERSEER      | 3         | All analytics, all nodes, read-only config,
+              |           | user approval (not creation)
+AUDITOR       | 2         | Compliance logs, audit trails, read-only access
+              |           | to all events and configurations
+ANALYST       | 2         | Events, malware analysis, behavior, MITRE,
+              |           | full analytics, no admin functions
+SPECIALIST    | 2         | VM lab management, APK analysis, URL scanning,
+              |           | sector intelligence
+OPERATIVE     | 1         | Dashboard, event feed, basic node view,
+              |           | no analytical or admin functions
+
+8.3 CREDENTIAL TOKEN SYSTEM (Just-In-Time Access)
+---------------------------------------------------
+Flow:
+  1. SUPER_ADMIN creates CredentialToken for new user
+  2. Token delivered via EMAIL / WHATSAPP / BOTH
+  3. New user uses token at /auth/activate-account
+  4. Token marked as used (used=True, used_at=now)
+  5. User forced to set new password (force_password_change=True)
+  6. Audit logged in credential_audit_log
+
+Token Properties:
+  id          : UUID v4
+  token       : UUID v4 (unique)
+  expires_at  : configurable (e.g., 24 hours from issuance)
+  used        : boolean (one-time use)
+  force_password_change : always True
+
+8.4 DATA SECURITY
+------------------
+  - SQLite databases NOT directly accessible to frontend
+  - All queries routed through FastAPI with JWT validation
+  - API rate limiting (framework-level)
+  - Audit logging for all admin actions
+  - CORS: configured for development (allow all origins) — restrict for production
+  - HTTPS: requires reverse proxy (Nginx/Traefik) in production
+  - Malware samples: stored in scans/ with SHA-256 keying, size cap 4MB
+  - Secrets redacted in reports (first 6 + last 4 chars shown)
+
+================================================================================
+PART 9 — HONEYPOT NETWORK DESIGN
+================================================================================
+
+9.1 SUPPORTED HONEYPOT TYPES
+------------------------------
+Honeypot   | Port(s)    | Protocol    | Interaction | Purpose
+────────────────────────────────────────────────────────────────────────────────
+Cowrie     | 22, 23     | SSH/Telnet  | Medium      | Credential capture,
+           |            |             |             | brute-force logging,
+           |            |             |             | command interception
+Dionaea    | 21,25,80,  | Multi       | Low         | Binary/payload capture
+           | 443,445,   |             |             | from malware exploits
+           | 1433,3306  |             |             |
+Honeytrap  | Configurable| Multi      | Low         | Multi-service observer,
+           |            |             |             | flexible port coverage
+
+9.2 EDGE NODE ARCHITECTURE
+----------------------------
+Each honeypot deployment is an "edge node" with:
+
+  LOCAL STORAGE:
+    SQLite ingestion.db — All events stored locally first
+    Advantages: Works completely offline, no cloud dependency
+    Schema: raw_events table with sync_status=PENDING
+
+  CLOUD SYNC:
+    Every 5 minutes: upload structured_events to S3
+    Guarantees: AT LEAST ONCE delivery (idempotent via S3SyncState tracking)
+    Format: NDJSON (newline-delimited JSON)
+
+  CLASSIFICATION (ON ARRIVAL):
+    AIEngine analyzes every event's payload in the 10-second sync cycle
+    Results stored in event_type and risk_score fields
+
+9.3 NODE MANAGEMENT
+---------------------
+UI Page: /nodes.html
+Features:
+  - Visual "Server Rack" (42U slot representation)
+  - LED status indicators (green=ONLINE, red=OFFLINE)
+  - Real-time metrics (24h attacks, unique attackers)
+  - Deploy/start/stop/restart controls
+  - Sector assignment (9 industry verticals)
+  - Risk level indicators
+
+9.4 SECTOR-BASED HONEYNET
+---------------------------
+9 industry-specific sector portals:
+  1. education  — University/Academic networks
+  2. defence    — Military/Government infrastructure
+  3. finance    — Banking/Financial services
+  4. healthcare — Hospital/Medical systems
+  5. energy     — Power grid/Utilities
+  6. telecom    — Telecommunications
+  7. retail     — E-commerce platforms
+  8. transport  — Logistics/Aviation
+  9. media      — Broadcasting/Media
+
+Each sector has:
+  - Dedicated honeypot portal HTML page (realistic-looking fake service)
+  - SectorTarget records (URL/IP + UUID API key)
+  - SectorEvent collection (attack events tagged by sector)
+  - Sector-specific analytics
+
+================================================================================
+PART 10 — CLOUD ORCHESTRATION (AWS)
+================================================================================
+
+10.1 EC2 VM PROVISIONING
+--------------------------
+Service: AWSOrchestrator (aws_orchestrator.py)
+SDK    : boto3 >= 1.34.0
+Region : ap-south-1 (default, configurable)
+
+VM PROVISIONING FLOW (4-stage async):
+  1. RunInstances API call
+     - Tags: ShadowTrust-{profile_id}-{session_id[:5]}
+     - UserData: Bootstrap scripts for SSH/RDP configuration
+     - Linux/Kali: Force password auth, set kali:kali, configure xrdp
+     - Windows: Use Administrator credentials
+
+  2. Poll for RUNNING state + IP (30 × 10s = 5 minutes max)
+     - describe_instances() every 10 seconds
+     - Prefer public IP; fall back to private IP
+
+  3. Poll for 2/2 status checks (72 × 10s = 12 minutes max)
+     - describe_instance_status() every 10 seconds
+     - Both SystemStatus and InstanceStatus must be 'ok'
+     - Covers Windows Server cold-boot time (~8-12 minutes)
+
+  4. Create Guacamole Connection
+     - RDP: port 3389 (Windows/Kali GUI)
+     - SSH: port 22 (Linux headless)
+     - Credentials mapped per profile type
+
+INSTANCE TYPES SUPPORTED:
+  t2.micro, t2.small, t3.medium, t3.large (configurable in UI)
+
+BOTO3 CLIENT CONFIGURATION:
+  connect_timeout : 8 seconds
+  read_timeout    : 15 seconds
+  max_retries     : 1 (prevent blocking FastAPI event loop)
+
+10.2 S3 TELEMETRY PIPELINE
+----------------------------
+Bucket naming: honeynet-telemetry-logs/
+Object format: {year}/{month}/{day}/{timestamp}_{node_id}.ndjson
+Tracking: s3_sync_state table prevents duplicate processing
+
+10.3 GUACAMOLE INTEGRATION
+----------------------------
+Service: GuacamoleService (guacamole_service.py)
+Purpose: Browser-based RDP/SSH access to provisioned VMs
+Flow:
+  - Create Guacamole connection via REST API
+  - Return connection ID
+  - Frontend embeds Guacamole client in iframe
+  - Supports RDP (Windows) and SSH (Linux)
+
+================================================================================
+PART 11 — FRONTEND ARCHITECTURE
+================================================================================
+
+11.1 PAGES INVENTORY (30+ HTML files)
+---------------------------------------
+Category        | Page               | Purpose
+─────────────────────────────────────────────────────────────────────
+Authentication  | login.html         | JWT login form
+                | register.html      | User registration with clearance request
+                | forgot_password.html| Password reset flow
+                | profile.html       | User profile management
+─────────────────────────────────────────────────────────────────────
+Command Center  | index.html         | Landing page (platform overview)
+                | dashboard.html     | Main SOC dashboard (stats, map, charts)
+                | events.html        | Raw event feed with AI analysis
+─────────────────────────────────────────────────────────────────────
+Grid Monitoring | nodes.html         | Honeypot node rack view
+                | sectors.html       | Sector-based threat dashboard
+                | geo.html           | Global threat map (Leaflet.js)
+─────────────────────────────────────────────────────────────────────
+Intelligence    | mitre.html         | MITRE ATT&CK heatmap
+                | graphs.html        | GNN behavioral graph (Vis.js)
+                | credentials.html   | Captured credentials viewer
+                | behavior.html      | Attacker behavior profiling
+                | analytics.html     | Advanced analytics (Chart.js)
+─────────────────────────────────────────────────────────────────────
+Tools           | malware.html       | 4-stage malware upload/analysis
+                | apk.html           | APK analysis results
+                | urlscan.html       | URL threat scanner
+                | vm_lab.html        | VM lab provisioning
+                | vm_session.html    | Active Guacamole session
+─────────────────────────────────────────────────────────────────────
+Admin           | admin.html         | User management panel
+                | access_control.html| RBAC role assignment
+                | credential_mgmt.html| Credential issuance & audit
+                | status.html        | System health monitoring
+─────────────────────────────────────────────────────────────────────
+Configuration   | config.html        | System configuration
+                | aws_connection.html| AWS credential management
+                | architecture.html  | System architecture viewer
+─────────────────────────────────────────────────────────────────────
+Sector Portals  | education_portal.html | Fake university portal
+                | defence_portal.html   | Fake military portal
+                | finance_portal.html   | Fake banking portal
+                | (6 more sectors)      |
+
+11.2 JAVASCRIPT MODULES
+-------------------------
+api.js      — APIService class: auto-discovers backend URL,
+              handles JWT headers, retry logic
+auth.js     — JWT storage/retrieval (localStorage), login flow,
+              token refresh, role-based redirect
+dashboard.js— Real-time stats polling, Chart.js render,
+              attack type distribution, traffic over time
+admin.js    — User table, role assignment modals, approval flow
+vm_client.js— AWS credential injection, instance type selection
+vm_lab.js   — Lab session management, status polling
+sidebar.js  — Navigation menu, active page highlighting
+utils.js    — Common utilities (formatting, debounce, etc.)
+charts.js   — Chart.js factory functions, chart update helpers
+tables.js   — Data table rendering, sorting, pagination
+map.js      — Leaflet.js map initialization, marker management,
+              IP-to-coordinate mapping
+
+11.3 UI DESIGN SYSTEM
+-----------------------
+Theme: "Neon Dark"
+  Background  : #0a0a0f (near-black)
+  Primary     : #00f3ff (electric cyan)
+  Secondary   : #bc13fe (neon magenta)
+  Accent      : #ff0055 (red alert)
+  Success     : #00ff88 (neon green)
+  Card BG     : #13131a (dark grey)
+  Border      : #1a1a2e (deep navy)
+
+Typography:
+  Font family : Monospace/System UI
+  Code elements: font-family: monospace
+
+Animations: animate.css library + custom CSS keyframes
+Icons     : FontAwesome 6.x (via CDN)
+
+================================================================================
+PART 12 — NOTIFICATION & ALERTING SYSTEM
+================================================================================
+
+12.1 EMAIL NOTIFICATIONS (SMTP)
+---------------------------------
+Library   : smtplib (Python standard library)
+Templates : Jinja2 HTML templates
+Config    :
+  SMTP_HOST : smtp.gmail.com (default)
+  SMTP_PORT : 587 (STARTTLS)
+  SMTP_USER : configured email
+  SMTP_PASS : app password
+  SMTP_FROM : sender address
+
+Email types:
+  - Password reset link (with expiring token URL)
+  - Credential issuance notification (with username + token + instructions)
+  - Critical alert notification (with event details + MITRE mapping)
+
+12.2 WHATSAPP NOTIFICATIONS (TWILIO)
+--------------------------------------
+Library : twilio >= 9.0.0
+Config  :
+  TWILIO_ACCOUNT_SID : AC{32 hex chars}
+  TWILIO_AUTH_TOKEN  : {32 hex chars}
+
+Message format: Condensed 3-5 line summary
+Trigger: Critical/High severity events + credential delivery
+
+12.3 SUPABASE REAL-TIME
+-------------------------
+Library  : supabase-py
+Channel  : 'honeypot_events'
+Protocol : WebSocket (long-lived connection)
+Events   : INSERT on raw_events, structured_events
+Use case : Live event feed in dashboard without polling
+
+================================================================================
+PART 13 — DATASETS USED
+================================================================================
+
+13.1 THREAT INTELLIGENCE DATASETS (Built-in / Hardcoded)
+----------------------------------------------------------
+
+A. MITRE ATT&CK Enterprise Matrix (v14)
+  Source   : MITRE Corporation (https://attack.mitre.org)
+  Format   : Subset embedded as Python dictionaries
+  Techniques covered: 20 techniques (T1059, T1055, T1082, T1083,
+              T1071, T1547, T1105, T1027, T1140, T1190, T1486,
+              T1112, T1070, T1016, T1049, T1021, T1078, T1136,
+              T1566, T1003)
+  Usage    : Attack classification → MITRE ID mapping,
+             GNN MITRE output, dashboard MITRE heatmap
+
+B. Malware Family Signatures
+  Source   : Industry-known malware behavioral patterns (curated)
+  Families : Ransomware, RAT/Backdoor, Botnet/Downloader, Trojan,
+             Spyware/Stealer, Rootkit, Worm, Adware (8 families)
+  Patterns : 60+ byte patterns per family
+  Usage    : Threat family classification in sandbox engine
+
+C. Packer/Protector Signature Database
+  Source   : Public packer signature repositories (curated)
+  Packers  : UPX, MPRESS, Themida, NsPack, PECompact, ASPack,
+             MoleBox, Enigma, VMProtect, Obsidium, ExeCryptor, PELock (12)
+  Format   : Binary byte signatures
+  Usage    : PE/ELF packer detection in static analyzer
+
+D. Suspicious API Catalog
+  Source   : Windows API documentation + malware analysis literature
+  APIs     : 70+ Windows API function names across 6 categories
+             (injection, network, persistence, privilege, crypto, evasion)
+  Usage    : PE import table analysis
+
+E. Secret Pattern Registry
+  Source   : Public research on credential leakage patterns
+             (TruffleHog, GitLeaks, detect-secrets projects)
+  Patterns : 45 regex patterns covering AWS, GCP, GitHub, Stripe,
+             Twilio, SendGrid, Mailchimp, JWT, SSH keys, database URIs
+  Usage    : SecretDetector scanning engine
+
+F. URL/Phishing Keyword Database
+  Source   : OpenPhish, PhishTank behavioral analysis (curated subset)
+  Keywords : 24 weighted phishing keywords
+  Brands   : PayPal, Apple, Amazon, Microsoft, Gmail, Netflix
+  TLDs     : 13 suspicious TLDs
+  Whitelist: 18 trusted domains
+  Usage    : URLScanService scoring
+
+G. APT Group Profiles
+  Source   : Public threat intelligence reports (CrowdStrike, Mandiant,
+             Microsoft MSTIC, CISA advisories)
+  Profiles : FANCY BEAR (APT28), LAZARUS, SANDWORM (APT44),
+             UNKNOWN AUTOMATED
+  Attributes: aggression, obfuscation, targeting, lateral movement
+  Usage    : GNN behavioral profiler classification
+
+H. Android Permission Risk Database
+  Source   : Android developer documentation + OWASP Mobile Top 10
+  Permissions: 20 critical + 9 high-risk Android permissions
+  Usage    : APK permission classifier
+
+I. DEX Code Pattern Library
+  Source   : Android malware analysis research literature
+  Patterns : 20 behavioral patterns for DEX bytecode scanning
+  Usage    : APK DEX scanner
+
+J. VirusTotal Engine Simulation List
+  Source   : Public VirusTotal engine catalog
+  Engines  : 15 simulated AV engines
+  Usage    : URL reputation simulation (deterministic, not real queries)
+
+13.2 LIVE/EXTERNAL DATASETS (API-fetched at runtime)
+------------------------------------------------------
+
+A. ip-api.com GeoIP Database
+  Endpoint : http://ip-api.com/batch
+  Fields   : country, city, region, lat, lon, ISP, org, AS
+  Rate limit: 15 requests/minute (free tier)
+  Usage    : Attacker geolocation enrichment
+
+B. URLhaus Database (MalwareBazaar / abuse.ch)
+  Used in  : url_scan_service.py (via HTTP checks)
+  Purpose  : Cross-reference URLs against known malware distribution URLs
+
+C. CAPE Sandbox (when deployed)
+  API      : REST (CAPE v2 API schema)
+  Purpose  : Dynamic malware sandbox detonation
+  Polling  : Up to 18 × 5s = 90 seconds per sample
+
+D. MobSF (Mobile Security Framework)
+  Mode     : Self-hosted Docker container
+  API      : REST API with API key authentication
+  Purpose  : Deep APK analysis (decompilation, dynamic analysis)
+
+13.3 GENERATED/SYNTHETIC DATASETS
+-----------------------------------
+
+A. Simulated Telemetry (seed_nodes.py)
+  File  : scripts/seed_nodes.py
+  Purpose: Seeds honeynet with realistic test data for development
+  Format: Python-generated attack events with various types and IPs
+
+B. Cached Analysis Reports
+  File  : scans/cape_cache.json, scans/full_reports.json
+  Format: SHA-256 keyed JSON
+  Note  : Contains results of analyzed samples (synthetic in demo mode)
+
+C. Deterministic GeoIP Simulation
+  Used in : URLScanService
+  Method  : MD5(hostname) mod 10 → country selection
+  Countries: US, Russia, China, Germany, UK, Netherlands,
+             Singapore, Brazil, India, France
+
+D. Deterministic Domain Age Simulation
+  Used in : URLScanService
+  Method  : MD5(hostname) mod 10000 → age in days (0-3650)
+
+================================================================================
+PART 14 — DEPLOYMENT ARCHITECTURE (DOCKER)
+================================================================================
+
+14.1 DOCKER COMPOSE CONFIGURATION
+------------------------------------
+Version: compose 3.8+
+
+services:
+  backend:
+    build: ./backend (Dockerfile.backend)
+    image: python:3.11-slim (multi-stage)
+    port: "8000:8000"
+    volumes: ./ingestion.db, ./honeynet.db, ./scans
+    env_file: .env
+    depends_on: [db volumes]
+    healthcheck: GET http://localhost:8000/
+
+  mobsf:
+    build: ./backend/mobsf_service (Dockerfile.mobsf)
+    port: "5055:5055"
+    volumes: /var/run/docker.sock, ./mobsf_service/data
+    env_file: .env
+
+  node_api:
+    build: ./services/api (Dockerfile.node)
+    port: "3000:8000"
+    env_file: .env
+
+  worker:
+    build: ./services/worker (Dockerfile.node)
+    env_file: .env
+    (no exposed port — internal only)
+
+  frontend:
+    image: nginx:alpine
+    port: "5500:80"
+    volumes: ./frontend:/usr/share/nginx/html:ro
+
+networks:
+  soc_net:
+    driver: bridge
+
+14.2 ENVIRONMENT VARIABLES (.env)
+-----------------------------------
+# Core
+SECRET_KEY=<random-256bit-hex>
+ACCESS_TOKEN_EXPIRE_MINUTES=60
+API_V1_STR=/api/v1
+
+# Supabase (optional)
+SUPABASE_URL=https://<project>.supabase.co
+SUPABASE_KEY=<service-role-key>
+
+# Email
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=<email>
+SMTP_PASS=<app-password>
+SMTP_FROM=<from-email>
+
+# WhatsApp
+TWILIO_ACCOUNT_SID=AC<32hex>
+TWILIO_AUTH_TOKEN=<32hex>
+
+# AWS
+AWS_ACCESS_KEY_ID=AKIA<16chars>
+AWS_SECRET_ACCESS_KEY=<40chars>
+AWS_REGION=ap-south-1
+AWS_BUCKET_NAME=honeynet-telemetry-logs
+
+# MobSF
+MOBSF_URL=http://mobsf:5055
+MOBSF_API_KEY=<key>
+
+# CAPE
+CAPE_URL=http://<cape-host>
+CAPE_API_KEY=<key>
+
+14.3 SETUP PROCESS (setup.sh)
+-------------------------------
+The setup.sh interactive wizard:
+  1. Detect OS (macOS/Linux/Windows via $OSTYPE)
+  2. Validate Docker + Docker Compose installation
+  3. Create .env from .env.example
+  4. Generate SECRET_KEY: python3 -c "import secrets; print(secrets.token_hex(32))"
+  5. Create directories: mkdir -p scans mobsf_service/data
+  6. Create empty SQLite DBs: touch ingestion.db honeynet.db
+  7. docker compose build --no-cache
+  8. docker compose up -d
+  9. Health check all services
+
+14.4 DEFAULT CREDENTIALS
+--------------------------
+Admin Email   : admin@gmail.com
+Admin Password: admin
+Admin Role    : SUPER_ADMIN
+Admin Clearance: 3
+
+================================================================================
+PART 15 — PERFORMANCE CHARACTERISTICS
+================================================================================
+
+15.1 THROUGHPUT
+-----------------
+Event Ingestion   : Async SQLite writes, ~5ms per event
+Sync Cycle        : 100 events/10 seconds = 10 events/second throughput
+Session Correlation: Batch processing every 60 seconds
+Dashboard Stats   : 15-second TTL cache (reduces DB queries)
+
+15.2 CONCURRENCY MODEL
+-----------------------
+Framework    : FastAPI (ASGI, async/await)
+Event Loop   : asyncio single-process
+DB Access    : aiosqlite (async SQLite driver)
+Background   : asyncio.create_task() for 3 workers
+AWS Calls    : boto3 with short timeouts (8s connect, 15s read)
+              to prevent blocking the event loop
+
+15.3 MEMORY MANAGEMENT
+------------------------
+AIEngine history  : Pruned every event (60s sliding window)
+CAPE cache        : Max 500 entries (FIFO eviction)
+Full reports cache: Max 1000 entries
+String extraction : Max 120 strings per file, 20 per category
+File upload limit : 4MB per file (malware samples)
+APK read limit    : 8MB per file
+
+15.4 CODEBASE METRICS
+-----------------------
+Component            | Files | Estimated LOC
+─────────────────────────────────────────────
+Backend Endpoints    | 20    | 3,826
+Backend Services     | 14    | ~8,000
+AI/Detection Engine  | 3     | 470
+Database Models      | 1     | 309
+Pydantic Schemas     | 1     | ~150
+Frontend HTML        | 30+   | ~15,000
+Frontend JavaScript  | 11    | ~3,500
+Node.js Services     | 4     | ~1,500 (TypeScript)
+Docker Configuration | 5     | 500+
+Database Schemas     | 2     | 250+
+Scripts              | 3     | ~200
+─────────────────────────────────────────────
+TOTAL                | 80+   | ~53,000+
+
+================================================================================
+PART 16 — RESEARCH CONTRIBUTIONS & NOVELTY
+================================================================================
+
+16.1 NOVEL CONTRIBUTIONS
+--------------------------
+
+1. EDGE-FIRST HONEYNET ARCHITECTURE
+   Contribution: Most honeypot systems require constant cloud connectivity or
+   store data exclusively on-premise. Shadow Trust introduces an "edge-first"
+   SQLite architecture where events are captured locally (offline capable) and
+   synced to cloud via eventual consistency. This addresses the challenge of
+   deploying honeypots in low-connectivity or air-gapped environments.
+
+2. UNIFIED 4-STAGE MALWARE ANALYSIS PIPELINE
+   Contribution: Integration of static analysis + CAPE sandbox + APK engine +
+   secret detection into a single API endpoint with standardized output schema.
+   This eliminates the need for analysts to use 4+ separate tools.
+
+3. TEMPORAL GNN BEHAVIORAL PROFILER
+   Contribution: Novel application of graph neural network principles to
+   honeypot telemetry. By representing attack events as temporal graphs
+   (IP nodes → Service nodes → Command/File nodes) and computing degree
+   centrality, the system derives behavioral signatures and matches them
+   to known APT group profiles without requiring a pre-trained model.
+
+4. JUST-IN-TIME CREDENTIAL MANAGEMENT
+   Contribution: Integration of one-time-use credential tokens with multi-channel
+   delivery (Email + WhatsApp) and complete audit trails into the SOC platform.
+   This addresses insider threat and access control in distributed SOC teams.
+
+5. CROSS-PLATFORM BINARY ANALYSIS WITHOUT EXTERNAL TOOLS
+   Contribution: The StaticAnalyzer performs deep PE/ELF binary analysis using
+   only Python's struct module — no PE parsing libraries (pefile, lief, etc.)
+   required. This reduces deployment friction and eliminates dependency chains.
+
+6. SECTOR-BASED THREAT INTELLIGENCE
+   Contribution: Division of honeypot network into industry-specific sectors
+   (9 sectors) enables cross-sector threat comparison analytics — which industries
+   are most targeted, by what attack types, from which geographic regions.
+
+16.2 RESEARCH QUESTIONS ADDRESSED
+------------------------------------
+Q1: Can signature + behavioral hybrid detection outperform pure signature-based
+    IDS for honeypot telemetry classification?
+    → Addressed by AIEngine's two-phase detection approach.
+
+Q2: What is the feasibility of zero-external-dependency malware analysis in
+    a containerized SOC environment?
+    → Addressed by StaticAnalyzer's pure-Python binary parsing.
+
+Q3: How can temporal graph analytics be applied to honeypot event streams
+    for automated threat actor attribution?
+    → Addressed by TemporalGNNProfiler's graph construction + centrality.
+
+Q4: What are the relative attack rates across industry sectors as captured
+    by a distributed honeynet?
+    → Addressed by SectorIntelligence subsystem.
+
+================================================================================
+PART 17 — RELATED WORK & COMPARISON
+================================================================================
+
+17.1 EXISTING PLATFORMS COMPARISON
+-------------------------------------
+
+Platform         | Type           | Malware | ML/AI | MITRE | Sectors | Cloud VM
+─────────────────────────────────────────────────────────────────────────────────
+Cowrie           | Honeypot only  | No      | No    | No    | No      | No
+TheHive          | SOC SIEM       | Limited | No    | Yes   | No      | No
+MISP             | Threat Intel   | No      | No    | Yes   | No      | No
+Cuckoo Sandbox   | Malware only   | Yes     | No    | No    | No      | No
+Velociraptor     | EDR/Hunt       | Limited | No    | Yes   | No      | No
+Shadow Trust     | Full Platform  | Yes(4-stage)| Yes| Yes  | Yes(9)  | Yes(AWS)
+
+17.2 KEY DIFFERENTIATORS
+--------------------------
+1. Integrated malware analysis + honeypot + SOC in one platform
+2. Edge-first offline-capable architecture
+3. APK mobile threat analysis
+4. Dynamic AWS VM provisioning for live malware analysis
+5. Sector-based threat intelligence (9 industries)
+6. Multi-channel alerting (Email + WhatsApp)
+7. GNN behavioral threat actor profiling
+8. Secret extraction from malware samples
+9. One-command Docker deployment
+
+================================================================================
+PART 18 — RAW CODE APPENDIX
+================================================================================
+
+APPENDIX A: main.py (FastAPI Application Entry Point)
+------------------------------------------------------
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from app.core.config import settings
+from app.api.v1.api import api_router
+import asyncio
+from contextlib import asynccontextmanager
+from app.db.sqlite_db import init_db
+from app.services.sync_manager import SyncManager
+from app.services.session_engine import SessionEngine
+from app.services.aws_telemetry_service import telemetry_engine
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    print("Initializing Database...")
+    await init_db()
+    sync_task = asyncio.create_task(background_sync_loop())
+    session_engine_task = asyncio.create_task(background_session_loop())
+    telemetry_task = asyncio.create_task(telemetry_engine.run_pipeline())
+    yield
+    sync_task.cancel()
+    session_engine_task.cancel()
+    telemetry_engine.is_running = False
+    telemetry_task.cancel()
+
+async def background_sync_loop():
+    while True:
+        try:
+            await SyncManager.run_sync_cycle()
+        except Exception as e:
+            print(f"Background Sync Error: {e}")
+        await asyncio.sleep(10)
+
+async def background_session_loop():
+    while True:
+        try:
+            await SessionEngine.process_unmapped_events()
+        except Exception as e:
+            print(f"Session Engine Error: {e}")
+        await asyncio.sleep(60)
+
+app = FastAPI(
+    title="Shadow Trust AI Honeypot",
+    description="AI Powered Threat Intelligence Platform",
+    version="2.0.0",
+    openapi_url=f"{settings.API_V1_STR}/openapi.json",
+    lifespan=lifespan
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+app.include_router(api_router, prefix=settings.API_V1_STR)
+
+APPENDIX B: Background Task Timing
+-------------------------------------
+Task                  | Interval | Purpose
+──────────────────────────────────────────────────────────────
+background_sync_loop  | 10s      | PENDING → SYNCED event normalization
+background_session_loop| 60s     | Event → Session correlation
+telemetry_engine      | 300s (5m)| SQLite → S3 export
+Dashboard stats cache | 15s TTL  | Reduce DB query load
+AWS status poll       | 10s      | EC2 provisioning status check
+
+APPENDIX C: AWS EC2 UserData Bootstrap (Linux/Kali)
+-----------------------------------------------------
+#!/bin/bash
+echo 'PasswordAuthentication yes' > /etc/ssh/sshd_config.d/99-force-password.conf
+sed -i 's/^PasswordAuthentication.*/PasswordAuthentication yes/g' /etc/ssh/sshd_config
+systemctl restart sshd || service ssh restart
+echo "kali:kali" | chpasswd
+echo "xfce4-session" > /home/kali/.xsession
+chown kali:kali /home/kali/.xsession
+chmod +x /home/kali/.xsession
+if [ -f /etc/xrdp/startwm.sh ]; then
+    sed -i '1s/^/unset DBUS_SESSION_BUS_ADDRESS\nunset XDG_RUNTIME_DIR\n/' /etc/xrdp/startwm.sh
+    systemctl restart xrdp
+fi
+
+APPENDIX D: Full MITRE Technique Catalog (sandbox_engine.py)
+--------------------------------------------------------------
+T1059 → Command and Scripting Interpreter
+T1055 → Process Injection
+T1082 → System Information Discovery
+T1083 → File and Directory Discovery
+T1071 → Application Layer Protocol (C2)
+T1547 → Boot or Logon Autostart Execution
+T1105 → Ingress Tool Transfer
+T1027 → Obfuscated Files or Information
+T1140 → Deobfuscate/Decode Files
+T1190 → Exploit Public-Facing Application
+T1486 → Data Encrypted for Impact (Ransomware)
+T1112 → Modify Registry
+T1070 → Indicator Removal on Host
+T1016 → System Network Configuration Discovery
+T1049 → System Network Connections Discovery
+T1021 → Remote Services (Lateral Movement)
+T1078 → Valid Accounts
+T1136 → Create Account
+T1566 → Phishing
+T1003 → OS Credential Dumping
+
+APPENDIX E: Sector Keys Used in System
+----------------------------------------
+education, defence, finance, healthcare, energy,
+telecom, retail, transport, media
+
+APPENDIX F: Supported File Types for Malware Analysis
+-------------------------------------------------------
+Extension | Format | Analyzer Used
+──────────────────────────────────────────────────────
+.exe .dll | PE     | _analyze_pe() (struct-based)
+.elf      | ELF    | _analyze_elf() (struct-based)
+.pdf      | PDF    | _analyze_pdf() (text regex)
+.apk      | APK/ZIP| APKEngine + _analyze_zip()
+.sh .bash | Script | _analyze_script()
+.py       | Script | _analyze_script()
+.ps1      | Script | _analyze_script()
+.bat .cmd | Script | _analyze_script()
+.js       | Script | _analyze_script()
+.lua .rb  | Script | _analyze_script()
+.docx     | ZIP    | APKEngine (zip analysis)
+.xlsx     | ZIP    | APKEngine (zip analysis)
+(other)   | Binary | entropy + packer check only
+
+================================================================================
+END OF DOCUMENT
+================================================================================
+
+Generated from codebase: /Users/ayuahkumarsingh/Desktop/SOC-Honeynet copy 5
+Platform: Shadow Trust v2.0.0
+Total documented: 80+ files, ~53,000 LOC
+Document length: ~1,200+ lines of technical documentation
+Suitable for: 60-80 page academic research paper
+Date: 2026-03-31
+
+================================================================================
