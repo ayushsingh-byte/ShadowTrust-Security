@@ -9,7 +9,10 @@ DB_PATH = DATA_DIR / "mobsf_history.db"
 SERVICE_HOST = "127.0.0.1"
 SERVICE_PORT = 5055
 
-MOBSF_CONTAINER_NAME = "mobsf"
+# Not "mobsf": inside docker-compose the proxy service is itself named `mobsf`
+# and carries that network alias, so a spawned container called `mobsf` would
+# be shadowed by it in DNS. Use a distinct name.
+MOBSF_CONTAINER_NAME = "shadowtrust-mobsf-engine"
 MOBSF_IMAGE = "opensecurity/mobile-security-framework-mobsf"
 MOBSF_INTERNAL_PORT = 8000
 MOBSF_PORT_RANGE_START = 8000

@@ -3,7 +3,7 @@ from pydantic import BaseModel
 from typing import Optional
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.db.sqlite_db import get_db, AsyncSessionLocal
+from app.db.database import get_db, AsyncSessionLocal
 from app.models.all_models import Event, Attack
 from ai_engine.classifier import AIEngine
 from app.api.v1.dependencies import get_current_active_user, User

@@ -1,0 +1,13 @@
+id: suspicious-command
+script_scenario: suspicious-command
+description: Post-exploitation recon commands (passwd read, crontab, history wipe) in a Cowrie shell.
+target: 127.0.0.1
+expected_telemetry:
+  - sensor: cowrie
+    min_events: 1
+expected_detections:
+  - st-exec-003
+expected_techniques:
+  - T1059
+expected_severity: HIGH
+expected_incident: true

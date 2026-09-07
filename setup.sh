@@ -7,7 +7,7 @@
 #    1. Checks Docker & Docker Compose are installed and running
 #    2. Detects your OS and sets the correct MobSF Docker host
 #    3. Creates .env files from .env.example templates (skips if already present)
-#    4. Touches SQLite database files so Docker bind-mounts work correctly
+#    4. Creates host data directories (the database runs as the 'db' container)
 #    5. Creates required data directories
 #    6. Builds all images and starts the stack in detached mode
 #    7. Prints service URLs
@@ -114,12 +114,59 @@ BACKEND_PORT=8000
 MOBSF_PORT=5055
 NODE_API_PORT=3000
 FRONTEND_PORT=5500
+PHPMYADMIN_PORT=8081
+MARIADB_PORT=3307
+
+# Application database (MariaDB) — managed through phpMyAdmin at :8081.
+# Change these before the first start; after that they are baked into the
+# db_data volume until 'docker compose down -v'.
+MARIADB_ROOT_PASSWORD=shadowtrust_root
+MARIADB_DATABASE=shadowtrust
+MARIADB_USER=shadowtrust
+MARIADB_PASSWORD=shadowtrust
+
+# VM Lab (vm_lab.html — Kali/Windows desktops via Guacamole at :8080)
+LAB_DOCKER_NETWORK=shadowtrust_labnet
+LAB_IMAGE_KALI=shadowtrust/lab-kali:latest
+LAB_KALI_USER=kali
+LAB_KALI_PASSWORD=kali
+LAB_WINDOWS_ENABLED=false
+GUAC_PORT=8080
+GUAC_DB_PASSWORD=guacamole_password
 EOF
     ok "Created .env"
   else
-    # Just patch the MOBSF_DOCKER_HOST line in the existing file
+    # Patch the MOBSF_DOCKER_HOST line, and add DB vars if this .env predates them
     perl -i -pe "s|^MOBSF_DOCKER_HOST=.*|MOBSF_DOCKER_HOST=${MOBSF_DOCKER_HOST}|" "${ROOT_DIR}/.env"
-    ok ".env already exists — updated MOBSF_DOCKER_HOST=${MOBSF_DOCKER_HOST}"
+    if ! grep -q '^MARIADB_USER=' "${ROOT_DIR}/.env"; then
+      cat >> "${ROOT_DIR}/.env" << 'EOF'
+
+# Application database (MariaDB) — added by setup.sh
+PHPMYADMIN_PORT=8081
+MARIADB_PORT=3307
+MARIADB_ROOT_PASSWORD=shadowtrust_root
+MARIADB_DATABASE=shadowtrust
+MARIADB_USER=shadowtrust
+MARIADB_PASSWORD=shadowtrust
+EOF
+      ok ".env updated — added MariaDB / phpMyAdmin variables"
+    fi
+    if ! grep -q '^LAB_DOCKER_NETWORK=' "${ROOT_DIR}/.env"; then
+      cat >> "${ROOT_DIR}/.env" << 'EOF'
+
+# VM Lab — added by setup.sh
+LAB_DOCKER_NETWORK=shadowtrust_labnet
+LAB_IMAGE_KALI=shadowtrust/lab-kali:latest
+LAB_KALI_USER=kali
+LAB_KALI_PASSWORD=kali
+LAB_WINDOWS_ENABLED=false
+GUAC_PORT=8080
+GUAC_DB_PASSWORD=guacamole_password
+EOF
+      ok ".env updated — added VM Lab / Guacamole variables"
+    else
+      ok ".env already exists — updated MOBSF_DOCKER_HOST=${MOBSF_DOCKER_HOST}"
+    fi
   fi
 
   # ── backend/.env ──────────────────────────────────────────────────────────
@@ -147,14 +194,13 @@ EOF
   fi
 }
 
-# ── Step 4 — Data directories & SQLite files ─────────────────────────────────
+# ── Step 4 — Data directories ───────────────────────────────────────────────
 setup_data() {
   step 4 "Initialising data directories..."
 
-  # SQLite files must exist as files (not dirs) before Docker bind-mounts them
-  touch "${ROOT_DIR}/backend/ingestion.db"
-  touch "${ROOT_DIR}/backend/honeynet.db"
-  ok "SQLite database files ready"
+  # MariaDB stores its data in the db_data Docker volume — nothing to touch
+  # on the host. The database/init/ SQL runs automatically on first boot.
+  ok "Database runs in the 'db' service (MariaDB) — data in the db_data volume"
 
   mkdir -p "${ROOT_DIR}/backend/mobsf_service/data"
   ok "MobSF data directory ready"
@@ -169,7 +215,29 @@ build_and_start() {
   echo "  (First build may take 3–5 minutes — subsequent starts are instant)"
   echo ""
   cd "${ROOT_DIR}"
-  ${COMPOSE_CMD} up --build -d
+
+  # VM Lab needs the Kali desktop image. It's multi-GB and slow the first time,
+  # so only build it when missing.
+  LAB_IMAGE="${LAB_IMAGE_KALI:-shadowtrust/lab-kali:latest}"
+  if ! docker image inspect "$LAB_IMAGE" >/dev/null 2>&1; then
+    warn "Building VM Lab image $LAB_IMAGE (multi-GB, ~5-15 min the first time)..."
+    docker build -t "$LAB_IMAGE" docker/lab-kali || \
+      warn "Kali lab image build failed — VM Lab will show an error until 'make lab-image' succeeds."
+  else
+    ok "VM Lab image present: $LAB_IMAGE"
+  fi
+
+  # Analysis Lab sandbox — small (~100 MB), quick to build.
+  ANALYSIS_IMAGE="${ANALYSIS_IMAGE:-shadowtrust/analysis-shell:latest}"
+  if ! docker image inspect "$ANALYSIS_IMAGE" >/dev/null 2>&1; then
+    warn "Building Analysis Lab image $ANALYSIS_IMAGE (~1 min)..."
+    docker build -t "$ANALYSIS_IMAGE" -f Dockerfile.analysis . || \
+      warn "Analysis Lab image build failed — run 'make analysis-image' later."
+  else
+    ok "Analysis Lab image present: $ANALYSIS_IMAGE"
+  fi
+
+  ${COMPOSE_CMD} up --build -d --remove-orphans
 }
 
 # ── Step 6 — Status & URLs ───────────────────────────────────────────────────
@@ -183,6 +251,7 @@ show_status() {
   MOBSF_PORT="${MOBSF_PORT:-5055}"
   NODE_API_PORT="${NODE_API_PORT:-3000}"
   FRONTEND_PORT="${FRONTEND_PORT:-5500}"
+  PHPMYADMIN_PORT="${PHPMYADMIN_PORT:-8081}"
 
   echo ""
   echo -e "${GREEN}${BOLD}╔══════════════════════════════════════════════════════╗${NC}"
@@ -191,9 +260,15 @@ show_status() {
   echo ""
   echo -e "${BLUE}  Open in your browser:${NC}"
   echo -e "    Dashboard   →  ${CYAN}http://localhost:${FRONTEND_PORT}${NC}"
+  echo -e "    Investigations→ ${CYAN}http://localhost:${FRONTEND_PORT}/incidents.html${NC}"
+  echo -e "    Status page →  ${CYAN}http://localhost:${BACKEND_PORT}/health${NC}  (off unless HEALTH_PAGE=1)"
   echo -e "    API Docs    →  ${CYAN}http://localhost:${BACKEND_PORT}/docs${NC}"
-  echo -e "    MobSF Svc  →  ${CYAN}http://localhost:${MOBSF_PORT}${NC}"
-  echo -e "    Node API    →  ${CYAN}http://localhost:${NODE_API_PORT}${NC}"
+  echo -e "    phpMyAdmin  →  ${CYAN}http://localhost:${PHPMYADMIN_PORT}${NC}  (server: db, user: shadowtrust)"
+  echo -e "    VM Lab      →  ${CYAN}http://localhost:${FRONTEND_PORT}/vm_lab.html${NC}"
+  echo -e "    Guacamole   →  ${CYAN}http://localhost:${GUAC_PORT:-8080}/guacamole${NC}"
+  echo -e "                   ${YELLOW}default guacadmin/guacadmin — run scripts/set_guac_password.sh to secure it${NC}"
+  echo -e "    MobSF Svc   →  ${CYAN}http://localhost:${MOBSF_PORT}${NC}  (APK analysis — apk.html)"
+  echo -e "    Node API    →  ${CYAN}http://localhost:${NODE_API_PORT}${NC}  (--profile extras)"
   echo ""
   echo -e "${YELLOW}  Quick commands (or use make <target>):${NC}"
   echo "    make logs        ← tail all container logs"

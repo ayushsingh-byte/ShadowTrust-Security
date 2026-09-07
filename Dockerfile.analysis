@@ -1,0 +1,90 @@
+# ShadowTrust Analysis Lab — a disposable, network-isolated Linux shell.
+#
+# The Analysis Lab page (analysis_lab.html) spawns one of these per session. It
+# sits on the `shadowtrust_analysis` network, which is `internal: true` — the
+# container has NO route to the internet, the honeypots, or the app. Outbound
+# connection *attempts* are still captured (destination + port) and fed to the
+# behaviour profiler; they simply never leave.
+#
+# The backend never mounts the Docker socket into this image and runs it with
+# cap_drop=ALL + no-new-privileges as a non-root user.
+#
+# Pre-seeded with a believable "compromised web host" filesystem
+# (docker/analysis-seed/rootfs/) so ls / cd / cat / grep find real content — the
+# fake credentials in it are all clearly marked NOTreal / EXAMPLE.
+
+FROM debian:12-slim
+
+LABEL org.opencontainers.image.title="ShadowTrust Analysis Shell" \
+      org.opencontainers.image.description="Disposable, egress-free Linux sandbox for behavioural analysis"
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        bash iproute2 procps curl wget netcat-openbsd python3 python3-venv \
+        dnsutils nmap less nano vim-tiny git file ca-certificates \
+        bash-completion tree jq gzip tar unzip xz-utils cron sqlite3 \
+        openssh-client man-db psmisc lsof net-tools \
+    && rm -rf /var/lib/apt/lists/*
+
+# ── service accounts (hostname is set at run time by the backend) ──────────
+RUN set -eux; \
+    useradd -m -s /bin/bash -c "Deploy / CI"   deploy; \
+    useradd -r -s /usr/sbin/nologin -c "storefront app" appsvc; \
+    useradd -m -s /bin/bash analyst
+
+# ── the seeded filesystem ──────────────────────────────────────────────────
+COPY docker/analysis-seed/rootfs/ /
+
+
+RUN set -eux; \
+    # Docker COPY drops empty dirs — recreate what the seed needs
+    mkdir -p /srv/backups /srv/data /opt/app/releases /var/log \
+             /home/deploy/projects/storefront/static \
+             /var/www/html/uploads /home/analyst/scratch; \
+    # fake binary backup artefacts (not text — realistic for a .sql.gz / .tgz)
+    head -c 6144 /dev/urandom | gzip > /srv/backups/db_2026-02-11.sql.gz; \
+    head -c 4096 /dev/urandom | gzip > /srv/backups/db_2026-02-10.sql.gz; \
+    head -c 12288 /dev/urandom > /srv/backups/uploads_2026-02-11.tgz; \
+    # a tiny real sqlite db so `sqlite3 storefront.db .tables` works
+    sqlite3 /home/deploy/projects/storefront/storefront.db < /home/deploy/projects/storefront/migrations/001_init.sql; \
+    sqlite3 /home/deploy/projects/storefront/storefront.db \
+      "INSERT INTO products(name,price,sku) VALUES ('15in Laptop',1299.0,'NS-LAP-15'),('USB-C Hub',49.9,'NS-HUB-1'),('4K Monitor',389.0,'NS-MON-4K'); \
+       INSERT INTO users(email,role,pw_hash) VALUES ('admin@northstar-retail.example.com','admin','\$2y\$10\$abcdefghijklmnopqrstuv'); "; \
+    # analyst shell niceties + a plausible history
+    { \
+      echo 'PS1="\[\e[38;5;79m\]\u@web-prod-01\[\e[0m\]:\[\e[38;5;110m\]\w\[\e[0m\]\$ "'; \
+      echo 'export TERM=xterm-256color EDITOR=nano'; \
+      echo 'alias ll="ls -alF" la="ls -A" l="ls -CF" ..="cd .."'; \
+      echo 'cd ~'; \
+    } >> /home/analyst/.bashrc; \
+    { \
+      echo 'id'; echo 'uname -a'; echo 'ls -la /var/www/html'; \
+      echo 'cd ~deploy/projects/storefront'; echo 'cat .env'; \
+      echo 'grep -rn PASSWORD .'; echo 'ls -la /srv/backups'; \
+      echo 'sudo -l'; echo 'crontab -l'; echo 'ps aux --sort=-%cpu | head'; \
+      echo 'find / -perm -4000 -type f 2>/dev/null'; \
+      echo 'ss -tulpn'; echo 'cat /etc/passwd'; \
+    } > /home/analyst/.bash_history; \
+    # deploy's crontab so `crontab -l` (as deploy) shows the backup job
+    mkdir -p /var/spool/cron/crontabs; \
+    printf '30 2 * * * /opt/scripts/backup.sh >> /var/log/backup.log 2>&1\n*/5 * * * * /opt/scripts/healthcheck.sh\n' > /var/spool/cron/crontabs/deploy; \
+    chmod 600 /var/spool/cron/crontabs/deploy; chown deploy:crontab /var/spool/cron/crontabs/deploy || true; \
+    # ownership + tight perms on the "secrets"
+    chmod +x /opt/scripts/*.sh /home/deploy/projects/storefront/deploy.sh /home/analyst/scratch/*.sh; \
+    chmod 600 /home/deploy/projects/storefront/.env /home/deploy/.ssh/* /etc/storefront/admin.env; \
+    chown -R deploy:deploy /home/deploy; \
+    chown -R appsvc:appsvc /var/www/html/uploads; \
+    chown -R analyst:analyst /home/analyst; \
+    ln -sfn /home/deploy/projects/storefront /opt/app/current; \
+    ln -sfn /home/deploy/projects/storefront/logs /var/log/storefront; \
+    # realistic mtimes
+    touch -d '2026-02-11 22:14' /home/deploy/projects/storefront/.env; \
+    touch -d '2026-02-12 02:30' /srv/backups/* 2>/dev/null || true; \
+    touch -d '2026-01-30 09:02' /opt/scripts/* 2>/dev/null || true; \
+    touch -d '2026-02-12 03:48' /home/deploy/projects/storefront/logs/* 2>/dev/null || true
+
+USER analyst
+WORKDIR /home/analyst
+ENV HOSTNAME=web-prod-01 TERM=xterm-256color
+
+# The backend keeps the container alive and execs interactive shells into it.
+CMD ["sleep", "infinity"]

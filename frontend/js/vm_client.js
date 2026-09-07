@@ -1,6 +1,17 @@
 import { apiService } from './api.js';
 
 class VMLabClient {
+    /**
+     * Maps each lab card to a provider-independent environment and resource
+     * tier. The backend decides what those mean — a container image and CPU/RAM
+     * limits locally, an AMI and instance type on AWS. No EC2 instance types
+     * are named client-side.
+     */
+    static CARD_PROFILES = {
+        kali_base:   { environment: 'kali',    profile: 'light' },
+        win_malware: { environment: 'windows', profile: 'heavy' }
+    };
+
     constructor() {
         const saved = localStorage.getItem('_st_instances');
         this.instances = saved ? JSON.parse(saved) : {};
@@ -19,6 +30,17 @@ class VMLabClient {
         this.updateGlobalStats();
     }
 
+    /** Reverse of CARD_PROFILES: which card does this environment belong to? */
+    cardIdFor(environment) {
+        if (!environment) return null;
+        const env = String(environment).toLowerCase();
+        for (const [cardId, cfg] of Object.entries(VMLabClient.CARD_PROFILES)) {
+            if (cfg.environment === env) return cardId;
+        }
+        // Tolerate legacy card ids arriving straight back from the provider.
+        return VMLabClient.CARD_PROFILES[env] ? env : null;
+    }
+
     async updateGlobalStats() {
         try {
             const metrics = await apiService.get('/labs/cluster-metrics');
@@ -28,18 +50,26 @@ class VMLabClient {
             const totalRam = metrics.ram || 0;
             const activeCount = metrics.active_count || 0;
 
-            const maxVcpu = 32;
-            const maxRam = 64;
+            // Real host capacity from the provider (psutil on the docker host / EC2 limits).
+            const maxVcpu = metrics.host_vcpu || totalVcpu || 1;
+            const maxRam = metrics.host_ram_gb || totalRam || 1;
 
-            // Update DOM elements if they exist
+            const region = document.getElementById('global-uplink-region');
+            if (region) region.textContent = `${metrics.provider || 'local'} · ${metrics.region || 'local docker host'}`
+                + (metrics.host_cpu_pct != null ? ` · host CPU ${metrics.host_cpu_pct}%` : '');
+
             const e1 = document.getElementById('global-vcpu-count');
             if (e1) e1.textContent = totalVcpu;
+            const vcpuMax = document.getElementById('global-vcpu-max');
+            if (vcpuMax) vcpuMax.textContent = maxVcpu;
 
             const e2 = document.getElementById('global-vcpu-bar');
             if (e2) e2.style.width = `${Math.min((totalVcpu / maxVcpu) * 100, 100)}%`;
 
             const e3 = document.getElementById('global-ram-count');
             if (e3) e3.textContent = totalRam;
+            const ramMax = document.getElementById('global-ram-max');
+            if (ramMax) ramMax.textContent = maxRam;
 
             const e4 = document.getElementById('global-ram-bar');
             if (e4) e4.style.width = `${Math.min((totalRam / maxRam) * 100, 100)}%`;
@@ -50,23 +80,31 @@ class VMLabClient {
             const e6 = document.getElementById('global-instance-sub');
             if (e6) e6.textContent = activeCount;
 
-            // Update individual VM specs with Live Data if available
-            if (metrics.instances && Array.isArray(metrics.instances)) {
-                for (const inst of metrics.instances) {
-                    if (inst.profile_id && inst.profile_id !== 'unknown' && inst.status === 'RUNNING') {
-                        const btn = document.querySelector(`button[data-profile="${inst.profile_id}"]`);
-                        if (btn) {
-                            const specsDiv = btn.closest('.vm-card').querySelector('.vm-specs');
-                            if (specsDiv && !specsDiv.dataset.live) {
-                                specsDiv.dataset.live = "true";
-                                specsDiv.innerHTML = `
-                                    <div style="margin-bottom: 8px;">IP Address <span style="color: var(--accent-primary); font-family: var(--font-mono);">${inst.private_ip}</span></div>
-                                    <div style="margin-bottom: 8px;">Hardware <span>${inst.instance_type}</span></div>
-                                    <div style="margin-bottom: 8px;">Architecture <span>${inst.architecture}</span></div>
-                                    <div>Status <span class="text-green">RUNNING</span></div>
-                                `;
-                            }
-                        }
+            // Update individual lab specs with live data if available.
+            // `labs` is the provider-neutral payload; `instances` is the legacy alias.
+            const labs = metrics.labs || metrics.instances;
+            if (labs && Array.isArray(labs)) {
+                for (const lab of labs) {
+                    const cardId = this.cardIdFor(lab.environment);
+                    if (!cardId || lab.status !== 'RUNNING') continue;
+
+                    const btn = document.querySelector(`button[data-profile="${cardId}"]`);
+                    if (!btn) continue;
+
+                    const specsDiv = btn.closest('.vm-card').querySelector('.vm-specs');
+                    if (specsDiv && !specsDiv.dataset.live) {
+                        specsDiv.dataset.live = "true";
+                        const res = lab.resources || {};
+                        const tier = res.label || lab.profile || '—';
+                        const size = (res.cpu && res.memory_gb)
+                            ? `${res.cpu} CPU / ${res.memory_gb} GB`
+                            : '—';
+                        specsDiv.innerHTML = `
+                            <div style="margin-bottom: 8px;">Host <span style="color: var(--accent-primary); font-family: var(--font-mono);">${lab.host || '—'}</span></div>
+                            <div style="margin-bottom: 8px;">Profile <span>${tier}</span></div>
+                            <div style="margin-bottom: 8px;">Resources <span>${size}</span></div>
+                            <div>Status <span class="text-green">RUNNING</span></div>
+                        `;
                     }
                 }
             }
@@ -188,44 +226,37 @@ class VMLabClient {
 
             // Mocking a session ID for now. In production, this comes from Supabase Auth.
             const sessionId = "sess_" + Math.random().toString(36).substr(2, 9);
-            // Lookup the dynamic AMI ID based on the requested profile button
-            let amiId = '';
-            if (profileId === 'win_base') amiId = localStorage.getItem('_st_ami_win_base');
-            if (profileId === 'kali_base') amiId = localStorage.getItem('_st_ami_kali_base');
-            if (profileId === 'win_malware') amiId = localStorage.getItem('_st_ami_win_mal');
 
-            // Fallbacks in case the user hasn't saved the AWS config page yet
-            amiId = amiId || "ami-0dab019e2f90d9a3d";
-
-            const subnetId = localStorage.getItem('_st_subnet_id') || "subnet-0123456789abcdef0";
-            let iamProfileName = localStorage.getItem('_st_iam_profile');
-            // If it's literally not set yet (first load), default it. If user cleared it to "", allow empty.
-            if (iamProfileName === null) {
-                iamProfileName = "ShadowTrust-Analysis-Role";
-            }
+            // Card -> provider-independent environment + resource tier.
+            // The backend maps these to a container image or an AMI; the UI
+            // never names an EC2 instance type.
+            const card = VMLabClient.CARD_PROFILES[profileId] ||
+                { environment: profileId, profile: 'standard' };
 
             // Get active protocol if select element exists
             const protocolSelect = document.getElementById(`protocol_${profileId}`);
             const protocolStr = protocolSelect ? protocolSelect.value : 'rdp';
 
             const response = await apiService.post('/labs/start', {
-                ami_id: amiId,
-                instance_type: profileId.includes('malware') ? 't3.xlarge' : 't3.medium',
-                subnet_id: subnetId,
-                iam_profile_name: iamProfileName,
-                security_group_id: localStorage.getItem('_st_aws_sg') || undefined,
+                environment_type: card.environment,
+                profile: card.profile,
                 protocol: protocolStr,
-                session_id: sessionId,
-                user_id: sessionId, // Mock user ID mappings 
-                profile_id: profileId,
-                environment_type: profileId, // Guacamole environment mapping
+                user_id: sessionId,
+                // AWS credentials are only read when the backend runs with
+                // INFRA_PROVIDER=aws; in local mode they are ignored.
                 aws_access_key: localStorage.getItem('_st_aws_ak') || undefined,
                 aws_secret_key: localStorage.getItem('_st_aws_sk') || undefined,
-                aws_region: localStorage.getItem('_st_aws_region') || undefined
+                aws_region: localStorage.getItem('_st_aws_region') || undefined,
+                security_group_id: localStorage.getItem('_st_aws_sg') || undefined
             });
 
             if (response.status === 'provisioning' || response.status === 'success') {
-                this.instances[profileId] = { instanceId: response.instance_id, labId: response.lab_id };
+                this.instances[profileId] = {
+                    labId: response.lab_id,
+                    provider: response.provider,
+                    environment: response.environment,
+                    profile: response.profile
+                };
                 this.saveState();
 
                 // VM is PROVISIONING — keep button in loading state until status checks pass
@@ -257,14 +288,13 @@ class VMLabClient {
             return;
         }
 
-        const { instanceId, labId } = instanceData;
+        const { labId } = instanceData;
 
         try {
             this.setButtonState(terminateBtnElement, 'LOADING', 'TERMINATING...');
 
             const response = await apiService.post('/labs/stop', {
                 lab_id: labId,
-                instance_id: instanceId,
                 aws_access_key: localStorage.getItem('_st_aws_ak') || undefined,
                 aws_secret_key: localStorage.getItem('_st_aws_sk') || undefined,
                 aws_region: localStorage.getItem('_st_aws_region') || undefined
@@ -279,7 +309,7 @@ class VMLabClient {
                 const orb = document.getElementById(`dot_${profileId}`);
                 if (orb) { orb.style.background = '#555'; orb.style.boxShadow = 'none'; orb.style.animation = 'none'; }
 
-                this.showNotification(`Instance ${instanceId} terminated.`, 'success');
+                this.showNotification(`Lab ${labId} terminated.`, 'success');
             } else {
                 this.setButtonState(terminateBtnElement, 'DEFAULT', '');
                 this.showNotification(`Failed to terminate: ${response.message}`, 'error');
@@ -462,7 +492,7 @@ class VMLabClient {
                         <div style="color:var(--accent-secondary)">INSTANCE READY — NO BROWSER SESSION</div>
                         <div style="font-size:0.8rem;color:#888;margin-top:8px;">Guacamole session was not registered. Instance is running.</div>
                         <div style="font-size:0.85rem;color:var(--text-primary);margin-top:6px;font-family:var(--font-mono);">
-                            IP: <span style="color:var(--accent-primary)">${response.private_ip || response.instance_id || 'See AWS Console'}</span>
+                            IP: <span style="color:var(--accent-primary)">${response.host || response.private_ip || 'pending'}</span>
                         </div>
                         <div style="margin-top:12px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap;">
                             <button onclick="window.vmClient.reattachGuacamole('${labId}')" class="soc-btn" style="font-size:0.75rem;padding:8px 14px;cursor:pointer;">
@@ -490,7 +520,7 @@ class VMLabClient {
                     }
                 }
                 const msg = response.status === 'ERROR'
-                    ? 'VM launch failed — AWS Orchestrator error. Check your AWS credentials and AMI settings.'
+                    ? 'Lab launch failed — infrastructure provider error. Check the backend logs and provider configuration.'
                     : `Instance is no longer available (${response.status}). Please provision a new one.`;
                 this.showNotification(msg, 'error');
             } else {

@@ -1,3 +1,4 @@
+import os
 import psycopg2
 from psycopg2.extras import RealDictCursor
 import logging
@@ -5,15 +6,23 @@ from typing import Optional, Dict, Any
 
 logger = logging.getLogger(__name__)
 
-# Note: In production, these should be loaded from environment variables or a secure secret store.
-# For this lab environment orchestration, we'll initialize them through the service constructor.
+
 class GuacamoleService:
-    def __init__(self, db_host="localhost", db_port="5432", db_name="guacamole", db_user="guacamole_user", db_password="guacamole_password"):
-        self.db_host = db_host
-        self.db_port = db_port
-        self.db_name = db_name
-        self.db_user = db_user
-        self.db_password = db_password
+    """
+    Writes/removes Guacamole connection records in its Postgres database.
+
+    Connection details default to the local Guacamole compose stack. Inside
+    docker-compose the backend sets GUAC_DB_HOST=guacamole_db; a native
+    `./start.sh` run leaves it at localhost (the guacamole_db port is published).
+    Explicit constructor args still win, for tests.
+    """
+
+    def __init__(self, db_host=None, db_port=None, db_name=None, db_user=None, db_password=None):
+        self.db_host = db_host or os.getenv("GUAC_DB_HOST", "localhost")
+        self.db_port = db_port or os.getenv("GUAC_DB_PORT", "5432")
+        self.db_name = db_name or os.getenv("GUAC_DB_NAME", "guacamole")
+        self.db_user = db_user or os.getenv("GUAC_DB_USER", "guacamole_user")
+        self.db_password = db_password or os.getenv("GUAC_DB_PASSWORD", "guacamole_password")
 
     def _get_connection(self):
         """Creates and returns a new Postgres connection to the Guacamole DB."""

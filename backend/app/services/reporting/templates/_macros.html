@@ -1,0 +1,22 @@
+{% macro sev_pill(s) %}
+{%- set s = (s or "")|upper -%}
+{%- if s in ("CRITICAL","CRIT") %}<span class="pill crit">{{ s }}</span>
+{%- elif s == "HIGH" %}<span class="pill high">{{ s }}</span>
+{%- elif s in ("MEDIUM","MED") %}<span class="pill med">{{ s }}</span>
+{%- elif s in ("LOW","INFO") %}<span class="pill low">{{ s }}</span>
+{%- else %}<span class="pill low">{{ s or "—" }}</span>{%- endif %}
+{% endmacro %}
+
+{% macro status_pill(s) %}
+{%- set s = (s or "")|lower -%}
+{%- if s == "met" %}<span class="pill ok">MET</span>
+{%- elif s == "partial" %}<span class="pill partial">PARTIAL</span>
+{%- elif s == "gap" %}<span class="pill gap">GAP</span>
+{%- else %}<span class="pill manual">MANUAL</span>{%- endif %}
+{% endmacro %}
+
+{% macro kpi_row(items) %}
+<div class="kpis">
+{% for it in items %}<div class="kpi"><div class="v">{{ it.value }}</div><div class="l">{{ it.label }}</div></div>{% endfor %}
+</div>
+{% endmacro %}

@@ -2,8 +2,9 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, desc
 
-from app.db.sqlite_db import get_db
+from app.db.database import get_db
 from app.models.all_models import RawEventModel
+from app.services.telemetry.collector import local_collector
 from datetime import datetime, timedelta
 import requests
 import asyncio
@@ -56,7 +57,7 @@ def fetch_geoip_batch_sync(ips):
         except Exception as e:
             print("GeoIP Fetch Error:", e)
             
-    # internal mock fallback
+    # RFC1918 / loopback addresses -> labelled Internal (no external lookup)
     for ip in ips:
         if ip and (ip.startswith("192.168.") or ip.startswith("10.") or ip == "127.0.0.1"):
             GEOIP_CACHE[ip] = {"country": "Internal", "code": "INT", "isp": "Local Network", "lat": 38.8951, "lon": -77.0364}
@@ -143,14 +144,26 @@ async def get_dashboard_stats(db: AsyncSession = Depends(get_db)):
     
     all_top_ports = top_ports_query.all()
     port_counts = {port: count for port, count in all_top_ports if port is not None}
-    requested_ports = [8080, 5060, 445, 21, 2222, 3306, 80, 3389, 5432, 443, 2223, 22, 23, 5439]
-    for rp in requested_ports:
-        if rp not in port_counts:
-            port_counts[rp] = 0
-            
-    port_map = {22: "SSH", 80: "HTTP", 443: "HTTPS", 23: "TELNET", 445: "SMB", 3389: "RDP", 8080: "HTTP-ALT", 5060: "SIP", 21: "FTP", 2222: "SSH-ALT", 8022: "HTTP-ALT", 3306: "MySQL", 5432: "PostgreSQL", 2223: "SSH-ALT", 5439: "Redshift"}
-    top_ports = [{"port": port, "service": port_map.get(port, "UNKNOWN"), "threat": "HIGH" if count > 0 else "MEDIUM", "count": count} for port, count in port_counts.items()]
+
+    port_map = {
+        21: "FTP", 22: "SSH", 23: "TELNET", 25: "SMTP", 53: "DNS", 80: "HTTP",
+        110: "POP3", 139: "NetBIOS", 143: "IMAP", 443: "HTTPS", 445: "SMB",
+        1433: "MSSQL", 1521: "Oracle", 2222: "SSH-ALT", 2223: "SSH-ALT",
+        3306: "MySQL", 3389: "RDP", 5060: "SIP", 5432: "PostgreSQL", 5439: "Redshift",
+        5900: "VNC", 6379: "Redis", 8022: "HTTP-ALT", 8023: "TELNET-ALT", 8080: "HTTP-ALT",
+        8443: "HTTPS-ALT", 9200: "Elasticsearch", 27017: "MongoDB",
+    }
+
+    def _port_threat(c: int) -> str:
+        return "HIGH" if c >= 50 else ("MEDIUM" if c >= 10 else "LOW")
+
+    # Only ports that have actually been hit — no zero-count padding.
+    top_ports = [
+        {"port": port, "service": port_map.get(port, "UNKNOWN"), "threat": _port_threat(count), "count": count}
+        for port, count in port_counts.items() if count > 0
+    ]
     top_ports.sort(key=lambda x: x["count"], reverse=True)
+    top_ports = top_ports[:15]
     
     # 7. Protocol Anomaly Radar ['SSH', 'HTTP', 'RDP', 'SMB', 'TELNET', 'FTP']
     radar_counts = {"SSH": 0, "HTTP": 0, "RDP": 0, "SMB": 0, "TELNET": 0, "FTP": 0}
@@ -164,27 +177,41 @@ async def get_dashboard_stats(db: AsyncSession = Depends(get_db)):
     
     radar_data = [radar_counts["SSH"], radar_counts["HTTP"], radar_counts["RDP"], radar_counts["SMB"], radar_counts["TELNET"], radar_counts["FTP"]]
 
-    # 8. Recent Artifacts/Payloads (using unique event_types or commands)
+    # 8. Recent distinct payloads / interactions. Prefer a captured command or an
+    #    uploaded-file reference over a bare event type, and report the real
+    #    disposition from the risk score instead of a canned "QUARANTINED".
     recent_payloads_query = await db.execute(
-        select(RawEventModel.event_type, RawEventModel.honeypot_type)
+        select(
+            RawEventModel.event_type, RawEventModel.honeypot_type,
+            RawEventModel.commands, RawEventModel.uploaded_files, RawEventModel.risk_score,
+        )
         .where(RawEventModel.event_type != None)
         .order_by(desc(RawEventModel.timestamp))
-        .limit(20)
+        .limit(60)
     )
-    
-    # Filter for unique ones
+
+    def _disposition(score: float) -> str:
+        s = score or 0
+        if s >= 80:
+            return "BLOCKED"
+        if s >= 40:
+            return "FLAGGED"
+        return "LOGGED"
+
     seen = set()
     artifacts = []
-    for evt_type, hp_type in recent_payloads_query.all():
-        if evt_type not in seen:
-            seen.add(evt_type)
+    for evt_type, hp_type, cmds, files, score in recent_payloads_query.all():
+        label = (files or cmds or evt_type or "").strip().splitlines()[0][:40] if (files or cmds or evt_type) else evt_type
+        key = label or evt_type
+        if key and key not in seen:
+            seen.add(key)
             artifacts.append({
-                "hash": "N/A", # Don't have actual file hashes yet
-                "type": evt_type[:15], 
-                "sensor": hp_type,
-                "status": "QUARANTINED"
+                "hash": "file" if files else ("cmd" if cmds else "evt"),
+                "type": label or (evt_type or "")[:40],
+                "sensor": hp_type or "SYSTEM",
+                "status": _disposition(score),
             })
-            if len(artifacts) >= 20:
+            if len(artifacts) >= 15:
                 break
     
     top_ips_list = [ip for ip, _ in top_ips_results if ip]
@@ -215,6 +242,7 @@ async def get_dashboard_stats(db: AsyncSession = Depends(get_db)):
     for event in recent_events:
         ip = event.attacker_ip
         geo = geo_map.get(ip, {})
+        internal = geo.get("code") == "INT"
         recent_data.append({
             "id": event.id,
             "timestamp": event.timestamp.isoformat() if event.timestamp else None,
@@ -223,36 +251,129 @@ async def get_dashboard_stats(db: AsyncSession = Depends(get_db)):
             "protocol": event.protocol,
             "honeypot_type": event.honeypot_type,
             "event_type": event.event_type,
-            "lat": geo.get("lat", 0.0),
-            "lon": geo.get("lon", 0.0)
+            "internal": internal,
+            # No real coordinates for LAN traffic — leave null so the map plots
+            # only genuine external attackers instead of a fake pin.
+            "lat": None if internal else geo.get("lat"),
+            "lon": None if internal else geo.get("lon"),
         })
     
     # 9. Additional Dashboard Metrics
-    # High Risk Alerts (count of CRITICAL/HIGH alerts in last 24h)
-    high_risk_query = await db.execute(
-        select(func.count(RawEventModel.id))
-        .where(RawEventModel.risk_score >= 80)
-    )
-    high_risk_alerts = high_risk_query.scalar() or 0
-    
-    # Lures tripped (total count of events on honeypots is inherently total lures tripped)
-    lures_tripped = total_attacks
-    
+    # High Risk Alerts (events scored >= 80)
+    high_risk_alerts = (await db.execute(
+        select(func.count(RawEventModel.id)).where(RawEventModel.risk_score >= 80)
+    )).scalar() or 0
+
+    # Lures tripped = real attacker *interactions* (login attempts, commands,
+    # uploads, scans) — not bare TCP connects, so it differs from TOTAL EVENTS.
+    lures_tripped = (await db.execute(
+        select(func.count(RawEventModel.id)).where(
+            (RawEventModel.commands.isnot(None))
+            | (RawEventModel.uploaded_files.isnot(None))
+            | (RawEventModel.ports_scanned.isnot(None))
+            | (RawEventModel.event_type.like("%login%"))
+            | (RawEventModel.event_type.like("%command%"))
+            | (RawEventModel.event_type.like("%download%"))
+            | (RawEventModel.event_type.like("%auth%"))
+        )
+    )).scalar() or 0
+
     # Hostile sources (Unique IPs in the last 30d)
     thirty_days_ago = now - timedelta(days=30)
-    hostile_query = await db.execute(
+    hostile_sources = (await db.execute(
         select(func.count(func.distinct(RawEventModel.attacker_ip)))
         .where(RawEventModel.timestamp >= thirty_days_ago)
-    )
-    hostile_sources = hostile_query.scalar() or 0
-    
-    # Targeted Sectors (Assuming ports/honeypot types as distinct "sectors" for now)
-    sectors_query = await db.execute(
+    )).scalar() or 0
+
+    # Targeted "sectors" = distinct ports probed in the last 30d
+    targeted_sectors = (await db.execute(
         select(func.count(func.distinct(RawEventModel.target_port)))
         .where(RawEventModel.timestamp >= thirty_days_ago)
-    )
-    targeted_sectors = sectors_query.scalar() or 0
-    
+    )).scalar() or 0
+
+    # Distinct payloads = unique captured commands + unique uploaded-file refs.
+    # Falls back to distinct event types if the honeypots aren't capturing bodies.
+    uniq_cmds = (await db.execute(
+        select(func.count(func.distinct(RawEventModel.commands)))
+        .where(RawEventModel.commands.isnot(None))
+    )).scalar() or 0
+    uniq_files = (await db.execute(
+        select(func.count(func.distinct(RawEventModel.uploaded_files)))
+        .where(RawEventModel.uploaded_files.isnot(None))
+    )).scalar() or 0
+    unique_payloads = uniq_cmds + uniq_files
+    if unique_payloads == 0:
+        unique_payloads = (await db.execute(
+            select(func.count(func.distinct(RawEventModel.event_type)))
+            .where(RawEventModel.event_type.isnot(None))
+        )).scalar() or 0
+
+    # Events scored in the last 24h + how many carry a non-trivial risk score —
+    # the honest read on the "analysis engine" that classifies every event.
+    day_ago = now - timedelta(hours=24)
+    scored_24h = (await db.execute(
+        select(func.count(RawEventModel.id)).where(RawEventModel.timestamp >= day_ago)
+    )).scalar() or 0
+    classified_24h = (await db.execute(
+        select(func.count(RawEventModel.id))
+        .where(RawEventModel.timestamp >= day_ago, RawEventModel.risk_score > 0)
+    )).scalar() or 0
+
+    # "Novel" high-risk patterns: distinct captured commands scored >= 80 (things
+    # the honeypot saw that warrant a human look). Real query, not a placeholder.
+    novel_patterns = (await db.execute(
+        select(func.count(func.distinct(RawEventModel.commands)))
+        .where(RawEventModel.risk_score >= 80, RawEventModel.commands.isnot(None))
+    )).scalar() or 0
+
+    collector = local_collector.status()
+    online_sensors = 0
+    total_sensors = 0
+    try:
+        from app.services.container_status import sensor_container_states
+        for st in sensor_container_states().values():
+            if not st.get("available"):
+                continue
+            total_sensors += 1
+            if st.get("running"):
+                online_sensors += 1
+    except Exception:
+        pass
+
+    latest_event_iso = latest_ts.isoformat() if latest_ts else None
+
+    # Engine is "ACTIVE" only if the collector loop actually ran recently.
+    engine_live = bool(collector.get("running"))
+    last_run = collector.get("last_run_at")
+    if last_run:
+        try:
+            age = (datetime.utcnow() - datetime.fromisoformat(last_run)).total_seconds()
+            engine_live = engine_live and age < max(120, collector.get("interval_seconds", 30) * 4)
+        except ValueError:
+            pass
+
+    system_block = {
+        "analysis_engine": {
+            "state": "ACTIVE" if engine_live else "OFFLINE",
+            "events_ingested": collector.get("events_ingested", 0),
+            "cycles": collector.get("cycles", 0),
+            "last_run_at": collector.get("last_run_at"),
+            "last_cycle_at": collector.get("last_cycle_at"),
+            "classified_24h": classified_24h,
+            "scored_24h": scored_24h,
+            "classified_pct": round(100 * classified_24h / scored_24h, 1) if scored_24h else 0.0,
+            "last_error": collector.get("last_error"),
+        },
+        "deception": {
+            "state": "ACTIVE" if online_sensors > 0 else "DEGRADED",
+            "sensors_online": online_sensors,
+            "sensors_total": total_sensors,
+        },
+        "novel_patterns": novel_patterns,
+        "last_event_at": latest_event_iso,
+        "generated_in_ms": round((time.time() - now_epoch) * 1000, 1),
+    }
+
     response_payload = {
         "summary": {
             "total_attacks": total_attacks,
@@ -266,8 +387,10 @@ async def get_dashboard_stats(db: AsyncSession = Depends(get_db)):
             "high_risk_alerts": high_risk_alerts,
             "lures_tripped": lures_tripped,
             "hostile_sources": hostile_sources,
-            "targeted_sectors": targeted_sectors
+            "targeted_sectors": targeted_sectors,
+            "unique_payloads": unique_payloads
         },
+        "system": system_block,
         "recent": recent_data,
         "traffic_chart": traffic_data,
         "top_attackers": top_ips,

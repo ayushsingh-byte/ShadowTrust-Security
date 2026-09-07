@@ -5,7 +5,7 @@ from sqlalchemy.future import select
 import json
 import datetime
 
-from app.db.sqlite_db import get_db
+from app.db.database import get_db
 from app.models.all_models import User, Node, Event, SystemSettings, AccessLog
 from app.api.v1.dependencies import require_role
 
@@ -33,7 +33,7 @@ async def system_backup(
             "users": [{"id": u.id, "email": u.email, "role": u.role} for u in users],
             "nodes": [{"id": n.node_id, "name": n.name, "status": n.status} for n in nodes],
             "logs": [{"id": l.id, "type": l.type, "timestamp": str(l.timestamp)} for l in logs],
-            "system_info": {"version": "v1.0", "deployment": "PROD-01 (SQLite)"}
+            "system_info": {"version": "v1.0", "deployment": "PROD-01 (MariaDB)"}
         }
         
         return backup_data
@@ -117,16 +117,28 @@ async def system_health(db: AsyncSession = Depends(get_db)):
         except:
              db_status = "UNREACHABLE"
              
+        # Real service probes
+        import os as _os
+        from app.services import container_manager as _cm
+        docker_ok = _cm.available()
+        mobsf_url = _os.getenv("MOBSF_URL", "").rstrip("/")
+        mobsf_status = "NOT_CONFIGURED"
+        if mobsf_url:
+            try:
+                import requests as _rq
+                mobsf_status = "ONLINE" if _rq.get(f"{mobsf_url}/api/v1/scans", timeout=3).status_code < 500 else "DEGRADED"
+            except Exception:
+                mobsf_status = "UNREACHABLE"
         return {
             "status": "HEALTHY" if db_status == "ONLINE" else "DEGRADED",
             "database": db_status,
-            "api_version": "v1.0 (SQLite)",
+            "api_version": "v1.0 (MariaDB)",
             "timestamp": datetime.datetime.now().isoformat(),
             "services": {
-                "auth": "ONLINE",
-                "vm_controller": "ONLINE", # In real app, check VMService.ping()
-                "mobsf_integration": "ONLINE"
-            }
+                "auth": "ONLINE",  # this handler authenticated the caller
+                "docker_labs": "ONLINE" if docker_ok else "UNAVAILABLE",
+                "mobsf_integration": mobsf_status,
+            },
         }
     except Exception as e:
         return {"status": "CRITICAL", "error": str(e)}

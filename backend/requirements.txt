@@ -14,10 +14,27 @@ psutil==5.9.8
 pydantic-settings>=2.1.0
 PyJWT==2.10.1
 requests>=2.31.0
+httpx>=0.27.0
+# Local lab provider (INFRA_PROVIDER=local) — talks to the Docker daemon.
+docker>=7.0.0
+# AWS provider (INFRA_PROVIDER=aws) — imported lazily, unused in local mode.
 boto3>=1.34.0
+# Guacamole talks to its own PostgreSQL instance (guacamole/ compose stack).
+psycopg2-binary>=2.9.0
 sqlalchemy>=2.0.0
 greenlet
-aiosqlite>=0.19.0
+# Application database: MariaDB/MySQL over the async aiomysql driver.
+aiomysql>=0.2.0
+PyMySQL>=1.1.1
+cryptography>=42.0.0
 passlib
 bcrypt
 
+# Detection rule + scenario definitions (backend/detections, backend/scenarios).
+PyYAML>=6.0
+# YARA malware rules (backend/yara_rules). Manylinux wheel bundles libyara;
+# the scanner degrades to available:false if this fails to import.
+yara-python>=4.5.0
+weasyprint>=62.0
+python-whois>=0.9.4
+networkx>=3.2

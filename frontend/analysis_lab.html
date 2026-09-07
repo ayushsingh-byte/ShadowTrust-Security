@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analysis Lab | Shadow Trust</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/dashboard.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/xterm@5.3.0/css/xterm.css">
+    <script src="https://cdn.jsdelivr.net/npm/xterm@5.3.0/lib/xterm.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xterm-addon-fit@0.8.0/lib/xterm-addon-fit.js"></script>
+    <script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+    <style>
+        .al-wrap { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; height: calc(100vh - 150px); }
+        @media (max-width: 1200px) { .al-wrap { grid-template-columns: 1fr; height: auto; } }
+        .al-card { border: 1px solid #1c2128; border-radius: 8px; background: #0a0a0f; display: flex; flex-direction: column; overflow: hidden; }
+        .al-card .hd { padding: 10px 14px; border-bottom: 1px solid #14181e; display: flex; align-items: center; gap: 10px; }
+        .al-card .hd .t { font-size: .72rem; letter-spacing: 1px; text-transform: uppercase; color: #7d8590; }
+        #term { flex: 1; padding: 6px; background: #000; min-height: 320px; }
+        #alGraph { flex: 1; min-height: 260px; background: #050507; }
+        .al-sub { display: flex; gap: 12px; flex-wrap: wrap; }
+        .al-sub .al-card { flex: 1 1 300px; }
+        .btn { background: #161b22; border: 1px solid #30363d; color: #adbac7; font-size: .72rem; padding: 5px 12px; border-radius: 6px; cursor: pointer; }
+        .btn:hover { border-color: #58a6ff; color: #58a6ff; }
+        .btn.go { border-color: #238636; color: #3fb950; }
+        .btn.stop { border-color: #b62324; color: #f85149; }
+        .btn:disabled { opacity: .4; cursor: not-allowed; }
+        .pill { font-family: var(--font-mono, monospace); font-size: .68rem; color: #7d8590; }
+        .pill b { color: #e6edf3; }
+        .strm { flex: 1; overflow-y: auto; padding: 10px 12px; font-family: var(--font-mono, monospace); font-size: .72rem; }
+        .strm .row { display: flex; gap: 8px; padding: 3px 0; border-bottom: 1px solid #111; }
+        .sev-CRITICAL { color: #f85149; } .sev-HIGH { color: #db6d28; } .sev-MEDIUM { color: #d29922; } .sev-LOW { color: #8b949e; } .sev-INFO { color: #6e7681; }
+        .mstrip { display: flex; flex-wrap: wrap; gap: 4px; padding: 10px 12px; }
+        .mchip { font-family: var(--font-mono, monospace); font-size: .64rem; padding: 1px 6px; border-radius: 4px; border: 1px solid #333; color: #555; }
+        .mchip.on-critical { border-color: #f85149; color: #f85149; }
+        .mchip.on-high { border-color: #db6d28; color: #db6d28; }
+        .mchip.on-med { border-color: #d29922; color: #d29922; }
+        .note { color: #7d8590; font-size: .74rem; margin: 4px 0 14px; }
+        .det { font-family: var(--font-mono, monospace); font-size: .7rem; color: #8b949e; padding: 8px 12px; }
+        .det a { color: #58a6ff; }
+    </style>
+</head>
+
+<body>
+    <div class="app-container">
+        <aside class="sidebar" id="sidebar"></aside>
+        <main class="main-content">
+            <div class="top-bar">
+                <div class="page-header">
+                    <h2>ANALYSIS LAB</h2>
+                    <p>SANDBOX SHELL // drive commands, watch the behaviour profile build in real time</p>
+                </div>
+                <div class="filters-bar" style="gap:8px;">
+                    <span class="pill" id="al-status">no session</span>
+                    <button class="btn go" id="al-start"><i class="fas fa-play"></i> START SANDBOX</button>
+                    <button class="btn stop" id="al-stop" disabled><i class="fas fa-stop"></i> STOP</button>
+                </div>
+            </div>
+
+            <div class="note">
+                The sandbox is a disposable Debian container with <b>no network egress</b> — it cannot reach the
+                internet, the honeypots, or the platform. Outbound connection <i>attempts</i> are still captured and
+                shown below. The session is time-boxed and every command is recorded and profiled.
+            </div>
+
+            <div class="al-wrap">
+                <div class="al-card">
+                    <div class="hd"><span class="t">Terminal</span> <span class="pill" id="al-timer"></span></div>
+                    <div id="term"></div>
+                </div>
+
+                <div style="display:flex; flex-direction:column; gap:14px; min-height:0;">
+                    <div class="al-card" style="flex:1;">
+                        <div class="hd"><span class="t">Behavioural flow (this session)</span></div>
+                        <div id="alGraph"></div>
+                        <div class="mstrip" id="al-mitre"></div>
+                    </div>
+                    <div class="al-sub">
+                        <div class="al-card" style="min-height:180px;">
+                            <div class="hd"><span class="t">Command &amp; connection stream</span></div>
+                            <div class="strm" id="al-stream"><div class="pill">// start a session</div></div>
+                        </div>
+                        <div class="al-card" style="min-height:180px;">
+                            <div class="hd"><span class="t">Detections / incident</span></div>
+                            <div class="det" id="al-det">—</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="js/sidebar.js"></script>
+    <script type="module">
+        import { apiService } from './js/api.js';
+        const $ = s => document.querySelector(s);
+        const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+        const token = () => localStorage.getItem('access_token') || localStorage.getItem('authToken') || '';
+
+        if (typeof Terminal === 'undefined') {
+            $('#term').innerHTML = '<div style="color:#f85149;padding:16px;font-family:monospace">xterm.js failed to load — check network / CDN access.</div>';
+        }
+        const term = (typeof Terminal !== 'undefined') ? new Terminal({
+            cursorBlink: true, fontSize: 13, fontFamily: 'JetBrains Mono, monospace',
+            theme: { background: '#000000', foreground: '#c9d1d9', cursor: '#22c55e' },
+        }) : null;
+        let fit = null;
+        if (term) {
+            try { fit = new FitAddon.FitAddon(); term.loadAddon(fit); } catch (e) {}
+            term.open($('#term'));
+            setTimeout(() => { try { fit && fit.fit(); } catch (e) {} }, 60);
+            window.addEventListener('resize', () => { try { fit && fit.fit(); } catch (e) {} });
+        }
+
+        let ws = null, session = null, poll = null, started = 0, network = null;
+
+        const MITRE = ['T1059', 'T1059.001', 'T1105', 'T1027', 'T1046', 'T1078', 'T1098', 'T1071'];
+
+        function setStatus(txt, running) {
+            $('#al-status').innerHTML = txt;
+            $('#al-start').disabled = !!running;
+            $('#al-stop').disabled = !running;
+        }
+
+        function apiBase() {
+            const dev = ['127.0.0.1', 'localhost', '0.0.0.0'].includes(location.hostname) || location.protocol === 'file:';
+            const httpBase = dev ? 'http://127.0.0.1:8000' : location.origin;
+            return httpBase.replace(/^http/, 'ws') + '/api/v1';
+        }
+
+        async function start() {
+            setStatus('starting…');
+            let res;
+            try { res = await apiService.post('/analysis-shell/start', {}); }
+            catch (e) { setStatus('<span style="color:#f85149">' + esc(e.message) + '</span>'); return; }
+            session = res.session;
+            started = Date.now();
+            if (term) term.clear();
+            connectWS();
+            setStatus(`<b>${esc(session.session_id.slice(0, 8))}</b> · ${esc(session.container || '')}`, true);
+            clearInterval(poll);
+            poll = setInterval(refresh, 3000);
+            refresh();
+        }
+
+        function connectWS() {
+            ws = new WebSocket(`${apiBase()}/analysis-shell/${session.session_id}/pty?token=${encodeURIComponent(token())}`);
+            ws.binaryType = 'arraybuffer';
+            ws.onmessage = ev => term && term.write(typeof ev.data === 'string' ? ev.data : new Uint8Array(ev.data));
+            ws.onclose = () => { term && term.write('\r\n\x1b[38;5;244m[session ended]\x1b[0m\r\n'); };
+            const enc = new TextEncoder();
+            if (term) term.onData(d => { if (ws && ws.readyState === 1) ws.send(enc.encode(d)); });
+        }
+
+        async function stop() {
+            if (!session) return;
+            try { await apiService.post(`/analysis-shell/${session.session_id}/stop`, {}); } catch (e) {}
+            cleanup();
+        }
+
+        function cleanup() {
+            if (ws) { try { ws.close(); } catch (e) {} ws = null; }
+            clearInterval(poll); poll = null;
+            setStatus('no session', false);
+            $('#al-timer').textContent = '';
+            session = null;
+        }
+
+        async function refresh() {
+            if (!session) return;
+            const mins = ((Date.now() - started) / 60000);
+            const left = Math.max(0, (session.ttl_minutes || 20) - mins);
+            $('#al-timer').textContent = `idle-TTL ~${left.toFixed(0)}m`;
+
+            try {
+                const s = await apiService.get(`/analysis-shell/${session.session_id}`);
+                if (s.status !== 'running') { cleanup(); return; }
+                $('#al-stream').innerHTML = (s.recent || []).map(e => `
+                    <div class="row">
+                        <span class="pill">${esc((e.timestamp || '').slice(11, 19))}</span>
+                        <span class="sev-${esc(e.severity)}">${esc(e.type.replace('shell.', ''))}</span>
+                        <span>${esc(e.command)}</span>
+                    </div>`).join('') || '<div class="pill">// run a command</div>';
+                $('#al-stream').scrollTop = 0;
+            } catch (e) {}
+
+            try {
+                const prof = await apiService.get(`/behavior/profile?session=${session.session_id}`);
+                const data = { nodes: new vis.DataSet(prof.graph.nodes), edges: new vis.DataSet(prof.graph.edges) };
+                if (!network) {
+                    network = new vis.Network($('#alGraph'), data, {
+                        nodes: { font: { color: '#fff', face: 'JetBrains Mono' }, borderWidth: 1 },
+                        edges: { color: '#3a3a3a', arrows: 'to', smooth: { type: 'cubicBezier' }, font: { color: '#666', size: 9 } },
+                        physics: { stabilization: true, barnesHut: { gravitationalConstant: -4000, springLength: 90 } },
+                    });
+                } else network.setData(data);
+                $('#al-mitre').innerHTML = MITRE.map(t => {
+                    const sev = prof.mitre[t];
+                    return `<span class="mchip ${sev ? 'on-' + sev : ''}">${t}</span>`;
+                }).join('');
+            } catch (e) {}
+
+            try {
+                const d = await apiService.get(`/detections?source_ip=${encodeURIComponent(session.source_tag)}&limit=20`);
+                const dets = d.detections || [];
+                const incId = dets.find(x => x.incident_id)?.incident_id;
+                $('#al-det').innerHTML = dets.length ? dets.map(x =>
+                    `<div>${esc(x.rule_id)} · <span class="sev-${esc(x.severity)}">${esc(x.severity)}</span> · ${esc(x.attack_technique || '')}<br><span style="color:#666">${esc(x.reason || '')}</span></div>`
+                ).join('') + (incId ? `<div style="margin-top:6px"><a href="incidents.html">▶ incident opened</a></div>` : '')
+                    : '<span class="pill">no detections yet — try recon / download commands</span>';
+            } catch (e) {}
+        }
+
+        $('#al-start').onclick = start;
+        $('#al-stop').onclick = stop;
+        window.addEventListener('beforeunload', () => { if (session) navigator.sendBeacon && stop(); });
+    </script>
+</body>
+
+</html>

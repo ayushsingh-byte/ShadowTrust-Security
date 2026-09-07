@@ -1,0 +1,25 @@
+id: st-exec-003
+name: Suspicious post-exploitation command
+description: >
+  An attacker who has a shell on a honeypot runs a recon / persistence / defense
+  evasion command (user enumeration, cron edits, history wipe, disabling auth).
+severity: HIGH
+confidence: 0.75
+source: honeypot
+attack:
+  technique: T1059
+  tactic: Execution
+type: threshold
+selection:
+  command|regex:
+    - 'cat\s+/etc/(passwd|shadow)'
+    - '\b(id|whoami|uname\s+-a)\b'
+    - 'crontab\s+-'
+    - 'history\s+-c'
+    - 'chattr\s+[+-]i'
+    - 'nohup\s+.*&'
+    - 'chmod\s+\+x'
+    - '\bnc\b.*-e'
+timeframe: 30m
+group_by: source_ip
+threshold: 1

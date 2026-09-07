@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detection Validation | Shadow Trust</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/dashboard.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .vk { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 18px; }
+        .vk div { background: #0a0a0f; border: 1px solid #222; border-radius: 8px; padding: 12px 18px; }
+        .vk .v { font-size: 1.5rem; font-weight: 700; font-family: var(--font-mono, monospace); }
+        .vk .l { font-size: .6rem; letter-spacing: 1px; color: #888; text-transform: uppercase; margin-top: 2px; }
+        table.vt { width: 100%; border-collapse: collapse; font-size: .8rem; }
+        table.vt th { text-align: left; background: #161b22; color: #7d8590; font-size: .66rem; letter-spacing: 1px;
+            text-transform: uppercase; padding: 9px 10px; border-bottom: 1px solid #30363d; }
+        table.vt td { padding: 9px 10px; border-top: 1px solid #14181e; color: #c9d1d9; vertical-align: top; }
+        .res { font-weight: 700; font-family: var(--font-mono, monospace); }
+        .res.PASS { color: #3fb950; }
+        .res.FAIL { color: #f85149; }
+        .res.PARTIAL { color: #d29922; }
+        .res.NONE { color: #6e7681; }
+        .mono { font-family: var(--font-mono, monospace); font-size: .72rem; }
+        .rb { color: #7d8590; font-size: .7rem; }
+        .runbtn { background: #161b22; border: 1px solid #30363d; color: #adbac7; font-size: .7rem; padding: 4px 9px;
+            border-radius: 6px; cursor: pointer; }
+        .runbtn:hover { border-color: #58a6ff; color: #58a6ff; }
+        .runbtn:disabled { opacity: .4; cursor: wait; }
+        .chip { display: inline-block; padding: 0 6px; border-radius: 4px; font-size: .66rem; background: rgba(88,166,255,.13);
+            color: #58a6ff; margin: 1px 2px; font-family: var(--font-mono, monospace); }
+        .miss { background: rgba(248,81,73,.14); color: #f85149; }
+        .bar { height: 6px; background: #21262d; border-radius: 3px; overflow: hidden; margin-top: 6px; }
+        .bar > span { display: block; height: 100%; background: #3fb950; }
+        .note { color: #7d8590; font-size: .75rem; margin: 8px 0 18px; }
+    </style>
+</head>
+
+<body>
+    <div class="app-container">
+        <aside class="sidebar" id="sidebar"></aside>
+        <main class="main-content">
+            <div class="top-bar">
+                <div class="page-header">
+                    <h2>DETECTION VALIDATION</h2>
+                    <p>SOC TESTING // does Shadow Trust actually detect these attacks?</p>
+                </div>
+                <div class="filters-bar">
+                    <button class="soc-btn" id="v-report"><i class="fas fa-file-pdf"></i> COVERAGE REPORT (PDF)</button>
+                    <button class="soc-btn soc-btn-primary" id="v-refresh"><i class="fas fa-rotate"></i> REFRESH</button>
+                </div>
+            </div>
+
+            <div class="vk" id="v-kpi"></div>
+            <div class="note">
+                <b>Evaluate</b> grades what the pipeline already produced. <b>Execute</b> fires the matching
+                controlled scenario at the local honeypots (target hard-locked to 127.0.0.1, admin only), waits for
+                one detection cycle, then grades the real result.
+            </div>
+
+            <table class="vt">
+                <thead>
+                    <tr><th>scenario</th><th>expected detection / ATT&amp;CK / severity</th><th>actual</th><th>result</th><th></th></tr>
+                </thead>
+                <tbody id="v-rows"><tr><td colspan="5" class="rb" style="padding:16px;">loading…</td></tr></tbody>
+            </table>
+        </main>
+    </div>
+
+    <script src="js/report-download.js"></script>
+    <script>document.getElementById('v-report').addEventListener('click', function () {
+        STReports.generateAndDownload('detection_validation', {}, { button: this, title: 'coverage' });
+    });</script>
+    <script src="js/sidebar.js"></script>
+    <script type="module">
+        import { apiService } from './js/api.js';
+        const $ = s => document.querySelector(s);
+        const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+        async function load() {
+            const [cov, scen] = await Promise.all([
+                apiService.get('/soc-testing/coverage'),
+                apiService.get('/soc-testing/scenarios'),
+            ]);
+            const pct = v => Math.round((v || 0) * 100);
+            $('#v-kpi').innerHTML = `
+                <div><div class="v" style="color:#3fb950">${pct(cov.detection_success_rate)}%</div><div class="l">detection success rate</div></div>
+                <div><div class="v">${pct(cov.attack_coverage)}%</div><div class="l">ATT&CK coverage</div></div>
+                <div><div class="v">${cov.scenarios_passing}/${cov.scenarios_total}</div><div class="l">scenarios passing</div></div>
+                <div><div class="v" style="color:#f85149">${(cov.failed_scenarios || []).length}</div><div class="l">failed / partial</div></div>
+                <div><div class="v" style="color:#6e7681">${(cov.untested_scenarios || []).length}</div><div class="l">never run</div></div>`;
+
+            const byId = Object.fromEntries((scen.scenarios || []).map(s => [s.id, s]));
+            $('#v-rows').innerHTML = (cov.scenarios || []).map(r => {
+                const s = byId[r.scenario_id] || {};
+                const m = r.metrics || {};
+                const result = r.last_result || 'NONE';
+                return `<tr>
+                    <td><b>${esc(r.scenario_id)}</b><div class="rb">${esc(r.description || '')}</div>
+                        ${s.requires ? `<div class="rb">requires: ${esc(s.requires)}</div>` : ''}</td>
+                    <td>
+                        ${(r.expected_detections || []).map(x => `<span class="chip">${esc(x)}</span>`).join('') || '<span class="rb">—</span>'}
+                        ${(r.expected_techniques || []).map(x => `<span class="chip">${esc(x)}</span>`).join('')}
+                        <span class="rb">sev ${esc(r.expected_severity || '—')}</span>
+                    </td>
+                    <td>
+                        ${(r.actual_detections || []).map(x => `<span class="chip">${esc(x)}</span>`).join('') || '<span class="rb">—</span>'}
+                        ${(r.actual_techniques || []).map(x => `<span class="chip">${esc(x)}</span>`).join('')}
+                        ${r.actual_severity ? `<span class="rb">sev ${esc(r.actual_severity)}</span>` : ''}
+                        ${(m.missing_detections || []).map(x => `<span class="chip miss">missing ${esc(x)}</span>`).join('')}
+                        ${(m.false_positive_rules || []).length ? `<div class="rb">false positives: ${(m.false_positive_rules).map(esc).join(', ')}</div>` : ''}
+                        ${m.detection_success_rate != null ? `<div class="bar"><span style="width:${Math.round(m.detection_success_rate * 100)}%"></span></div>` : ''}
+                        <div class="rb">${r.last_run_at ? 'ran ' + esc(r.last_run_at.replace('T', ' ').slice(0, 19)) : 'never run'}</div>
+                    </td>
+                    <td class="res ${result}">${result}</td>
+                    <td>
+                        <button class="runbtn" data-id="${esc(r.scenario_id)}" data-mode="evaluate">evaluate</button>
+                        <button class="runbtn" data-id="${esc(r.scenario_id)}" data-mode="execute">execute</button>
+                    </td>
+                </tr>`;
+            }).join('');
+
+            $('#v-rows').querySelectorAll('.runbtn').forEach(b => b.onclick = async () => {
+                const buttons = $('#v-rows').querySelectorAll('.runbtn');
+                buttons.forEach(x => x.disabled = true);
+                b.textContent = b.dataset.mode === 'execute' ? 'firing…' : 'grading…';
+                try {
+                    await apiService.post(`/soc-testing/scenarios/${b.dataset.id}/run`, { mode: b.dataset.mode });
+                } catch (e) {
+                    alert('run failed: ' + e.message + (b.dataset.mode === 'execute' ? ' (admin role required)' : ''));
+                }
+                load();
+            });
+        }
+
+        $('#v-refresh').onclick = load;
+        load();
+    </script>
+</body>
+
+</html>

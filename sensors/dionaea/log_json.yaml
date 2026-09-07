@@ -1,0 +1,32 @@
+# Dionaea log_json ihandler.
+#
+# This is what makes Dionaea emit newline-delimited JSON instead of only its
+# internal SQLite/text logs. The collector tails the file named below.
+#
+# `handlers` is a list of DESTINATION URLs, not an event-type filter -- that
+# was the bug in an earlier version of this file. dionaea/log_json.py parses
+# each entry with urlparse() and only recognises file:// and http(s)://
+# schemes; anything else (e.g. a bare event name like
+# "dionaea.connection.tcp.accept") silently matches nothing, so the ihandler
+# loads without error but never writes a line. The path here must be
+# absolute and match where docker-compose.yml bind-mounts this sensor's log
+# directory (./telemetry/raw/dionaea -> /opt/dionaea/var/log/dionaea).
+#
+# Coverage: log_json.py hardcodes which incidents it serialises -- TCP/TLS
+# listen/connect/accept/reject, FTP commands, and FTP/MSSQL/MySQL login
+# credentials, plus p0f OS fingerprints when the p0f ihandler is also
+# enabled. It does NOT emit a generic "dionaea.login" event or SMB DCERPC
+# request detail; those need the incident's own dedicated ihandler (e.g.
+# store.yaml for captured binaries), not this one. What it does capture is
+# exactly the connection-level and credential-level telemetry this lab
+# needs for the dashboard.
+#
+# Delivered into ihandlers-enabled/ by docker-compose.yml's entrypoint
+# override (a plain `cp`, not a bind mount straight onto that path -- the
+# latter crashes the daemon on this Docker Desktop setup; see the comment
+# next to dionaea's `entrypoint:` in docker-compose.yml).
+
+- name: log_json
+  config:
+    handlers:
+      - file:///opt/dionaea/var/log/dionaea/dionaea.json

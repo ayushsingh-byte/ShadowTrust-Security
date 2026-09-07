@@ -12,7 +12,7 @@ from pydantic import BaseModel
 from typing import Optional, List
 import math
 
-from app.db.sqlite_db import get_db
+from app.db.database import get_db
 from app.api.v1.dependencies import get_current_user
 from app.models.all_models import (
     User, CredentialAuditLog, AdminActivity, CredentialToken
@@ -117,7 +117,7 @@ async def get_audit_trail(
     result = await db.execute(query)
     all_records = result.scalars().all()
 
-    # Filter in Python (SQLite LIKE is case-sensitive without collation)
+    # Filter in Python for consistent case-insensitive matching
     filtered = []
     search_lower = search.lower()
     for r in all_records:

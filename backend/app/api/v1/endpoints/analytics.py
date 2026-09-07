@@ -1,11 +1,19 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, desc, and_
 from datetime import datetime, timedelta
 import json
 
-from app.db.sqlite_db import get_db
-from app.models.all_models import RawEventModel
+
+def _fmt_bytes(n: float) -> str:
+    for u in ("B", "KB", "MB", "GB", "TB"):
+        if abs(n) < 1024.0:
+            return f"{n:,.1f} {u}"
+        n /= 1024.0
+    return f"{n:,.1f} PB"
+
+from app.db.database import get_db
+from app.models.all_models import RawEventModel, NormalizedEventModel, Detection, Incident
 
 # We can import fetch_geoip_batch from dashboard to reuse the cache
 from app.api.v1.endpoints.dashboard import fetch_geoip_batch
@@ -15,22 +23,25 @@ router = APIRouter()
 @router.get("/graphs")
 async def get_analytics_graphs(
     db: AsyncSession = Depends(get_db),
+    days: int = Query(7, description="Look-back window for the range buttons: 1, 7, or 30."),
 ):
     """
     Provides aggregated, structured data for all 10 Chart.js widgets on the Deep Analytics page.
+    The ``days`` query param is driven by the Past 24H / 7 Days / 30 Days buttons.
     """
+    days_sel = days if days in (1, 7, 30) else 7
     # Establish 'now' relative to the latest event so older test data still appears in graphs
     latest_res = await db.execute(select(RawEventModel.timestamp).order_by(desc(RawEventModel.timestamp)).limit(1))
     latest_ts = latest_res.scalar()
     now = latest_ts if latest_ts else datetime.utcnow()
     
-    # Still pull a 30-day window to ensure we get a good spread of data
-    thirty_days_ago = now - timedelta(days=30)
-    
+    # Look-back window follows the range button the operator picked.
+    window_start = now - timedelta(days=days_sel)
+
     # Pre-fetch recent events logic
     result = await db.execute(
         select(RawEventModel)
-        .where(RawEventModel.timestamp >= thirty_days_ago)
+        .where(RawEventModel.timestamp >= window_start)
         .order_by(desc(RawEventModel.timestamp))
     )
     all_recent_events = result.scalars().all()
@@ -38,11 +49,17 @@ async def get_analytics_graphs(
     total_in_7_days = len(all_recent_events)
 
     # --- 1. Cross-Sector Attack Volume (Main Line Chart) ---
-    # We will simulate "Sectors" by distinguishing between Web/DB attacks vs Shell/Auth attacks
-    # Format: { "labels": ["Mon", "Tue"...], "datasets": [...] }
-    days = [(now - timedelta(days=i)).strftime("%a") for i in range(6, -1, -1)]
-    education_counts = {day: 0 for day in days}
-    defence_counts = {day: 0 for day in days}
+    # Seven buckets spanning the selected window (bucket span scales with the
+    # range button: 1d -> ~3.4h, 7d -> daily, 30d -> ~4.3d).
+    N_MAIN = 7
+    main_span_s = max(1.0, (days_sel * 86400) / N_MAIN)
+    _fmt_main = "%H:%M" if days_sel <= 1 else "%m/%d"
+    main_labels = [
+        (now - timedelta(seconds=main_span_s * (N_MAIN - 1 - i))).strftime(_fmt_main)
+        for i in range(N_MAIN)
+    ]
+    education_counts = [0] * N_MAIN
+    defence_counts = [0] * N_MAIN
     
     # --- 3. Protocol Distribution (Pie Chart) ---
     # Target Ports: SSH, HTTP, RDP, FTP, DNS
@@ -70,13 +87,15 @@ async def get_analytics_graphs(
     
     # --- Metrics processing loop ---
     for evt in all_recent_events:
-        day_str = evt.timestamp.strftime("%a") if evt.timestamp else now.strftime("%a")
-        
-        # Sector Simulation (for Line Chart)
-        if evt.target_port in [80, 443, 8080, 5060]:
-            if day_str in education_counts: education_counts[day_str] += 1
-        elif evt.target_port in [22, 23, 445, 3389]:
-            if day_str in defence_counts: defence_counts[day_str] += 1
+        _age_s = (now - evt.timestamp).total_seconds() if evt.timestamp else 0.0
+        main_idx = N_MAIN - 1 - int(_age_s / main_span_s)
+
+        # Sector split (web/app ports vs shell/auth ports) for the line chart
+        if 0 <= main_idx < N_MAIN:
+            if evt.target_port in [80, 443, 8080, 5060]:
+                education_counts[main_idx] += 1
+            elif evt.target_port in [22, 23, 445, 3389]:
+                defence_counts[main_idx] += 1
             
         # Pie Chart
         if evt.target_port in [22, 2222]: pie_counts["SSH"] += 1
@@ -95,17 +114,7 @@ async def get_analytics_graphs(
         if evt.attacker_ip:
             ip_counter[evt.attacker_ip] = ip_counter.get(evt.attacker_ip, 0) + 1
             
-        # Scatter prep (simulate TTD/TTR based on Risk Score)
-        if evt.risk_score:
-            # Fake simulation math: higher risk -> faster detection, slower response
-            ttd = max(1, int(100 - evt.risk_score) / 2) # 1 - 50 mins
-            ttr = evt.risk_score * 2 # 0 - 200 mins
-            if evt.risk_score >= 80:
-                if len(scatter_critical) < 50: # Limit points
-                    scatter_critical.append({"x": ttd, "y": ttr})
-            elif evt.risk_score < 40:
-                if len(scatter_minor) < 50:
-                    scatter_minor.append({"x": ttd * 3, "y": ttr / 2})
+        # (scatter is built below from real detection/incident timestamps)
                     
         # Horizontal Bar
         if evt.target_port == 445: horizontal_ports["Port 445 (SMB)"] += 1
@@ -116,7 +125,7 @@ async def get_analytics_graphs(
         # Bubble Insider
         if evt.attacker_ip and (evt.attacker_ip.startswith("10.") or evt.attacker_ip.startswith("192.168.")):
             # Insider
-            login_ops = 50 + (evt.risk_score or 0)
+            login_ops = int(evt.risk_score or 0)
             data_exfil = len(evt.commands or "") + (10 if evt.uploaded_files else 0)
             radius = min(40, max(5, data_exfil))
             if len(bubble_data) < 20:
@@ -149,7 +158,11 @@ async def get_analytics_graphs(
     xss = sum([1 for evt in all_recent_events if evt.target_port in [80, 443] and ("script" in (evt.commands or "").lower())])
     ddos = sum(hourly_counts) # proxy for traffic spikes
     malware = sum([1 for evt in all_recent_events if evt.uploaded_files])
-    phishing = len(scatter_minor) # proxy
+    phishing = sum(
+        1 for e in all_recent_events
+        if any(k in ((e.commands or "") + " " + (e.raw_payload or "")).lower()
+               for k in ("phish", "credential", "login.php", "verify-account"))
+    )
     
     max_vector = max(1, brute_force, sqli, xss, ddos, malware, phishing)
     radar_data = [
@@ -162,17 +175,23 @@ async def get_analytics_graphs(
     ]
 
     # --- 7. Mixed Chart (Malware Trends) ---
-    # We will aggregate by the last 5 days instead of 5 weeks for higher resolution
-    mixed_labels = [(now - timedelta(days=i)).strftime("%a") for i in range(4, -1, -1)]
+    # Five buckets across the selected window, same scheme as the main chart.
+    N_MIX = 5
+    mix_span_s = max(1.0, (days_sel * 86400) / N_MIX)
+    _fmt_mix = "%H:%M" if days_sel <= 1 else "%m/%d"
+    mixed_labels = [
+        (now - timedelta(seconds=mix_span_s * (N_MIX - 1 - i))).strftime(_fmt_mix)
+        for i in range(N_MIX)
+    ]
     mixed_volume = [0] * 5
     mixed_severity = [0.0] * 5
     severity_counts = [0] * 5
     
     for evt in all_recent_events:
         if evt.timestamp:
-            delta_days = (now - evt.timestamp).days
-            if 0 <= delta_days < 5:
-                idx = 4 - delta_days
+            _mix_age_s = (now - evt.timestamp).total_seconds()
+            idx = N_MIX - 1 - int(_mix_age_s / mix_span_s)
+            if 0 <= idx < N_MIX:
                 mixed_volume[idx] += 1
                 mixed_severity[idx] += (evt.risk_score or 50) / 20 # scale 0-100 to 0-5
                 severity_counts[idx] += 1
@@ -181,34 +200,61 @@ async def get_analytics_graphs(
         if severity_counts[i] > 0:
             mixed_severity[i] = round(mixed_severity[i] / severity_counts[i], 1)
             
-    # --- 10. System Chart (Area) ---
-    # Fake system loads based on real event volume in the last 10 minutes
+    # --- 10. Ingest-rate chart (Area) — real events per 2-minute bucket, last 10 min ---
     now_ts = now.timestamp()
     sys_labels = ['10m', '8m', '6m', '4m', '2m', 'Now']
     sys_data = [0] * 6
     for evt in all_recent_events:
         if evt.timestamp:
             delta_mins = (now_ts - evt.timestamp.timestamp()) / 60
-            if delta_mins <= 10:
-                bucket = int((10 - delta_mins) / 2)
-                if 0 <= bucket < 6:
-                    sys_data[bucket] += 2 # 2% cpu per event
-                    
-    sys_data = [min(100, max(5, val)) for val in sys_data] # Floor 5%, ceil 100%
+            if 0 <= delta_mins <= 10:
+                bucket = min(5, int((10 - delta_mins) / 2))
+                sys_data[bucket] += 1
+
+    # --- real detection latency (TTD) & incident resolution time (TTR), in minutes ---
+    _dets = (await db.execute(
+        select(Detection).where(Detection.created_at >= window_start)
+    )).scalars().all()
+    for d in _dets:
+        if d.created_at and d.first_event_at and d.created_at >= d.first_event_at:
+            ttd = (d.created_at - d.first_event_at).total_seconds() / 60.0
+            pt = {"x": round(ttd, 1), "y": round((d.confidence or 0) * 100, 1)}
+            (scatter_critical if (d.severity or "").upper() == "CRITICAL" else scatter_minor).append(pt)
+    _incs = (await db.execute(
+        select(Incident).where(Incident.status.in_(["CONTAINED", "RESOLVED", "FALSE_POSITIVE"]))
+    )).scalars().all()
+    for i in _incs:
+        if i.updated_at and i.created_at and i.updated_at > i.created_at:
+            ttr = (i.updated_at - i.created_at).total_seconds() / 60.0
+            scatter_critical.append({"x": round(ttr, 1), "y": round(i.risk_score or 0, 1)})
+    scatter_critical = scatter_critical[:60]
+    scatter_minor = scatter_minor[:60]
+
+    # --- real KPI inputs ---
+    total_bytes = sum(len((e.raw_payload or "")) for e in all_recent_events)
+    _norm = (await db.execute(
+        select(func.count(NormalizedEventModel.event_id)).where(NormalizedEventModel.timestamp >= window_start)
+    )).scalar() or 0
+    _inc_total = (await db.execute(select(func.count(Incident.id)))).scalar() or 0
+    _inc_fp = (await db.execute(
+        select(func.count(Incident.id)).where(Incident.status == "FALSE_POSITIVE")
+    )).scalar() or 0
+    fp_rate = (100.0 * _inc_fp / _inc_total) if _inc_total else 0.0
+    norm_rate = (100.0 * _norm / total_in_7_days) if total_in_7_days else 0.0
 
     # --- Compile total response ---
     return {
         "kpi": {
-            "processed": f"{(total_in_7_days * 0.12):.1f} MB", # Fake size multiplier
+            "processed": _fmt_bytes(total_bytes),
             "threat_intel": f"{len(ip_counter)} IPs",
-            "false_positives": "0.4%",
-            "decryption": "100%"
+            "false_positives": f"{fp_rate:.1f}%",
+            "normalization_rate": f"{norm_rate:.0f}%",
         },
         "charts": {
             "main": {
-                "labels": days,
-                "education": [education_counts[day] for day in days],
-                "defence": [defence_counts[day] for day in days]
+                "labels": main_labels,
+                "education": education_counts,
+                "defence": defence_counts
             },
             "radar": {
                 "data": radar_data

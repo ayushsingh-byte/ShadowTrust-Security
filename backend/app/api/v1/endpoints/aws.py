@@ -21,7 +21,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from sqlalchemy import update
 
-from app.db.sqlite_db import get_db
+from app.db.database import get_db
 from app.models.all_models import RawEventModel, SystemConfig, S3SyncState
 from app.services.aws_telemetry_service import telemetry_engine
 
@@ -89,14 +89,11 @@ async def test_aws_connection(request: AWSTestRequest):
     Validates AWS Credentials by executing an STS GetCallerIdentity API call.
     Returns the associated Account ID and IAM ARN if successful.
     """
-    # Instant bypass for Frontend placeholder keys to prevent 28-second timeout hangs
-    if "EXAMPLE" in request.aws_access_key or request.aws_access_key == "AKIAIOSFODNN7EXAMPLE":
-        return {
-            "status": "success",
-            "message": "AWS Connection Established (Demo/Sandbox Keys)",
-            "account": "123456789012",
-            "arn": "arn:aws:iam::123456789012:user/DemoUser"
-        }
+    # Reject obvious placeholder keys up front rather than waiting on an STS timeout.
+    if "EXAMPLE" in request.aws_access_key or not request.aws_access_key.strip():
+        raise HTTPException(status_code=400, detail=(
+            "Placeholder AWS credentials. Enter a real access key / secret for an IAM "
+            "principal with sts:GetCallerIdentity permission."))
 
     import asyncio
 
@@ -126,17 +123,11 @@ async def test_aws_connection(request: AWSTestRequest):
         error_code = e.response.get('Error', {}).get('Code', '')
         error_message = e.response.get('Error', {}).get('Message', str(e))
         
-        # Sandbox Bypass: Handle Time Skew or Dummy Credentials gracefully
-        sandbox_errors = ['RequestTimeTooSkewed', 'InvalidClientTokenId', 'SignatureDoesNotMatch', 'AuthFailure']
-        if any(err in error_code for err in sandbox_errors) or 'difference between the request time and the current time' in error_message:
-            return {
-                "status": "success",
-                "message": "AWS Connection Established (Sandbox Bypass)",
-                "account": "123456789012",
-                "arn": "arn:aws:iam::123456789012:user/SandboxUser"
-            }
-            
-        raise HTTPException(status_code=400, detail=f"AWS Invalid/Unauthorized: {error_message}")
+        if error_code == 'RequestTimeTooSkewed':
+            raise HTTPException(status_code=400, detail=(
+                "AWS rejected the request: the host clock is skewed from AWS time. "
+                "Fix the system clock (NTP) and retry."))
+        raise HTTPException(status_code=400, detail=f"AWS credential check failed [{error_code}]: {error_message}")
     except Exception as e:
         logger.error(f"Unexpected AWS error: {e}")
         raise HTTPException(status_code=500, detail="Internal Server Error during AWS validation.")
@@ -413,7 +404,7 @@ def _s3_fetch_and_parse(request: "AWSS3PullRequest", processed_state_by_key: Dic
 @router.post("/pull-s3-logs", response_model=Dict[str, Any])
 async def pull_s3_logs(request: AWSS3PullRequest, db: AsyncSession = Depends(get_db)):
     """
-    Pulls honeypot telemetry logs from S3 and ingests them into SQLite.
+    Pulls honeypot telemetry logs from S3 and ingests them into the database.
     All blocking S3/boto3 operations run in a thread-pool executor so the
     FastAPI event loop stays free for other requests (e.g. /aws/test).
     """

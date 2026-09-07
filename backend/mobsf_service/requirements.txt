@@ -1,0 +1,6 @@
+# MobSF proxy service — only what mobsf_service/*.py imports. It talks to the
+# Docker daemon through the `docker` CLI (installed in Dockerfile.mobsf), not a
+# Python SDK, so it does NOT need the backend's full requirements.txt.
+flask>=3.1.0
+flask-cors>=5.0.0
+requests>=2.31.0

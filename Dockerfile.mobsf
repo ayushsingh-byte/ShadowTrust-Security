@@ -17,8 +17,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && apt-get update && apt-get install -y --no-install-recommends docker-ce-cli \
     && rm -rf /var/lib/apt/lists/*
 
-# Python dependencies (shared with backend)
-COPY backend/requirements.txt .
+# Python dependencies — just what mobsf_service needs (flask / requests).
+# It shells out to the `docker` CLI, so it does not need the backend stack.
+COPY backend/mobsf_service/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Application source

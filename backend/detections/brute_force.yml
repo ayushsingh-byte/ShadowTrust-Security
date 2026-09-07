@@ -1,0 +1,17 @@
+id: st-auth-001
+name: SSH / Telnet brute force
+description: >
+  Five or more failed authentication attempts from a single source IP within
+  ten minutes against a honeypot login service.
+severity: HIGH
+confidence: 0.8
+source: honeypot
+attack:
+  technique: T1110
+  tactic: Credential Access
+type: threshold
+selection:
+  authentication_result: FAILURE
+timeframe: 10m
+group_by: source_ip
+threshold: 5

@@ -4,7 +4,7 @@ from sqlalchemy import func, desc
 from sqlalchemy.future import select
 from typing import Dict, Any, List
 
-from app.db.sqlite_db import get_db
+from app.db.database import get_db
 from app.models.all_models import RawEventModel
 from app.services.aws_telemetry_service import telemetry_engine
 
@@ -12,7 +12,7 @@ router = APIRouter()
 
 @router.get("/recent")
 async def get_recent_attacks(limit: int = 50, db: AsyncSession = Depends(get_db)):
-    """Returns latest attack events perfectly synced to the SQLite index."""
+    """Returns latest attack events synced to the raw_events table."""
     
     # Query Database for ground truth payloads
     result = await db.execute(
@@ -52,7 +52,7 @@ async def get_attacks_by_port(db: AsyncSession = Depends(get_db)):
 @router.get("/timeline")
 async def get_attack_timeline(db: AsyncSession = Depends(get_db)):
     """Returns time-series attack activity (grouped by hour for simplicity)."""
-    # SQLite datetime slice to get YYYY-MM-DD HH
+    # datetime -> "YYYY-MM-DD HH" string slice for hourly buckets (works on MariaDB: DATETIME casts to text)
     result = await db.execute(
         select(
             func.substr(RawEventModel.timestamp, 1, 13).label('hour'),

@@ -59,14 +59,17 @@ document.addEventListener("DOMContentLoaded", function () {
                 label: 'Command Center',
                 items: [
                     { href: 'dashboard.html', icon: 'fa-th-large', text: 'Tactical Overview' },
-                    { href: 'events.html', icon: 'fa-list-alt', text: 'Event Log' }
+                    { href: 'incidents.html', icon: 'fa-folder-open', text: 'Investigations' },
+                    { href: 'events.html', icon: 'fa-list-alt', text: 'Event Log' },
+                    { href: 'logs.html', icon: 'fa-layer-group', text: 'Logs' },
+                    { href: 'reports.html', icon: 'fa-file-pdf', text: 'Reports' }
                 ]
             },
             {
                 label: 'Grid Monitoring',
                 items: [
                     { href: 'nodes.html', icon: 'fa-server', text: 'Honeypot Nodes' },
-                    { href: 'sectors.html', icon: 'fa-network-wired', text: 'Sector Monitors' },
+                    { href: 'splunk.html', icon: 'fa-shield-alt', text: 'Splunk Blue Team' },
                     { href: 'geo.html', icon: 'fa-globe-americas', text: 'Geo Intelligence' }
                 ]
             },
@@ -74,9 +77,17 @@ document.addEventListener("DOMContentLoaded", function () {
                 label: 'Intelligence',
                 items: [
                     { href: 'mitre.html', icon: 'fa-chess-board', text: 'MITRE Matrix' },
+                    { href: 'validation.html', icon: 'fa-vial', text: 'Detection Validation' },
                     { href: 'graphs.html', icon: 'fa-chart-area', text: 'Attack Analytics' },
                     { href: 'credentials.html', icon: 'fa-key', text: 'Credentials Vault' },
-                    { href: 'behavior.html', icon: 'fa-user-secret', text: 'Behavior Profiling' }
+                    { href: 'behavior.html', icon: 'fa-user-secret', text: 'Behavior Profiling' },
+                    { href: 'analysis_lab.html', icon: 'fa-terminal', text: 'Analysis Lab' }
+                ]
+            },
+            {
+                label: 'Governance',
+                items: [
+                    { href: 'grc.html', icon: 'fa-clipboard-check', text: 'GRC & SOC 2' }
                 ]
             },
             {

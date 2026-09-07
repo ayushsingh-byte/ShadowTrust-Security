@@ -7,11 +7,11 @@
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/dashboard.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.6/Sortable.min.js"></script>
     <style>
         .mitre-grid {
             display: grid;
-            grid-template-columns: repeat(6, 1fr);
-            /* 12 tactics is too wide, split into 2 rows or scroll */
+            grid-template-columns: repeat(7, minmax(190px, 1fr));
             gap: 10px;
             overflow-x: auto;
             padding-bottom: 20px;
@@ -20,7 +20,9 @@
         .tactic-column {
             background: #050507;
             border: 1px solid #333;
-            min-width: 200px;
+            min-width: 190px;
+            display: flex;
+            flex-direction: column;
         }
 
         .tactic-header {
@@ -30,43 +32,241 @@
             font-weight: bold;
             border-bottom: 1px solid #333;
             color: #fff;
-            font-size: 0.9rem;
+            font-size: 0.82rem;
             text-transform: uppercase;
+        }
+
+        .tcol-list {
+            min-height: 40px;
+            padding: 4px;
+            flex: 1;
+        }
+
+        .tcol-empty {
+            padding: 14px 8px;
+            color: #2c2c2c;
+            font-style: italic;
+            font-size: 0.7rem;
+            text-align: center;
+        }
+
+        .tcol-add {
+            margin: 6px 8px 8px;
+            background: transparent;
+            border: 1px dashed #333;
+            color: #666;
+            font-size: 0.7rem;
+            padding: 5px;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+
+        .tcol-add:hover {
+            border-color: var(--neon-cyan);
+            color: var(--neon-cyan);
         }
 
         .technique-card {
             background: #0a0a0a;
             border: 1px solid #222;
-            margin: 8px;
-            padding: 10px;
-            font-size: 0.8rem;
+            margin: 6px 0;
+            padding: 8px;
+            font-size: 0.78rem;
             color: #aaa;
-            cursor: pointer;
-            transition: 0.2s;
             position: relative;
-        }
-
-        .technique-card:hover {
-            border-color: var(--neon-cyan);
-            color: #fff;
+            border-radius: 4px;
         }
 
         .technique-card.active {
-            background: rgba(255, 0, 0, 0.1);
+            background: rgba(255, 0, 0, 0.08);
             border-color: var(--neon-red);
             color: #fff;
         }
 
+        .technique-card.manual {
+            border-style: dashed;
+        }
+
+        .tc-ghost {
+            opacity: 0.35;
+        }
+
+        .tc-top {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            cursor: grab;
+        }
+
+        .tc-id {
+            font-weight: bold;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .tc-name {
+            margin: 4px 0;
+            line-height: 1.25;
+        }
+
         .count-badge {
-            position: absolute;
-            top: 5px;
-            right: 5px;
             background: var(--neon-red);
             color: #000;
             font-size: 0.6rem;
-            padding: 2px 5px;
+            padding: 1px 5px;
             border-radius: 4px;
             font-weight: bold;
+        }
+
+        .tc-manual {
+            font-size: 0.58rem;
+            color: #666;
+            border: 1px solid #333;
+            padding: 0 4px;
+            border-radius: 3px;
+            text-transform: uppercase;
+        }
+
+        .tc-pin,
+        .tc-del {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 0.72rem;
+            padding: 0;
+            filter: grayscale(1) opacity(0.4);
+        }
+
+        .tc-pin.on {
+            filter: none;
+        }
+
+        .tc-del {
+            color: #a33;
+            margin-left: auto;
+            filter: none;
+        }
+
+        .tc-doc {
+            color: #666;
+            font-size: 0.7rem;
+        }
+
+        .tc-doc:hover {
+            color: var(--neon-cyan);
+        }
+
+        .tc-status {
+            width: 100%;
+            background: #060606;
+            border: 1px solid #2a2a2a;
+            font-size: 0.68rem;
+            padding: 3px;
+            border-radius: 3px;
+            text-transform: uppercase;
+        }
+
+        .tc-note {
+            width: 100%;
+            margin-top: 5px;
+            background: #060606;
+            border: 1px solid #2a2a2a;
+            color: #ccc;
+            font-size: 0.7rem;
+            padding: 4px;
+            border-radius: 3px;
+        }
+
+        #tech-picker {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(5, 10, 15, 0.8);
+            z-index: 10001;
+            justify-content: center;
+            align-items: flex-start;
+            padding-top: 8vh;
+            backdrop-filter: blur(4px);
+        }
+
+        .tp-box {
+            background: #0a0d12;
+            border: 1px solid var(--accent-primary, #3ba7ff);
+            width: 460px;
+            max-width: 92%;
+            padding: 16px;
+            border-radius: 6px;
+        }
+
+        .tp-head {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            color: #e2e8f0;
+        }
+
+        .tp-head button {
+            background: none;
+            border: none;
+            color: #888;
+            cursor: pointer;
+        }
+
+        #tp-search {
+            width: 100%;
+            background: #060606;
+            border: 1px solid #2a2a2a;
+            color: #ccc;
+            padding: 7px;
+            border-radius: 4px;
+            margin-bottom: 8px;
+        }
+
+        #tp-list {
+            max-height: 320px;
+            overflow-y: auto;
+        }
+
+        .tp-item {
+            padding: 6px 8px;
+            font-size: 0.78rem;
+            color: #bbb;
+            cursor: pointer;
+            border-bottom: 1px solid #161616;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .tp-item:hover {
+            background: #12181f;
+            color: #fff;
+        }
+
+        .tp-item span {
+            color: #666;
+            font-size: 0.68rem;
+        }
+
+        .tp-manual {
+            margin-top: 10px;
+            font-size: 0.72rem;
+            color: #888;
+        }
+
+        .tp-manual input {
+            background: #060606;
+            border: 1px solid #2a2a2a;
+            color: #ccc;
+            padding: 4px;
+            border-radius: 3px;
+        }
+
+        .tp-manual button {
+            background: var(--accent-primary, #3ba7ff);
+            border: none;
+            color: #001;
+            padding: 4px 8px;
+            border-radius: 3px;
+            cursor: pointer;
         }
     </style>
 </head>
@@ -137,78 +337,11 @@
         </div>
     </div>
 
+    <div id="tech-picker"></div>
+
     <div class="app-container">
 
-        <!-- SIDEBAR (Placeholder - Will refer to main sidebar) -->
-        <aside class="sidebar" id="sidebar">
-            <div class="logo-area" onclick="document.getElementById('sidebar').classList.toggle('collapsed')">
-                <div class="logo-icon"></div>
-                <div class="logo-text">
-                    <div class="logo-title">SHADOW TRUST</div>
-                    <div class="logo-sub">DECEPTION GRID // V1</div>
-                </div>
-                <i class="fas fa-arrow-left toggle-btn"
-                    style="margin-left: auto; cursor: pointer; color: #555; transition:0.3s;"></i>
-            </div>
-
-            <div class="nav-group">
-                <div class="nav-group-label">Mission Control</div>
-                <a href="dashboard.html" class="nav-item"><i class="fas fa-th-large"></i> <span class="nav-text">Threat
-                        Overview</span></a>
-                <a href="events.html" class="nav-item"><i class="fas fa-stream"></i> <span class="nav-text">Event
-                        Stream</span></a>
-            </div>
-
-            <div class="nav-group">
-                <div class="nav-group-label">Grid Monitoring</div>
-                <a href="nodes.html" class="nav-item"><i class="fas fa-server"></i> <span class="nav-text">Honeypot
-                        Nodes</span></a>
-                <a href="sectors.html" class="nav-item"><i class="fas fa-network-wired"></i> <span
-                        class="nav-text">Sector Monitors</span></a>
-                <a href="geo.html" class="nav-item"><i class="fas fa-globe-americas"></i> <span class="nav-text">Geo
-                        Intelligence</span></a>
-            </div>
-
-            <div class="nav-group">
-                <div class="nav-group-label">Intelligence</div>
-                <a href="mitre.html" class="nav-item active"><i class="fas fa-project-diagram"></i> <span
-                        class="nav-text">MITRE Matrix</span></a>
-                <a href="graphs.html" class="nav-item"><i class="fas fa-chart-pie"></i> <span class="nav-text">Analytics
-                        Graphs</span></a>
-                <a href="credentials.html" class="nav-item"><i class="fas fa-key"></i> <span
-                        class="nav-text">Credentials Vault</span></a>
-                <a href="behavior.html" class="nav-item"><i class="fas fa-fingerprint"></i> <span
-                        class="nav-text">Behaviour Profiling</span></a>
-                
-            </div>
-
-            <div class="nav-group">
-                <div class="nav-group-label">Tools Suite</div>
-                <a href="malware.html" class="nav-item"><i class="fas fa-bug"></i> <span class="nav-text">Malware
-                        Sandbox</span></a>
-                <a href="urlscan.html" class="nav-item"><i class="fas fa-search-location"></i> <span
-                        class="nav-text">URL Scanner</span></a>
-                <a href="apk.html" class="nav-item"><i class="fas fa-mobile-alt"></i> <span class="nav-text">APK
-                        Analyzer</span></a>
-                <a href="vm_lab.html" class="nav-item"><i class="fas fa-desktop"></i> <span class="nav-text">Virtual
-                        Lab</span></a>
-            </div>
-
-            <div class="nav-group">
-                <div class="nav-group-label">System</div>
-                <a href="admin.html" class="nav-item"><i class="fas fa-user-shield"></i> <span class="nav-text">Admin
-                        Panel</span></a>
-                <a href="config.html" class="nav-item"><i class="fas fa-cog"></i> <span
-                        class="nav-text">Configuration</span></a>
-                <a href="profile.html" class="nav-item"><i class="fas fa-id-card"></i> <span
-                        class="nav-text">Profile</span></a>
-            </div>
-
-            <div class="build-info">
-                <div>DEPLOYMENT: <span class="text-cyan">PROD-01</span></div>
-                <div>STATUS: <span class="text-green">ONLINE</span></div>
-            </div>
-        </aside>
+        <aside class="sidebar" id="sidebar"></aside>
 
         <main class="main-content">
             <div class="top-bar">
@@ -272,114 +405,222 @@
     <script type="module">
         import { apiService } from './js/api.js';
 
+        // ── state ────────────────────────────────────────────────────────────
+        const TACTICS = ["Reconnaissance","Resource Development","Initial Access","Execution",
+            "Persistence","Privilege Escalation","Defense Evasion","Credential Access","Discovery",
+            "Lateral Movement","Collection","Command and Control","Exfiltration","Impact"];
+        let CATALOG = [];
+        let analyticsById = {};
+        let annotations = {};          // { techId: {status,note,pinned,order,tactic,manual,name} }
+        let liveMatrix = {};           // { tactic: [ {id,technique,severity,timestamp} ] }
+        let saveTimer = null, dirty = false;
+
+        const STATUS = ["observed","investigating","mitigated","false-positive"];
+        const statusColor = { observed:"#8b949e", investigating:"#d29922", mitigated:"#3fb950", "false-positive":"#6e7681" };
+
+        function saveSoon() {
+            dirty = true;
+            clearTimeout(saveTimer);
+            saveTimer = setTimeout(saveAnnotations, 900);
+        }
+        async function saveAnnotations() {
+            if (!dirty) return;
+            dirty = false;
+            try { await apiService.put('/mitre/annotations', { annotations }); }
+            catch (e) { console.warn('mitre save failed', e); dirty = true; }
+        }
+
         async function loadMatrix() {
+            if (!localStorage.getItem('access_token') && !localStorage.getItem('authToken')) { window.location.href = 'login.html'; return; }
             try {
-                // Check auth (assuming api.js handles basic auth checks or we add here)
-                if (!localStorage.getItem('access_token') && !localStorage.getItem('authToken')) window.location.href = 'login.html';
-
-                const container = document.getElementById('matrixContainer');
-                container.innerHTML = '<div style="padding:20px; color:#666;">Loading Application Matrix...</div>';
-
-                // Fetch Data
-                // Note: We need to register this endpoint in backend router first!
-                const response = await apiService.get('/mitre/');
-
-                if (response.status === 'success') {
-                    renderMatrix(response.matrix);
-                } else {
-                    container.innerHTML = `<div style="padding:20px; color:var(--neon-red);">Failed: ${response.detail}</div>`;
+                if (!CATALOG.length) {
+                    try { CATALOG = (await apiService.get('/mitre/catalog')).techniques || []; } catch (e) { CATALOG = []; }
                 }
-
-            } catch (e) {
-                console.error(e);
-                const container = document.getElementById('matrixContainer');
-                container.innerHTML = '<div style="padding:20px; color:#666;">No data yet.</div>';
-                const tableBody = document.getElementById('eventsTable');
-                tableBody.innerHTML = '<tr><td colspan="4" class="text-muted">No data yet</td></tr>';
-                document.getElementById('activeThreatsCount').innerText = '—';
-            }
+                const [m, ann, an] = await Promise.all([
+                    apiService.get('/mitre/').catch(() => ({ status: 'error', matrix: {} })),
+                    apiService.get('/mitre/annotations').catch(() => ({ annotations: {} })),
+                    apiService.get('/mitre/analytics').catch(() => ({ techniques: [] })),
+                ]);
+                liveMatrix = (m.status === 'success' && m.matrix) ? m.matrix : {};
+                analyticsById = {};
+                (an.techniques || []).forEach(t => { analyticsById[t.technique_id] = t; });
+                // don't clobber unsaved local edits
+                if (!dirty) annotations = ann.annotations || {};
+                render();
+            } catch (e) { console.error(e); }
         }
 
-        function renderMatrix(matrix) {
+        // observed techniques from the live feed, keyed by id
+        function observed() {
+            const out = {};
+            for (const [tactic, evs] of Object.entries(liveMatrix)) {
+                for (const e of (evs || [])) {
+                    if (!out[e.id]) out[e.id] = { id: e.id, name: e.technique, tactic, count: 0, severity: e.severity, last: e.timestamp };
+                    out[e.id].count++;
+                    if (e.timestamp > (out[e.id].last || '')) out[e.id].last = e.timestamp;
+                }
+            }
+            return out;
+        }
+
+        function render() {
             const container = document.getElementById('matrixContainer');
-            container.innerHTML = '';
-            const tableBody = document.getElementById('eventsTable');
-            tableBody.innerHTML = '';
+            const obs = observed();
 
-            let totalThreats = 0;
-
-            // Order tactics logically (Kill Chain order)
-            const order = [
-                "Reconnaissance", "Resource Development", "Initial Access", "Execution",
-                "Persistence", "Privilege Escalation", "Defense Evasion", "Credential Access",
-                "Discovery", "Lateral Movement", "Collection", "Command and Control",
-                "Exfiltration", "Impact"
-            ];
-
-            // Filter matrix to exclude empty if we want compact, or show standard set
-            // Let's show the standard set from our order list
-            order.forEach(tactic => {
-                const events = matrix[tactic] || [];
-
-                // Determine if tactic column should be highlighted
-                const hasEvents = events.length > 0;
-                totalThreats += events.length;
-
-                let colHtml = `
-                <div class="tactic-column">
-                    <div class="tactic-header" style="${hasEvents ? 'color:var(--neon-red); border-bottom-color:var(--neon-red);' : ''}">
-                        ${tactic}
-                    </div>
-            `;
-
-                if (hasEvents) {
-                    // Group by technique ID to avoid duplicates
-                    const techniques = {};
-                    events.forEach(e => {
-                        if (!techniques[e.id]) techniques[e.id] = { ...e, count: 0 };
-                        techniques[e.id].count++;
-
-                        // Add to table
-                        const row = `<tr>
-                        <td class="text-mono text-muted">${new Date(e.timestamp).toLocaleTimeString()}</td>
-                        <td class="text-cyan">${tactic}</td>
-                        <td class="text-mono">${e.id}</td>
-                        <td class="${e.severity === 'CRITICAL' ? 'text-red' : 'text-yellow'}">${e.severity}</td>
-                    </tr>`;
-                        tableBody.innerHTML += row;
-                    });
-
-                    Object.values(techniques).forEach(tech => {
-                        colHtml += `
-                        <div class="technique-card active" onclick="openTechnique('${tech.id}')" title="View details on MITRE ATT&CK">
-                            <div class="count-badge">${tech.count}</div>
-                            <div style="font-weight:bold; margin-bottom:2px;">${tech.id}</div>
-                            <div>${tech.technique}</div>
-                        </div>
-                    `;
-                    });
-                } else {
-                    colHtml += `<div style="padding:10px; color:#333; font-style:italic; font-size:0.7rem; text-align:center;">No Activity</div>`;
+            // union of observed + annotated (manual) techniques -> which tactic column each sits in
+            const nz = o => Object.fromEntries(Object.entries(o).filter(([, v]) => v !== '' && v != null));
+            const cards = {};
+            for (const o of Object.values(obs)) cards[o.id] = { ...o, ...nz(annotations[o.id] || {}) };
+            for (const [id, a] of Object.entries(annotations)) {
+                if (!cards[id]) {
+                    const cat = CATALOG.find(c => c.id === id);
+                    cards[id] = {
+                        id, count: 0, severity: null, ...nz(a),
+                        name: a.name || (cat ? cat.name : id),
+                        tactic: a.tactic || (cat ? cat.tactic : 'Execution'),
+                    };
                 }
+            }
 
-                colHtml += `</div>`;
-                container.innerHTML += colHtml;
+            let total = 0;
+            container.innerHTML = TACTICS.map(tactic => {
+                const list = Object.values(cards)
+                    .filter(c => (c.tactic || 'Execution') === tactic)
+                    .sort((a, b) => (a.pinned === b.pinned ? (a.order || 0) - (b.order || 0) : (b.pinned ? 1 : -1)));
+                total += list.filter(c => c.count > 0).length;
+                const active = list.some(c => c.count > 0);
+                return `<div class="tactic-column">
+                    <div class="tactic-header" style="${active ? 'color:var(--neon-red);border-bottom-color:var(--neon-red);' : ''}">${tactic}</div>
+                    <div class="tcol-list" data-tactic="${tactic}">
+                        ${list.map(c => cardHtml(c)).join('') || '<div class="tcol-empty">drop here</div>'}
+                    </div>
+                    <button class="tcol-add" data-tactic="${tactic}"><i class="fas fa-plus"></i> add technique</button>
+                </div>`;
+            }).join('');
+
+            document.getElementById('activeThreatsCount').innerText = `${total} OBSERVED TECHNIQUES`;
+            const badge = document.querySelector('.badge-green');
+            if (badge) badge.innerText = `UPDATED: ${new Date().toLocaleTimeString()}`;
+
+            // recent-events table
+            const tb = document.getElementById('eventsTable');
+            const rows = [];
+            for (const [tactic, evs] of Object.entries(liveMatrix))
+                for (const e of (evs || []).slice(0, 40))
+                    rows.push({ tactic, ...e });
+            rows.sort((a, b) => (b.timestamp || '').localeCompare(a.timestamp || ''));
+            tb.innerHTML = rows.slice(0, 40).map(e => `<tr>
+                <td class="text-mono text-muted">${e.timestamp ? new Date(e.timestamp).toLocaleTimeString() : '—'}</td>
+                <td class="text-cyan">${e.tactic}</td><td class="text-mono">${e.id}</td>
+                <td class="${e.severity === 'CRITICAL' ? 'text-red' : 'text-yellow'}">${e.severity || ''}</td></tr>`).join('')
+                || '<tr><td colspan="4" class="text-muted">No mapped events yet</td></tr>';
+
+            wireCards();
+        }
+
+        function cardHtml(c) {
+            const a = annotations[c.id] || {};
+            const st = a.status || 'observed';
+            return `<div class="technique-card ${c.count ? 'active' : 'manual'}" data-id="${c.id}" data-tactic="${c.tactic}">
+                <div class="tc-top">
+                    <span class="tc-id">${c.id}</span>
+                    ${c.count ? `<span class="count-badge">${c.count}</span>` : '<span class="tc-manual">manual</span>'}
+                    <button class="tc-pin ${a.pinned ? 'on' : ''}" title="pin">📌</button>
+                    <a class="tc-doc" href="#" data-doc="${c.id}" title="ATT&CK docs"><i class="fas fa-arrow-up-right-from-square"></i></a>
+                    ${c.count ? '' : '<button class="tc-del" title="remove">✕</button>'}
+                </div>
+                <div class="tc-name">${c.name || ''}</div>
+                <div class="tc-row">
+                    <select class="tc-status" style="color:${statusColor[st]}">
+                        ${STATUS.map(s => `<option ${s === st ? 'selected' : ''}>${s}</option>`).join('')}
+                    </select>
+                </div>
+                <input class="tc-note" placeholder="note…" value="${(a.note || '').replace(/"/g, '&quot;')}">
+                ${analyticsPanel(c.id)}
+            </div>`;
+        }
+
+        function analyticsPanel(id) {
+            const t = analyticsById[id];
+            if (!t) return '';
+            const inc = (t.incident_ids || []).length;
+            return `<div class="tc-analytics" style="margin-top:6px;font-size:0.62rem;color:#8b949e;line-height:1.4;border-top:1px solid #1c1c1c;padding-top:4px;">
+                <b style="color:#adbac7">${t.event_count}</b> events · <b style="color:#adbac7">${t.detection_count}</b> detections
+                · conf <b style="color:${t.confidence === 'High' ? '#3fb950' : t.confidence === 'Medium' ? '#d29922' : '#8b949e'}">${t.confidence}</b>
+                ${(t.sensors || []).length ? '<br>sensors: ' + t.sensors.join(', ') : ''}
+                ${inc ? `<br><a href="incidents.html" style="color:#58a6ff">${inc} incident${inc > 1 ? 's' : ''}</a>` : ''}
+                ${t.last_seen ? '<br>last: ' + t.last_seen.replace('T', ' ').slice(0, 16) : ''}
+            </div>`;
+        }
+
+        function ensureAnn(id, seed = {}) {
+            if (!annotations[id]) annotations[id] = { status: 'observed', note: '', pinned: false, order: 0, ...seed };
+            return annotations[id];
+        }
+
+        function wireCards() {
+            document.querySelectorAll('.technique-card').forEach(card => {
+                const id = card.dataset.id;
+                card.querySelector('.tc-status').onchange = e => { ensureAnn(id, { tactic: card.dataset.tactic }).status = e.target.value; e.target.style.color = statusColor[e.target.value]; saveSoon(); };
+                card.querySelector('.tc-note').oninput = e => { ensureAnn(id, { tactic: card.dataset.tactic }).note = e.target.value; saveSoon(); };
+                card.querySelector('.tc-pin').onclick = e => { const A = ensureAnn(id, { tactic: card.dataset.tactic }); A.pinned = !A.pinned; e.target.classList.toggle('on', A.pinned); saveSoon(); render(); };
+                const doc = card.querySelector('.tc-doc'); if (doc) doc.onclick = e => { e.preventDefault(); openTechnique(doc.dataset.doc); };
+                const del = card.querySelector('.tc-del'); if (del) del.onclick = () => { delete annotations[id]; saveSoon(); render(); };
             });
-
-            document.getElementById('activeThreatsCount').innerText = `${totalThreats} ACTIVE THREATS`;
-            
-            // Dynamically update the 'UPDATED' badge to show real-time changes
-            const badgeObj = document.querySelector('.badge-green');
-            if (badgeObj && badgeObj.innerText.includes('UPDATED')) {
-                badgeObj.innerText = `UPDATED: ${new Date().toLocaleTimeString()}`;
+            document.querySelectorAll('.tcol-add').forEach(b => b.onclick = () => openPicker(b.dataset.tactic));
+            // drag & drop
+            if (window.Sortable) {
+                document.querySelectorAll('.tcol-list').forEach(el => {
+                    Sortable.create(el, {
+                        group: 'mitre', animation: 120, ghostClass: 'tc-ghost',
+                        onEnd: evt => {
+                            const id = evt.item.dataset.id;
+                            const newTactic = evt.to.dataset.tactic;
+                            const A = ensureAnn(id);
+                            A.tactic = newTactic;
+                            A.name = A.name || (evt.item.querySelector('.tc-name')?.textContent || '');
+                            [...evt.to.children].forEach((ch, i) => { if (ch.dataset.id) ensureAnn(ch.dataset.id).order = i; });
+                            saveSoon(); render();
+                        }
+                    });
+                });
             }
         }
 
-        // Init
-        window.addEventListener('scroll', () => { }); // placeholder
+        function openPicker(tactic) {
+            const existing = new Set(Object.keys(annotations).concat(Object.keys(observed())));
+            const opts = CATALOG.filter(c => !existing.has(c.id));
+            const pick = document.getElementById('tech-picker');
+            pick.innerHTML = `<div class="tp-box">
+                <div class="tp-head">Add technique to <b>${tactic}</b> <button id="tp-x">✕</button></div>
+                <input id="tp-search" placeholder="search id or name…">
+                <div id="tp-list"></div>
+                <div class="tp-manual">or free-text: <input id="tp-fid" placeholder="T1234" size="8"> <input id="tp-fname" placeholder="name"> <button id="tp-fadd">add</button></div>
+            </div>`;
+            pick.style.display = 'flex';
+            const listEl = document.getElementById('tp-list');
+            const draw = (f = '') => {
+                listEl.innerHTML = opts.filter(o => (o.id + ' ' + o.name).toLowerCase().includes(f.toLowerCase()))
+                    .slice(0, 60).map(o => `<div class="tp-item" data-id="${o.id}" data-name="${o.name}">${o.id} · ${o.name} <span>${o.tactic}</span></div>`).join('');
+                listEl.querySelectorAll('.tp-item').forEach(it => it.onclick = () => {
+                    annotations[it.dataset.id] = { status: 'investigating', note: '', pinned: false, order: 99, tactic, manual: true, name: it.dataset.name };
+                    saveSoon(); pick.style.display = 'none'; render();
+                });
+            };
+            draw();
+            document.getElementById('tp-search').oninput = e => draw(e.target.value);
+            document.getElementById('tp-x').onclick = () => pick.style.display = 'none';
+            document.getElementById('tp-fadd').onclick = () => {
+                const fid = (document.getElementById('tp-fid').value || '').trim().toUpperCase();
+                if (!/^T\d{4}(\.\d{3})?$/.test(fid)) { alert('id like T1059 or T1059.001'); return; }
+                annotations[fid] = { status: 'investigating', note: '', pinned: false, order: 99, tactic, manual: true, name: document.getElementById('tp-fname').value.trim() || fid };
+                saveSoon(); pick.style.display = 'none'; render();
+            };
+        }
+
+        window.addEventListener('beforeunload', () => { if (dirty) navigator.sendBeacon && saveAnnotations(); });
         loadMatrix();
-        // Auto refresh every 5s for real-time responsiveness to new logs
-        setInterval(loadMatrix, 5000);
+        setInterval(loadMatrix, 15000);
 
         // View Toggle Logic
         window.toggleView = function (view) {

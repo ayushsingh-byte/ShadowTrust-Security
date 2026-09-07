@@ -7,8 +7,9 @@
 COMPOSE := $(shell docker compose version >/dev/null 2>&1 && echo "docker compose" || echo "docker-compose")
 
 .PHONY: setup up down restart rebuild logs status \
-        shell-backend shell-mobsf shell-frontend shell-node \
-        clean nuke
+        shell-backend shell-mobsf shell-frontend shell-node db-shell db-dump \
+        lab-image analysis-image labs-up guac-up guac-down labs-list labs-clean \
+        test verify-local clean nuke
 
 ## ── First-time setup ─────────────────────────────────────────────────────────
 
@@ -65,6 +66,58 @@ shell-frontend: ## Open a sh shell inside the Nginx frontend container
 
 shell-node:     ## Open a sh shell inside the Node API container
 	docker exec -it soc_node_api sh
+
+db-shell:       ## Open a MariaDB (mysql) prompt inside the db container
+	docker exec -it honeynet_db mariadb -ushadowtrust -pshadowtrust shadowtrust
+
+db-dump:        ## Dump the shadowtrust schema to database/dump.sql
+	docker exec honeynet_db mariadb-dump -ushadowtrust -pshadowtrust shadowtrust > database/dump.sql
+	@echo "Wrote database/dump.sql"
+
+## ── Local lab environment (INFRA_PROVIDER=local) ─────────────────────────────
+
+LAB_IMAGE       ?= shadowtrust/lab-kali:latest
+LAB_NETWORK     ?= shadowtrust_labnet
+ANALYSIS_IMAGE  ?= shadowtrust/analysis-shell:latest
+
+lab-image:      ## Build the local Kali lab image (Kali + XFCE + XRDP) — slow first time
+	docker build -t $(LAB_IMAGE) docker/lab-kali
+
+analysis-image: ## Build the Analysis Lab sandbox image (small Debian shell, no egress)
+	docker build -t $(ANALYSIS_IMAGE) -f Dockerfile.analysis .
+
+labs-up:        ## Build the Kali image if missing, then start the whole stack (VM Lab ready)
+	@docker image inspect $(LAB_IMAGE) >/dev/null 2>&1 || { \
+	  echo "Building $(LAB_IMAGE) (first build is multi-GB, ~5-15 min)..."; \
+	  docker build -t $(LAB_IMAGE) docker/lab-kali; }
+	$(COMPOSE) up -d --build
+	@echo ""
+	@echo "VM Lab:     http://localhost:5500/vm_lab.html"
+	@echo "Guacamole:  http://localhost:8080/guacamole  (guacadmin/guacadmin)"
+
+guac-up:        ## (compat) Guacamole is part of the main stack now — starts just those services
+	$(COMPOSE) up -d guacd guacamole_db guacamole
+	@echo "Guacamole: http://localhost:8080/guacamole  (guacadmin/guacadmin)"
+
+guac-down:      ## Stop just the Guacamole services
+	$(COMPOSE) stop guacd guacamole_db guacamole
+
+labs-list:      ## List running lab containers
+	@docker ps --filter "label=shadowtrust.managed=true" \
+	  --format "table {{.Names}}\t{{.Status}}\t{{.Label \"shadowtrust.environment\"}}\t{{.Label \"shadowtrust.profile\"}}"
+
+labs-clean:     ## Force-remove every ShadowTrust lab container
+	@docker ps -aq --filter "label=shadowtrust.managed=true" | xargs -r docker rm -f
+	@echo "All lab containers removed."
+
+## ── Tests ────────────────────────────────────────────────────────────────────
+
+test:           ## Run the backend test suite (needs the db container up)
+	$(COMPOSE) up -d db
+	cd backend && .venv/bin/python -m pytest tests/ -q
+
+verify-local:   ## Live end-to-end check of the local lab provider (needs Docker)
+	python3 scripts/verify_local_lab.py
 
 ## ── Cleanup ──────────────────────────────────────────────────────────────────
 

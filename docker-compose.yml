@@ -1,129 +1,439 @@
 # ──────────────────────────────────────────────────────────────────────────────
-#  Shadow Trust  ·  Shadow Trust SOC Honeynet
-#  docker compose up --build          ← first time
-#  docker compose up -d               ← subsequent starts
-#  ./setup.sh                         ← recommended first-time wizard
+#  Shadow Trust · Local-first honeynet
+#
+#  docker compose up -d              ← the whole honeynet (this is the default)
+#  docker compose --profile extras up -d
+#                                    ← adds MobSF, the Node edge API and worker
+#
+#  Services started by default
+#    cowrie      SSH/Telnet honeypot                 :2222 (host)
+#    dionaea     Malware-capture honeypot            :445, :21, :1433 (host)
+#    honeytrap   Multi-port honeypot                 :8022, :8023 (host)
+#    db          MariaDB application database         :3306
+#    phpmyadmin  Web GUI for the database             :8081
+#    guacd/guacamole/guacamole_db  VM Lab remote desktop stack   :8080
+#    mobsf       APK analysis service (apk.html)      :5055
+#    backend     FastAPI + telemetry collector        :8000
+#    frontend    Nginx dashboard + API proxy          :5500
+#
+#  The backend and mobsf mount /var/run/docker.sock so vm_lab.html and apk.html
+#  can spawn lab / analysis containers. That is host-root — keep :8000 off any
+#  untrusted network.
+#
+#  Ports are overridable via the root .env — see .env.example.
+#
+# ── Security model ────────────────────────────────────────────────────────────
+#  The honeypots are assumed to be compromised. They are therefore placed on
+#  their own network (honeynet_edge) which has NO route to the backend, the
+#  database, or the dashboard. There is no service-to-service call from a
+#  sensor into the application at all.
+#
+#  The only channel out of a sensor is the log file it writes to ./telemetry/raw.
+#  The backend mounts that same path READ-ONLY and tails it. So the worst a
+#  fully compromised sensor can do to the platform is write misleading log
+#  lines — it cannot reach the API, cannot reach the database, and cannot reach
+#  the Docker daemon.
+#
+#  Every sensor additionally runs with all capabilities dropped except the ones
+#  it genuinely needs to bind low ports, with no-new-privileges set, and with
+#  memory and pid limits so a fork bomb inside a honeypot cannot take the host
+#  down.
 # ──────────────────────────────────────────────────────────────────────────────
-#
-# Services
-#   backend    FastAPI threat-intelligence API          :8000
-#   mobsf      MobSF APK-analysis proxy (Flask)         :5055
-#   node_api   Fastify edge-node collector API          :3000
-#   worker     Supabase background sync worker          (internal)
-#   frontend   Nginx static dashboard                   :5500
-#
-# Ports are overridable via root .env:
-#   BACKEND_PORT, MOBSF_PORT, NODE_API_PORT, FRONTEND_PORT
-#
-# macOS / Windows
-#   MOBSF_DOCKER_HOST is set to host.docker.internal by setup.sh automatically.
-#   On Linux it defaults to 172.17.0.1 (docker bridge gateway).
 
 services:
 
-  # ── FastAPI Backend ──────────────────────────────────────────────────────────
+  # ══ HONEYPOT SENSORS ════════════════════════════════════════════════════════
+  # These are the only services exposed to the lab network.
+
+  # ── Cowrie · SSH/Telnet ─────────────────────────────────────────────────────
+  # The primary sensor. Emits newline-delimited JSON with full session detail:
+  # credentials, session ids, and every command the attacker types.
+  cowrie:
+    image: cowrie/cowrie:latest
+    container_name: honeynet_cowrie
+    restart: unless-stopped
+    ports:
+      # Default 2222 so the host's own sshd (if enabled) is untouched.
+      # Set HONEYPOT_SSH_PORT=22 in .env for a bare `ssh root@<ip>`.
+      - "${HONEYPOT_SSH_PORT:-2222}:2222"
+      - "${HONEYPOT_TELNET_PORT:-2223}:2223"
+    volumes:
+      # Cowrie writes cowrie.json here; the collector tails it.
+      - ./telemetry/raw/cowrie:/cowrie/cowrie-git/var/log/cowrie
+      - ./sensors/cowrie/cowrie.cfg:/cowrie/cowrie-git/etc/cowrie.cfg:ro
+      - ./sensors/cowrie/userdb.txt:/cowrie/cowrie-git/etc/userdb.txt:ro
+      - ./docker/healthcheck_listen.py:/healthcheck_listen.py:ro
+    networks:
+      - honeynet_edge
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    mem_limit: 512m
+    pids_limit: 200
+    healthcheck:
+      # Cowrie's image ships neither a shell nor `nc`, so use its bundled
+      # Python to check port 2222 is in LISTEN state via /proc/net/tcp — this
+      # does NOT open a connection. A real connect here makes cowrie log a
+      # `session.connect` every interval, filling the feed with self-inflicted
+      # "attacks" from 127.0.0.1. normalize() also drops loopback events as a
+      # backstop, but not probing at all is cleaner.
+      test: ["CMD", "/cowrie/cowrie-env/bin/python3",
+             "/healthcheck_listen.py", "2222"]
+      interval: 60s
+      timeout: 5s
+      start_period: 30s
+      retries: 3
+
+  # ── Dionaea · malware capture ───────────────────────────────────────────────
+  # Emits connection records for SMB/FTP/MSSQL/SIP probes.
+  # NOTE: the upstream image is amd64-only. On Apple Silicon it runs under
+  # emulation (slower, occasionally unstable) — see README limitations.
+  dionaea:
+    image: dinotools/dionaea:latest
+    container_name: honeynet_dionaea
+    restart: unless-stopped
+    ports:
+      - "${HONEYPOT_SMB_PORT:-445}:445"
+      - "${HONEYPOT_FTP_PORT:-2121}:21"
+      - "${HONEYPOT_MSSQL_PORT:-1433}:1433"
+    volumes:
+      - ./telemetry/raw/dionaea:/opt/dionaea/var/log/dionaea
+      - ./docker/healthcheck_listen.py:/healthcheck_listen.py:ro
+      # log_json.yaml lands at /opt/dionaea-lab/, NOT directly at its final
+      # ihandlers-enabled/ path — see `entrypoint` below for why.
+      #
+      # dionaea.cfg is deliberately NOT overridden. An earlier hand-trimmed
+      # version of it dropped required `imports=`/processor-chain sections
+      # (dionaea.services, dionaea.ihandlers, [processor.filter_emu] etc.)
+      # and the daemon aborted (SIGTRAP) on every boot. The image's own
+      # default config already does everything this lab needs — smb/ftp/mssql
+      # services enabled, log paths that resolve under its own WORKDIR to
+      # exactly the directory bind-mounted above — so it's used as-is.
+      - ./sensors/dionaea/log_json.yaml:/opt/dionaea-lab/log_json.yaml:ro
+    # Confirmed by testing the image directly: bind-mounting a single file
+    # straight onto /opt/dionaea/etc/dionaea/ihandlers-enabled/log_json.yaml
+    # crashes the daemon on startup (SIGTRAP) on Docker Desktop for Mac —
+    # `docker cp`'ing the identical content into a running container instead
+    # works fine, so the bind mount itself (not the file's content) is what
+    # the config loader chokes on. Copying it into place from a harmless
+    # path before handing off to the real entrypoint sidesteps that.
+    #
+    # etc/dionaea/ doesn't exist until the image's own entrypoint.sh runs its
+    # init_etc step (`cp -van template/etc .`, skipped if the dir is already
+    # there) — so that step has to happen here too before our file can land
+    # in ihandlers-enabled/. Running it again from inside entrypoint.sh is a
+    # no-op once the directory exists, so this doesn't double-copy anything.
+    entrypoint:
+      - /bin/sh
+      - -c
+      - >-
+        cd /opt/dionaea &&
+        cp -van template/etc . &&
+        cp /opt/dionaea-lab/log_json.yaml etc/dionaea/ihandlers-enabled/log_json.yaml &&
+        exec /usr/local/sbin/entrypoint.sh
+    networks:
+      - honeynet_edge
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    cap_add:
+      # Dionaea's entrypoint seeds var/lib and var/log from a template on
+      # first boot (as root), then the daemon drops to its own unprivileged
+      # user. Under a bare `cap_drop: ALL` that whole sequence fails —
+      # confirmed by running the image directly: the initial template copy
+      # needs DAC_OVERRIDE/CHOWN/FOWNER/FSETID to write and preserve
+      # ownership+permissions on files it doesn't yet own, and the privilege
+      # drop itself needs SETUID/SETGID/SETPCAP or the daemon aborts
+      # (SIGTRAP, exit 133) instead of ever reaching its own capset() call.
+      # This is the minimal set that gets through both steps — still well
+      # short of the 14 capabilities Docker grants by default (no NET_RAW,
+      # SYS_CHROOT, MKNOD, AUDIT_WRITE, SETFCAP, or KILL).
+      - NET_BIND_SERVICE
+      - CHOWN
+      - DAC_OVERRIDE
+      - FOWNER
+      - FSETID
+      - SETUID
+      - SETGID
+      - SETPCAP
+    mem_limit: 512m
+    pids_limit: 200
+    healthcheck:
+      # Check port 445 is LISTENing via /proc — no real connection, so dionaea
+      # does not log the probe as a `connection.accept` every interval.
+      test: ["CMD", "python3", "/healthcheck_listen.py", "445"]
+      interval: 60s
+      timeout: 5s
+      start_period: 30s
+      retries: 3
+
+  # ── Honeytrap · multi-port ──────────────────────────────────────────────────
+  # Catches probes on ports the other two do not cover.
+  honeytrap:
+    image: honeytrap/honeytrap:latest
+    container_name: honeynet_honeytrap
+    restart: unless-stopped
+    ports:
+      - "${HONEYPOT_HTTP_PORT:-8022}:8022"
+      - "${HONEYPOT_ALT_PORT:-8023}:8023"
+    volumes:
+      - ./telemetry/raw/honeytrap:/honeytrap/logs
+      - ./sensors/honeytrap/config.toml:/config/config.toml:ro
+    networks:
+      - honeynet_edge
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    mem_limit: 384m
+    pids_limit: 200
+    healthcheck:
+      test: ["CMD-SHELL", "nc -z 127.0.0.1 8022 || exit 1"]
+      interval: 30s
+      timeout: 5s
+      start_period: 30s
+      retries: 3
+
+  # ══ APPLICATION ═════════════════════════════════════════════════════════════
+
+  # ── MariaDB — application database ──────────────────────────────────────────
+  # Holds users, nodes, events, sessions, credentials, sector intel — everything
+  # the backend persists. On honeynet_app only; no sensor can reach it.
+  db:
+    image: mariadb:11
+    container_name: honeynet_db
+    restart: unless-stopped
+    ports:
+      # Host port defaults to 3307 to avoid colliding with a local MySQL/MariaDB
+      # already on 3306. In-cluster, the backend always reaches it as db:3306.
+      - "${MARIADB_PORT:-3307}:3306"
+    environment:
+      MARIADB_ROOT_PASSWORD: "${MARIADB_ROOT_PASSWORD:-shadowtrust_root}"
+      MARIADB_DATABASE: "${MARIADB_DATABASE:-shadowtrust}"
+      MARIADB_USER: "${MARIADB_USER:-shadowtrust}"
+      MARIADB_PASSWORD: "${MARIADB_PASSWORD:-shadowtrust}"
+    volumes:
+      - db_data:/var/lib/mysql
+      # Runs once on an empty data dir — creates the pytest schema + grants.
+      - ./database/init:/docker-entrypoint-initdb.d:ro
+    networks:
+      - honeynet_app
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      start_period: 30s
+      retries: 10
+
+  # ── phpMyAdmin — web GUI for the MariaDB above ──────────────────────────────
+  phpmyadmin:
+    image: phpmyadmin:5
+    container_name: honeynet_phpmyadmin
+    restart: unless-stopped
+    ports:
+      - "${PHPMYADMIN_PORT:-8081}:80"
+    environment:
+      PMA_HOST: db
+      PMA_PORT: "3306"
+      UPLOAD_LIMIT: 256M
+    networks:
+      - honeynet_app
+    security_opt:
+      - no-new-privileges:true
+    depends_on:
+      db:
+        condition: service_healthy
+
+  # ══ VM LAB — Apache Guacamole (browser remote desktop for vm_lab.html) ══════
+  # The backend launches Kali/Windows lab containers via the Docker socket and
+  # registers a connection in Guacamole's Postgres; the dashboard embeds the
+  # Guacamole client in an iframe. guacd, the labs and the backend all share
+  # `labnet` so guacd can dial a lab container by name.
+
+  guacd:
+    image: guacamole/guacd:latest
+    container_name: guacd
+    restart: unless-stopped
+    networks:
+      - labnet
+    healthcheck:
+      test: ["CMD-SHELL", "nc -z localhost 4822 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  guacamole_db:
+    image: postgres:15
+    container_name: guacamole_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: guacamole_user
+      POSTGRES_PASSWORD: "${GUAC_DB_PASSWORD:-guacamole_password}"
+      POSTGRES_DB: guacamole
+    volumes:
+      - ./guacamole/init/initdb.sql:/docker-entrypoint-initdb.d/initdb.sql:ro
+      - guac_pgdata:/var/lib/postgresql/data
+    networks:
+      - labnet
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U guacamole_user -d guacamole"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+
+  guacamole:
+    image: guacamole/guacamole:latest
+    container_name: guacamole
+    restart: unless-stopped
+    depends_on:
+      guacd:
+        condition: service_healthy
+      guacamole_db:
+        condition: service_healthy
+    environment:
+      GUACD_HOSTNAME: guacd
+      GUACD_PORT: "4822"
+      POSTGRESQL_HOSTNAME: guacamole_db
+      POSTGRESQL_PORT: "5432"
+      POSTGRESQL_DATABASE: guacamole
+      POSTGRESQL_USER: guacamole_user
+      POSTGRESQL_PASSWORD: "${GUAC_DB_PASSWORD:-guacamole_password}"
+    ports:
+      - "${GUAC_PORT:-8080}:8080"
+    networks:
+      - labnet
+
+  # ── FastAPI backend + telemetry collector ───────────────────────────────────
   backend:
     build:
       context: .
       dockerfile: Dockerfile.backend
     image: soc/backend:latest
-    container_name: soc_backend
+    container_name: honeynet_backend
     restart: unless-stopped
     ports:
       - "${BACKEND_PORT:-8000}:8000"
     volumes:
-      # SQLite databases — bind-mounted so data persists outside the container.
-      # setup.sh touches these files so Docker doesn't create directories here.
-      - ./backend/ingestion.db:/app/ingestion.db
-      - ./backend/honeynet.db:/app/honeynet.db
       - ./backend/scans:/app/scans
+      # Generated PDF/JSON reports (app/services/reporting) — served only via
+      # authenticated /reports/{id}/download, never a StaticFiles mount.
+      - ./backend/reports:/app/reports
+      # Quarantined malware samples + incident evidence. Never served by nginx,
+      # never a StaticFiles mount — reachable only via authenticated endpoints.
+      - ./backend/quarantine:/app/quarantine
+      - ./backend/evidence:/app/evidence
+      # Detection rules, YARA rules and scenario definitions — READ-ONLY so an
+      # analysed sample or a compromised backend cannot rewrite detection logic.
+      - ./backend/detections:/app/detections:ro
+      - ./backend/yara_rules:/app/yara_rules:ro
+      - ./backend/scenarios:/app/scenarios:ro
+      # attack_scenarios.sh — the detection-validation runner shells out to it.
+      - ./scripts:/app/scripts:ro
+      # Sensor telemetry, READ-ONLY. The collector only ever tails these files;
+      # mounting rw would let a backend compromise rewrite the evidence.
+      - ./telemetry/raw:/app/telemetry/raw:ro
+      # Docker socket — the VM Lab feature (vm_lab.html) launches Kali / Windows
+      # lab containers through the local Docker provider. This is effectively
+      # host-root; it is mounted here deliberately so `docker compose up -d`
+      # gives a working VM Lab out of the box. Do not expose port 8000 to an
+      # untrusted network with this mounted.
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      INFRA_PROVIDER: "${INFRA_PROVIDER:-local}"
+      TELEMETRY_SOURCE: "${TELEMETRY_SOURCE:-local}"
+      TELEMETRY_DIR: /app/telemetry/raw
+      REPORTS_DIR: /app/reports
+      COLLECTOR_INTERVAL_SECONDS: "${COLLECTOR_INTERVAL_SECONDS:-2}"
+      CORS_ORIGINS: "${CORS_ORIGINS:-http://localhost:5500,http://127.0.0.1:5500}"
+      # Application database — MariaDB, reachable as `db` on honeynet_app.
+      DATABASE_URL: "mysql+aiomysql://${MARIADB_USER:-shadowtrust}:${MARIADB_PASSWORD:-shadowtrust}@db:3306/${MARIADB_DATABASE:-shadowtrust}"
+      # Host-side ports + root password, shown on the /health operator page.
+      MARIADB_PORT: "${MARIADB_PORT:-3307}"
+      MARIADB_ROOT_PASSWORD: "${MARIADB_ROOT_PASSWORD:-shadowtrust_root}"
+      PHPMYADMIN_PORT: "${PHPMYADMIN_PORT:-8081}"
+      FRONTEND_PORT: "${FRONTEND_PORT:-5500}"
+      MOBSF_PORT: "${MOBSF_PORT:-5055}"
+      NODE_API_PORT: "${NODE_API_PORT:-3000}"
+      HONEYPOT_SSH_PORT: "${HONEYPOT_SSH_PORT:-2222}"
+      HONEYPOT_TELNET_PORT: "${HONEYPOT_TELNET_PORT:-2223}"
+      HONEYPOT_SMB_PORT: "${HONEYPOT_SMB_PORT:-445}"
+      HONEYPOT_FTP_PORT: "${HONEYPOT_FTP_PORT:-2121}"
+      HONEYPOT_MSSQL_PORT: "${HONEYPOT_MSSQL_PORT:-1433}"
+      HONEYPOT_HTTP_PORT: "${HONEYPOT_HTTP_PORT:-8022}"
+      HONEYPOT_ALT_PORT: "${HONEYPOT_ALT_PORT:-8023}"
+      # ── VM Lab (Guacamole + Docker lab provider) ──────────────────────────
+      # Lab containers are created on this network; guacd shares it.
+      LAB_DOCKER_NETWORK: "${LAB_DOCKER_NETWORK:-shadowtrust_labnet}"
+      LAB_IMAGE_KALI: "${LAB_IMAGE_KALI:-shadowtrust/lab-kali:latest}"
+      LAB_KALI_USER: "${LAB_KALI_USER:-kali}"
+      LAB_KALI_PASSWORD: "${LAB_KALI_PASSWORD:-kali}"
+      LAB_WINDOWS_ENABLED: "${LAB_WINDOWS_ENABLED:-false}"
+      LAB_IMAGE_WINDOWS: "${LAB_IMAGE_WINDOWS:-dockurr/windows}"
+      # Guacamole — DB for connection records, REST API for session tokens.
+      GUAC_DB_HOST: guacamole_db
+      GUAC_DB_PASSWORD: "${GUAC_DB_PASSWORD:-guacamole_password}"
+      GUAC_API_URL: "${GUAC_API_URL:-http://guacamole:8080/guacamole}"
+      # Splunk Blue Team page — the Splunk container is its own compose project
+      # (~/splunk-lab). Backend queries its management API; page links to the web UI.
+      SPLUNK_API_URL: "${SPLUNK_API_URL:-https://host.docker.internal:8089}"
+      SPLUNK_WEB_URL: "${SPLUNK_WEB_URL:-http://localhost:8009}"
+      SPLUNK_USER: "${SPLUNK_USER:-admin}"
+      SPLUNK_PASSWORD: "${SPLUNK_PASSWORD:-ChangeMe123!}"
+      # Malware Lab — ClamAV signature scanner + optional VirusTotal + YARA.
+      CLAMAV_HOST: "${CLAMAV_HOST:-clamav}"
+      CLAMAV_PORT: "${CLAMAV_PORT:-3310}"
+      VIRUSTOTAL_API_KEY: "${VIRUSTOTAL_API_KEY:-}"
+      MAX_MALWARE_UPLOAD_BYTES: "${MAX_MALWARE_UPLOAD_BYTES:-104857600}"
+      YARA_RULES_DIR: /app/yara_rules
+      # ── SOC hardening (task 12) — fail-closed defaults ────────────────────
+      # /health status page: OFF unless set to 1. Even when on it emits NO
+      # secrets — full detail is the authenticated /api/v1/admin/diagnostics.
+      HEALTH_PAGE: "${HEALTH_PAGE:-0}"
+      # dev_bypass_token auth shortcut: OFF unless set to 1 AND INFRA_PROVIDER=local.
+      DEV_BYPASS: "${DEV_BYPASS:-0}"
+      # ── Detection & correlation engine ───────────────────────────────────
+      DETECTION_ENGINE_INTERVAL_SECONDS: "${DETECTION_ENGINE_INTERVAL_SECONDS:-20}"
+      DETECTIONS_DIR: /app/detections
+      SCENARIOS_DIR: /app/scenarios
+      # ── Analysis Lab (analysis_lab.html) — disposable egress-free sandboxes ─
+      ANALYSIS_IMAGE: "${ANALYSIS_IMAGE:-shadowtrust/analysis-shell:latest}"
+      ANALYSIS_DOCKER_NETWORK: "${ANALYSIS_DOCKER_NETWORK:-shadowtrust_analysis}"
+      ANALYSIS_SHELL_TTL_MIN: "${ANALYSIS_SHELL_TTL_MIN:-20}"
+      ANALYSIS_SHELL_MAX_SESSIONS: "${ANALYSIS_SHELL_MAX_SESSIONS:-8}"
     env_file:
       - path: backend/.env
-        required: true       # run setup.sh first to create this from backend/.env.example
+        required: false
     networks:
-      - soc_net
+      # Deliberately NOT on honeynet_edge. The backend has no network path to
+      # any sensor, and no sensor has one to it. It IS on labnet so it can
+      # reach Guacamole and the lab containers it spawns.
+      - honeynet_app
+      - labnet
+    security_opt:
+      - no-new-privileges:true
+    depends_on:
+      db:
+        condition: service_healthy
+      guacamole_db:
+        condition: service_healthy
     healthcheck:
       test: ["CMD", "python", "-c",
              "import urllib.request; urllib.request.urlopen('http://localhost:8000/')"]
       interval: 15s
       timeout: 5s
-      start_period: 15s
+      start_period: 20s
       retries: 5
 
-  # ── MobSF APK Analysis Proxy ─────────────────────────────────────────────────
-  mobsf:
-    build:
-      context: .
-      dockerfile: Dockerfile.mobsf
-    image: soc/mobsf:latest
-    container_name: soc_mobsf
-    restart: unless-stopped
-    ports:
-      - "${MOBSF_PORT:-5055}:5055"
-    volumes:
-      # Docker socket — lets this service spawn MobSF analysis containers
-      - /var/run/docker.sock:/var/run/docker.sock
-      # Persist uploaded APKs and scan results
-      - ./backend/mobsf_service/data:/app/mobsf_service/data
-    environment:
-      # auto-detected by setup.sh — macOS/Win → host.docker.internal, Linux → 172.17.0.1
-      MOBSF_DOCKER_HOST: ${MOBSF_DOCKER_HOST:-localhost}
-    networks:
-      - soc_net
-    depends_on:
-      backend:
-        condition: service_healthy
-
-  # ── Node.js Fastify Edge-Collector API ───────────────────────────────────────
-  node_api:
-    build:
-      context: .
-      dockerfile: Dockerfile.node
-      args:
-        SERVICE: api
-    image: soc/node-api:latest
-    container_name: soc_node_api
-    restart: unless-stopped
-    ports:
-      # Container runs on 8000 (default PORT in .env); mapped to 3000 on host
-      - "${NODE_API_PORT:-3000}:8000"
-    env_file:
-      - path: services/api/.env
-        required: false      # created by setup.sh from services/api/.env.example
-    environment:
-      HOST: "0.0.0.0"
-    networks:
-      - soc_net
-    depends_on:
-      backend:
-        condition: service_healthy
-
-  # ── Node.js Supabase Background Worker ───────────────────────────────────────
-  worker:
-    build:
-      context: .
-      dockerfile: Dockerfile.node
-      args:
-        SERVICE: worker
-    image: soc/worker:latest
-    container_name: soc_worker
-    restart: unless-stopped
-    # No exposed port — background process only
-    env_file:
-      - path: services/worker/.env
-        required: false      # created by setup.sh from services/worker/.env.example
-    networks:
-      - soc_net
-    depends_on:
-      backend:
-        condition: service_healthy
-    # Override CMD for the worker entrypoint
-    command: ["node", "dist/worker.js"]
-
-  # ── Nginx Frontend Dashboard ─────────────────────────────────────────────────
+  # ── Nginx dashboard ─────────────────────────────────────────────────────────
   frontend:
     image: nginx:1.25-alpine
-    container_name: soc_frontend
+    container_name: honeynet_frontend
     restart: unless-stopped
     ports:
       - "${FRONTEND_PORT:-5500}:5500"
@@ -131,11 +441,139 @@ services:
       - ./frontend:/usr/share/nginx/html:ro
       - ./frontend/nginx.conf:/etc/nginx/conf.d/default.conf:ro
     networks:
-      - soc_net
+      - honeynet_app
+    security_opt:
+      - no-new-privileges:true
     depends_on:
       backend:
         condition: service_healthy
 
+  # ══ MobSF — APK analysis service (apk.html) ═════════════════════════════════
+  # Spawns real MobSF containers on `labnet` via the Docker socket and proxies
+  # to them. On by default now (same socket trade-off as the backend).
+
+  mobsf:
+    build:
+      context: .
+      dockerfile: Dockerfile.mobsf
+    image: soc/mobsf:latest
+    container_name: honeynet_mobsf
+    restart: unless-stopped
+    ports:
+      - "${MOBSF_PORT:-5055}:5055"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./backend/mobsf_service/data:/app/mobsf_service/data
+    environment:
+      MOBSF_DOCKER_HOST: ${MOBSF_DOCKER_HOST:-host.docker.internal}
+      # When set, the spawned MobSF container joins this network and is reached
+      # by name (http://mobsf:8000) instead of a host-published port.
+      LAB_DOCKER_NETWORK: "${LAB_DOCKER_NETWORK:-shadowtrust_labnet}"
+    networks:
+      - honeynet_app
+      - labnet
+
+  # ── ClamAV — real signature antivirus for the Malware Lab ───────────────────
+  # The backend streams uploaded files to clamd over INSTREAM (:3310). First
+  # boot runs freshclam and downloads ~1.5 GB of signatures — the scanner
+  # reports "engine offline" until it's ready (reports still render).
+  clamav:
+    image: clamav/clamav-debian:latest   # -debian variant publishes arm64
+    container_name: honeynet_clamav
+    restart: unless-stopped
+    environment:
+      # Keep the freshclam updater running inside the container.
+      CLAMAV_NO_FRESHCLAMD: "false"
+    volumes:
+      - clamav_db:/var/lib/clamav
+    networks:
+      - honeynet_app
+    healthcheck:
+      test: ["CMD", "/usr/local/bin/clamdcheck.sh"]
+      interval: 30s
+      timeout: 10s
+      start_period: 360s
+      retries: 5
+
+  # ══ OPTIONAL EXTRAS (docker compose --profile extras up -d) ═════════════════
+
+  node_api:
+    profiles: ["extras"]
+    build:
+      context: .
+      dockerfile: Dockerfile.node
+      args:
+        SERVICE: api
+    image: soc/node-api:latest
+    container_name: honeynet_node_api
+    restart: unless-stopped
+    ports:
+      - "${NODE_API_PORT:-3000}:8000"
+    env_file:
+      - path: services/api/.env
+        required: false
+    environment:
+      HOST: "0.0.0.0"
+    networks:
+      - honeynet_app
+
+  worker:
+    profiles: ["extras"]
+    build:
+      context: .
+      dockerfile: Dockerfile.node
+      args:
+        SERVICE: worker
+    image: soc/worker:latest
+    container_name: honeynet_worker
+    restart: unless-stopped
+    env_file:
+      - path: services/worker/.env
+        required: false
+    networks:
+      - honeynet_app
+    command: ["node", "dist/worker.js"]
+
+
 networks:
-  soc_net:
+  # Attacker-facing. Sensors only. Nothing on this network can reach the
+  # application network — Docker does not route between bridge networks, and
+  # no service is a member of both.
+  honeynet_edge:
     driver: bridge
+    name: honeynet_edge
+
+  # Application. Backend, dashboard, database, optional extras.
+  honeynet_app:
+    driver: bridge
+    name: honeynet_app
+
+  # VM Lab. Backend, Guacamole (guacd/db/web), MobSF, and every lab container
+  # the backend spawns. Explicit name so the Docker lab provider can target it.
+  labnet:
+    driver: bridge
+    name: shadowtrust_labnet
+
+  # Analysis Lab sandboxes (analysis_lab.html). internal: true = NO egress: the
+  # sandbox shell cannot reach the internet, the honeypots, or the app. The
+  # backend is NOT a member — it drives the containers through the Docker API,
+  # not the network. Only the disposable shell containers sit here.
+  analysis:
+    driver: bridge
+    internal: true
+    name: shadowtrust_analysis
+
+
+volumes:
+  # MariaDB data — survives `docker compose down`, wiped by `down -v` / `make nuke`.
+  db_data:
+    name: honeynet_db_data
+
+  # Guacamole Postgres — users + connection records. Wiped by `down -v`.
+  guac_pgdata:
+    name: honeynet_guac_pgdata
+
+  # ClamAV signature database (~1.5 GB) — keep it so freshclam doesn't
+  # re-download the whole set on every recreate.
+  clamav_db:
+    name: honeynet_clamav_db

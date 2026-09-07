@@ -20,15 +20,17 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
+# WeasyPrint runtime libraries (PDF report engine — app/services/reporting).
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libpango-1.0-0 libpangoft2-1.0-0 libharfbuzz0b libjpeg62-turbo \
+    libfontconfig1 libcairo2 fonts-dejavu-core \
+    && rm -rf /var/lib/apt/lists/*
+
 # Pull installed packages from builder
 COPY --from=builder /install /usr/local
 
 # Copy application source
 COPY backend/ .
-
-# Ensure SQLite DB files exist as FILES (not directories) before bind-mount kicks in.
-# Without this, if the host path doesn't exist, Docker creates a directory and SQLite crashes.
-RUN touch /app/ingestion.db /app/honeynet.db
 
 EXPOSE 8000
 

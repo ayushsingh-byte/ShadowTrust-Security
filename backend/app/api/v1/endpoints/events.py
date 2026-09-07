@@ -5,7 +5,7 @@ import uuid
 
 from app.schemas.event import RawEventSchema
 from app.models.all_models import RawEventModel
-from app.db.sqlite_db import get_db
+from app.db.database import get_db
 
 router = APIRouter()
 
@@ -13,7 +13,7 @@ router = APIRouter()
 async def ingest_telemetry(events: List[RawEventSchema], db: AsyncSession = Depends(get_db)):
     """
     High-throughput endpoint for honeypot agents to push structured logs.
-    Writes raw telemetry directly to local SQLite.
+    Writes raw telemetry directly to the database.
     """
     try:
         db_events = []

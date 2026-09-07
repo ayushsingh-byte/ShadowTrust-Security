@@ -3,797 +3,135 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>Raw Telemetry | Shadow Trust</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Event Log | Shadow Trust</title>
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/dashboard.css">
+    <link rel="stylesheet" href="css/events.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/jquery.dataTables.min.css" />
     <style>
-        .dataTables_wrapper .dataTables_length,
-        .dataTables_wrapper .dataTables_filter {
-            color: #888;
-            margin-bottom: 20px;
-        }
-
-        .dataTables_wrapper input,
-        .dataTables_wrapper select {
-            background: #111;
-            border: 1px solid #333;
-            color: var(--neon-cyan);
-            padding: 5px;
-            outline: none;
-        }
-
-        table.dataTable {
-            border-collapse: collapse;
-            width: 100%;
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 0.8rem;
-        }
-
-        table.dataTable thead th {
-            border-bottom: 1px solid #333;
-            color: #666;
-            text-transform: uppercase;
-            padding: 10px;
-            text-align: left;
-        }
-
-        table.dataTable tbody td {
-            border-bottom: 1px solid #111;
-            padding: 8px 10px;
-            color: #ccc;
-        }
-
-        .paginate_button {
-            background: transparent !important;
-            color: #888 !important;
-            border: none !important;
-        }
-
-        .paginate_button.current {
-            color: #fff !important;
-            font-weight: bold;
-        }
-
-        .query-builder {
-            background: #000;
-            border: 1px solid #333;
-            padding: 10px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 20px;
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 0.8rem;
-        }
-
-        .query-tag {
-            background: #222;
-            padding: 2px 8px;
-            border-radius: 4px;
-            color: var(--neon-cyan);
-            border: 1px solid #444;
-        }
+        /* Fit the live-pipeline panels inside the shared sidebar shell. */
+        .main-content .hn-stats,
+        .main-content .hn-panel { margin-bottom: 18px; }
+        .page-header .hn-conn { margin-left: 6px; vertical-align: middle; }
     </style>
 </head>
 
-<!-- Custom Modal styles & container -->
-<style>
-    .export-progress-bar {
-        width: 0%;
-        height: 100%;
-        background: var(--accent-primary);
-        transition: width 2s linear;
-    }
+<body>
+    <div class="app-container">
+        <aside class="sidebar" id="sidebar"></aside>
 
-    @keyframes scrollData {
-        0% {
-            transform: translateY(0);
-        }
-
-        100% {
-            transform: translateY(-50%);
-        }
-    }
-
-    .data-stream-bg {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 200%;
-        pointer-events: none;
-        opacity: 0.1;
-        z-index: -1;
-        font-family: 'JetBrains Mono', monospace;
-        font-size: 0.5rem;
-        line-height: 1;
-        color: var(--accent-primary);
-        word-wrap: break-word;
-        overflow: hidden;
-        animation: scrollData 10s linear infinite;
-    }
-</style>
-
-<!-- Custom Modal -->
-<div id="custom-modal"
-    style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(5, 10, 15, 0.85); z-index:10000; justify-content:center; align-items:center; backdrop-filter:blur(5px);">
-    <div class="soc-card"
-        style="width: 400px; max-width: 90%; border-color: var(--accent-primary); box-shadow: 0 0 20px rgba(0, 0, 0, 0.5); position: relative; overflow: hidden;">
-        <div id="modal-data-stream" class="data-stream-bg" style="display:none;"></div>
-
-        <div class="soc-card-header"
-            style="border-bottom: 1px solid #334155; padding-bottom: 10px; margin-bottom: 15px; position:relative;">
-            <span id="modal-title" class="card-title text-yellow"><i class="fas fa-exclamation-triangle"></i>
-                AUTHORIZATION REQUIRED</span>
-        </div>
-
-        <div id="modal-message"
-            style="color: #e2e8f0; font-family: 'JetBrains Mono', monospace; font-size: 0.9rem; margin-bottom: 15px; line-height: 1.5; position:relative;">
-            Please confirm action.
-        </div>
-
-        <!-- Progress Bar Container -->
-        <div id="modal-progress-container"
-            style="display:none; width: 100%; height: 6px; background: #1e293b; margin-bottom: 25px; border-radius: 3px; overflow: hidden; position:relative;">
-            <div id="modal-progress-bar" class="export-progress-bar"></div>
-        </div>
-
-        <div id="modal-buttons" style="display: flex; justify-content: flex-end; gap: 10px; position:relative;">
-            <button id="modal-btn-cancel" class="soc-btn"
-                style="background: transparent; border: 1px solid #334155; color: #94a3b8;">CANCEL</button>
-            <button id="modal-btn-confirm" class="soc-btn soc-btn-primary">PROCEED</button>
-        </div>
-    </div>
-</div>
-
-<div class="app-container">
-
-    <!-- SIDEBAR -->
-    <!-- VOID NEON SIDEBAR (FROM GEO INTEL) -->
-    <aside class="sidebar" id="sidebar">
-        <div class="logo-area" onclick="document.getElementById('sidebar').classList.toggle('collapsed')">
-            <div class="logo-icon"></div>
-            <div class="logo-text">
-                <div class="logo-title">SHADOW TRUST</div>
-                <div class="logo-sub">DECEPTION GRID // V1</div>
-            </div>
-            <i class="fas fa-arrow-left toggle-btn"
-                style="margin-left: auto; cursor: pointer; color: #555; transition:0.3s;"></i>
-        </div>
-
-        <div class="nav-group">
-            <div class="nav-group-label">Mission Control</div>
-            <a href="dashboard.html" class="nav-item"><i class="fas fa-th-large"></i> <span class="nav-text">Threat
-                    Overview</span></a>
-            <a href="events.html" class="nav-item active"><i class="fas fa-stream"></i> <span class="nav-text">Event
-                    Stream</span></a>
-        </div>
-
-        <div class="nav-group">
-            <div class="nav-group-label">Grid Monitoring</div>
-            <a href="nodes.html" class="nav-item"><i class="fas fa-server"></i> <span class="nav-text">Honeypot
-                    Nodes</span></a>
-            <a href="sectors.html" class="nav-item"><i class="fas fa-network-wired"></i> <span class="nav-text">Sector
-                    Monitors</span></a>
-            <a href="geo.html" class="nav-item"><i class="fas fa-globe-americas"></i> <span class="nav-text">Geo
-                    Intelligence</span></a>
-        </div>
-
-        <div class="nav-group">
-            <div class="nav-group-label">Intelligence</div>
-            <a href="mitre.html" class="nav-item"><i class="fas fa-project-diagram"></i> <span class="nav-text">MITRE
-                    Matrix</span></a>
-            <a href="graphs.html" class="nav-item"><i class="fas fa-chart-pie"></i> <span class="nav-text">Analytics
-                    Graphs</span></a>
-            <a href="credentials.html" class="nav-item"><i class="fas fa-key"></i> <span class="nav-text">Credentials
-                    Vault</span></a>
-            <a href="behavior.html" class="nav-item"><i class="fas fa-fingerprint"></i> <span class="nav-text">Behaviour
-                    Profiling</span></a>
-            
-        </div>
-
-        <div class="nav-group">
-            <div class="nav-group-label">Tools Suite</div>
-            <a href="malware.html" class="nav-item"><i class="fas fa-bug"></i> <span class="nav-text">Malware
-                    Sandbox</span></a>
-            <a href="urlscan.html" class="nav-item"><i class="fas fa-search-location"></i> <span class="nav-text">URL
-                    Scanner</span></a>
-            <a href="apk.html" class="nav-item"><i class="fas fa-mobile-alt"></i> <span class="nav-text">APK
-                    Analyzer</span></a>
-            <a href="vm_lab.html" class="nav-item"><i class="fas fa-desktop"></i> <span class="nav-text">Virtual
-                    Lab</span></a>
-        </div>
-
-        <div class="nav-group">
-            <div class="nav-group-label">System</div>
-            <a href="admin.html" class="nav-item"><i class="fas fa-user-shield"></i> <span class="nav-text">Admin
-                    Panel</span></a>
-            <a href="config.html" class="nav-item"><i class="fas fa-cog"></i> <span
-                    class="nav-text">Configuration</span></a>
-            <a href="profile.html" class="nav-item"><i class="fas fa-id-card"></i> <span
-                    class="nav-text">Profile</span></a>
-        </div>
-
-        <div class="build-info">
-            <div>DEPLOYMENT: <span class="text-cyan">PROD-01</span></div>
-            <div>STATUS: <span class="text-green">ONLINE</span></div>
-        </div>
-    </aside>
-
-    <main class="main-content">
-
-        <div class="top-bar">
-            <div class="page-header">
-                <h2>EVENT TELEMETRY</h2>
-                <p>FULL RETENTION LOGS // <span class="text-cyan">ELASTICSEARCH INDEX</span></p>
-            </div>
-            <div class="filters-bar">
-                <span style="font-size:0.8rem; color:#666; margin-right:10px;">BUFFER SIZE:</span>
-                <span class="text-mono text-cyan" style="margin-right:20px;">—</span>
-                <button id="btn-save-query" class="soc-btn SOC-btn-sm"><i class="fas fa-save"></i> SAVE QUERY</button>
-                <button id="btn-dump-csv" class="soc-btn soc-btn-primary"><i class="fas fa-download"></i> DUMP
-                    CSV</button>
-            </div>
-        </div>
-
-        <!-- STATISTICS HEADER -->
-        <div class="dashboard-grid" style="grid-template-columns: repeat(6, 1fr); margin-bottom: 20px;">
-            <div style="background:#0a0a0f; border:1px solid #222; padding:10px; text-align:center;">
-                <div class="text-purple" style="font-size:1.4rem; font-weight:700;">—</div>
-                <div style="font-size:0.6rem; color:#666;">INGEST RATE</div>
-            </div>
-            <div style="background:#0a0a0f; border:1px solid #222; padding:10px; text-align:center;">
-                <div class="text-pink" style="font-size:1.4rem; font-weight:700;">—</div>
-                <div style="font-size:0.6rem; color:#666;">CRITICAL ALERTS</div>
-            </div>
-            <div style="background:#0a0a0f; border:1px solid #222; padding:10px; text-align:center;">
-                <div class="text-cyan" style="font-size:1.4rem; font-weight:700;">—</div>
-                <div style="font-size:0.6rem; color:#666;">TOTAL LOGS (24H)</div>
-            </div>
-            <div style="background:#0a0a0f; border:1px solid #222; padding:10px; text-align:center;">
-                <div class="text-green" style="font-size:1.4rem; font-weight:700;">—</div>
-                <div style="font-size:0.6rem; color:#666;">INDEX STATUS</div>
-            </div>
-            <div style="background:#0a0a0f; border:1px solid #222; padding:10px; text-align:center;">
-                <div style="font-size:1.4rem; font-weight:700; color:#fff;">—</div>
-                <div style="font-size:0.6rem; color:#666;">QUERY LATENCY</div>
-            </div>
-            <div style="background:#0a0a0f; border:1px solid #222; padding:10px; text-align:center;">
-                <div class="text-white" style="font-size:1.4rem; font-weight:700;">—</div>
-                <div style="font-size:0.6rem; color:#666;">CACHE HIT RATIO</div>
-            </div>
-        </div>
-
-        <!-- SEARCH BAR -->
-        <div class="query-builder">
-            <span class="text-green">root@elastic:~$</span>
-            <span style="color:#aaa;">SEARCH index="honeypot-*" | WHERE</span>
-            <span class="query-tag">severity="CRITICAL"</span>
-            <span style="color:#aaa;">AND</span>
-            <span class="query-tag">protocol="SSH"</span>
-            <span class="blink-cursor" style="background:#0f0; width:8px; height:15px; display:inline-block;"></span>
-        </div>
-
-        <!-- VISUALIZATION ROW -->
-        <div class="dashboard-grid" style="grid-template-columns: 3fr 1fr; margin-bottom: 20px;">
-            <div class="soc-card" style="height:300px; padding:10px; display:flex; flex-direction:column;">
-                <div class="text-xs text-muted" style="margin-bottom:10px;">EVENT VOLUME (LAST 1 HOUR)</div>
-                <div style="flex:1; position:relative;">
-                    <canvas id="volumeChart"></canvas>
+        <main class="main-content">
+            <div class="top-bar">
+                <div class="page-header">
+                    <h2>EVENT LOG</h2>
+                    <p>LOCAL PIPELINE // sensor &rarr; collector &rarr; normalizer &rarr; dashboard &nbsp;
+                        <span id="hn-conn" class="hn-conn"><span class="hn-dot"></span><span id="hn-conn-label">Connecting&hellip;</span></span>
+                    </p>
+                </div>
+                <div class="filters-bar">
+                    <button id="ev-export" class="soc-btn soc-btn-primary"><i class="fas fa-download"></i> EXPORT CSV</button>
                 </div>
             </div>
-            <div class="soc-card" style="padding:15px;">
-                <div class="card-title">TOP SOURCES</div>
-                <div style="margin-top:10px; font-size:0.8rem;">
-                    <div class="text-muted">No data yet</div>
+
+            <!-- Overview -->
+            <div class="hn-stats">
+                <div class="hn-stat"><div class="label">Total Events</div><div class="value" id="stat-total">0</div></div>
+                <div class="hn-stat"><div class="label">Active Sessions</div><div class="value" id="stat-sessions">0</div></div>
+                <div class="hn-stat"><div class="label">Unique Source IPs</div><div class="value" id="stat-ips">0</div></div>
+                <div class="hn-stat"><div class="label">Commands Executed</div><div class="value" id="stat-commands">0</div></div>
+                <div class="hn-stat crit"><div class="label">High/Critical Events</div><div class="value" id="stat-attacks">0</div></div>
+                <div class="hn-stat"><div class="label">Sensors Online</div><div class="value" id="stat-sensors">0/0</div></div>
+            </div>
+
+            <div class="hn-grid-2">
+                <div class="hn-panel">
+                    <h2>Live Activity <span class="count">newest first, SSE-driven</span></h2>
+                    <div class="hn-feed" id="hn-feed"><div class="hn-empty">Waiting for sensor telemetry&hellip;</div></div>
+                </div>
+                <div class="hn-panel">
+                    <h2>Sensors</h2>
+                    <div class="hn-sensors" id="hn-sensors"><div class="hn-empty">Loading&hellip;</div></div>
                 </div>
             </div>
-        </div>
 
-
-        <!-- MAIN TABLE CARD -->
-        <div class="soc-card">
-            <table id="logTable">
-                <thead>
-                    <tr>
-                        <th>TIME (UTC)</th>
-                        <th>SEV</th>
-                        <th>SOURCE</th>
-                        <th>GEO</th>
-                        <th>TARGET</th>
-                        <th>PROTOCOL</th>
-                        <th>EVENT SIGNATURE / PAYLOAD</th>
-                        <th>ACTION</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <!-- JS Populated -->
-                </tbody>
-            </table>
-        </div>
-
-        <!-- FOOTER SYSTEM STATUS -->
-        <div
-            style="margin-top:20px; border-top:1px solid #222; padding-top:10px; display:flex; justify-content:space-between; color:#666; font-size:0.7rem; font-family:'JetBrains Mono';">
-            <div>SHADOW TRUST NODE CLUSTER // v4.2.0-STABLE</div>
-            <div>
-                <span style="margin-right:15px;"><i class="fas fa-circle text-green" style="font-size:0.5rem;"></i>
-                    API: —</span>
-                <span style="margin-right:15px;"><i class="fas fa-circle text-green" style="font-size:0.5rem;"></i>
-                    DB: —</span>
-                <span><i class="fas fa-circle text-green" style="font-size:0.5rem;"></i> WORKERS: —</span>
+            <div class="hn-panel">
+                <h2>Attacker Profiles <span class="count"><span id="hn-attacker-count">0</span> source IP(s)</span></h2>
+                <div class="hn-table-wrap">
+                    <table class="hn-table" id="hn-attackers">
+                        <thead>
+                            <tr>
+                                <th>Source IP</th><th>Severity</th><th>Events</th><th>Sensors</th>
+                                <th>Ports</th><th>Usernames</th><th>Logins OK</th><th>Last Seen</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
             </div>
-            <div>LATENCY: —</div>
-        </div>
 
-    </main>
-</div>
-
-<script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
-<script type="module">
-    import { apiService } from './js/api.js';
-
-    let latestEvents = [];
-    let eventsTableRef = null;
-
-    function getCurrentQueryExpression() {
-        const tags = Array.from(document.querySelectorAll('.query-builder .query-tag'))
-            .map((el) => el.textContent?.trim())
-            .filter(Boolean);
-        const clause = tags.length ? tags.join(' AND ') : 'severity="*"';
-        return `SEARCH index="honeypot-*" | WHERE ${clause}`;
-    }
-
-    function saveQueryToLocalStore() {
-        const storageKey = 'shadowtrust_saved_queries';
-        const existing = JSON.parse(localStorage.getItem(storageKey) || '[]');
-        const now = new Date().toISOString();
-        const query = {
-            id: `qry_${Date.now()}`,
-            created_at: now,
-            query: getCurrentQueryExpression(),
-        };
-
-        existing.unshift(query);
-        localStorage.setItem(storageKey, JSON.stringify(existing.slice(0, 50)));
-        return query;
-    }
-
-    function toCsvValue(value) {
-        if (value === null || value === undefined) return '';
-        if (typeof value === 'object') {
-            value = JSON.stringify(value);
-        }
-        const str = String(value);
-        return /[",\n]/.test(str) ? `"${str.replace(/"/g, '""')}"` : str;
-    }
-
-    function buildEventsCsv(events) {
-        const columns = [
-            'timestamp',
-            'risk_score',
-            'attacker_ip',
-            'country',
-            'target',
-            'protocol',
-            'event_type',
-            'payload',
-        ];
-
-        const rows = events.map((e) => {
-            const country = e?.geoip_data?.country_name || 'UNKNOWN';
-            const target = `${e?.honeypot_type || 'HONEYPOT'}:${e?.target_port || ''}`;
-            const payload = e?.raw_data || e?.payload || e?.event_payload || '';
-            const mapped = {
-                timestamp: e?.timestamp || '',
-                risk_score: e?.risk_score ?? '',
-                attacker_ip: e?.attacker_ip || '',
-                country,
-                target,
-                protocol: e?.protocol || '',
-                event_type: e?.event_type || 'CONNECTION',
-                payload,
-            };
-            return columns.map((col) => toCsvValue(mapped[col])).join(',');
-        });
-
-        return `${columns.join(',')}\n${rows.join('\n')}`;
-    }
-
-    function downloadCsvFile(csvContent) {
-        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        const ts = new Date().toISOString().replace(/[:.]/g, '-');
-        link.href = url;
-        link.download = `shadowtrust-telemetry-${ts}.csv`;
-        document.body.appendChild(link);
-        link.click();
-        link.remove();
-        URL.revokeObjectURL(url);
-    }
-
-    function getEventsForExport() {
-        if (Array.isArray(latestEvents) && latestEvents.length > 0) {
-            return latestEvents;
-        }
-        if (eventsTableRef) {
-            const rows = eventsTableRef.rows().data().toArray();
-            if (rows.length > 0) return rows;
-        }
-        return [];
-    }
-
-    $(document).ready(function () {
-        const table = $('#logTable').DataTable({
-            data: [],
-            pageLength: 25,
-            lengthChange: false,
-            ordering: true,
-            order: [[0, "desc"]],
-            columns: [
-                { data: 'timestamp', render: data => data ? data.replace('T', ' ').substring(0, 19) : '' },
-                {
-                    data: 'risk_score', render: data => {
-                        if (data >= 80) return '<span class="text-red">CRITICAL</span>';
-                        if (data >= 50) return '<span class="text-yellow">HIGH</span>';
-                        if (data >= 20) return '<span class="text-cyan">MEDIUM</span>';
-                        return '<span class="text-green">LOW</span>';
-                    }
-                },
-                { data: 'attacker_ip', render: data => `<span class="text-mono">${data}</span>` },
-                { data: 'geoip_data', render: data => data?.country_name || 'UNKNOWN' },
-                { data: 'target_port', render: (data, type, row) => `${row.honeypot_type || 'HONEYPOT'}:${data}` },
-                { data: 'protocol', render: data => `<span class="text-pink">${data || 'UNKNOWN'}</span>` },
-                { data: 'event_type', render: (data, type, row) => `<span class="text-mono text-muted">${data || 'CONNECTION'}</span>` },
-                { data: null, render: (data, type, row) => `<button class="soc-btn soc-btn-sm" style="padding: 2px 10px; font-size: 0.7rem;" onclick="analyzeEvent('${row.id}')">ANALYZE</button>` }
-            ]
-        });
-        eventsTableRef = table;
-
-        // Global function for Datatable button
-        window.analyzeEvent = async function(eventId) {
-            // Show initial processing modal
-            showModal(
-                '<i class="fas fa-microchip"></i> AI INTELLIGENCE ENGINE',
-                '<span class="text-cyan animate-pulse">Initializing deep behavioral heuristics...</span>',
-                false, 
-                null, 
-                true // isAlert
-            );
-            
-            // Start the data streaming background
-            document.getElementById('modal-data-stream').style.display = 'block';
-            document.getElementById('modal-data-stream').innerHTML = generateDataStream();
-            
-            try {
-                // Fetch the analysis report
-                const res = await apiService.get(`/events/${eventId}/analyze`);
-                const r = res.report;
-                
-                // Construct the modal HTML body for the report
-                let mitreHtml = `<span class="text-muted">No specific tactic detected.</span>`;
-                if (r.ai_analysis.mitre_mapping) {
-                    mitreHtml = `
-                        <div style="border: 1px solid #334155; padding: 5px; background: #0f172a;">
-                            <span class="text-purple">${r.ai_analysis.mitre_mapping.tactic}</span> &gt; 
-                            <span class="text-cyan">${r.ai_analysis.mitre_mapping.id}: ${r.ai_analysis.mitre_mapping.technique}</span>
-                        </div>
-                    `;
-                }
-
-                let severityClass = "text-green";
-                if (r.ai_analysis.severity === "CRITICAL") severityClass = "text-red";
-                else if (r.ai_analysis.severity === "HIGH") severityClass = "text-yellow";
-                else if (r.ai_analysis.severity === "MEDIUM") severityClass = "text-cyan";
-
-                const reportHtml = `
-                    <div style="text-align: left; margin-bottom: 20px;">
-                        <div style="margin-bottom: 10px;">
-                            <div class="text-muted" style="font-size: 0.7rem;">DETECTED VECTOR</div>
-                            <div class="${severityClass}" style="font-size: 1.2rem; font-weight: bold;">
-                                <i class="fas fa-bug"></i> ${r.ai_analysis.detected_attack} 
-                                <span style="font-size: 0.8rem;">(${r.ai_analysis.severity})</span>
-                            </div>
-                        </div>
-                        
-                        <div style="margin-bottom: 10px;">
-                            <div class="text-muted" style="font-size: 0.7rem;">MITRE ATT&CK EVALUATION</div>
-                            ${mitreHtml}
-                        </div>
-                        
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
-                            <div style="border: 1px solid #334155; padding: 5px; background: #0f172a;">
-                                <div class="text-muted" style="font-size: 0.6rem;">THREAT ACTOR IP</div>
-                                <div class="text-mono text-pink">${r.attacker_ip}</div>
-                            </div>
-                            <div style="border: 1px solid #334155; padding: 5px; background: #0f172a;">
-                                <div class="text-muted" style="font-size: 0.6rem;">GEO TILT</div>
-                                <div class="text-mono text-cyan">${r.geo_ip}</div>
-                            </div>
-                        </div>
-
-                        <div>
-                            <div class="text-muted" style="font-size: 0.7rem; margin-bottom: 5px;">DECODED PAYLOAD FORENSICS</div>
-                            <div style="background: #000; border: 1px dashed #334155; padding: 10px; font-size: 0.75rem; color: #a3e635; max-height: 150px; overflow-y: auto; word-break: break-all;">
-                                ${$("<div>").text(r.payload_data.decoded || "No readable payload extracted.").html()}
-                            </div>
-                        </div>
+            <div class="hn-grid-2">
+                <div class="hn-panel">
+                    <h2>Event Log <span class="count"><span id="hn-event-count">0</span> shown</span></h2>
+                    <div class="hn-filters">
+                        <select id="filter-sensor">
+                            <option value="">All sensors</option>
+                            <option value="cowrie">Cowrie</option>
+                            <option value="dionaea">Dionaea</option>
+                            <option value="honeytrap">Honeytrap</option>
+                        </select>
+                        <select id="filter-severity">
+                            <option value="">All severities</option>
+                            <option value="INFO">Info</option>
+                            <option value="LOW">Low</option>
+                            <option value="MEDIUM">Medium</option>
+                            <option value="HIGH">High</option>
+                            <option value="CRITICAL">Critical</option>
+                        </select>
+                        <input type="text" id="filter-ip" placeholder="source IP&hellip;">
+                        <button id="filter-apply">Apply</button>
+                        <button id="filter-clear">Clear</button>
                     </div>
-                `;
+                    <div class="hn-table-wrap">
+                        <table class="hn-table" id="hn-events">
+                            <thead>
+                                <tr>
+                                    <th>Time</th><th>Sensor</th><th>Event Type</th><th>Source IP</th>
+                                    <th>Username</th><th>Command</th><th>Severity</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="hn-panel">
+                    <h2 id="hn-timeline-title">Select an attacker to see their timeline</h2>
+                    <div class="hn-timeline" id="hn-timeline"></div>
+                </div>
+            </div>
+        </main>
+    </div>
 
-                // Update the modal after an artificial delay for visual effect
-                setTimeout(() => {
-                    document.getElementById('modal-data-stream').style.display = 'none';
-                    document.getElementById('modal-title').innerHTML = `<i class="fas fa-shield-alt"></i> INTELLIGENCE REPORT`;
-                    document.getElementById('modal-message').innerHTML = reportHtml;
-                }, 1200);
-
-            } catch (err) {
-                console.error("Analysis failed", err);
-                setTimeout(() => {
-                    document.getElementById('modal-data-stream').style.display = 'none';
-                    document.getElementById('modal-message').innerHTML = `<span class="text-red"><i class="fas fa-times-circle"></i> FAILED TO SYNTHESIZE REPORT</span><br><br><span class="text-muted" style="font-size:0.7rem;">${err.message || 'Server error occurred'}</span>`;
-                }, 1000);
-            }
-        };
-
-        // Initialize Chart
-        const ctxVolume = document.getElementById('volumeChart').getContext('2d');
-        const volumeChart = new Chart(ctxVolume, {
-            type: 'bar',
-            data: {
-                labels: Array.from({ length: 60 }, (_, i) => i + 'm ago').reverse(),
-                datasets: [
-                    {
-                        label: 'SSH/Telnet (Brute Force)',
-                        data: [],
-                        backgroundColor: '#ff003c'
-                    },
-                    {
-                        label: 'HTTP/S (Web Exploits)',
-                        data: [],
-                        backgroundColor: '#00f0ff'
-                    },
-                    {
-                        label: 'Other/Malware',
-                        data: [],
-                        backgroundColor: '#aa00ff'
-                    }
-                ]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    x: { stacked: true, ticks: { color: '#666', font: { family: 'JetBrains Mono' } }, grid: { color: '#222' } },
-                    y: { stacked: true, ticks: { color: '#666', font: { family: 'JetBrains Mono' } }, grid: { color: '#222' } }
-                },
-                plugins: {
-                    legend: { labels: { color: '#aaa', font: { family: 'JetBrains Mono', size: 10 } } }
-                }
-            }
+    <script src="js/sidebar.js"></script>
+    <script src="js/events.js"></script>
+    <script>
+        // CSV export of the event rows currently shown in the table.
+        document.getElementById('ev-export').addEventListener('click', () => {
+            const rows = [...document.querySelectorAll('#hn-events tbody tr')].map(tr =>
+                [...tr.children].map(td => {
+                    const v = (td.innerText || '').replace(/\s+/g, ' ').trim();
+                    return /[",\n]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v;
+                }).join(','));
+            if (!rows.length) return;
+            const header = 'time,sensor,event_type,source_ip,username,command,severity';
+            const blob = new Blob([header + '\n' + rows.join('\n')], { type: 'text/csv' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = `shadowtrust-events-${new Date().toISOString().replace(/[:.]/g, '-')}.csv`;
+            a.click();
+            URL.revokeObjectURL(a.href);
         });
-
-        // Fetch Real Telemetry Data & Stats
-        async function fetchEventsAndStats() {
-            try {
-                // Fetch Events Table Data
-                const events = await apiService.get('/events/');
-                latestEvents = Array.isArray(events) ? events : [];
-                table.clear();
-                table.rows.add(latestEvents);
-                table.draw();
-
-                // Update Top Bar Stats (Buffer Size)
-                const bufferSize = latestEvents.reduce((acc, curr) => acc + JSON.stringify(curr).length, 0);
-                document.querySelector('.filters-bar .text-mono.text-cyan').innerText = (bufferSize / 1024).toFixed(2) + ' KB';
-
-                // Fetch Dashboard Stats for Top Widgets & Chart
-                const stats = await apiService.get('/dashboard/stats');
-
-                // Update Top Source List
-                const topSourcesContainer = document.querySelector('.dashboard-grid .soc-card:nth-child(2) > div:nth-child(2)');
-                if (stats.top_attackers && stats.top_attackers.length > 0) {
-                    topSourcesContainer.innerHTML = stats.top_attackers.map(attacker => `
-                        <div style="display:flex; justify-content:space-between; margin-bottom:10px; border-bottom:1px solid #222; padding-bottom:5px;">
-                            <span class="text-mono" style="color:#e2e8f0;">${attacker.org}</span>
-                            <span class="text-cyan text-mono">${attacker.hits} <i class="fas fa-fire ${attacker.risk === 'HIGH' ? 'text-red' : 'text-yellow'}"></i></span>
-                        </div>
-                    `).join('');
-                } else {
-                    topSourcesContainer.innerHTML = '<div class="text-muted">No data yet</div>';
-                }
-
-                // Update Chart Data
-                if (stats.traffic_chart) {
-                    volumeChart.data.datasets[0].data = stats.traffic_chart.ssh || [];
-                    volumeChart.data.datasets[1].data = stats.traffic_chart.http || [];
-                    volumeChart.data.datasets[2].data = stats.traffic_chart.malware || [];
-                    volumeChart.update();
-                }
-
-                // Update Header Stat Blocks
-                const statBlocks = document.querySelectorAll('.dashboard-grid[style*="repeat(6"] > div');
-                if (statBlocks.length >= 6) {
-                    const totalAttacksThisHour = (stats.traffic_chart?.ssh?.reduce((a, b) => a + b, 0) || 0) +
-                        (stats.traffic_chart?.http?.reduce((a, b) => a + b, 0) || 0) +
-                        (stats.traffic_chart?.malware?.reduce((a, b) => a + b, 0) || 0);
-
-                    // 1. Ingest Rate (Estimating based on last hour)
-                    statBlocks[0].querySelector('.text-purple').innerText = Math.round(totalAttacksThisHour / 60) + '/min';
-                    // 2. Critical Alerts
-                    statBlocks[1].querySelector('.text-pink').innerText = latestEvents.filter(e => e.risk_score >= 80).length;
-                    // 3. Total Logs (24H)
-                    statBlocks[2].querySelector('.text-cyan').innerText = stats.summary?.total_attacks || 0;
-                    // 4. Index Status
-                    statBlocks[3].querySelector('.text-green').innerText = 'GREEN';
-                    // 5. Query Latency (Mock latency base on buffer)
-                    statBlocks[4].querySelector('div:first-child').innerText = Math.max(12, Math.round(bufferSize / 1024 * 1.5)) + 'ms';
-                    // 6. Cache Hit Ratio
-                    statBlocks[5].querySelector('.text-white').innerText = '94.2%';
-                }
-
-
-            } catch (err) {
-                console.error("Failed to load telemetry:", err);
-            }
-        }
-
-        fetchEventsAndStats();
-        // Auto-refresh every 30 seconds
-        setInterval(fetchEventsAndStats, 30000);
-    });
-
-    // --- CUSTOM MODAL LOGIC ---
-    const topModal = document.getElementById('custom-modal');
-    const modalTitle = document.getElementById('modal-title');
-    const modalMessage = document.getElementById('modal-message');
-    const btnConfirm = document.getElementById('modal-btn-confirm');
-    const btnCancel = document.getElementById('modal-btn-cancel');
-    const modalButtons = document.getElementById('modal-buttons');
-    const progressContainer = document.getElementById('modal-progress-container');
-    const progressBar = document.getElementById('modal-progress-bar');
-    const dataStream = document.getElementById('modal-data-stream');
-
-    let modalConfirmCallback = null;
-
-    // Generate some fake hex data for the animation
-    function generateDataStream() {
-        let str = '';
-        const hexChars = '0123456789ABCDEF01 00FF AA55 ';
-        for (let i = 0; i < 2000; i++) {
-            str += hexChars.charAt(Math.floor(Math.random() * hexChars.length));
-            if (i % 64 === 0) str += '<br>';
-        }
-        return str;
-    }
-
-    function showModal(title, message, isDanger, callback, isAlert = false) {
-        modalTitle.innerHTML = title;
-        modalMessage.innerHTML = message;
-
-        // Reset modal states
-        progressContainer.style.display = 'none';
-        progressBar.style.width = '0%';
-        dataStream.style.display = 'none';
-        modalButtons.style.display = 'flex';
-
-        if (isDanger) {
-            modalTitle.className = 'card-title text-red';
-            btnConfirm.className = 'soc-btn soc-btn-danger';
-            btnConfirm.innerText = isAlert ? 'ACKNOWLEDGE' : 'INITIATE';
-            topModal.querySelector('.soc-card').style.borderColor = 'var(--accent-critical)';
-        } else {
-            modalTitle.className = 'card-title text-cyan';
-            btnConfirm.className = 'soc-btn soc-btn-primary';
-            btnConfirm.innerText = isAlert ? 'ACKNOWLEDGE' : 'PROCEED';
-            topModal.querySelector('.soc-card').style.borderColor = 'var(--accent-primary)';
-        }
-
-        btnCancel.style.display = isAlert ? 'none' : 'block';
-
-        modalConfirmCallback = callback;
-        topModal.style.display = 'flex';
-    }
-
-    function hideModal() {
-        topModal.style.display = 'none';
-        modalConfirmCallback = null;
-    }
-
-    btnCancel.addEventListener('click', hideModal);
-    btnConfirm.addEventListener('click', () => {
-        if (modalConfirmCallback) modalConfirmCallback();
-        else hideModal();
-    });
-
-    // --- BUTTON HANDLERS ---
-    document.getElementById('btn-save-query').addEventListener('click', () => {
-        showModal(
-            '<i class="fas fa-save"></i> SAVE QUERY PARAMETERS',
-            'Store current search parameters to the central index?',
-            false,
-            () => {
-                const saved = saveQueryToLocalStore();
-                const totalSaved = JSON.parse(localStorage.getItem('shadowtrust_saved_queries') || '[]').length;
-
-                // Start saving animation
-                modalButtons.style.display = 'none';
-                modalMessage.innerHTML = '<span class="text-cyan animate-pulse">Hashing query pattern...</span>';
-
-                setTimeout(() => {
-                    modalMessage.innerHTML = `<span class="text-green"><i class="fas fa-check-circle"></i> QUERY SUCCESSFULLY SAVED</span><br><br><span class="text-muted" style="font-size:0.75rem;">${saved.query}</span><br><span class="text-cyan" style="font-size:0.72rem;">Saved Queries: ${totalSaved}</span>`;
-                    modalTitle.className = 'card-title text-green';
-                    topModal.querySelector('.soc-card').style.borderColor = 'var(--accent-primary)';
-
-                    setTimeout(() => { hideModal(); }, 1500);
-                }, 1000);
-            }
-        );
-    });
-
-    document.getElementById('btn-dump-csv').addEventListener('click', () => {
-        showModal(
-            '<i class="fas fa-download"></i> DATA EXTRACTION PROTOCOL',
-            'WARNING: You are about to extract highly sensitive telemetry data. Proceed with extraction?',
-            true,
-            () => {
-                const eventsForExport = getEventsForExport();
-                if (!eventsForExport.length) {
-                    modalButtons.style.display = 'none';
-                    modalMessage.innerHTML = '<span class="text-yellow"><i class="fas fa-info-circle"></i> No telemetry rows available to export right now.</span>';
-                    setTimeout(() => { hideModal(); }, 1500);
-                    return;
-                }
-
-                // Trigger download immediately in direct user-confirm flow.
-                try {
-                    const csv = buildEventsCsv(eventsForExport);
-                    downloadCsvFile(csv);
-                } catch (e) {
-                    console.error('CSV export failed:', e);
-                    modalButtons.style.display = 'none';
-                    modalMessage.innerHTML = `<span class="text-red"><i class="fas fa-times-circle"></i> CSV export failed</span><br><span class="text-muted" style="font-size:0.75rem;">${e.message || 'Unknown error'}</span>`;
-                    setTimeout(() => { hideModal(); }, 1800);
-                    return;
-                }
-
-                // Start extraction animation
-                modalButtons.style.display = 'none';
-                progressContainer.style.display = 'block';
-                dataStream.style.display = 'block';
-                dataStream.innerHTML = generateDataStream();
-
-                modalMessage.innerHTML = '<span class="text-yellow animate-pulse">Compiling telemetry logs into CSV bundle...</span>';
-
-                // Trigger CSS width transition
-                setTimeout(() => {
-                    progressBar.style.width = '100%';
-                }, 50);
-
-                setTimeout(() => {
-                    // Extraction complete
-                    dataStream.style.display = 'none';
-                    progressContainer.style.display = 'none';
-                    modalMessage.innerHTML = '<span class="text-green"><i class="fas fa-check-circle"></i> EXTRACTION COMPLETED SECURELY</span><br><br><span style="color:#64748b; font-size:0.75rem;">Download will commence automatically.</span>';
-                    modalTitle.className = 'card-title text-green';
-                    topModal.querySelector('.soc-card').style.borderColor = 'var(--accent-primary)';
-
-                    setTimeout(() => {
-                        hideModal();
-                    }, 2500);
-                }, 2050); // wait for 2s transiton
-            }
-        );
-    });
-</script>
-
-<script src="js/sidebar.js"></script>
+    </script>
 </body>
 
 </html>

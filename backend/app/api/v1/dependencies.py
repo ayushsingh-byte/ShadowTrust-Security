@@ -1,3 +1,5 @@
+import os
+
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -5,10 +7,22 @@ from sqlalchemy.future import select
 import jwt
 
 from app.core.config import settings
-from app.db.sqlite_db import get_db
+from app.db.database import get_db
 from app.models.all_models import User
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl=f"{settings.API_V1_STR}/auth/login")
+
+
+def dev_bypass_enabled() -> bool:
+    """
+    The ``dev_bypass_token`` shortcut is honoured only when explicitly enabled
+    (``DEV_BYPASS=1``) AND the app is running locally (``INFRA_PROVIDER=local``).
+    Any production-like config is fail-closed.
+    """
+    return (
+        os.getenv("DEV_BYPASS", "0").strip().lower() in ("1", "true", "yes")
+        and os.getenv("INFRA_PROVIDER", "local").strip().lower() == "local"
+    )
 
 async def get_current_user(
     token: str = Depends(oauth2_scheme),
@@ -21,9 +35,11 @@ async def get_current_user(
     )
     try:
         if token == "dev_bypass_token":
+            if not dev_bypass_enabled():
+                raise credentials_exception
             # Mock a super admin user for local development without Supabase
             return User(email="dev@shadowtrust.local", role="SUPER_ADMIN", status="ACTIVE")
-            
+
         payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
         email: str = payload.get("sub")
         if email is None:

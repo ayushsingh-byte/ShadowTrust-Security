@@ -123,11 +123,11 @@ def send_email_notification(
 ) -> str:
     """
     Send an HTML email to a list of recipients.
-    Returns 'SENT' | 'FAILED' | 'SIMULATED'.
+    Returns 'SENT' | 'FAILED' | 'NOT_CONFIGURED'.
     """
     if not SMTP_ENABLED:
-        logger.info("[EMAIL] SMTP not configured — simulating delivery to %s", recipients)
-        return "SIMULATED"
+        logger.info("[EMAIL] SMTP not configured — no email sent to %s", recipients)
+        return "NOT_CONFIGURED"
 
     try:
         msg = MIMEMultipart("alternative")
@@ -156,11 +156,11 @@ def send_email_notification(
 def send_whatsapp_notification(phone: str, message: str) -> str:
     """
     Send a WhatsApp message via Twilio.
-    Returns 'SENT' | 'FAILED' | 'SIMULATED'.
+    Returns 'SENT' | 'FAILED' | 'NOT_CONFIGURED'.
     """
     if not TWILIO_ENABLED:
-        logger.info("[WHATSAPP] Twilio not configured — simulating delivery to %s", phone)
-        return "SIMULATED"
+        logger.info("[WHATSAPP] Twilio not configured — no message sent to %s", phone)
+        return "NOT_CONFIGURED"
 
     try:
         from twilio.rest import Client  # type: ignore

@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% from "_macros.html" import sev_pill, status_pill %}
+{% block content %}
+{% for sec in sections %}
+<div class="section">
+  {% if sec.heading %}<h2>{{ sec.heading }}</h2>{% endif %}
+
+  {% if sec.kind == "kpis" %}
+    <div class="kpis">
+    {% for it in sec['items'] %}<div class="kpi"><div class="v">{{ it.value }}</div><div class="l">{{ it.label }}</div></div>{% endfor %}
+    </div>
+
+  {% elif sec.kind == "text" %}
+    {% for para in (sec.body if sec.body is iterable and sec.body is not string else [sec.body]) %}<p>{{ para }}</p>{% endfor %}
+
+  {% elif sec.kind == "note" %}
+    <div class="note">{{ sec.body }}</div>
+
+  {% elif sec.kind == "list" %}
+    <ul class="tight">{% for it in sec['items'] %}<li>{{ it }}</li>{% endfor %}</ul>
+
+  {% elif sec.kind == "table" %}
+    {% if sec.rows %}
+    <table class="data">
+      <thead><tr>{% for c in sec.columns %}<th>{{ c }}</th>{% endfor %}</tr></thead>
+      <tbody>
+      {% for row in sec.rows %}
+        <tr>{% for cell in row %}<td>
+          {%- if cell is mapping and cell.pill == "sev" %}{{ sev_pill(cell.text) }}
+          {%- elif cell is mapping and cell.pill == "status" %}{{ status_pill(cell.text) }}
+          {%- elif cell is mapping %}{{ cell.text }}
+          {%- else %}{{ cell }}{% endif -%}
+        </td>{% endfor %}</tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    {% else %}<p class="muted">No records for this section in the selected window.</p>{% endif %}
+    {% if sec.note %}<p class="evidence-src">{{ sec.note }}</p>{% endif %}
+
+  {% endif %}
+</div>
+{% endfor %}
+{% endblock %}

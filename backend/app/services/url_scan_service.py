@@ -6,8 +6,7 @@ Multi-engine URL threat analysis:
   - Live DNS resolution (A, MX, TXT, NS, CNAME)
   - SSL/TLS certificate inspection
   - HTTP response & redirect chain analysis
-  - WHOIS-style domain age estimation
-  - VirusTotal-style threat intelligence simulation
+  - Live WHOIS domain-age lookup (python-whois)
   - Phishing keyword and typosquat detection
   - Homograph / IDN attack detection
   - Threat category classification
@@ -22,8 +21,12 @@ import json
 import os
 import hashlib
 import math
-import random
 from datetime import datetime, timezone
+
+try:
+    import whois as _whois  # python-whois
+except Exception:  # pragma: no cover
+    _whois = None
 from typing import Dict, Any, List, Optional, Tuple
 
 # ── Known safe domains (whitelist) ───────────────────────────────────────────────
@@ -70,26 +73,6 @@ SUSPICIOUS_TLDS = {
     ".su",                                   # Old Soviet TLD, abuse-heavy
     ".zip", ".mov",                          # Google's controversial new TLDs
 }
-
-# ── VirusTotal simulated engine scores (deterministic by hash) ──────────────────
-VT_ENGINES = [
-    "Google SafeBrowsing","Kaspersky","BitDefender","ESET","Sophos",
-    "Avast","ClamAV","Avira","Malwarebytes","Fortinet","OpenPhish",
-    "PhishTank","URLhaus","Sucuri SiteCheck","Webroot BrightCloud",
-]
-
-def _vt_simulate(url: str, score: int) -> Dict[str, Any]:
-    """Deterministic VirusTotal simulation based on threat score."""
-    seed = int(hashlib.md5(url.encode()).hexdigest()[:8], 16)
-    rng  = random.Random(seed)
-    detections = max(0, int((score / 100) * len(VT_ENGINES) * (0.6 + rng.random()*0.4)))
-    detected   = rng.sample(VT_ENGINES, min(detections, len(VT_ENGINES)))
-    return {
-        "engines_total":   len(VT_ENGINES),
-        "detections":      detections,
-        "detected_by":     detected,
-        "clean_engines":   [e for e in VT_ENGINES if e not in detected],
-    }
 
 # ── DNS Resolution ───────────────────────────────────────────────────────────────
 def _dns_resolve(hostname: str) -> Dict[str, Any]:
@@ -168,13 +151,35 @@ def _domain_entropy(domain: str) -> float:
 def _check_homograph(hostname: str) -> bool:
     return "xn--" in hostname  # Punycode = potential IDN homograph attack
 
-# ── WHOIS-style domain age simulation ─────────────────────────────────────────────
-def _estimate_age(hostname: str) -> Tuple[str, int]:
-    """Returns (age_str, age_days). Deterministic by hostname hash."""
-    seed  = int(hashlib.md5(hostname.encode()).hexdigest()[:8], 16) % 10000
-    days  = seed % 3650
-    age   = f"{days} days" if days > 365 else (f"{days} days (RECENTLY REGISTERED)" if days < 30 else f"{days} days")
-    return age, days
+# ── Real WHOIS domain age ────────────────────────────────────────────────────────
+def _domain_whois(hostname: str) -> Dict[str, Any]:
+    """Live WHOIS lookup. Returns {available, age_days, created, expires, registrar}.
+    available=False when python-whois is missing or the registry gave no answer —
+    the caller must not treat 'unknown age' as 'new domain'."""
+    if _whois is None:
+        return {"available": False, "reason": "python-whois not installed"}
+    try:
+        w = _whois.whois(hostname)
+    except Exception as e:
+        return {"available": False, "reason": f"whois lookup failed: {e}"}
+    created = w.creation_date
+    if isinstance(created, list):
+        created = created[0] if created else None
+    expires = w.expiration_date
+    if isinstance(expires, list):
+        expires = expires[0] if expires else None
+    if not created:
+        return {"available": False, "reason": "registry returned no creation date"}
+    try:
+        age_days = (datetime.now(timezone.utc).replace(tzinfo=None) - created.replace(tzinfo=None)).days
+    except Exception:
+        return {"available": False, "reason": "unparseable creation date"}
+    reg = w.registrar
+    if isinstance(reg, list):
+        reg = reg[0] if reg else None
+    return {"available": True, "age_days": age_days,
+            "created": str(created), "expires": str(expires) if expires else None,
+            "registrar": reg}
 
 
 class URLScanService:
@@ -316,15 +321,21 @@ class URLScanService:
                 findings.append(f"Redirects to different domain: {final_host}")
                 categories.append("Hidden Redirect")
 
-        # ── Domain Age ─────────────────────────────────────────────────────────
-        age_str, age_days = _estimate_age(hostname)
-        if age_days < 30:
-            score += 25
-            findings.append(f"Very new domain: {age_str}")
-            categories.append("New Domain")
-        elif age_days < 180:
-            score += 10
-            findings.append(f"Recently registered domain: {age_str}")
+        # ── Domain Age (real WHOIS) ────────────────────────────────────────────
+        whois_info = _domain_whois(hostname) if hostname else {"available": False, "reason": "no hostname"}
+        if whois_info.get("available"):
+            age_days = whois_info["age_days"]
+            age_str = f"{age_days} days (registered {whois_info['created'][:10]})"
+            if age_days < 30:
+                score += 25
+                findings.append(f"Very new domain: registered {age_days} days ago")
+                categories.append("New Domain")
+            elif age_days < 180:
+                score += 10
+                findings.append(f"Recently registered domain: {age_days} days old")
+        else:
+            age_days = None
+            age_str = f"unknown ({whois_info.get('reason', 'no data')})"
 
         # ── Whitelist discount ─────────────────────────────────────────────────
         if is_white:
@@ -338,9 +349,6 @@ class URLScanService:
         if score >= 30: risk_level = "SUSPICIOUS"
         if score >= 65: risk_level = "MALICIOUS"
 
-        # ── VirusTotal Simulation ──────────────────────────────────────────────
-        vt = _vt_simulate(raw_url, score)
-
         # ── Threat Category ────────────────────────────────────────────────────
         if not categories:
             if score > 50: categories = ["Phishing", "Credential Theft"]
@@ -348,16 +356,22 @@ class URLScanService:
             else: categories = ["Clean"]
         threat_category = " / ".join(categories[:3]) if categories else "Unknown"
 
-        # ── IP Geolocation (deterministic simulation) ──────────────────────────
-        ip  = dns_info["a_records"][0] if dns_info["a_records"] else "N/A"
-        h   = int(hashlib.md5(hostname.encode()).hexdigest()[:8], 16)
-        COUNTRIES = [("🇺🇸","United States","NA"),("🇷🇺","Russia","EU"),("🇨🇳","China","AS"),
-                     ("🇩🇪","Germany","EU"),("🇬🇧","United Kingdom","EU"),("🇳🇱","Netherlands","EU"),
-                     ("🇸🇬","Singapore","AS"),("🇧🇷","Brazil","SA"),("🇮🇳","India","AS"),("🇫🇷","France","EU")]
-        flag, country, region = COUNTRIES[h % len(COUNTRIES)]
-        ISPS = ["Cloudflare (AS13335)","Amazon AWS (AS16509)","DigitalOcean (AS14061)",
-                "OVH SAS (AS16276)","Hetzner (AS24940)","Google Cloud (AS15169)","Alibaba (AS37963)"]
-        isp = ISPS[h % len(ISPS)]
+        # ── IP Geolocation (real — ip-api.com via the shared batch cache) ──────
+        ip = dns_info["a_records"][0] if dns_info["a_records"] else "N/A"
+        country, region, isp, flag = "Unknown", "N/A", "Unknown", "🏳️"
+        if ip and ip != "N/A":
+            try:
+                from app.api.v1.endpoints.dashboard import fetch_geoip_batch_sync, get_flag_emoji
+                geo = fetch_geoip_batch_sync([ip]).get(ip, {})
+                if geo:
+                    country = geo.get("country", "Unknown")
+                    region = geo.get("code", "N/A")
+                    isp = geo.get("isp", "Unknown")
+                    if geo.get("asn") and geo.get("asn") != "N/A":
+                        isp = f"{isp} ({geo['asn']})"
+                    flag = get_flag_emoji(geo.get("code", ""))
+            except Exception:
+                pass
 
         # ── Structured Report ──────────────────────────────────────────────────
         return {
@@ -378,7 +392,7 @@ class URLScanService:
             "ssl":              ssl_info,
             "dns":              dns_info,
             "http":             http_info,
-            "virustotal":       vt,
+            "whois":            whois_info,
             "entropy":          ent,
             "categories":       categories,
             "is_whitelisted":   is_white,

@@ -1,0 +1,22 @@
+id: st-exec-005
+name: Suspicious PowerShell
+description: >
+  Encoded, hidden, or download-cradle PowerShell — seen on a Windows analysis
+  lab or forwarded from Splunk / an endpoint sensor.
+severity: HIGH
+confidence: 0.8
+source: endpoint
+attack:
+  technique: T1059.001
+  tactic: Execution
+type: threshold
+selection:
+  command|regex:
+    - 'powershell(\.exe)?\s+.*-enc(odedcommand)?\b'
+    - 'powershell(\.exe)?\s+.*-nop\b.*-w\s+hidden'
+    - 'FromBase64String\('
+    - 'IEX\s*\(|Invoke-Expression'
+    - 'DownloadString\(|DownloadFile\('
+timeframe: 30m
+group_by: source_ip
+threshold: 1

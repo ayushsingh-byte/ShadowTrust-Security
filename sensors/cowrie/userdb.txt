@@ -1,0 +1,36 @@
+# Cowrie credential database -- which logins the honeypot accepts.
+#
+# Format:  <username>:<uid, ignored>:<password>
+#   *      matches any value
+#   !x     explicitly REJECTS password x
+#
+# Order matters: the first matching rule wins, so denials must come before
+# the catch-all.
+#
+#  Lab intent 
+# The demo in the README is `ssh root@<honeypot-ip>` followed by a few
+# commands, so root must accept a login. But if root accepted *everything*,
+# the dashboard would never show a failed authentication, and the brute-force
+# scenario would have nothing to display.
+#
+# So: a couple of common passwords are rejected to generate realistic
+# login.failed events, and anything else succeeds. That gives both outcomes in
+# one demo without any configuration change.
+
+# Rejected -- these produce cowrie.login.failed events.
+root:x:!root
+root:x:!123456
+root:x:!password
+root:x:!admin
+admin:x:!admin
+admin:x:!123456
+
+# Accepted -- anything else for root or admin produces cowrie.login.success.
+root:x:*
+admin:x:*
+
+# A plausible service account, so username enumeration looks realistic.
+oracle:x:oracle
+ubuntu:x:ubuntu
+
+# Everyone else is rejected, which is what generates brute-force telemetry.

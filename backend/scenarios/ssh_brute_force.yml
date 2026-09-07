@@ -1,0 +1,14 @@
+id: ssh-brute-force
+script_scenario: brute-force
+description: >
+  Repeated failed SSH logins from one source against the Cowrie honeypot.
+target: 127.0.0.1
+expected_telemetry:
+  - sensor: cowrie
+    min_events: 5
+expected_detections:
+  - st-auth-001
+expected_techniques:
+  - T1110
+expected_severity: HIGH
+expected_incident: true

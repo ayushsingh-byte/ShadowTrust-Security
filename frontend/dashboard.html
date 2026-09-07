@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>DEFCON 1 | Shadow Trust Command</title>
+    <title>Tactical Command | Shadow Trust</title>
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/dashboard.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -21,6 +21,11 @@
 
         .leaflet-container {
             background: #050a0f !important;
+        }
+
+        /* Darken the keyless OSM tiles to match the tactical theme */
+        .leaflet-tile-pane {
+            filter: invert(1) hue-rotate(180deg) brightness(0.85) contrast(1.05) saturate(0.7);
         }
 
         /* Radar Sweep Animation */
@@ -189,83 +194,16 @@
             style="font-size:6rem; color:var(--accent-critical); margin-bottom:20px;"></i>
         <h1
             style="color:var(--accent-critical); font-family:'JetBrains Mono', monospace; font-size:3rem; letter-spacing:5px; text-shadow:0 0 20px rgba(255, 51, 51, 0.7); margin-bottom: 5px;">
-            SYSTEM SECURED</h1>
+            CONSOLE LOCKED</h1>
         <div
-            style="color:#ffffff; font-family:'JetBrains Mono', monospace; font-size:1.5rem; margin-top: 10px; background:rgba(0,0,0,0.7); padding:15px 30px; border:1px solid var(--accent-critical); box-shadow: 0 0 15px rgba(255,51,51,0.3);">
-            Administrator locked all pages</div>
+            style="color:#ffffff; font-family:'JetBrains Mono', monospace; font-size:1.2rem; margin-top: 10px; background:rgba(0,0,0,0.7); padding:15px 30px; border:1px solid var(--accent-critical); box-shadow: 0 0 15px rgba(255,51,51,0.3);">
+            Local screen guard — press NORMAL MODE to restore</div>
     </div>
 
     <div class="app-container">
 
         <!-- SIDEBAR -->
-        <aside class="sidebar" id="sidebar">
-            <div class="logo-area" onclick="document.getElementById('sidebar').classList.toggle('collapsed')">
-                <div class="logo-icon"></div>
-                <div class="logo-text">
-                    <div class="logo-title">SHADOW TRUST</div>
-                    <div class="logo-sub">DEFENSE GRID // V2</div>
-                </div>
-                <i class="fas fa-chevron-left toggle-btn" style="margin-left: auto; cursor: pointer;"></i>
-            </div>
-
-            <div class="nav-group">
-                <div class="nav-group-label">Command Center</div>
-                <a href="dashboard.html" class="nav-item active"><i class="fas fa-th-large"></i> <span
-                        class="nav-text">Tactical Overview</span></a>
-                <a href="events.html" class="nav-item"><i class="fas fa-list-alt"></i> <span class="nav-text">Event
-                        Log</span></a>
-            </div>
-
-            <div class="nav-group">
-                <div class="nav-group-label">Grid Monitoring</div>
-                <a href="nodes.html" class="nav-item"><i class="fas fa-server"></i> <span class="nav-text">Honeypot
-                        Nodes</span></a>
-                <a href="sectors.html" class="nav-item"><i class="fas fa-network-wired"></i> <span
-                        class="nav-text">Sector Monitors</span></a>
-                <a href="geo.html" class="nav-item"><i class="fas fa-globe-americas"></i> <span class="nav-text">Geo
-                        Intelligence</span></a>
-            </div>
-
-            <div class="nav-group">
-                <div class="nav-group-label">Intelligence</div>
-                <a href="mitre.html" class="nav-item"><i class="fas fa-chess-board"></i> <span class="nav-text">MITRE
-                        Matrix</span></a>
-                <a href="graphs.html" class="nav-item"><i class="fas fa-chart-area"></i> <span class="nav-text">Attack
-                        Analytics</span></a>
-                <a href="credentials.html" class="nav-item"><i class="fas fa-key"></i> <span
-                        class="nav-text">Credentials Vault</span></a>
-                <a href="behavior.html" class="nav-item"><i class="fas fa-user-secret"></i> <span
-                        class="nav-text">Behavior Profiling</span></a>
-                
-            </div>
-
-            <div class="nav-group">
-                <div class="nav-group-label">Tools Suite</div>
-                <a href="malware.html" class="nav-item"><i class="fas fa-biohazard"></i> <span class="nav-text">Binary
-                        Analysis</span></a>
-                <a href="urlscan.html" class="nav-item"><i class="fas fa-search-location"></i> <span
-                        class="nav-text">URL Scanner</span></a>
-                <a href="apk.html" class="nav-item"><i class="fas fa-mobile"></i> <span class="nav-text">APK
-                        Inspector</span></a>
-                <a href="vm_lab.html" class="nav-item"><i class="fas fa-laptop-code"></i> <span class="nav-text">Virtual
-                        Lab</span></a>
-            </div>
-
-            <div class="nav-group">
-                <div class="nav-group-label">System</div>
-                <a href="admin_login.html" class="nav-item"><i class="fas fa-id-badge"></i> <span class="nav-text">Admin
-                        Access</span></a>
-                <a href="config.html" class="nav-item"><i class="fas fa-cogs"></i> <span class="nav-text">Global
-                        Config</span></a>
-                <a href="profile.html" class="nav-item"><i class="fas fa-user-circle"></i> <span
-                        class="nav-text">Officer Profile</span></a>
-            </div>
-
-            <div class="build-info">
-                <div>UNIT: <span class="text-green">CYBER-01</span></div>
-                <div>SECURE: <span class="text-green">ENCRYPTED</span></div>
-            </div>
-        </aside>
+        <aside class="sidebar" id="sidebar"></aside>
 
         <!-- MAIN CONTENT -->
         <main class="main-content">
@@ -273,8 +211,8 @@
             <div class="top-bar">
                 <div class="page-header">
                     <h2>TACTICAL COMMAND</h2>
-                    <p>THREAT LEVEL: <span class="text-yellow">ELEVATED</span> // AUTH: <span
-                            class="text-green">SECURE</span></p>
+                    <p>THREAT LEVEL: <span id="hdrThreatLevel" class="text-muted">—</span> // ENGINE: <span
+                            id="hdrEngine" class="text-muted">—</span></p>
                 </div>
                 <div class="filters-bar" style="display:flex; flex-direction:column; align-items:flex-end; gap:10px;">
                     <div style="text-align:right;">
@@ -283,6 +221,10 @@
                             00:00:00</div>
                     </div>
                     <div style="display:flex; gap:15px;">
+                        <button id="btn-exec-report" class="soc-btn"
+                            style="background: rgba(88,166,255,0.1); border-color: #58a6ff; color: #58a6ff; padding: 6px 15px; font-size: 0.8rem;">
+                            <i class="fas fa-file-pdf"></i> EXEC SUMMARY
+                        </button>
                         <button id="btn-refresh-intel" class="soc-btn"
                             style="background: rgba(0, 198, 255, 0.1); border-color: #00c6ff; color: #00c6ff; padding: 6px 15px; font-size: 0.8rem;">
                             <i class="fas fa-sync-alt" id="refresh-icon"></i> REFRESH DATA
@@ -322,7 +264,7 @@
                         <i class="fas fa-bug text-red"></i>
                     </div>
                     <div id="malwareCapturedCount" class="metric-value">0</div>
-                    <div id="malwareCapturedSub" class="metric-sub">Distict Artifacts Identified</div>
+                    <div id="malwareCapturedSub" class="metric-sub">Distinct commands / uploads</div>
                 </div>
 
                 <div class="soc-card metric-tile">
@@ -350,7 +292,7 @@
                         <i class="fas fa-siren-on text-red"></i>
                     </div>
                     <div id="highRiskAlertsValue" class="metric-value text-red">0</div>
-                    <div class="metric-sub">Auto-Mitigation Active</div>
+                    <div class="metric-sub">Risk score &ge; 80</div>
                 </div>
 
                 <div class="soc-card metric-tile">
@@ -359,7 +301,7 @@
                         <i class="fas fa-server text-green"></i>
                     </div>
                     <div id="systemUptimeValue" class="metric-value text-green">0.0h</div>
-                    <div class="metric-sub">Host Server Up</div>
+                    <div class="metric-sub">Backend process uptime</div>
                 </div>
 
                 <div class="soc-card metric-tile">
@@ -376,10 +318,10 @@
             <!-- ROW 1.5: OPERATIONAL STATUS BAR -->
             <div class="dashboard-grid grid-6" style="margin-bottom: 20px;">
                 <div class="micro-metric">
-                    <div class="label">AI ENGINE</div>
-                    <div class="value text-muted">OFFLINE</div>
+                    <div class="label">ANALYSIS ENGINE</div>
+                    <div id="analysisEngineValue" class="value text-muted">—</div>
                     <div style="height:2px; background:#334155; margin-top:5px;">
-                        <div style="width:0%; height:100%; background:var(--accent-info);"></div>
+                        <div id="analysisEngineBar" style="width:0%; height:100%; background:var(--accent-info); transition:width .5s;"></div>
                     </div>
                 </div>
                 <div class="micro-metric">
@@ -393,9 +335,9 @@
                 </div>
                 <div class="micro-metric">
                     <div class="label">DECEPTION</div>
-                    <div class="value text-yellow">ACTIVE</div>
+                    <div id="deceptionValue" class="value text-muted">—</div>
                     <div style="height:2px; background:#334155; margin-top:5px;">
-                        <div style="width:100%; height:100%; background:var(--accent-secondary);"></div>
+                        <div id="deceptionBar" style="width:0%; height:100%; background:var(--accent-secondary); transition:width .5s;"></div>
                     </div>
                 </div>
                 <div class="micro-metric">
@@ -408,10 +350,10 @@
                     </div>
                 </div>
                 <div class="micro-metric">
-                    <div class="label">ZERO-DAYS</div>
-                    <div id="zeroDaysValue" class="value text-red">—</div>
+                    <div class="label">NOVEL PATTERNS</div>
+                    <div id="zeroDaysValue" class="value text-muted">—</div>
                     <div style="height:2px; background:#334155; margin-top:5px;">
-                        <div style="width:0%; height:100%; background:var(--accent-critical);"></div>
+                        <div id="zeroDaysBar" style="width:0%; height:100%; background:var(--accent-critical); transition:width .5s;"></div>
                     </div>
                 </div>
                 <div class="micro-metric">
@@ -556,10 +498,10 @@
                     <table class="terminal-table" style="flex:1; margin:0;">
                         <thead>
                             <tr>
-                                <th style="width:10%">HASH (MD5)</th>
-                                <th style="width:60%">TYPE</th>
+                                <th style="width:12%">KIND</th>
+                                <th style="width:58%">PAYLOAD / EVENT</th>
                                 <th style="width:15%">SENSOR</th>
-                                <th style="width:15%">STATUS</th>
+                                <th style="width:15%">DISPOSITION</th>
                             </tr>
                         </thead>
                         <tbody class="scrollable-tbody">
@@ -618,7 +560,7 @@
                 <div class="soc-card" style="height:480px; display:flex; flex-direction:column;">
                     <div class="soc-card-header">
                         <span class="card-title">SENSOR GRID STATUS</span>
-                        <span class="badge badge-gray">—</span>
+                        <span id="sensorGridBadge" class="badge badge-gray">—</span>
                     </div>
                     <div id="nodeGrid" class="node-grid"
                         style="display:grid; grid-template-columns: 1fr 1fr; gap:15px; flex:1; padding:10px; overflow-y: auto;">
@@ -631,22 +573,21 @@
             <!-- FOOTER SYSTEM STATUS -->
             <div
                 style="margin-top:20px; border-top:1px solid #334155; padding-top:10px; display:flex; justify-content:space-between; color:#64748b; font-size:0.7rem; font-family:'JetBrains Mono';">
-                <div>SHADOW TRUST DEFENSE GRID // v4.2.0-STABLE</div>
+                <div id="footerBuild">SHADOW TRUST DEFENSE GRID</div>
                 <div>
-                    <span style="margin-right:15px;"><i class="fas fa-circle text-green" style="font-size:0.5rem;"></i>
-                        API: —</span>
-                    <span style="margin-right:15px;"><i class="fas fa-circle text-green" style="font-size:0.5rem;"></i>
-                        DB: —</span>
-                    <span id="footerWorkers"><i class="fas fa-circle text-green" style="font-size:0.5rem;"></i> CLUSTER:
-                        Active</span>
+                    <span style="margin-right:15px;"><i id="footerApiDot" class="fas fa-circle text-muted" style="font-size:0.5rem;"></i>
+                        <span id="footerApi">API: —</span></span>
+                    <span style="margin-right:15px;"><i id="footerDbDot" class="fas fa-circle text-muted" style="font-size:0.5rem;"></i>
+                        <span id="footerDb">DB: —</span></span>
+                    <span id="footerWorkers"><i class="fas fa-circle text-muted" style="font-size:0.5rem;"></i> SENSORS: —</span>
                 </div>
-                <div>LATENCY: —</div>
+                <div id="footerLatency">LATENCY: —</div>
             </div>
 
         </main>
     </div>
-
-    <script src="js/sidebar.js"></script>
+<script src="js/report-download.js"></script>
+<script src="js/sidebar.js"></script>
     <script type="module">
         import { apiService } from './js/api.js';
         // System Clock
@@ -672,19 +613,20 @@
             data: {
                 labels: Array.from({ length: 60 }, (_, i) => i),
                 datasets: [{
-                    label: 'Traffic Volume',
+                    label: 'SSH',
                     data: Array.from({ length: 60 }, () => 0),
                     backgroundColor: '#00c6ff',
-                    borderWidth: 0,
-                    barPercentage: 0.9,
-                    categoryPercentage: 1.0
+                    borderWidth: 0, barPercentage: 0.9, categoryPercentage: 1.0, stack: 's'
                 }, {
-                    label: 'Anomaly',
+                    label: 'HTTP',
+                    data: Array.from({ length: 60 }, () => 0),
+                    backgroundColor: '#22c55e',
+                    borderWidth: 0, barPercentage: 0.9, categoryPercentage: 1.0, stack: 's'
+                }, {
+                    label: 'MALWARE / OTHER',
                     data: Array.from({ length: 60 }, () => 0),
                     backgroundColor: '#ff3333',
-                    borderWidth: 0,
-                    barPercentage: 0.9,
-                    categoryPercentage: 1.0
+                    borderWidth: 0, barPercentage: 0.9, categoryPercentage: 1.0, stack: 's'
                 }]
             },
             options: {
@@ -692,11 +634,11 @@
                 maintainAspectRatio: false,
                 plugins: { legend: { display: false } },
                 scales: {
-                    x: { display: false },
+                    x: { display: false, stacked: true },
                     y: {
-                        display: true,
+                        display: true, stacked: true,
                         grid: { color: '#1e293b' },
-                        ticks: { color: '#64748b', font: { family: 'JetBrains Mono' } }
+                        ticks: { color: '#64748b', font: { family: 'JetBrains Mono' }, precision: 0 }
                     }
                 },
                 animation: false
@@ -724,9 +666,11 @@
             window.location.href = 'geo.html';
         });
 
-        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+        // Keyless OSM tiles, darkened with a CSS filter (CARTO's dark basemap
+        // now requires an API key).
+        L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
             maxZoom: 19,
-            subdomains: 'abcd'
+            crossOrigin: true
         }).addTo(map);
 
         // Live geo events are loaded from the backend; no client-side fake/simulated data.
@@ -749,21 +693,88 @@
             threatEl.textContent = level;
             threatEl.classList.remove('text-green', 'text-yellow', 'text-red');
 
-            if (level === 'CRITICAL' || level === 'HIGH') {
-                threatEl.classList.add('text-red');
-            } else if (level === 'MEDIUM') {
-                threatEl.classList.add('text-yellow');
-            } else {
-                threatEl.classList.add('text-green');
-            }
+            let cls = 'text-green';
+            if (level === 'CRITICAL' || level === 'HIGH') cls = 'text-red';
+            else if (level === 'MEDIUM' || level === 'ELEVATED') cls = 'text-yellow';
+            threatEl.classList.add(cls);
+
+            const hdr = document.getElementById('hdrThreatLevel');
+            if (hdr) { hdr.textContent = level; hdr.className = cls; }
         }
 
         // Removed fetchApkStats() as requested to only show live honeypot telemetry
+
+        function setFooter(id, text, dotId, cls) {
+            const el = document.getElementById(id);
+            if (el) el.textContent = text;
+            if (dotId) {
+                const dot = document.getElementById(dotId);
+                if (dot) dot.className = `fas fa-circle ${cls}`;
+            }
+        }
+
+        function applySystemBlock(system) {
+            if (!system) return;
+            const ae = system.analysis_engine || {};
+            const dec = system.deception || {};
+
+            // Header
+            const hdrEngine = document.getElementById('hdrEngine');
+            if (hdrEngine) {
+                hdrEngine.textContent = ae.state || '—';
+                hdrEngine.className = ae.state === 'ACTIVE' ? 'text-green' : 'text-red';
+            }
+
+            // ANALYSIS ENGINE micro-metric
+            const aeVal = document.getElementById('analysisEngineValue');
+            const aeBar = document.getElementById('analysisEngineBar');
+            if (aeVal) {
+                aeVal.textContent = ae.state === 'ACTIVE' ? `${ae.classified_pct ?? 0}% CLASSIFIED` : 'OFFLINE';
+                aeVal.className = ae.state === 'ACTIVE' ? 'value text-green' : 'value text-red';
+            }
+            if (aeBar) aeBar.style.width = `${ae.state === 'ACTIVE' ? (ae.classified_pct ?? 0) : 0}%`;
+
+            // DECEPTION micro-metric
+            const decVal = document.getElementById('deceptionValue');
+            const decBar = document.getElementById('deceptionBar');
+            const pct = dec.sensors_total ? Math.round(100 * dec.sensors_online / dec.sensors_total) : 0;
+            if (decVal) {
+                decVal.textContent = dec.sensors_total ? `${dec.sensors_online}/${dec.sensors_total} SENSORS` : (dec.state || '—');
+                decVal.className = pct === 100 ? 'value text-green' : (pct > 0 ? 'value text-yellow' : 'value text-red');
+            }
+            if (decBar) decBar.style.width = `${pct}%`;
+
+            // NOVEL PATTERNS micro-metric
+            const npVal = document.getElementById('zeroDaysValue');
+            const npBar = document.getElementById('zeroDaysBar');
+            const np = system.novel_patterns || 0;
+            if (npVal) {
+                npVal.textContent = String(np);
+                npVal.className = np > 0 ? 'value text-red' : 'value text-green';
+            }
+            if (npBar) npBar.style.width = `${Math.min(100, np * 10)}%`;
+
+            // Footer
+            setFooter('footerApi', 'API: UP', 'footerApiDot', 'text-green');
+            const dbUp = ae.state === 'ACTIVE' || (system.last_event_at != null);
+            setFooter('footerDb', dbUp ? 'DB: UP' : 'DB: ?', 'footerDbDot', dbUp ? 'text-green' : 'text-yellow');
+            const fw = document.getElementById('footerWorkers');
+            if (fw) fw.innerHTML = `<i class="fas fa-circle ${pct === 100 ? 'text-green' : 'text-yellow'}" style="font-size:0.5rem;"></i> SENSORS: ${dec.sensors_online}/${dec.sensors_total}`;
+            const lat = document.getElementById('footerLatency');
+            if (lat && system.generated_in_ms != null) lat.textContent = `BACKEND: ${system.generated_in_ms} ms`;
+
+            const badge = document.getElementById('sensorGridBadge');
+            if (badge) {
+                badge.textContent = `${dec.sensors_online}/${dec.sensors_total} ONLINE`;
+                badge.className = `badge ${pct === 100 ? 'badge-green' : (pct > 0 ? 'badge-yellow' : 'badge-red')}`;
+            }
+        }
 
         async function fetchHoneypotStats() {
             try {
                 const payload = await apiService.get('/dashboard/stats');
                 if (!payload) return;
+                applySystemBlock(payload.system);
 
                 const summary = payload.summary || {};
                 const recentLogs = payload.recent || [];
@@ -784,6 +795,7 @@
                 if (uniqueAttackersValueEl) {
                     uniqueAttackersValueEl.textContent = formatCompactNumber(summary.unique_attackers || 0);
                 }
+                if (malwareCapturedEl) malwareCapturedEl.textContent = formatCompactNumber(summary.unique_payloads || 0);
                 if (highRiskAlertsEl) highRiskAlertsEl.textContent = formatCompactNumber(summary.high_risk_alerts || 0);
                 if (luresTrippedEl) luresTrippedEl.textContent = formatCompactNumber(summary.lures_tripped || 0);
                 if (hostileSrcEl) hostileSrcEl.textContent = summary.hostile_sources || 0;
@@ -815,27 +827,30 @@
 
                 if (sysIntegrityVal) {
                     const dBar = document.getElementById('defenseMatrixBar');
+                    const dMatrix = document.getElementById('defenseMatrixValue');
+                    const sub = document.getElementById('sysIntegritySub');
+                    const alerts = summary.high_risk_alerts || 0;
                     if (tLevel === 'CRITICAL' || tLevel === 'HIGH') {
-                        sysIntegrityVal.textContent = 'COMPROMISED';
+                        sysIntegrityVal.textContent = 'UNDER ATTACK';
                         sysIntegrityVal.className = 'metric-value text-red';
                         if (sysIntegrityIcon) sysIntegrityIcon.className = 'fas fa-shield-virus text-red';
-                        const dMatrix = document.getElementById('defenseMatrixValue');
-                        if (dMatrix) { dMatrix.textContent = 'BREACHED'; dMatrix.className = 'value text-red'; }
-                        if (dBar) { dBar.style.width = '30%'; dBar.style.background = 'var(--accent-critical)'; }
+                        if (dMatrix) { dMatrix.textContent = 'ENGAGED'; dMatrix.className = 'value text-red'; }
+                        if (dBar) { dBar.style.width = '40%'; dBar.style.background = 'var(--accent-critical)'; }
+                        if (sub) sub.textContent = `${alerts} high-risk alerts active`;
                     } else if (tLevel === 'MEDIUM' || tLevel === 'ELEVATED') {
                         sysIntegrityVal.textContent = 'ELEVATED';
                         sysIntegrityVal.className = 'metric-value text-yellow';
                         if (sysIntegrityIcon) sysIntegrityIcon.className = 'fas fa-shield-alt text-yellow';
-                        const dMatrix = document.getElementById('defenseMatrixValue');
                         if (dMatrix) { dMatrix.textContent = 'ADAPTING'; dMatrix.className = 'value text-yellow'; }
                         if (dBar) { dBar.style.width = '70%'; dBar.style.background = 'var(--accent-secondary)'; }
+                        if (sub) sub.textContent = `${alerts} high-risk alerts (24h)`;
                     } else {
                         sysIntegrityVal.textContent = 'SECURE';
                         sysIntegrityVal.className = 'metric-value text-green';
                         if (sysIntegrityIcon) sysIntegrityIcon.className = 'fas fa-shield-alt text-green';
-                        const dMatrix = document.getElementById('defenseMatrixValue');
                         if (dMatrix) { dMatrix.textContent = 'OPTIMIZED'; dMatrix.className = 'value text-green'; }
                         if (dBar) { dBar.style.width = '100%'; dBar.style.background = 'var(--accent-primary)'; }
+                        if (sub) sub.textContent = 'Core systems nominal';
                     }
                 }
 
@@ -860,7 +875,7 @@
                     `;
 
                     recentLogs.slice(0, 15).forEach(log => {
-                        if (log.lat !== undefined && log.lon !== undefined) {
+                        if (typeof log.lat === 'number' && typeof log.lon === 'number' && !(log.lat === 0 && log.lon === 0)) {
                             const icon = L.divIcon({
                                 className: "custom-pin",
                                 html: `<span style="${markerHtmlStyles}"></span>`
@@ -896,10 +911,11 @@
                     }
                 }
 
-                // Update Traffic Volume Chart
+                // Update Traffic Volume Chart (real per-minute buckets, last hour)
                 if (payload.traffic_chart && trafficChartInstance) {
-                    trafficChartInstance.data.datasets[0].data = payload.traffic_chart.ssh || Array(60).fill(0); // primary line
-                    trafficChartInstance.data.datasets[1].data = payload.traffic_chart.malware || Array(60).fill(0); // secondary line
+                    trafficChartInstance.data.datasets[0].data = payload.traffic_chart.ssh || Array(60).fill(0);
+                    trafficChartInstance.data.datasets[1].data = payload.traffic_chart.http || Array(60).fill(0);
+                    trafficChartInstance.data.datasets[2].data = payload.traffic_chart.malware || Array(60).fill(0);
                     trafficChartInstance.update();
                 }
 
@@ -938,12 +954,13 @@
                     if (payload.top_vectors.length === 0) {
                         exploitTableBody.innerHTML = `<tr><td colspan="4" class="text-muted">No data yet</td></tr>`;
                     } else {
+                        const tC = t => t === 'HIGH' ? 'text-red' : (t === 'MEDIUM' ? 'text-yellow' : 'text-muted');
                         payload.top_vectors.forEach(v => {
                             exploitTableBody.innerHTML += `
                                 <tr>
                                     <td class="text-cyan">${v.port}</td>
                                     <td>${v.service}</td>
-                                    <td class="text-red">${v.threat}</td>
+                                    <td class="${tC(v.threat)}">${v.threat}</td>
                                     <td>${v.count}</td>
                                 </tr>
                             `;
@@ -958,21 +975,19 @@
                     if (payload.recent_artifacts.length === 0) {
                         artifactsTableBody.innerHTML = `<tr><td colspan="4" class="text-muted">No payload data</td></tr>`;
                     } else {
+                        const dispColor = s => s === 'BLOCKED' ? 'text-red' : (s === 'FLAGGED' ? 'text-yellow' : 'text-green');
                         payload.recent_artifacts.forEach(r => {
                             artifactsTableBody.innerHTML += `
                                 <tr>
-                                    <td class="text-muted text-xs" title="${r.hash}">${r.hash}</td>
+                                    <td class="text-muted text-xs">${r.hash}</td>
                                     <td title="${r.type}">${r.type}</td>
                                     <td class="text-yellow" title="${r.sensor}">${r.sensor}</td>
-                                    <td class="text-green">${r.status}</td>
+                                    <td class="${dispColor(r.status)}">${r.status}</td>
                                 </tr>
                             `;
                         });
                     }
 
-                    if (malwareCapturedEl) {
-                        malwareCapturedEl.textContent = formatCompactNumber(payload.recent_artifacts.length || 0);
-                    }
                 }
 
             } catch (error) {
@@ -1004,27 +1019,26 @@
                     if (uptimeEl) uptimeEl.textContent = `${hrs}h`;
                 }
 
-                // Calculate Network Flow (Simulated via actual host psutil differentials if possible, else jitter)
+                // Real network flow: delta of the host's psutil byte counters
+                // between two /nodes/stats polls. No jitter — shows IDLE when idle.
                 if (stats && stats.network) {
                     const currentTotalBytes = stats.network.bytes_recv + stats.network.bytes_sent;
                     const nowTs = Date.now();
+                    const flowEl = document.getElementById('networkFlowValue');
 
                     if (lastNetBytes > 0 && lastNetTime > 0) {
-                        const deltaBytes = currentTotalBytes - lastNetBytes;
+                        const deltaBytes = Math.max(0, currentTotalBytes - lastNetBytes);
                         const deltaSecs = (nowTs - lastNetTime) / 1000;
-                        let bytesPerSec = 0;
-                        if (deltaSecs > 0) bytesPerSec = deltaBytes / deltaSecs;
+                        const bytesPerSec = deltaSecs > 0 ? deltaBytes / deltaSecs : 0;
 
-                        // Jitter to make it look constantly active in UI
-                        bytesPerSec += (Math.random() * 50000);
+                        let displayVal;
+                        if (bytesPerSec < 1024) displayVal = `${bytesPerSec.toFixed(0)} B/s`;
+                        else if (bytesPerSec < 1048576) displayVal = `${(bytesPerSec / 1024).toFixed(1)} KB/s`;
+                        else displayVal = `${(bytesPerSec / 1048576).toFixed(2)} MB/s`;
 
-                        let displayVal = `${(bytesPerSec / 1024).toFixed(1)} KB/s`;
-                        if (bytesPerSec > 1048576) {
-                            displayVal = `${(bytesPerSec / 1048576).toFixed(2)} MB/s`;
-                        }
-
-                        const flowEl = document.getElementById('networkFlowValue');
                         if (flowEl) flowEl.textContent = displayVal;
+                    } else if (flowEl) {
+                        flowEl.textContent = 'measuring…';
                     }
 
                     lastNetBytes = currentTotalBytes;
@@ -1094,9 +1108,7 @@
                 container.innerHTML += html;
             });
 
-            // Update Footer
-            const footerWorkers = document.getElementById('footerWorkers');
-            if (footerWorkers) footerWorkers.innerHTML = `WORKERS: ${onlineCount}/${nodes.length}`;
+            // Footer sensor count is owned by applySystemBlock (Docker-truthed).
 
             // Update Active Nodes Metric Tile
             const activeNodesTile = document.getElementById('activeNodes');
@@ -1112,6 +1124,8 @@
 
         // Fetch initially and loop
         fetchNodes();
+        // second poll shortly after so NETWORK FLOW has two samples to diff
+        setTimeout(fetchNodes, 3000);
         setInterval(fetchNodes, 12000);
 
         fetchHoneypotStats();
@@ -1124,20 +1138,12 @@
             data: {
                 labels: ['SSH', 'HTTP', 'RDP', 'SMB', 'TELNET', 'FTP'],
                 datasets: [{
-                    label: 'TRAFFIC SIGNATURE',
+                    label: 'PROTOCOL MIX (LIVE)',
                     data: [0, 0, 0, 0, 0, 0],
-                    backgroundColor: 'rgba(0, 198, 255, 0.2)', // Green fill
-                    borderColor: '#00c6ff', // Green line
+                    backgroundColor: 'rgba(0, 198, 255, 0.2)',
+                    borderColor: '#00c6ff',
                     borderWidth: 2,
                     pointBackgroundColor: '#00c6ff'
-                }, {
-                    label: 'NORMAL PROFILE',
-                    data: [0, 0, 0, 0, 0, 0],
-                    backgroundColor: 'rgba(255, 255, 255, 0.05)',
-                    borderColor: '#64748b',
-                    borderDash: [5, 5],
-                    borderWidth: 1,
-                    pointRadius: 0
                 }]
             },
             options: {
@@ -1205,33 +1211,20 @@
             hideModal();
         });
 
-        document.getElementById('btn-refresh-intel').addEventListener('click', () => {
-            showModal(
-                '<i class="fas fa-sync-alt"></i> REFRESH INTELLIGENCE',
-                'Initiate global intelligence refresh? This will scrape the latest S3 buckets and synchronize all sensor feeds.',
-                false,
-                async () => {
-                    const loader = document.getElementById('full-page-loading');
-                    if (loader) loader.style.display = 'flex';
-
-                    // Force the backend python worker to pull newest AWS S3 bucket logs
-                    try {
-                        await apiService.post('/aws/pull-s3-logs', {
-                            aws_access_key: localStorage.getItem('_st_aws_access_key') || '',
-                            aws_secret_key: localStorage.getItem('_st_aws_secret_key') || '',
-                            aws_region:     localStorage.getItem('_st_aws_region')      || 'ap-south-1',
-                            s3_bucket_3rd:  localStorage.getItem('_st_s3_bucket')       || 'honeynet-telemetry-logs',
-                            force_repull: true
-                        });
-                    } catch (e) {
-                        console.error('Failed to trigger S3 manual sync on intelligence refresh:', e);
-                    }
-
-                    setTimeout(() => {
-                        window.location.reload();
-                    }, 800);
-                }
-            );
+        document.getElementById('btn-exec-report').addEventListener('click', function () {
+            STReports.generateAndDownload('executive_summary', {}, { button: this, title: 'executive summary' });
+        });
+        document.getElementById('btn-refresh-intel').addEventListener('click', async () => {
+            const btn = document.getElementById('btn-refresh-intel');
+            const icon = document.getElementById('refresh-icon');
+            if (icon) icon.classList.add('fa-spin');
+            btn.disabled = true;
+            try {
+                await Promise.all([fetchHoneypotStats(), fetchNodes()]);
+            } finally {
+                if (icon) icon.classList.remove('fa-spin');
+                btn.disabled = false;
+            }
         });
 
         let isLockedDown = false;
@@ -1243,8 +1236,8 @@
         btnLockdown.addEventListener('click', () => {
             if (!isLockedDown) {
                 showModal(
-                    '<i class="fas fa-biohazard"></i> SYSTEM LOCKDOWN',
-                    'WARNING: Are you sure you want to initiate system lockdown? All external connections will be severed.',
+                    '<i class="fas fa-biohazard"></i> CONSOLE LOCKDOWN',
+                    'Blank this console screen behind a lockdown shutter? This is a local screen guard for shoulder-surfing — it does not change backend state. Click again to restore.',
                     true,
                     () => {
                         isLockedDown = true;
@@ -1295,7 +1288,7 @@
             }
         });
     </script>
-    <script src="js/sidebar.js"></script>
+
 </body>
 
 </html>

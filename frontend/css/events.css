@@ -1,0 +1,398 @@
+/* ──────────────────────────────────────────────────────────────────────────
+   Event Log — styles for the local telemetry pipeline dashboard.
+
+   Deliberately plain: dense tables, a monospace log, no gradients, no glow,
+   no decorative animation. The data is the interesting part.
+   ────────────────────────────────────────────────────────────────────────── */
+
+.hn-body {
+    background: var(--bg-body);
+    color: var(--text-primary);
+    font-family: var(--font-mono);
+    min-height: 100vh;
+    padding: 0 0 3rem;
+}
+
+.hn-topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.9rem 1.5rem;
+    border-bottom: var(--border-dim);
+    background: var(--bg-sidebar);
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+}
+
+.hn-title {
+    display: flex;
+    align-items: baseline;
+    gap: 0.6rem;
+}
+
+.hn-title h1 {
+    font-family: var(--font-heading);
+    font-size: 1.15rem;
+    letter-spacing: 0.04em;
+    color: var(--text-primary);
+    margin: 0;
+    text-transform: uppercase;
+}
+
+.hn-title span.sub {
+    color: var(--text-muted);
+    font-size: 0.75rem;
+}
+
+.hn-nav {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    font-size: 0.78rem;
+}
+
+.hn-nav a {
+    color: var(--text-secondary);
+    text-decoration: none;
+    border-bottom: 1px solid transparent;
+}
+
+.hn-nav a:hover {
+    color: var(--accent-primary);
+    border-bottom-color: var(--accent-primary);
+}
+
+.hn-conn {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.75rem;
+    padding: 0.25rem 0.6rem;
+    border: 1px solid var(--text-muted);
+    color: var(--text-secondary);
+}
+
+.hn-conn.live {
+    border-color: var(--accent-primary);
+    color: var(--accent-primary);
+}
+
+.hn-conn.down {
+    border-color: var(--accent-critical);
+    color: var(--accent-critical);
+}
+
+.hn-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: currentColor;
+    display: inline-block;
+}
+
+.hn-conn.live .hn-dot {
+    animation: hn-pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes hn-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.35; }
+}
+
+.hn-wrap {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 1.25rem 1.5rem 0;
+}
+
+/* ── Overview strip ─────────────────────────────────────────────────────── */
+
+.hn-stats {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 1px;
+    background: var(--border-dim);
+    border: var(--border-dim);
+    margin-bottom: 1.25rem;
+}
+
+.hn-stat {
+    background: var(--bg-card);
+    padding: 0.85rem 1rem;
+}
+
+.hn-stat .label {
+    font-size: 0.68rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.35rem;
+}
+
+.hn-stat .value {
+    font-size: 1.6rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.hn-stat.warn .value { color: var(--accent-secondary); }
+.hn-stat.crit .value { color: var(--accent-critical); }
+
+@media (max-width: 1100px) {
+    .hn-stats { grid-template-columns: repeat(3, 1fr); }
+}
+@media (max-width: 640px) {
+    .hn-stats { grid-template-columns: repeat(2, 1fr); }
+}
+
+/* ── Panel shell ─────────────────────────────────────────────────────────── */
+
+.hn-panel {
+    background: var(--bg-card);
+    border: var(--border-dim);
+    margin-bottom: 1.25rem;
+}
+
+.hn-panel h2 {
+    font-family: var(--font-heading);
+    font-size: 0.82rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-secondary);
+    padding: 0.65rem 1rem;
+    border-bottom: var(--border-dim);
+    margin: 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.hn-panel h2 .count {
+    color: var(--text-muted);
+    font-weight: normal;
+    font-size: 0.72rem;
+}
+
+.hn-grid-2 {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 1.25rem;
+    align-items: start;
+}
+
+@media (max-width: 1000px) {
+    .hn-grid-2 { grid-template-columns: 1fr; }
+}
+
+/* ── Live feed ───────────────────────────────────────────────────────────── */
+
+.hn-feed {
+    max-height: 420px;
+    overflow-y: auto;
+    font-size: 0.78rem;
+    line-height: 1.55;
+}
+
+.hn-feed-row {
+    display: grid;
+    grid-template-columns: 78px 74px 84px 1fr;
+    gap: 0.6rem;
+    padding: 0.3rem 1rem;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    white-space: nowrap;
+}
+
+.hn-feed-row:last-child { border-bottom: none; }
+
+.hn-feed-row.hn-new {
+    animation: hn-flash 1.2s ease-out;
+}
+
+@keyframes hn-flash {
+    0% { background: rgba(0, 198, 255, 0.16); }
+    100% { background: transparent; }
+}
+
+.hn-feed-row .ts { color: var(--text-muted); }
+.hn-feed-row .sensor { color: var(--accent-info); text-transform: uppercase; font-size: 0.7rem; }
+.hn-feed-row .detail {
+    color: var(--text-primary);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.hn-feed-row .detail .ip { color: var(--text-secondary); }
+.hn-feed-row .detail .cmd { color: var(--accent-secondary); }
+
+.hn-sev {
+    font-size: 0.65rem;
+    padding: 0.05rem 0.4rem;
+    border: 1px solid currentColor;
+    text-align: center;
+    text-transform: uppercase;
+    justify-self: start;
+}
+
+.hn-sev-INFO, .hn-sev-LOW { color: var(--text-secondary); }
+.hn-sev-MEDIUM { color: var(--accent-secondary); }
+.hn-sev-HIGH, .hn-sev-CRITICAL { color: var(--accent-critical); }
+
+.hn-empty {
+    padding: 1.5rem 1rem;
+    color: var(--text-muted);
+    font-size: 0.8rem;
+    text-align: center;
+}
+
+/* ── Sensor cards ────────────────────────────────────────────────────────── */
+
+.hn-sensors {
+    display: flex;
+    flex-direction: column;
+}
+
+.hn-sensor-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    font-size: 0.8rem;
+}
+
+.hn-sensor-row:last-child { border-bottom: none; }
+
+.hn-sensor-name {
+    text-transform: capitalize;
+    font-weight: 600;
+}
+
+.hn-sensor-meta {
+    color: var(--text-muted);
+    font-size: 0.7rem;
+}
+
+.hn-badge {
+    font-size: 0.65rem;
+    padding: 0.15rem 0.5rem;
+    border: 1px solid currentColor;
+    text-transform: uppercase;
+}
+
+.hn-badge-ACTIVE { color: var(--accent-primary); }
+.hn-badge-IDLE { color: var(--accent-secondary); }
+.hn-badge-NO_DATA { color: var(--text-muted); }
+
+/* ── Tables ──────────────────────────────────────────────────────────────── */
+
+.hn-table-wrap {
+    overflow-x: auto;
+}
+
+table.hn-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.78rem;
+}
+
+table.hn-table th {
+    text-align: left;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    font-size: 0.65rem;
+    letter-spacing: 0.04em;
+    padding: 0.5rem 0.9rem;
+    border-bottom: var(--border-dim);
+    white-space: nowrap;
+}
+
+table.hn-table td {
+    padding: 0.5rem 0.9rem;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    vertical-align: top;
+}
+
+table.hn-table tbody tr {
+    cursor: pointer;
+}
+
+table.hn-table tbody tr:hover {
+    background: var(--bg-card-hover);
+}
+
+table.hn-table tbody tr.hn-selected {
+    background: var(--bg-card-hover);
+    box-shadow: inset 2px 0 0 var(--accent-primary);
+}
+
+.hn-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+    max-width: 260px;
+}
+
+.hn-tag {
+    background: rgba(255,255,255,0.06);
+    color: var(--text-secondary);
+    font-size: 0.68rem;
+    padding: 0.1rem 0.4rem;
+}
+
+/* ── Filters ─────────────────────────────────────────────────────────────── */
+
+.hn-filters {
+    display: flex;
+    gap: 0.6rem;
+    padding: 0.6rem 1rem;
+    border-bottom: var(--border-dim);
+    flex-wrap: wrap;
+}
+
+.hn-filters select, .hn-filters input {
+    background: var(--bg-body);
+    border: var(--border-dim);
+    color: var(--text-primary);
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    padding: 0.3rem 0.5rem;
+}
+
+.hn-filters button {
+    background: transparent;
+    border: 1px solid var(--text-muted);
+    color: var(--text-secondary);
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    padding: 0.3rem 0.7rem;
+    cursor: pointer;
+}
+
+.hn-filters button:hover {
+    border-color: var(--accent-primary);
+    color: var(--accent-primary);
+}
+
+/* ── Timeline drawer ─────────────────────────────────────────────────────── */
+
+.hn-timeline {
+    padding: 0.75rem 1rem;
+    font-size: 0.78rem;
+    max-height: 340px;
+    overflow-y: auto;
+}
+
+.hn-timeline-item {
+    display: grid;
+    grid-template-columns: 90px 1fr;
+    gap: 0.75rem;
+    padding: 0.3rem 0;
+    border-left: 2px solid var(--border-dim);
+    padding-left: 0.75rem;
+    margin-left: 3px;
+}
+
+.hn-timeline-item .ts { color: var(--text-muted); }

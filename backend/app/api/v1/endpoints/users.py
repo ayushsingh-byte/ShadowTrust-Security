@@ -4,7 +4,7 @@ from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
-from app.db.sqlite_db import get_db
+from app.db.database import get_db
 from app.models.all_models import User, AccessLog
 from app.services.auth_service import get_password_hash, generate_system_code, _send_auth_email, create_access_token
 from app.api.v1.dependencies import get_current_active_user, require_role, require_clearance

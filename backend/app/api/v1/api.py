@@ -8,6 +8,8 @@ api_router.include_router(nodes_router, prefix="/nodes", tags=["nodes"])
 api_router.include_router(auth_router, prefix="/auth", tags=["auth"])
 from app.api.v1.endpoints.logs import router as logs_router
 api_router.include_router(logs_router, prefix="/logs", tags=["logs"])
+from app.api.v1.endpoints.logs_feed import router as logs_feed_router
+api_router.include_router(logs_feed_router, prefix="/logs", tags=["logs"])
 from app.api.v1.endpoints.dashboard import router as dashboard_router
 api_router.include_router(dashboard_router, prefix="/dashboard", tags=["dashboard"])
 
@@ -54,11 +56,39 @@ api_router.include_router(behavior_router, prefix="/behavior", tags=["behavior"]
 from app.api.v1.endpoints.credentials_api import router as credentials_router
 api_router.include_router(credentials_router, prefix="/credentials", tags=["credentials"])
 
-from app.api.v1.endpoints.sectors import router as sectors_router
-api_router.include_router(sectors_router, prefix="/sectors", tags=["sectors"])
 
 from app.api.v1.endpoints.attacks_api import router as attacks_router
 api_router.include_router(attacks_router, prefix="/attacks", tags=["attacks"])
 
 from app.api.v1.endpoints.honeypots_api import router as honeypots_router
 api_router.include_router(honeypots_router, prefix="/honeypots", tags=["honeypots"])
+
+from app.api.v1.endpoints.live import router as live_router
+api_router.include_router(live_router, prefix="/live", tags=["live"])
+
+from app.api.v1.endpoints.splunk import router as splunk_router
+api_router.include_router(splunk_router, prefix="/splunk", tags=["splunk"])
+
+from app.api.v1.endpoints.diagnostics import router as diagnostics_router
+api_router.include_router(diagnostics_router, prefix="/admin", tags=["admin"])
+
+from app.api.v1.endpoints.incidents import router as incidents_router
+api_router.include_router(incidents_router, prefix="/incidents", tags=["incidents"])
+
+from app.api.v1.endpoints.detections import router as detections_router
+api_router.include_router(detections_router, prefix="/detections", tags=["detections"])
+
+from app.api.v1.endpoints.evidence import router as evidence_router
+api_router.include_router(evidence_router, prefix="/evidence", tags=["evidence"])
+
+from app.api.v1.endpoints.soc_testing import router as soc_testing_router
+api_router.include_router(soc_testing_router, prefix="/soc-testing", tags=["soc-testing"])
+
+from app.api.v1.endpoints.analysis_shell import router as analysis_shell_router
+api_router.include_router(analysis_shell_router, prefix="/analysis-shell", tags=["analysis-shell"])
+
+from app.api.v1.endpoints.reports import router as reports_router
+api_router.include_router(reports_router, prefix="/reports", tags=["reports"])
+
+from app.api.v1.endpoints.compliance import router as compliance_router
+api_router.include_router(compliance_router, prefix="/compliance", tags=["compliance"])

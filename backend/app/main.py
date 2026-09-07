@@ -6,28 +6,61 @@ from app.api.v1.api import api_router
 import asyncio
 from contextlib import asynccontextmanager
 
-from app.db.sqlite_db import init_db
+import os
+
+from app.db.database import engine, init_db
 from app.services.sync_manager import SyncManager
 from app.services.session_engine import SessionEngine
 from app.services.aws_telemetry_service import telemetry_engine
+from app.services.telemetry.collector import local_collector
+from app.services import detection_engine
+from app.services import analysis_shell
+
+
+def _infra_provider() -> str:
+    """Which infrastructure mode this process is running in."""
+    return os.getenv("INFRA_PROVIDER", "local").strip().lower()
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     print("Initializing Database...")
     await init_db()
-    
+
     # Start background tasks
-    sync_task = asyncio.create_task(background_sync_loop())
-    session_engine_task = asyncio.create_task(background_session_loop())
-    telemetry_task = asyncio.create_task(telemetry_engine.run_pipeline())
-    
+    tasks = [
+        asyncio.create_task(background_sync_loop()),
+        asyncio.create_task(background_session_loop()),
+        asyncio.create_task(background_detection_loop()),
+        asyncio.create_task(background_analysis_reaper()),
+    ]
+
+    # Telemetry ingestion. Local mode runs the cursor-based collector, which
+    # tails sensor logs every couple of seconds so the dashboard updates while
+    # an attack is happening. AWS mode keeps the original 30-second S3 poller.
+    # Running both would double-ingest every event.
+    if _infra_provider() == "aws":
+        print("Telemetry: S3 pipeline (INFRA_PROVIDER=aws)")
+        tasks.append(asyncio.create_task(telemetry_engine.run_pipeline()))
+    else:
+        print("Telemetry: local collector (INFRA_PROVIDER=local)")
+        tasks.append(asyncio.create_task(local_collector.run_forever()))
+
     yield
-    
+
     # Clean up on shutdown
-    sync_task.cancel()
-    session_engine_task.cancel()
     telemetry_engine.is_running = False
-    telemetry_task.cancel()
+    local_collector.is_running = False
+    for task in tasks:
+        task.cancel()
+    # Give cancelled tasks a moment to unwind so their `finally` blocks run
+    # (the collector holds a DB session) instead of being dropped mid-flight.
+    await asyncio.gather(*tasks, return_exceptions=True)
+
+    # Close the connection pool while the event loop is still running, so
+    # aiomysql connections aren't left for the garbage collector to reap
+    # after the loop is gone ("Event loop is closed" on shutdown).
+    await engine.dispose()
 
 async def background_sync_loop():
     while True:
@@ -45,6 +78,49 @@ async def background_session_loop():
             print(f"Session Engine Error: {e}")
         await asyncio.sleep(60) # Run every 60 seconds
 
+
+async def background_analysis_reaper():
+    """Analysis Lab housekeeping — reap idle/expired sandboxes and poll each
+    running sandbox for new outbound connection attempts."""
+    from app.db.database import AsyncSessionLocal as _ASL
+    from sqlalchemy import select as _select
+    from app.models.all_models import AnalysisSession as _AS
+
+    seen: dict = {}
+    await asyncio.sleep(15)
+    while True:
+        try:
+            async with _ASL() as db:
+                await analysis_shell.reap_stale(db)
+                running = (await db.execute(
+                    _select(_AS).where(_AS.status == "running")
+                )).scalars().all()
+                for s in running:
+                    await analysis_shell.poll_connections(db, s, seen.setdefault(s.session_id, set()))
+                for sid in list(seen):
+                    if sid not in {r.session_id for r in running}:
+                        seen.pop(sid, None)
+        except Exception as e:  # noqa: BLE001
+            print(f"Analysis Reaper Error: {e}")
+        await asyncio.sleep(30)
+
+
+async def background_detection_loop():
+    """Detection + correlation engine — turns normalized events into detections
+    and incidents. Extends the existing risk/sync layer, never replaces it."""
+    try:
+        interval = max(5.0, float(os.getenv("DETECTION_ENGINE_INTERVAL_SECONDS", "20")))
+    except (TypeError, ValueError):
+        interval = 20.0
+    # let the collector get a head start on the first ingest
+    await asyncio.sleep(min(interval, 10))
+    while True:
+        try:
+            await detection_engine.run_cycle()
+        except Exception as e:  # noqa: BLE001
+            print(f"Detection Engine Error: {e}")
+        await asyncio.sleep(interval)
+
 app = FastAPI(
     title="Shadow Trust AI Honeypot",
     description="AI Powered Threat Intelligence Platform",
@@ -53,10 +129,30 @@ app = FastAPI(
     lifespan=lifespan
 )
 
-# CORS — allow all origins for development
+# CORS.
+#
+# The dashboard is served from nginx on a different port than the API, so the
+# browser treats API calls as cross-origin and the allowlist has to name the
+# dashboard's origin explicitly.
+#
+# `allow_origins=["*"]` together with `allow_credentials=True` is not a valid
+# combination — browsers reject a wildcard on a credentialed request, so the
+# previous configuration silently failed the calls it was meant to permit.
+# CORS_ORIGINS is a comma-separated list; the defaults cover the local
+# dashboard on both loopback spellings.
+_DEFAULT_ORIGINS = (
+    "http://localhost:5500,http://127.0.0.1:5500,"
+    "http://localhost:8000,http://127.0.0.1:8000"
+)
+_cors_origins = [
+    origin.strip()
+    for origin in os.getenv("CORS_ORIGINS", _DEFAULT_ORIGINS).split(",")
+    if origin.strip()
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=_cors_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -69,6 +165,12 @@ from app.api.v1.endpoints.honeypots_api import router as honeypots_router
 
 app.include_router(attacks_router, prefix="/api/attacks", tags=["attacks"])
 app.include_router(honeypots_router, prefix="/api/honeypots", tags=["honeypots"])
+
+# Local operator status page — GET /health (unauthenticated, prints credentials;
+# see app/health_page.py). Disable with HEALTH_PAGE=0.
+from app.health_page import router as health_router
+
+app.include_router(health_router, tags=["health"])
 
 @app.get("/")
 def root():

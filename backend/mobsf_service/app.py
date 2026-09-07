@@ -84,7 +84,9 @@ def container_running() -> bool:
         return False
 
 
-def wait_for_mobsf(base_url: str, timeout: int = 180) -> None:
+def wait_for_mobsf(base_url: str, timeout: int = 420) -> None:
+    # MobSF's first boot pulls a ~600 MB image, downloads signature updates and
+    # restarts gunicorn once — comfortably over 3 minutes on a cold machine.
     deadline = time.time() + timeout
     last_error = None
     while time.time() < deadline:
@@ -98,35 +100,52 @@ def wait_for_mobsf(base_url: str, timeout: int = 180) -> None:
     raise RuntimeError(f"MobSF did not become ready in time: {last_error}")
 
 
+# When this service runs inside docker-compose it is given a network shared with
+# the MobSF container it spawns; then the container is reached by name instead of
+# a host-published port (which a containerized service can't see).
+LAB_NETWORK = os.getenv("LAB_DOCKER_NETWORK", "").strip()
+
+
 def ensure_mobsf_running() -> str:
     if _STATE.get("mobsf_url"):
         return str(_STATE["mobsf_url"])
 
+    networked = bool(LAB_NETWORK)
+
     if container_exists():
         if not container_running():
             run_command(["docker", "start", MOBSF_CONTAINER_NAME])
-        port = parse_container_port()
-        if port is None:
-            raise RuntimeError("Existing MobSF container has no published port.")
-        mobsf_url = f"http://localhost:{port}"
+        if networked:
+            mobsf_url = f"http://{MOBSF_CONTAINER_NAME}:{MOBSF_INTERNAL_PORT}"
+            port = MOBSF_INTERNAL_PORT
+        else:
+            port = parse_container_port()
+            if port is None:
+                raise RuntimeError("Existing MobSF container has no published port.")
+            mobsf_url = f"http://localhost:{port}"
         wait_for_mobsf(mobsf_url)
         _STATE["mobsf_url"] = mobsf_url
         _STATE["mobsf_port"] = port
         return mobsf_url
 
-    port = find_free_port()
     run_command(["docker", "pull", MOBSF_IMAGE])
-    run_command([
-        "docker",
-        "run",
-        "-d",
-        "-p",
-        f"{port}:{MOBSF_INTERNAL_PORT}",
-        "--name",
-        MOBSF_CONTAINER_NAME,
-        MOBSF_IMAGE,
-    ])
-    mobsf_url = f"http://localhost:{port}"
+
+    run_cmd = ["docker", "run", "-d", "--name", MOBSF_CONTAINER_NAME,
+               # Pin the API key so it matches config.MOBSF_API_KEY instead of
+               # MobSF generating a random one that every request then fails on.
+               "-e", f"MOBSF_API_KEY={MOBSF_API_KEY}"]
+
+    if networked:
+        run_cmd += ["--network", LAB_NETWORK]
+        run_command(run_cmd + [MOBSF_IMAGE])
+        mobsf_url = f"http://{MOBSF_CONTAINER_NAME}:{MOBSF_INTERNAL_PORT}"
+        port = MOBSF_INTERNAL_PORT
+    else:
+        port = find_free_port()
+        run_cmd += ["-p", f"{port}:{MOBSF_INTERNAL_PORT}"]
+        run_command(run_cmd + [MOBSF_IMAGE])
+        mobsf_url = f"http://localhost:{port}"
+
     wait_for_mobsf(mobsf_url)
     _STATE["mobsf_url"] = mobsf_url
     _STATE["mobsf_port"] = port
@@ -293,6 +312,12 @@ def mobsf_post(path: str, *, files=None, data=None, timeout=180):
         timeout=timeout,
     )
     return response
+
+
+@app.get("/")
+def index():
+    """Liveness — does NOT spawn MobSF. Used by the container healthcheck."""
+    return jsonify({"service": "mobsf-proxy", "ok": True})
 
 
 @app.get("/status")

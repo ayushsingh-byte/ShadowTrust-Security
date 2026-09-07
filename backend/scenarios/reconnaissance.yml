@@ -1,0 +1,12 @@
+id: reconnaissance
+script_scenario: recon
+description: Wide TCP port sweep across all exposed honeypot ports.
+target: 127.0.0.1
+expected_telemetry:
+  - min_events: 8
+expected_detections:
+  - st-recon-006
+expected_techniques:
+  - T1595
+expected_severity: MEDIUM
+expected_incident: false

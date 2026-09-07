@@ -4,7 +4,7 @@ from typing import Optional
 from datetime import datetime
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
-from app.db.sqlite_db import get_db
+from app.db.database import get_db
 from app.services.auth_service import auth_service, get_password_hash, create_access_token
 from app.models.all_models import User, CredentialToken
 
@@ -132,4 +132,8 @@ async def activate_account(req: ActivateAccountRequest, db: AsyncSession = Depen
 
 @router.post("/dev-bypass")
 async def dev_bypass(db: AsyncSession = Depends(get_db)):
+    from app.api.v1.dependencies import dev_bypass_enabled
+
+    if not dev_bypass_enabled():
+        raise HTTPException(status_code=404, detail="Not Found")
     return await auth_service.dev_bypass_token(db)

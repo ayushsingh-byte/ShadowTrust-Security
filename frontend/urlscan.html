@@ -468,74 +468,13 @@
 
 <body>
     <div class="app-container">
-        <aside class="sidebar" id="sidebar">
-            <div class="logo-area" onclick="document.getElementById('sidebar').classList.toggle('collapsed')">
-                <div class="logo-icon"></div>
-                <div class="logo-text">
-                    <div class="logo-title">SHADOW TRUST</div>
-                    <div class="logo-sub">DECEPTION GRID // V1</div>
-                </div>
-                <i class="fas fa-arrow-left toggle-btn" style="margin-left:auto;cursor:pointer;color:#555;"></i>
-            </div>
-            <div class="nav-group">
-                <div class="nav-group-label">Mission Control</div>
-                <a href="dashboard.html" class="nav-item"><i class="fas fa-th-large"></i><span class="nav-text">Threat
-                        Overview</span></a>
-                <a href="events.html" class="nav-item"><i class="fas fa-stream"></i><span class="nav-text">Event
-                        Stream</span></a>
-            </div>
-            <div class="nav-group">
-                <div class="nav-group-label">Grid Monitoring</div>
-                <a href="nodes.html" class="nav-item"><i class="fas fa-server"></i><span class="nav-text">Honeypot
-                        Nodes</span></a>
-                <a href="sectors.html" class="nav-item"><i class="fas fa-network-wired"></i><span
-                        class="nav-text">Sector Monitors</span></a>
-                <a href="geo.html" class="nav-item"><i class="fas fa-globe-americas"></i><span class="nav-text">Geo
-                        Intelligence</span></a>
-            </div>
-            <div class="nav-group">
-                <div class="nav-group-label">Intelligence</div>
-                <a href="mitre.html" class="nav-item"><i class="fas fa-project-diagram"></i><span class="nav-text">MITRE
-                        Matrix</span></a>
-                <a href="graphs.html" class="nav-item"><i class="fas fa-chart-pie"></i><span class="nav-text">Analytics
-                        Graphs</span></a>
-                <a href="credentials.html" class="nav-item"><i class="fas fa-key"></i><span class="nav-text">Credentials
-                        Vault</span></a>
-                <a href="behavior.html" class="nav-item"><i class="fas fa-fingerprint"></i><span
-                        class="nav-text">Behaviour Profiling</span></a>
-                
-            </div>
-            <div class="nav-group">
-                <div class="nav-group-label">Tools Suite</div>
-                <a href="malware.html" class="nav-item"><i class="fas fa-bug"></i><span class="nav-text">Malware
-                        Sandbox</span></a>
-                <a href="urlscan.html" class="nav-item active"><i class="fas fa-search-location"></i><span
-                        class="nav-text">URL Scanner</span></a>
-                <a href="apk.html" class="nav-item"><i class="fas fa-mobile-alt"></i><span class="nav-text">APK
-                        Analyzer</span></a>
-                <a href="vm_lab.html" class="nav-item"><i class="fas fa-desktop"></i><span class="nav-text">Virtual
-                        Lab</span></a>
-            </div>
-            <div class="nav-group">
-                <div class="nav-group-label">System</div>
-                <a href="admin.html" class="nav-item"><i class="fas fa-user-shield"></i><span class="nav-text">Admin
-                        Panel</span></a>
-                <a href="config.html" class="nav-item"><i class="fas fa-cog"></i><span
-                        class="nav-text">Configuration</span></a>
-                <a href="profile.html" class="nav-item"><i class="fas fa-id-card"></i><span
-                        class="nav-text">Profile</span></a>
-            </div>
-            <div class="build-info">
-                <div>DEPLOYMENT: <span class="text-cyan">PROD-01</span></div>
-                <div>STATUS: <span class="text-green">ONLINE</span></div>
-            </div>
-        </aside>
+        <aside class="sidebar" id="sidebar"></aside>
 
         <main class="main-content">
             <div class="top-bar">
                 <div class="page-header">
                     <h2>URL INTELLIGENCE</h2>
-                    <p>MULTI-ENGINE THREAT SCANNER // <span class="text-cyan">DNS · SSL · VT · PREVIEW</span></p>
+                    <p>MULTI-ENGINE THREAT SCANNER // <span class="text-cyan">DNS · SSL · WHOIS · PREVIEW</span></p>
                 </div>
                 <div class="filters-bar">
                     <div style="text-align:right;">
@@ -564,7 +503,7 @@
                     <span class="engine-tag" id="eng-dns"><i class="fas fa-server"></i> DNS RESOLVE</span>
                     <span class="engine-tag" id="eng-ssl"><i class="fas fa-lock"></i> SSL/TLS</span>
                     <span class="engine-tag" id="eng-http"><i class="fas fa-globe"></i> HTTP PROBE</span>
-                    <span class="engine-tag" id="eng-vt"><i class="fas fa-shield-alt"></i> VIRUSTOTAL SIM</span>
+                    <span class="engine-tag" id="eng-whois"><i class="fas fa-id-card"></i> WHOIS</span>
                     <span class="engine-tag" id="eng-preview"><i class="fas fa-eye"></i> LIVE PREVIEW</span>
                 </div>
                 <div id="inlineError"
@@ -687,31 +626,15 @@
                             sandbox="allow-same-origin allow-scripts allow-forms" referrerpolicy="no-referrer"></iframe>
                     </div>
 
-                    <!-- VirusTotal Engine Results -->
+                    <!-- Domain registration (WHOIS) -->
                     <div class="soc-card" style="padding:0;">
                         <div class="soc-card-header" style="padding:10px 14px;">
-                            <span class="card-title"><i class="fas fa-shield-virus"
-                                    style="color:#bc13fe;margin-right:5px;"></i>MULTI-ENGINE DETECTION</span>
-                            <span id="vtCountBadge" class="badge badge-green">0/15 DETECTED</span>
+                            <span class="card-title"><i class="fas fa-id-card"
+                                    style="color:#bc13fe;margin-right:5px;"></i>DOMAIN REGISTRATION (WHOIS)</span>
+                            <span id="whoisBadge" class="badge badge-green">—</span>
                         </div>
-                        <div style="padding:12px;">
-                            <!-- Detection bar -->
-                            <div style="margin-bottom:12px;">
-                                <div
-                                    style="display:flex;justify-content:space-between;font-size:.6rem;color:#444;font-family:var(--font-mono);margin-bottom:4px;">
-                                    <span>DETECTION RATE</span><span id="vtPctLbl">0%</span>
-                                </div>
-                                <div style="height:5px;background:#0a0a0a;">
-                                    <div id="vtBar"
-                                        style="height:100%;width:0%;transition:width .7s;background:#00ff41;"></div>
-                                </div>
-                            </div>
-                            <!-- Engine list (scrollable) -->
-                            <div id="vtEngines"
-                                style="max-height:180px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:#222 #000;">
-                                <div style="color:#222;font-family:var(--font-mono);font-size:.7rem;">Run a scan to see
-                                    engine results</div>
-                            </div>
+                        <div style="padding:14px;font-size:.75rem;font-family:var(--font-mono);color:#c9d1d9;">
+                            <div id="whoisBody" style="color:#444;">Run a scan to see WHOIS registration data.</div>
                         </div>
                     </div>
                 </div>
@@ -742,9 +665,6 @@
                                     COUNTRY</th>
                                 <th
                                     style="padding:9px 12px;font-size:.62rem;color:#444;text-align:left;font-family:var(--font-mono);border-bottom:1px solid #111;">
-                                    ENGINE HITS</th>
-                                <th
-                                    style="padding:9px 12px;font-size:.62rem;color:#444;text-align:left;font-family:var(--font-mono);border-bottom:1px solid #111;">
                                     SCORE</th>
                                 <th
                                     style="padding:9px 12px;font-size:.62rem;color:#444;text-align:left;font-family:var(--font-mono);border-bottom:1px solid #111;">
@@ -753,7 +673,7 @@
                         </thead>
                         <tbody id="historyBody">
                             <tr>
-                                <td colspan="7"
+                                <td colspan="6"
                                     style="padding:16px 12px;color:#222;font-family:var(--font-mono);font-size:.7rem;">
                                     No scans yet</td>
                             </tr>
@@ -770,7 +690,7 @@
         const $ = id => document.getElementById(id);
         let scansToday = 0, totalMalicious = 0, lastResult = null;
 
-        const engines = ['eng-heuristic', 'eng-dns', 'eng-ssl', 'eng-http', 'eng-vt', 'eng-preview'];
+        const engines = ['eng-heuristic', 'eng-dns', 'eng-ssl', 'eng-http', 'eng-whois', 'eng-preview'];
         function engOn(id) { $(id).classList.add('active'); }
         function engOff(id) { $(id).classList.remove('active'); }
         function esc(s) { return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
@@ -827,7 +747,7 @@
             const [cls, col, icon, prefix] = bColors[r.risk_level] || bColors['SAFE'];
             banner.className = `threat-banner ${cls}`;
             $('bannerIcon').className = `fas ${icon}`;
-            $('bannerText').textContent = prefix + r.domain + ` · Score ${r.risk_score}/100 · ${(r.virustotal?.detections || 0)} engine detections`;
+            $('bannerText').textContent = prefix + r.domain + ` · Score ${r.risk_score}/100 · ${r.threat_category || '—'}`;
             banner.style.display = 'flex';
 
             // Score ring
@@ -855,7 +775,7 @@
             setII('ii-ip', r.ip_address);
             setII('ii-country', r.country);
             setII('ii-isp', r.isp);
-            setII('ii-age', r.domain_age, r.domain_age_days < 30 ? '#ff0055' : r.domain_age_days < 180 ? '#ff9900' : '#00ff41');
+            setII('ii-age', r.domain_age, (r.domain_age_days != null && r.domain_age_days < 30) ? '#ff0055' : (r.domain_age_days != null && r.domain_age_days < 180) ? '#ff9900' : '#00ff41');
             setII('ii-server', r.http?.server || 'Unknown');
             setII('ii-status', r.http?.status_code ? String(r.http.status_code) : (r.http?.error || '—'));
             const entEl = $('ii-entropy');
@@ -877,26 +797,24 @@
         </div>`;
                 }).join('');
 
-            // VirusTotal
-            const vt = r.virustotal || {};
-            const total = vt.engines_total || 15;
-            const dets = vt.detections || 0;
-            const pct = Math.round(dets / total * 100);
-            const barColor = pct > 50 ? '#ff0055' : pct > 20 ? '#ff9900' : '#00ff41';
-            $('vtCountBadge').textContent = `${dets}/${total} DETECTED`;
-            $('vtCountBadge').className = dets > 0 ? 'badge badge-red' : 'badge badge-green';
-            $('vtBar').style.width = pct + '%';
-            $('vtBar').style.background = barColor;
-            $('vtPctLbl').textContent = pct + '%';
-            $('vtPctLbl').style.color = barColor;
-
-            const allEngines = [...(vt.detected_by || []).map(e => ({ n: e, d: true })), ...(vt.clean_engines || []).map(e => ({ n: e, d: false }))];
-            $('vtEngines').innerHTML = allEngines.map(({ n, d }) => `
-    <div class="vt-engine">
-      <i class="fas ${d ? 'fa-times-circle' : 'fa-check-circle'}" style="color:${d ? '#ff0055' : '#00ff41'};flex-shrink:0;font-size:.7rem;"></i>
-      <span class="e-name">${esc(n)}</span>
-      <span class="${d ? 'e-detect' : 'e-clean'}">${d ? 'MALICIOUS' : 'Clean'}</span>
-    </div>`).join('');
+            // WHOIS
+            const w = r.whois || {};
+            if (w.available) {
+                $('whoisBadge').textContent = (w.age_days != null ? w.age_days + ' days old' : 'registered');
+                $('whoisBadge').className = 'badge ' + (w.age_days != null && w.age_days < 30 ? 'badge-red' : 'badge-green');
+                $('whoisBody').style.color = '#c9d1d9';
+                $('whoisBody').innerHTML = [
+                    ['Registrar', w.registrar || '—'],
+                    ['Created', (w.created || '—').slice(0, 10)],
+                    ['Expires', (w.expires || '—').slice(0, 10)],
+                    ['Age', w.age_days != null ? w.age_days + ' days' : '—'],
+                ].map(([k, v]) => `<div style="display:grid;grid-template-columns:90px 1fr;gap:4px;"><span style="color:#666;">${k}</span><span>${esc(v)}</span></div>`).join('');
+            } else {
+                $('whoisBadge').textContent = 'unavailable';
+                $('whoisBadge').className = 'badge badge-purple';
+                $('whoisBody').style.color = '#666';
+                $('whoisBody').textContent = 'WHOIS lookup unavailable: ' + (w.reason || 'no data');
+            }
 
             // Live preview
             loadPreview(r.url);
@@ -933,7 +851,6 @@
             const hb = $('historyBody');
             if (hb.children.length === 1 && hb.children[0].children[0]?.colSpan) hb.innerHTML = '';
             const rc = r.risk_level === 'MALICIOUS' ? 'badge-red' : r.risk_level === 'SUSPICIOUS' ? 'badge-purple' : 'badge-green';
-            const dets = r.virustotal?.detections || 0;
             const row = document.createElement('tr');
             row.className = 'url-tr';
             row.innerHTML = `
@@ -941,7 +858,6 @@
     <td style="max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#888;" title="${esc(r.url)}">${esc(r.url)}</td>
     <td>${esc(r.ip_address || '—')}</td>
     <td>${esc(r.country || '—')}</td>
-    <td style="color:${dets > 0 ? '#ff0055' : '#00ff41'};">${dets}/${r.virustotal?.engines_total || 15}</td>
     <td>
       <div class="score-bar-inline">
         <div class="sb-track"><div class="sb-fill" style="width:${r.risk_score}%;background:${r.risk_score > 65 ? '#ff0055' : r.risk_score > 30 ? '#bc13fe' : '#00ff41'};"></div></div>

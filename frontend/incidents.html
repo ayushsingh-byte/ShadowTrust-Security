@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Investigations | Shadow Trust</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/dashboard.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .inc-wrap { display: grid; grid-template-columns: 380px 1fr; gap: 16px; height: calc(100vh - 150px); }
+        @media (max-width: 1100px) { .inc-wrap { grid-template-columns: 1fr; height: auto; } }
+        .inc-list { border: 1px solid #1c2128; border-radius: 8px; overflow-y: auto; background: #0a0a0f; }
+        .inc-row { padding: 11px 13px; border-bottom: 1px solid #14181e; cursor: pointer; }
+        .inc-row:hover { background: #11161d; }
+        .inc-row.sel { background: #13202b; border-left: 3px solid #58a6ff; }
+        .inc-row .k { font-family: var(--font-mono, monospace); font-size: .68rem; color: #7d8590; }
+        .inc-row .t { font-size: .86rem; color: #e6edf3; margin: 3px 0; }
+        .inc-row .m { font-size: .68rem; color: #7d8590; display: flex; gap: 8px; flex-wrap: wrap; }
+        .inc-detail { border: 1px solid #1c2128; border-radius: 8px; overflow-y: auto; background: #0a0a0f; padding: 18px; }
+        .sev { display: inline-block; padding: 1px 7px; border-radius: 5px; font-size: .66rem; font-weight: 700; letter-spacing: .3px; }
+        .sev-CRITICAL { background: rgba(248,81,73,.18); color: #f85149; }
+        .sev-HIGH { background: rgba(219,109,40,.18); color: #db6d28; }
+        .sev-MEDIUM { background: rgba(210,153,34,.16); color: #d29922; }
+        .sev-LOW { background: rgba(139,148,158,.16); color: #8b949e; }
+        .st { display: inline-block; padding: 1px 7px; border-radius: 5px; font-size: .66rem; border: 1px solid #30363d; color: #adbac7; text-transform: uppercase; }
+        .chip { display: inline-block; padding: 1px 7px; border-radius: 5px; font-size: .68rem; background: rgba(88,166,255,.13); color: #58a6ff; margin: 2px 3px 2px 0; }
+        .chip.ioc { background: rgba(188,140,255,.15); color: #bc8cff; font-family: var(--font-mono, monospace); }
+        .inc-sec { margin-top: 18px; }
+        .inc-sec h4 { font-size: .7rem; letter-spacing: 1px; text-transform: uppercase; color: #7d8590; margin: 0 0 8px; border-bottom: 1px solid #1c2128; padding-bottom: 5px; }
+        .why { background: #10151b; border-left: 3px solid #d29922; padding: 10px 12px; border-radius: 0 6px 6px 0; font-size: .8rem; color: #c9d1d9; }
+        .why ul { margin: 6px 0 0; padding-left: 18px; }
+        .tl { border-left: 2px solid #30363d; margin-left: 6px; padding-left: 14px; }
+        .tl-item { position: relative; padding: 7px 0; font-size: .78rem; }
+        .tl-item::before { content: ''; position: absolute; left: -20px; top: 12px; width: 8px; height: 8px; border-radius: 50%; background: #58a6ff; }
+        .tl-item .tl-h { color: #e6edf3; }
+        .tl-item .tl-r { color: #7d8590; font-size: .7rem; }
+        .tl-item .tl-t { color: #7d8590; font-family: var(--font-mono, monospace); font-size: .68rem; }
+        table.det { width: 100%; border-collapse: collapse; font-size: .74rem; }
+        table.det td { padding: 5px 8px; border-top: 1px solid #14181e; vertical-align: top; color: #c9d1d9; }
+        .mono { font-family: var(--font-mono, monospace); }
+        .btn-row { display: flex; gap: 6px; flex-wrap: wrap; margin: 10px 0; }
+        .sbtn { background: #161b22; border: 1px solid #30363d; color: #adbac7; font-size: .72rem; padding: 5px 10px; border-radius: 6px; cursor: pointer; }
+        .sbtn:hover { border-color: #58a6ff; color: #58a6ff; }
+        .sbtn.on { border-color: #58a6ff; color: #58a6ff; background: #13202b; }
+        #inc-note { width: 100%; background: #060606; border: 1px solid #2a2a2a; color: #ccc; font: inherit; font-size: .8rem; padding: 7px; border-radius: 5px; }
+        .kpi { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
+        .kpi div { background: #0a0a0f; border: 1px solid #222; border-radius: 8px; padding: 8px 14px; }
+        .kpi .v { font-size: 1.2rem; font-weight: 700; font-family: var(--font-mono, monospace); }
+        .kpi .l { font-size: .58rem; letter-spacing: 1px; color: #888; text-transform: uppercase; }
+        .rb { font-family: var(--font-mono, monospace); font-size: .72rem; color: #8b949e; }
+    </style>
+</head>
+
+<body>
+    <div class="app-container">
+        <aside class="sidebar" id="sidebar"></aside>
+        <main class="main-content">
+            <div class="top-bar">
+                <div class="page-header">
+                    <h2>INVESTIGATIONS</h2>
+                    <p>INCIDENT WORKSPACE // correlated detections, evidence &amp; attack reconstruction</p>
+                </div>
+                <div class="filters-bar">
+                    <label class="rb"><input type="checkbox" id="inc-auto" checked> auto-refresh</label>
+                    <button class="soc-btn soc-btn-primary" id="inc-refresh"><i class="fas fa-rotate"></i> REFRESH</button>
+                </div>
+            </div>
+
+            <div class="kpi" id="inc-kpi"></div>
+
+            <div class="btn-row" id="inc-filters">
+                <button class="sbtn on" data-status="">all open</button>
+                <button class="sbtn" data-status="NEW">new</button>
+                <button class="sbtn" data-status="INVESTIGATING">investigating</button>
+                <button class="sbtn" data-status="CONTAINED">contained</button>
+                <button class="sbtn" data-status="RESOLVED">resolved</button>
+                <button class="sbtn" data-status="FALSE_POSITIVE">false positive</button>
+            </div>
+
+            <div class="inc-wrap">
+                <div class="inc-list" id="inc-list"><div style="padding:16px;color:#7d8590;">loading…</div></div>
+                <div class="inc-detail" id="inc-detail"><div style="color:#7d8590;">Select an incident.</div></div>
+            </div>
+        </main>
+    </div>
+
+    <script src="js/report-download.js"></script>
+    <script src="js/sidebar.js"></script>
+    <script type="module">
+        import { apiService } from './js/api.js';
+        const $ = s => document.querySelector(s);
+        const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+        const STATUSES = ['NEW', 'TRIAGING', 'INVESTIGATING', 'CONTAINED', 'RESOLVED', 'FALSE_POSITIVE'];
+        let statusFilter = '';
+        let selected = null;
+        let incidents = [];
+
+        function sevClass(s) { return 'sev sev-' + (s || 'LOW'); }
+        function fmt(t) { return t ? t.replace('T', ' ').slice(0, 19) : '—'; }
+
+        async function loadList() {
+            const q = statusFilter ? `?status=${statusFilter}` : '';
+            const [res, stats] = await Promise.all([
+                apiService.get('/incidents' + q),
+                apiService.get('/incidents/stats').catch(() => null),
+            ]);
+            incidents = res.incidents || [];
+            if (stats) {
+                $('#inc-kpi').innerHTML = `
+                    <div><div class="v">${stats.open}</div><div class="l">open</div></div>
+                    <div><div class="v" style="color:#f85149">${stats.by_severity?.CRITICAL || 0}</div><div class="l">critical</div></div>
+                    <div><div class="v" style="color:#db6d28">${stats.by_severity?.HIGH || 0}</div><div class="l">high</div></div>
+                    <div><div class="v">${stats.total}</div><div class="l">total</div></div>`;
+            }
+            $('#inc-list').innerHTML = incidents.length ? incidents.map(i => `
+                <div class="inc-row ${selected === i.id ? 'sel' : ''}" data-id="${i.id}">
+                    <div class="k">${esc(i.incident_key)} · ${fmt(i.last_seen)}</div>
+                    <div class="t">${esc(i.title)}</div>
+                    <div class="m">
+                        <span class="${sevClass(i.severity)}">${esc(i.severity)}</span>
+                        <span class="st">${esc(i.status)}</span>
+                        <span>conf ${(i.confidence ?? 0).toFixed(2)}</span>
+                        <span>risk ${(i.risk_score ?? 0).toFixed(0)}</span>
+                        ${(i.source_ips || []).slice(0, 1).map(ip => `<span class="mono">${esc(ip)}</span>`).join('')}
+                    </div>
+                </div>`).join('') : '<div style="padding:16px;color:#7d8590;">no incidents</div>';
+            $('#inc-list').querySelectorAll('.inc-row').forEach(r =>
+                r.onclick = () => { selected = r.dataset.id; loadList(); loadDetail(r.dataset.id); });
+        }
+
+        async function loadDetail(id) {
+            const d = await apiService.get('/incidents/' + id).catch(e => ({ error: e.message }));
+            if (d.error) { $('#inc-detail').innerHTML = `<div style="color:#f85149">${esc(d.error)}</div>`; return; }
+            let tl = { timeline: [] };
+            try { tl = await apiService.get(`/incidents/${id}/timeline?splunk=false`); } catch (e) {}
+
+            $('#inc-detail').innerHTML = `
+                <div style="display:flex;justify-content:space-between;align-items:start;gap:12px;flex-wrap:wrap;">
+                    <div>
+                        <div class="k mono" style="color:#7d8590;font-size:.7rem;">${esc(d.incident_key)}${d.auto_created ? ' · auto-correlated' : ' · manual'}</div>
+                        <h3 style="margin:4px 0;color:#e6edf3;">${esc(d.title)}</h3>
+                        <span class="${sevClass(d.severity)}">${esc(d.severity)}</span>
+                        <span class="st">${esc(d.status)}</span>
+                        <span class="rb">confidence ${(d.confidence ?? 0).toFixed(2)} · risk ${(d.risk_score ?? 0).toFixed(0)}/100</span>
+                    </div>
+                    <button class="soc-btn" id="inc-export" data-key="${esc(d.incident_key)}"><i class="fas fa-file-pdf"></i> EXPORT PDF</button>
+                </div>
+
+                <div class="btn-row">
+                    ${STATUSES.map(s => `<button class="sbtn ${d.status === s ? 'on' : ''}" data-set="${s}">${s.replace('_', ' ').toLowerCase()}</button>`).join('')}
+                </div>
+
+                <div class="inc-sec">
+                    <h4>Why this incident &amp; this severity</h4>
+                    <div class="why">
+                        ${(d.detection_reasons || []).length ? `<ul>${(d.detection_reasons || []).map(r => `<li>${esc(r)}</li>`).join('')}</ul>` : 'manually created'}
+                        ${d.risk_breakdown ? `<div class="rb" style="margin-top:8px">${Object.entries(d.risk_breakdown).map(([k, v]) => `${esc(k)}=${esc(v)}`).join(' · ')}</div>` : ''}
+                    </div>
+                </div>
+
+                <div class="inc-sec">
+                    <h4>Attribution</h4>
+                    <div>source IPs: ${(d.source_ips || []).map(x => `<span class="chip">${esc(x)}</span>`).join('') || '—'}</div>
+                    <div>users: ${(d.related_users || []).map(x => `<span class="chip">${esc(x)}</span>`).join('') || '—'}</div>
+                    <div>sensors: ${(d.related_sensors || []).map(x => `<span class="chip">${esc(x)}</span>`).join('') || '—'}</div>
+                    <div style="margin-top:6px">IOCs: ${(d.iocs || []).map(i => `<span class="chip ioc">${esc(i.type)}:${esc(i.value)}</span>`).join('') || '—'}</div>
+                </div>
+
+                <div class="inc-sec">
+                    <h4>ATT&amp;CK techniques (observed)</h4>
+                    ${(d.attack_techniques || []).map(t => `<a class="chip" href="mitre.html" title="${esc(t.tactic || '')}">${esc(t.id)} ${esc(t.name || '')}</a>`).join('') || '<span class="rb">none</span>'}
+                </div>
+
+                <div class="inc-sec">
+                    <h4>Detections (${(d.detections || []).length})</h4>
+                    <table class="det">${(d.detections || []).map(x => `
+                        <tr><td class="mono">${esc(x.rule_id)}</td>
+                        <td>${esc(x.rule_name)}<div class="rb">${esc(x.reason || '')}</div>
+                        <div class="rb">match: ${esc(JSON.stringify(x.match_conditions))} · ${(x.matched_event_ids || []).length} events</div></td>
+                        <td><span class="${sevClass(x.severity)}">${esc(x.severity)}</span></td>
+                        <td class="mono">${esc(x.attack_technique || '')}</td></tr>`).join('') || '<tr><td class="rb">no detections — high-risk-event incident</td></tr>'}
+                    </table>
+                </div>
+
+                <div class="inc-sec">
+                    <h4>Attack reconstruction — timeline (${tl.timeline.length})</h4>
+                    <div class="tl">${tl.timeline.map(e => `
+                        <div class="tl-item">
+                            <div class="tl-t">${fmt(e.timestamp)} · ${esc(e.source)}${e.attack_technique ? ' · ' + esc(e.attack_technique) : ''}</div>
+                            <div class="tl-h">${esc(e.event_type)} <span class="${sevClass(e.severity)}">${esc(e.severity || '')}</span>
+                                ${e.source_ip ? '<span class="mono rb">' + esc(e.source_ip) + '</span>' : ''}
+                                ${e.username ? '<span class="rb">user=' + esc(e.username) + '</span>' : ''}</div>
+                            <div class="tl-r">${esc(e.reason)}${e.ref ? ' · ref ' + esc(e.ref) : ''}</div>
+                        </div>`).join('') || '<div class="rb">no timeline entries yet</div>'}
+                    </div>
+                </div>
+
+                <div class="inc-sec">
+                    <h4>Evidence (${(d.evidence || []).length})</h4>
+                    <table class="det">${(d.evidence || []).map(e => `
+                        <tr><td class="mono">${esc(e.type)}</td><td class="rb">${esc(e.ref || '')}</td>
+                        <td class="rb">${e.sha256 ? esc(e.sha256.slice(0, 16)) + '…' : ''}</td>
+                        <td>${e.immutable ? '<span class="chip">immutable</span>' : ''}</td></tr>`).join('') || '<tr><td class="rb">no evidence attached</td></tr>'}
+                    </table>
+                </div>
+
+                <div class="inc-sec">
+                    <h4>Analyst notes</h4>
+                    <pre class="rb" style="white-space:pre-wrap;color:#c9d1d9;">${esc(d.analyst_notes || '')}</pre>
+                    <div style="display:flex;gap:6px;margin-top:6px;">
+                        <input id="inc-note" placeholder="add a note…">
+                        <button class="sbtn" id="inc-note-add">add</button>
+                    </div>
+                </div>
+
+                <div class="inc-sec">
+                    <h4>Activity log</h4>
+                    ${(d.activity || []).map(a => `<div class="rb">${fmt(a.at)} · ${esc(a.actor)} · <b>${esc(a.action)}</b> · ${esc(a.detail || '')}</div>`).join('') || '<div class="rb">—</div>'}
+                </div>`;
+
+            const expBtn = document.getElementById('inc-export');
+            if (expBtn) expBtn.onclick = function () {
+                STReports.generateAndDownload('incident', { incident_id: this.dataset.key }, { button: this, title: 'incident' });
+            };
+            $('#inc-detail').querySelectorAll('[data-set]').forEach(b => b.onclick = async () => {
+                try {
+                    await apiService._request('/incidents/' + id, 'PATCH', { status: b.dataset.set });
+                    loadDetail(id); loadList();
+                } catch (e) { alert('status change failed: ' + e.message + ' (analyst role required)'); }
+            });
+            const na = $('#inc-note-add');
+            if (na) na.onclick = async () => {
+                const t = $('#inc-note').value.trim(); if (!t) return;
+                try { await apiService.post(`/incidents/${id}/notes`, { text: t }); loadDetail(id); }
+                catch (e) { alert('note failed: ' + e.message); }
+            };
+        }
+
+        $('#inc-filters').querySelectorAll('.sbtn').forEach(b => b.onclick = () => {
+            $('#inc-filters').querySelectorAll('.sbtn').forEach(x => x.classList.remove('on'));
+            b.classList.add('on');
+            statusFilter = b.dataset.status;
+            loadList();
+        });
+        $('#inc-refresh').onclick = () => { loadList(); if (selected) loadDetail(selected); };
+        loadList();
+        setInterval(() => { if ($('#inc-auto').checked) { loadList(); if (selected) loadDetail(selected); } }, 12000);
+    </script>
+</body>
+
+</html>

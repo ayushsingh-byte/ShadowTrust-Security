@@ -4,7 +4,7 @@ from sqlalchemy import func, desc
 from sqlalchemy.future import select
 from typing import Dict, Any, List
 
-from app.db.sqlite_db import get_db
+from app.db.database import get_db
 from app.models.all_models import RawEventModel
 
 router = APIRouter()

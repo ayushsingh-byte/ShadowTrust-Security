@@ -24,6 +24,10 @@
             background: #050507 !important;
         }
 
+        .leaflet-tile-pane {
+            filter: invert(1) hue-rotate(180deg) brightness(0.85) contrast(1.05) saturate(0.7);
+        }
+
         /* Blinking Marker Animation */
         .blinking-marker {
             animation: pulse-ring 2s infinite;
@@ -162,75 +166,7 @@
         <!-- VOID NEON SIDEBAR -->
         <!-- VOID NEON SIDEBAR (FROM GEO INTEL) -->
         <!-- VOID NEON SIDEBAR (FROM GEO INTEL) -->
-        <aside class="sidebar" id="sidebar">
-            <div class="logo-area" onclick="document.getElementById('sidebar').classList.toggle('collapsed')">
-                <div class="logo-icon"></div>
-                <div class="logo-text">
-                    <div class="logo-title">SHADOW TRUST</div>
-                    <div class="logo-sub">DECEPTION GRID // V1</div>
-                </div>
-                <i class="fas fa-arrow-left toggle-btn"
-                    style="margin-left: auto; cursor: pointer; color: #555; transition:0.3s;"></i>
-            </div>
-
-            <div class="nav-group">
-                <div class="nav-group-label">Mission Control</div>
-                <a href="dashboard.html" class="nav-item"><i class="fas fa-th-large"></i> <span class="nav-text">Threat
-                        Overview</span></a>
-                <a href="events.html" class="nav-item"><i class="fas fa-stream"></i> <span class="nav-text">Event
-                        Stream</span></a>
-            </div>
-
-            <div class="nav-group">
-                <div class="nav-group-label">Grid Monitoring</div>
-                <a href="nodes.html" class="nav-item"><i class="fas fa-server"></i> <span class="nav-text">Honeypot
-                        Nodes</span></a>
-                <a href="sectors.html" class="nav-item"><i class="fas fa-network-wired"></i> <span
-                        class="nav-text">Sector Monitors</span></a>
-                <a href="geo.html" class="nav-item active"><i class="fas fa-globe-americas"></i> <span
-                        class="nav-text">Geo Intelligence</span></a>
-            </div>
-
-            <div class="nav-group">
-                <div class="nav-group-label">Intelligence</div>
-                <a href="mitre.html" class="nav-item"><i class="fas fa-project-diagram"></i> <span
-                        class="nav-text">MITRE Matrix</span></a>
-                <a href="graphs.html" class="nav-item"><i class="fas fa-chart-pie"></i> <span class="nav-text">Analytics
-                        Graphs</span></a>
-                <a href="credentials.html" class="nav-item"><i class="fas fa-key"></i> <span
-                        class="nav-text">Credentials Vault</span></a>
-                <a href="behavior.html" class="nav-item"><i class="fas fa-fingerprint"></i> <span
-                        class="nav-text">Behaviour Profiling</span></a>
-                
-            </div>
-
-            <div class="nav-group">
-                <div class="nav-group-label">Tools Suite</div>
-                <a href="malware.html" class="nav-item"><i class="fas fa-bug"></i> <span class="nav-text">Malware
-                        Sandbox</span></a>
-                <a href="urlscan.html" class="nav-item"><i class="fas fa-search-location"></i> <span
-                        class="nav-text">URL Scanner</span></a>
-                <a href="apk.html" class="nav-item"><i class="fas fa-mobile-alt"></i> <span class="nav-text">APK
-                        Analyzer</span></a>
-                <a href="vm_lab.html" class="nav-item"><i class="fas fa-desktop"></i> <span class="nav-text">Virtual
-                        Lab</span></a>
-            </div>
-
-            <div class="nav-group">
-                <div class="nav-group-label">System</div>
-                <a href="admin.html" class="nav-item"><i class="fas fa-user-shield"></i> <span class="nav-text">Admin
-                        Panel</span></a>
-                <a href="config.html" class="nav-item"><i class="fas fa-cog"></i> <span
-                        class="nav-text">Configuration</span></a>
-                <a href="profile.html" class="nav-item"><i class="fas fa-id-card"></i> <span
-                        class="nav-text">Profile</span></a>
-            </div>
-
-            <div class="build-info">
-                <div>DEPLOYMENT: <span class="text-cyan">PROD-01</span></div>
-                <div>STATUS: <span class="text-green">ONLINE</span></div>
-            </div>
-        </aside>
+        <aside class="sidebar" id="sidebar"></aside>
 
 
         <main class="main-content">
@@ -342,9 +278,10 @@
             zoom: 2.5
         });
 
-        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+        // Keyless OSM tiles, darkened via CSS (CARTO dark basemap needs a key now).
+        L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
             maxZoom: 19,
-            subdomains: 'abcd'
+            crossOrigin: true
         }).addTo(map);
 
         // Live geo events are loaded from the backend
@@ -364,16 +301,6 @@
 
         let modalConfirmCallback = null;
         window.lastGeoStatsSnapshot = null;
-
-        function generateDataStream() {
-            let str = '';
-            const chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ_/';
-            for (let i = 0; i < 2000; i++) {
-                str += chars.charAt(Math.floor(Math.random() * chars.length));
-                if (i % 64 === 0) str += '<br>';
-            }
-            return str;
-        }
 
         function showModal(title, message, isDanger, callback, isAlert = false) {
             modalTitle.innerHTML = title;
@@ -413,144 +340,14 @@
             return Number.isFinite(num) ? num.toLocaleString() : '0';
         }
 
-        function buildGeoSocReportText(stats) {
-            const now = new Date();
-            const topCountries = Array.isArray(stats?.top_countries) ? stats.top_countries : [];
-            const asnIntelligence = Array.isArray(stats?.asn_intelligence) ? stats.asn_intelligence : [];
-            const topIsp = stats?.top_isp || {};
-            const markers = Array.isArray(stats?.markers) ? stats.markers : [];
-
-            const countryLines = topCountries.length
-                ? topCountries.slice(0, 10).map((c, idx) => {
-                    return `${idx + 1}. ${c.country || 'Unknown'} (${c.code || '--'}) | Events: ${formatNumber(c.events)} | Traffic: ${c.traffic || '0 MB'}`;
-                }).join('\n')
-                : 'No country attribution records available.';
-
-            const asnLines = asnIntelligence.length
-                ? asnIntelligence.slice(0, 10).map((a, idx) => {
-                    return `${idx + 1}. ${a.isp_name || 'Unknown ISP'} | ASN: ${a.asn || '--'} | IPs: ${a.ips || '--'} | Events: ${formatNumber(a.count)}`;
-                }).join('\n')
-                : 'No ASN intelligence records available.';
-
-            return [
-                'SHADOW TRUST - SOC GEO INTELLIGENCE REPORT',
-                '==========================================',
-                `Generated At: ${now.toISOString()}`,
-                `Selected Range: Last 24 hours`,
-                '',
-                'EXECUTIVE SUMMARY',
-                '-----------------',
-                `Active Sources: ${formatNumber(stats?.active_sources)}`,
-                `Targeted Zones: ${formatNumber(stats?.targeted_zones)}`,
-                `Last Detected: ${stats?.last_detected || 'N/A'}`,
-                `Geolocation Markers: ${formatNumber(markers.length)}`,
-                `Top Offending ISP: ${topIsp.isp_name || 'N/A'} (${formatNumber(topIsp.count)} events)`,
-                '',
-                'TOP SOURCE COUNTRIES',
-                '--------------------',
-                countryLines,
-                '',
-                'ASN INTELLIGENCE',
-                '----------------',
-                asnLines,
-                '',
-                'ANALYST NOTES',
-                '-------------',
-                '- Prioritize traffic controls and throttling for top offending ASN and country clusters.',
-                '- Cross-correlate listed sources with event telemetry and honeypot service fingerprints.',
-                '- Re-run this report after mitigation policy updates for drift validation.'
-            ].join('\n');
-        }
-
-        function downloadSocReport(content) {
-            const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
-            const url = URL.createObjectURL(blob);
-            const stamp = new Date().toISOString().replace(/[:.]/g, '-');
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = `shadowtrust-geo-soc-report-${stamp}.txt`;
-            document.body.appendChild(link);
-            link.click();
-            link.remove();
-            URL.revokeObjectURL(url);
-        }
-
         btnCancel.addEventListener('click', hideModal);
         btnConfirm.addEventListener('click', () => {
             if (modalConfirmCallback) modalConfirmCallback();
             else hideModal();
         });
 
-        document.getElementById('btn-generate-report').addEventListener('click', () => {
-            showModal(
-                '<i class="fas fa-file-contract"></i> GENERATE SOC REPORT',
-                'Compile automated geographic intelligence report for the selected timeframe?',
-                false,
-                async () => {
-                    modalButtons.style.display = 'none';
-                    progressContainer.style.display = 'block';
-                    radarScan.style.display = 'block';
-                    dataStream.style.display = 'block';
-                    dataStream.innerHTML = generateDataStream();
-
-                    const messages = [
-                        "Aggregating ASN intelligence...",
-                        "Correlating geographic vectors...",
-                        "Compiling threat density maps...",
-                        "Finalizing PDF report bundle..."
-                    ];
-
-                    let msgIndex = 0;
-                    modalMessage.innerHTML = `<span class="text-cyan animate-pulse">${messages[0]}</span>`;
-
-                    const interval = setInterval(() => {
-                        msgIndex++;
-                        if (msgIndex < messages.length) {
-                            modalMessage.innerHTML = `<span class="text-cyan animate-pulse">${messages[msgIndex]}</span>`;
-                        } else {
-                            clearInterval(interval);
-                        }
-                    }, 600); // cycle messages
-
-                    // Trigger CSS width transition
-                    setTimeout(() => { progressBar.style.width = '100%'; }, 50);
-
-                    let reportContent = '';
-                    try {
-                        const freshStats = (typeof window.fetchGeoStats === 'function')
-                            ? await window.fetchGeoStats()
-                            : null;
-                        const reportStats = freshStats || window.lastGeoStatsSnapshot;
-                        if (!reportStats) {
-                            throw new Error('No geo telemetry data is available yet.');
-                        }
-                        reportContent = buildGeoSocReportText(reportStats);
-                    } catch (err) {
-                        clearInterval(interval);
-                        radarScan.style.display = 'none';
-                        dataStream.style.display = 'none';
-                        progressContainer.style.display = 'none';
-                        modalTitle.className = 'card-title text-red';
-                        topModal.querySelector('.soc-card').style.borderColor = 'var(--accent-critical)';
-                        modalMessage.innerHTML = `<span class="text-red"><i class="fas fa-times-circle"></i> REPORT GENERATION FAILED</span><br><br><span style="color:#94a3b8; font-size:0.75rem;">${err.message || 'Unknown error'}</span>`;
-                        setTimeout(() => { hideModal(); }, 2200);
-                        return;
-                    }
-
-                    setTimeout(() => {
-                        // Generation complete
-                        radarScan.style.display = 'none';
-                        dataStream.style.display = 'none';
-                        progressContainer.style.display = 'none';
-                        downloadSocReport(reportContent);
-                        modalMessage.innerHTML = '<span class="text-green"><i class="fas fa-check-circle"></i> REPORT GENERATED SUCCESSFULLY</span><br><br><span style="color:#64748b; font-size:0.75rem;">Download will commence automatically.</span>';
-                        modalTitle.className = 'card-title text-green';
-                        topModal.querySelector('.soc-card').style.borderColor = 'var(--accent-primary)';
-
-                        setTimeout(() => { hideModal(); }, 2500);
-                    }, 2550); // wait for 2.5s transiton
-                }
-            );
+        document.getElementById('btn-generate-report').addEventListener('click', function () {
+            STReports.generateAndDownload('geo_intel', {}, { button: this, title: 'geo intelligence' });
         });
 
     </script>
@@ -658,6 +455,7 @@
         window.fetchGeoStats();
         setInterval(window.fetchGeoStats, 5000);
     </script>
+    <script src="js/report-download.js"></script>
     <script src="js/sidebar.js"></script>
 </body>
 

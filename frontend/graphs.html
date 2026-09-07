@@ -16,75 +16,7 @@
 
         <!-- SIDEBAR -->
         <!-- VOID NEON SIDEBAR (FROM GEO INTEL) -->
-        <aside class="sidebar" id="sidebar">
-            <div class="logo-area" onclick="document.getElementById('sidebar').classList.toggle('collapsed')">
-                <div class="logo-icon"></div>
-                <div class="logo-text">
-                    <div class="logo-title">SHADOW TRUST</div>
-                    <div class="logo-sub">DECEPTION GRID // V1</div>
-                </div>
-                <i class="fas fa-arrow-left toggle-btn"
-                    style="margin-left: auto; cursor: pointer; color: #555; transition:0.3s;"></i>
-            </div>
-
-            <div class="nav-group">
-                <div class="nav-group-label">Mission Control</div>
-                <a href="dashboard.html" class="nav-item"><i class="fas fa-th-large"></i> <span class="nav-text">Threat
-                        Overview</span></a>
-                <a href="events.html" class="nav-item"><i class="fas fa-stream"></i> <span class="nav-text">Event
-                        Stream</span></a>
-            </div>
-
-            <div class="nav-group">
-                <div class="nav-group-label">Grid Monitoring</div>
-                <a href="nodes.html" class="nav-item"><i class="fas fa-server"></i> <span class="nav-text">Honeypot
-                        Nodes</span></a>
-                <a href="sectors.html" class="nav-item"><i class="fas fa-network-wired"></i> <span
-                        class="nav-text">Sector Monitors</span></a>
-                <a href="geo.html" class="nav-item"><i class="fas fa-globe-americas"></i> <span class="nav-text">Geo
-                        Intelligence</span></a>
-            </div>
-
-            <div class="nav-group">
-                <div class="nav-group-label">Intelligence</div>
-                <a href="mitre.html" class="nav-item"><i class="fas fa-project-diagram"></i> <span
-                        class="nav-text">MITRE Matrix</span></a>
-                <a href="graphs.html" class="nav-item active"><i class="fas fa-chart-pie"></i> <span
-                        class="nav-text">Analytics Graphs</span></a>
-                <a href="credentials.html" class="nav-item"><i class="fas fa-key"></i> <span
-                        class="nav-text">Credentials Vault</span></a>
-                <a href="behavior.html" class="nav-item"><i class="fas fa-fingerprint"></i> <span
-                        class="nav-text">Behaviour Profiling</span></a>
-                
-            </div>
-
-            <div class="nav-group">
-                <div class="nav-group-label">Tools Suite</div>
-                <a href="malware.html" class="nav-item"><i class="fas fa-bug"></i> <span class="nav-text">Malware
-                        Sandbox</span></a>
-                <a href="urlscan.html" class="nav-item"><i class="fas fa-search-location"></i> <span
-                        class="nav-text">URL Scanner</span></a>
-                <a href="apk.html" class="nav-item"><i class="fas fa-mobile-alt"></i> <span class="nav-text">APK
-                        Analyzer</span></a>
-                <a href="vm_lab.html" class="nav-item"><i class="fas fa-desktop"></i> <span class="nav-text">Virtual
-                        Lab</span></a>
-            </div>
-
-            <div class="nav-group">
-                <div class="nav-group-label">System</div>
-                <a href="admin.html" class="nav-item"><i class="fas fa-user-shield"></i> <span class="nav-text">Admin
-                        Panel</span></a>
-                <a href="config.html" class="nav-item"><i class="fas fa-cog"></i> <span
-                        class="nav-text">Configuration</span></a>
-                <a href="profile.html" class="nav-item"><i class="fas fa-id-card"></i> <span
-                        class="nav-text">Profile</span></a>
-            </div>
-
-            <div class="build-info">
-                <div>DEPLOYMENT: <span class="text-cyan">PROD-01</span></div>
-                <div>STATUS: <span class="text-green">ONLINE</span></div>
-            </div>
-        </aside>
+        <aside class="sidebar" id="sidebar"></aside>
 
         <main class="main-content">
 
@@ -94,9 +26,9 @@
                     <p>DATA VISUALIZATION // <span class="text-purple">120-DAY RETENTION</span></p>
                 </div>
                 <div class="filters-bar">
-                    <button class="soc-btn">Past 24H</button>
-                    <button class="soc-btn soc-btn-primary">Past 7 Days</button>
-                    <button class="soc-btn">Past 30 Days</button>
+                    <button class="soc-btn" data-days="1">Past 24H</button>
+                    <button class="soc-btn soc-btn-primary" data-days="7">Past 7 Days</button>
+                    <button class="soc-btn" data-days="30">Past 30 Days</button>
                 </div>
             </div>
 
@@ -104,23 +36,23 @@
             <div class="dashboard-grid" style="grid-template-columns: repeat(4, 1fr); margin-bottom: 2rem;">
                 <div class="soc-card metric-tile">
                     <div class="metric-header"><span class="card-title">DATA PROCESSED</span></div>
-                    <div class="metric-value text-cyan">42.5 TB</div>
-                    <div class="metric-sub">Total Ingest Volume</div>
+                    <div class="metric-value text-cyan">—</div>
+                    <div class="metric-sub">Raw payload bytes (window)</div>
                 </div>
                 <div class="soc-card metric-tile">
                     <div class="metric-header"><span class="card-title">THREAT INTEL</span></div>
-                    <div class="metric-value text-purple">142K</div>
-                    <div class="metric-sub">Indicators of Compromise</div>
+                    <div class="metric-value text-purple">—</div>
+                    <div class="metric-sub">Distinct attacker IPs</div>
                 </div>
                 <div class="soc-card metric-tile">
                     <div class="metric-header"><span class="card-title">FALSE POSITIVES</span></div>
-                    <div class="metric-value text-pink">0.4%</div>
-                    <div class="metric-sub">Accuracy Rate</div>
+                    <div class="metric-value text-pink">—</div>
+                    <div class="metric-sub">Incidents dispositioned FP</div>
                 </div>
                 <div class="soc-card metric-tile">
-                    <div class="metric-header"><span class="card-title">DECRYPTION RATE</span></div>
-                    <div class="metric-value text-green">100%</div>
-                    <div class="metric-sub">SSL/TLS Inspection</div>
+                    <div class="metric-header"><span class="card-title">NORMALIZATION</span></div>
+                    <div class="metric-value text-green">—</div>
+                    <div class="metric-sub">Raw events normalized</div>
                 </div>
             </div>
 
@@ -269,16 +201,18 @@
             });
         }
 
+        let analyticsRange = 7; // days — driven by the range buttons
+
         async function fetchAnalytics() {
             try {
                 // Ensure API service is accessible
-                const data = await apiService.get('/analytics/graphs');
+                const data = await apiService.get(`/analytics/graphs?days=${analyticsRange}`);
 
                 // Update KPI Cards
                 document.querySelector('.metric-tile:nth-child(1) .metric-value').textContent = data.kpi.processed;
                 document.querySelector('.metric-tile:nth-child(2) .metric-value').textContent = data.kpi.threat_intel;
                 document.querySelector('.metric-tile:nth-child(3) .metric-value').textContent = data.kpi.false_positives;
-                document.querySelector('.metric-tile:nth-child(4) .metric-value').textContent = data.kpi.decryption;
+                document.querySelector('.metric-tile:nth-child(4) .metric-value').textContent = data.kpi.normalization_rate;
 
                 const c = data.charts;
 
@@ -346,6 +280,15 @@
                 setTimeout(() => { if (banner) banner.style.display = 'none'; }, 8000);
             }
         }
+
+        document.querySelectorAll('.filters-bar [data-days]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                analyticsRange = parseInt(btn.dataset.days, 10) || 7;
+                document.querySelectorAll('.filters-bar [data-days]').forEach(b =>
+                    b.classList.toggle('soc-btn-primary', b === btn));
+                fetchAnalytics();
+            });
+        });
 
         document.addEventListener('DOMContentLoaded', () => {
             initCharts();

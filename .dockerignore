@@ -47,3 +47,8 @@ backend/scans/
 
 # ── Docs ──────────────────────────────────────────────────────────────────────
 *.md
+
+# ── Analysis Lab seed filesystem ─────────────────────────────────────────────
+# The .env / *.log / *.md under here are FAKE scenario content (all creds are
+# marked NOTreal/EXAMPLE) and MUST ship inside the sandbox image.
+!docker/analysis-seed/**

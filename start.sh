@@ -58,12 +58,50 @@ kill_port_if_in_use() {
 }
 
 MOBSF_PORT="${MOBSF_PORT:-5055}"
+MARIADB_PORT="${MARIADB_PORT:-3307}"
 
 echo "Starting full backend + full frontend + MobSF service..."
 
 kill_port_if_in_use "$BACKEND_PORT"
 kill_port_if_in_use "$FRONTEND_PORT"
 kill_port_if_in_use "$MOBSF_PORT"
+
+# Database — there is no embedded DB anymore, so a native run still needs the
+# MariaDB (and phpMyAdmin) containers up. Everything else runs on the host.
+ensure_database() {
+  if ! command -v docker >/dev/null 2>&1; then
+    echo "ERROR: docker is required for the database (MariaDB runs as a container)." >&2
+    echo "       Install Docker Desktop, or run the whole stack with ./setup.sh." >&2
+    exit 1
+  fi
+  echo "Starting MariaDB + phpMyAdmin + Guacamole (for VM Lab)..."
+  ( cd "$ROOT_DIR" && docker compose up -d db phpmyadmin guacd guacamole_db guacamole )
+
+  # VM Lab needs the Kali desktop image. Build it once if it's missing.
+  LAB_IMAGE="${LAB_IMAGE_KALI:-shadowtrust/lab-kali:latest}"
+  if ! docker image inspect "$LAB_IMAGE" >/dev/null 2>&1; then
+    echo "Building VM Lab image $LAB_IMAGE (multi-GB, slow the first time)..."
+    ( cd "$ROOT_DIR" && docker build -t "$LAB_IMAGE" docker/lab-kali ) || \
+      echo "WARN: Kali lab image build failed — VM Lab will error until 'make lab-image' works." >&2
+  fi
+
+  echo -n "Waiting for MariaDB on 127.0.0.1:${MARIADB_PORT} "
+  for _ in $(seq 1 60); do
+    if ( cd "$ROOT_DIR" && docker compose exec -T db healthcheck.sh --connect --innodb_initialized ) >/dev/null 2>&1; then
+      echo "— ready."
+      return 0
+    fi
+    echo -n "."
+    sleep 2
+  done
+  echo
+  echo "ERROR: MariaDB did not become ready in time. Check: docker compose logs db" >&2
+  exit 1
+}
+ensure_database
+
+# Point the backend at the containerised MariaDB unless the caller already set it.
+export DATABASE_URL="${DATABASE_URL:-mysql+aiomysql://shadowtrust:shadowtrust@127.0.0.1:${MARIADB_PORT}/shadowtrust}"
 
 # Backend
 ensure_backend_venv
@@ -99,9 +137,11 @@ FRONTEND_PID=$!
 
 echo ""
 echo "All services running:"
-echo "  Backend:  http://localhost:${BACKEND_PORT}"
-echo "  MobSF:    http://localhost:${MOBSF_PORT}"
-echo "  Frontend: http://localhost:${FRONTEND_PORT}"
+echo "  Backend:    http://localhost:${BACKEND_PORT}"
+echo "  MobSF:      http://localhost:${MOBSF_PORT}"
+echo "  Frontend:   http://localhost:${FRONTEND_PORT}"
+echo "  phpMyAdmin: http://localhost:${PHPMYADMIN_PORT:-8081}  (server: db, user: shadowtrust)"
+echo "  MariaDB:    127.0.0.1:${MARIADB_PORT}  (container)"
 echo ""
 
 wait "$BACKEND_PID" "$MOBSF_PID" "$FRONTEND_PID"

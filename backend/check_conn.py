@@ -1,33 +1,52 @@
+"""Quick connectivity check against the application database (MariaDB).
 
+Usage:  cd backend && .venv/bin/python check_conn.py
+"""
+
+import asyncio
 import os
-from supabase import create_client, Client
-from dotenv import load_dotenv
 
-# Load .env explicitly
+from dotenv import load_dotenv
+from sqlalchemy import text
+from sqlalchemy.ext.asyncio import create_async_engine
+
 load_dotenv()
 
-SUPABASE_URL = os.getenv("SUPABASE_URL")
-SUPABASE_KEY = os.getenv("SUPABASE_KEY")
+DATABASE_URL = os.getenv(
+    "DATABASE_URL",
+    "mysql+aiomysql://shadowtrust:shadowtrust@localhost:3307/shadowtrust",
+)
 
-print(f"URL: {SUPABASE_URL}")
-# Mask Key for security in logs
-masked_key = SUPABASE_KEY[:5] + "..." + SUPABASE_KEY[-5:] if SUPABASE_KEY else "None"
-print(f"Key: {masked_key}")
+# Mask the password in logs.
+_safe_url = DATABASE_URL
+if "@" in DATABASE_URL and "//" in DATABASE_URL:
+    prefix, rest = DATABASE_URL.split("//", 1)
+    creds, host = rest.split("@", 1)
+    user = creds.split(":", 1)[0]
+    _safe_url = f"{prefix}//{user}:***@{host}"
+print(f"URL: {_safe_url}")
 
-if not SUPABASE_URL or not SUPABASE_KEY:
-    print("[-] Error: Missing credentials in .env")
-    exit(1)
 
-try:
-    print("[*] Connecting to Supabase...")
-    supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
-    
-    # Try a simple query
-    # We query the 'users' table since it exists in our schema
-    response = supabase.table("users").select("*", count="exact").limit(1).execute()
-    
-    print("[+] Connection Successful!")
-    print(f"[+] Found {response.count} users in the database.")
-    
-except Exception as e:
-    print(f"[-] Connection Failed: {e}")
+async def main() -> int:
+    engine = create_async_engine(DATABASE_URL)
+    try:
+        print("[*] Connecting to MariaDB...")
+        async with engine.connect() as conn:
+            version = (await conn.execute(text("SELECT VERSION()"))).scalar()
+            try:
+                users = (await conn.execute(text("SELECT COUNT(*) FROM users"))).scalar()
+            except Exception:
+                users = "table not created yet"
+        print("[+] Connection successful!")
+        print(f"[+] Server version: {version}")
+        print(f"[+] users rows: {users}")
+        return 0
+    except Exception as e:  # noqa: BLE001
+        print(f"[-] Connection failed: {e}")
+        return 1
+    finally:
+        await engine.dispose()
+
+
+if __name__ == "__main__":
+    raise SystemExit(asyncio.run(main()))

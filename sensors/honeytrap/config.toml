@@ -1,0 +1,47 @@
+# Honeytrap configuration for the local honeynet.
+#
+# Honeytrap's model is listener -> service -> channel:
+#   listener  what to bind
+#   service   what protocol to emulate on a port
+#   channel   where events go
+#
+# The file channel below is what the collector tails.
+
+[listener]
+type = "socket"
+
+# ── Output ───────────────────────────────────────────────────────────────────
+# Newline-delimited JSON into the bind-mounted log directory.
+#
+# honeytrap's config.Channels is a map[string]toml.Primitive (keyed by
+# channel name), not a list -- so this must be a named table
+# ([channel.<name>]), not an array-of-tables ([[channel]]). The name here
+# ("file") is what a filter's `channel = [...]` list below refers to; it is
+# not read from any field inside the table itself.
+[channel.file]
+type = "file"
+filename = "/honeytrap/logs/honeytrap.json"
+
+# Send everything to the file channel. Narrow this if the log gets noisy.
+[[filter]]
+channel = ["file"]
+
+# ── Emulated services ────────────────────────────────────────────────────────
+# Ports chosen not to collide with Cowrie (2222/2223) or Dionaea (445/21/1433).
+
+[service.http]
+type = "http"
+# What an attacker sees in the Server header — an ordinary web server.
+server = "Apache/2.4.52 (Ubuntu)"
+
+[[port]]
+port = "tcp/8022"
+services = ["http"]
+
+[service.ssh-alt]
+type = "ssh-simulator"
+banner = "SSH-2.0-OpenSSH_7.4"
+
+[[port]]
+port = "tcp/8023"
+services = ["ssh-alt"]

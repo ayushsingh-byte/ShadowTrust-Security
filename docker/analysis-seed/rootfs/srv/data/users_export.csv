@@ -1,0 +1,5 @@
+id,email,role,last_login
+1,admin@northstar-retail.example.com,admin,2026-02-11
+2,ops@northstar-retail.example.com,operator,2026-02-10
+3,marketing@northstar-retail.example.com,viewer,2026-01-28
+4,contractor@example.net,viewer,2025-11-04

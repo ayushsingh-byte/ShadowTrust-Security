@@ -19,6 +19,10 @@ class ApiService {
         return this._request(endpoint, 'POST', data);
     }
 
+    async put(endpoint, data) {
+        return this._request(endpoint, 'PUT', data);
+    }
+
     async delete(endpoint) {
         return this._request(endpoint, 'DELETE');
     }

@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Logs | Shadow Trust</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/dashboard.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .lg-kpis { display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; margin-bottom: 16px; }
+        .lg-kpi { background: #0a0a0f; border: 1px solid #222; border-radius: 8px; padding: 12px; text-align: center; cursor: pointer; }
+        .lg-kpi.sel { border-color: #58a6ff; }
+        .lg-kpi .v { font-size: 1.4rem; font-weight: 700; font-family: var(--font-mono, monospace); }
+        .lg-kpi .l { font-size: 0.6rem; letter-spacing: 1px; color: #888; text-transform: uppercase; margin-top: 3px; }
+        .lg-bar { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 14px; }
+        .lg-bar select, .lg-bar input { background: #161b22; border: 1px solid #30363d; color: #e6edf3;
+            padding: 7px 10px; border-radius: 6px; font: inherit; font-size: 0.85rem; }
+        .lg-bar input.q { flex: 1; min-width: 200px; }
+        .lg-src { display: flex; gap: 6px; }
+        .lg-src label { background: #161b22; border: 1px solid #30363d; border-radius: 6px; padding: 6px 9px;
+            font-size: 0.75rem; font-family: var(--font-mono, monospace); cursor: pointer; user-select: none; }
+        .lg-src label.on { border-color: #58a6ff; color: #58a6ff; }
+        .lg-wrap { border: 1px solid #1c2128; border-radius: 8px; overflow: auto; max-height: calc(100vh - 320px); }
+        table.lg { border-collapse: collapse; width: 100%; font-size: 0.78rem; font-family: var(--font-mono, monospace); }
+        table.lg th { position: sticky; top: 0; background: #161b22; color: #7d8590; text-align: left; padding: 8px 10px; white-space: nowrap; }
+        table.lg td { padding: 5px 10px; border-top: 1px solid #14181e; color: #c9d1d9; vertical-align: top; }
+        table.lg tr:hover td { background: #11161d; }
+        .chip { display: inline-block; padding: 1px 7px; border-radius: 5px; font-size: 0.68rem; letter-spacing: .3px; }
+        .cat-auth { background: rgba(88,166,255,.14); color: #58a6ff; }
+        .cat-recon { background: rgba(210,153,34,.14); color: #d29922; }
+        .cat-exec, .cat-c2 { background: rgba(219,109,40,.16); color: #db6d28; }
+        .cat-malware { background: rgba(248,81,73,.18); color: #f85149; }
+        .cat-lateral, .cat-exfil, .cat-persistence, .cat-privilege, .cat-defense-evasion { background: rgba(188,140,255,.16); color: #bc8cff; }
+        .cat-error { background: rgba(248,81,73,.12); color: #f85149; }
+        .cat-network, .cat-system, .cat-info { background: rgba(139,148,158,.14); color: #8b949e; }
+        .cat-audit { background: rgba(63,185,80,.14); color: #3fb950; }
+        .sev-CRITICAL { color: #f85149; font-weight: 700; }
+        .sev-HIGH { color: #db6d28; } .sev-MEDIUM { color: #d29922; }
+        .sev-LOW { color: #8b949e; } .sev-INFO { color: #6e7681; }
+        .lg-msg { max-width: 780px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .lg-msg.exp { white-space: pre-wrap; overflow: visible; }
+        .lg-src-tag { color: #7d8590; }
+    </style>
+</head>
+
+<body>
+    <div class="app-container">
+        <aside class="sidebar" id="sidebar"></aside>
+
+        <main class="main-content">
+            <div class="top-bar">
+                <div class="page-header">
+                    <h2>LOGS</h2>
+                    <p>UNIFIED FEED // every source, categorised &nbsp;<span id="lg-meta" class="lg-src-tag"></span></p>
+                </div>
+                <div class="filters-bar">
+                    <label class="lg-src-tag" style="font-size:.8rem;"><input type="checkbox" id="lg-auto" checked> auto-refresh</label>
+                    <button class="soc-btn soc-btn-primary" id="lg-refresh"><i class="fas fa-rotate"></i> REFRESH</button>
+                </div>
+            </div>
+
+            <div class="lg-kpis" id="lg-kpis"></div>
+
+            <div class="lg-bar">
+                <div class="lg-src" id="lg-sources">
+                    <label data-src="honeypot" class="on"><input type="checkbox" checked hidden> honeypot</label>
+                    <label data-src="splunk" class="on"><input type="checkbox" checked hidden> splunk</label>
+                    <label data-src="platform" class="on"><input type="checkbox" checked hidden> platform</label>
+                    <label data-src="audit" class="on"><input type="checkbox" checked hidden> audit</label>
+                </div>
+                <select id="lg-cat">
+                    <option value="">all categories</option>
+                    <option>auth</option><option>recon</option><option>exec</option><option>c2</option>
+                    <option>malware</option><option>lateral</option><option>exfil</option><option>persistence</option>
+                    <option>privilege</option><option>defense-evasion</option><option>network</option>
+                    <option>system</option><option>audit</option><option>error</option><option>info</option>
+                </select>
+                <select id="lg-sev">
+                    <option value="">any severity</option>
+                    <option>LOW</option><option>MEDIUM</option><option>HIGH</option><option>CRITICAL</option>
+                </select>
+                <input class="q" id="lg-q" placeholder="search text…">
+                <button class="soc-btn" id="lg-csv"><i class="fas fa-download"></i> CSV</button>
+            </div>
+
+            <div class="lg-wrap">
+                <table class="lg">
+                    <thead><tr><th>time</th><th>source</th><th>category</th><th>sev</th><th>message</th></tr></thead>
+                    <tbody id="lg-rows"><tr><td colspan="5" style="padding:16px; color:#7d8590;">loading…</td></tr></tbody>
+                </table>
+            </div>
+        </main>
+    </div>
+
+    <script src="js/sidebar.js"></script>
+    <script type="module">
+        import { apiService } from './js/api.js';
+        const $ = s => document.querySelector(s);
+        const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+        let rows = [];
+
+        function activeSources() {
+            return [...document.querySelectorAll('#lg-sources label.on')].map(l => l.dataset.src).join(',') || 'honeypot';
+        }
+
+        function render() {
+            const cat = $('#lg-cat').value, sev = $('#lg-sev').value, q = $('#lg-q').value.toLowerCase();
+            let view = rows;
+            if (cat) view = view.filter(r => r.category === cat);
+            const sevRank = { INFO: 0, LOW: 1, MEDIUM: 2, HIGH: 3, CRITICAL: 4 };
+            if (sev) view = view.filter(r => sevRank[r.severity] >= sevRank[sev]);
+            if (q) view = view.filter(r => (r.text + ' ' + r.origin).toLowerCase().includes(q));
+            $('#lg-rows').innerHTML = view.length ? view.map((r, i) => `
+                <tr>
+                    <td>${esc((r.ts || '').replace('T', ' ').slice(0, 19))}</td>
+                    <td class="lg-src-tag">${esc(r.source)}<br><span style="opacity:.6">${esc(r.origin || '')}</span></td>
+                    <td><span class="chip cat-${esc(r.category)}">${esc(r.category)}</span></td>
+                    <td class="sev-${esc(r.severity)}">${esc(r.severity)}</td>
+                    <td><div class="lg-msg" title="${esc(r.reason)}" data-i="${i}">${esc(r.text)}</div></td>
+                </tr>`).join('') : '<tr><td colspan="5" style="padding:16px;color:#7d8590;">no matching log lines</td></tr>';
+            $('#lg-rows').querySelectorAll('.lg-msg').forEach(el => el.onclick = () => el.classList.toggle('exp'));
+        }
+
+        function renderKpis(sum) {
+            const cats = sum.by_category || {};
+            const order = ['malware', 'exec', 'c2', 'auth', 'recon', 'lateral', 'exfil', 'privilege', 'defense-evasion', 'error', 'network', 'audit', 'system', 'info'];
+            const shown = order.filter(c => cats[c]).slice(0, 6);
+            $('#lg-kpis').innerHTML = shown.map(c => `
+                <div class="lg-kpi" data-cat="${c}"><div class="v chip cat-${c}" style="background:none">${cats[c]}</div><div class="l">${c}</div></div>`
+            ).join('') || '<div class="lg-kpi"><div class="v">0</div><div class="l">no events</div></div>';
+            $('#lg-kpis').querySelectorAll('.lg-kpi').forEach(el => el.onclick = () => {
+                $('#lg-cat').value = ($('#lg-cat').value === el.dataset.cat) ? '' : el.dataset.cat;
+                document.querySelectorAll('.lg-kpi').forEach(k => k.classList.toggle('sel', k.dataset.cat === $('#lg-cat').value));
+                render();
+            });
+        }
+
+        async function load() {
+            const src = activeSources();
+            try {
+                const [feed, sum] = await Promise.all([
+                    apiService.get(`/logs/feed?sources=${src}&limit=500&hours=72`),
+                    apiService.get(`/logs/summary?hours=72`),
+                ]);
+                rows = feed.items || [];
+                $('#lg-meta').textContent = `${feed.count} lines · ${feed.sources.join(', ')}${feed.is_admin ? '' : ' · (login as admin for platform + audit)'}`;
+                renderKpis(sum);
+                render();
+            } catch (e) {
+                $('#lg-rows').innerHTML = `<tr><td colspan="5" style="padding:16px;color:#f85149;">${esc(e.message)}</td></tr>`;
+            }
+        }
+
+        document.querySelectorAll('#lg-sources label').forEach(l => l.onclick = () => { l.classList.toggle('on'); load(); });
+        ['lg-cat', 'lg-sev'].forEach(id => $('#' + id).onchange = render);
+        $('#lg-q').addEventListener('input', render);
+        $('#lg-refresh').onclick = load;
+        $('#lg-csv').onclick = () => {
+            if (!rows.length) return;
+            const hdr = 'ts,source,origin,category,severity,reason,text';
+            const body = rows.map(r => [r.ts, r.source, r.origin, r.category, r.severity, r.reason, r.text]
+                .map(v => { v = String(v ?? ''); return /[",\n]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v; }).join(',')).join('\n');
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(new Blob([hdr + '\n' + body], { type: 'text/csv' }));
+            a.download = `shadowtrust-logs-${new Date().toISOString().replace(/[:.]/g, '-')}.csv`;
+            a.click(); URL.revokeObjectURL(a.href);
+        };
+
+        load();
+        setInterval(() => { if ($('#lg-auto').checked) load(); }, 8000);
+    </script>
+</body>
+
+</html>

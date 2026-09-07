@@ -1,0 +1,12 @@
+id: web-attack
+script_scenario: web-attack
+description: SQLi / path-traversal / XSS shaped HTTP requests against Honeytrap.
+target: 127.0.0.1
+expected_telemetry:
+  - sensor: honeytrap
+    min_events: 1
+expected_detections: []
+expected_techniques:
+  - T1190
+expected_severity: MEDIUM
+expected_incident: false

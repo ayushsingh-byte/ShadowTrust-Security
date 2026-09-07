@@ -2,13 +2,13 @@ import asyncio
 import uuid
 from sqlalchemy.future import select
 from sqlalchemy import update
-from app.db.sqlite_db import AsyncSessionLocal
+from app.db.database import AsyncSessionLocal
 from app.models.all_models import RawEventModel, StructuredEvent
 from datetime import datetime
 
 class SyncManager:
     """
-    Background worker that fetches PENDING events from local SQLite 
+    Background worker that fetches PENDING events from the database 
     and batches them over into StructuredEvents (now also local).
     """
     BATCH_SIZE = 100
@@ -54,7 +54,7 @@ class SyncManager:
                     )
                 )
             
-            # 3. Push to SQLite Local Structured Events
+            # 3. Push to local structured_events table
             try:
                 db.add_all(structured_payloads)
                 

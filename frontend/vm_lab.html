@@ -55,6 +55,36 @@
             font-weight: bold;
         }
 
+        .vm-specs > div { margin-bottom: 8px; }
+        .vm-specs > div:last-child { margin-bottom: 0; }
+
+        .vm-env-tag {
+            font-family: var(--font-mono);
+            font-size: 0.62rem;
+            letter-spacing: 1px;
+            color: var(--text-muted);
+            margin-top: 6px;
+        }
+
+        .vm-desc {
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            line-height: 1.5;
+            margin-top: 12px;
+        }
+
+        .vm-note {
+            margin-top: 14px;
+            font-size: 0.75rem;
+            line-height: 1.45;
+            border-radius: 6px;
+            padding: 8px 10px;
+            font-family: var(--font-mono);
+        }
+        .vm-note code { background: rgba(255,255,255,0.06); padding: 1px 5px; border-radius: 3px; }
+        .vm-note-ok { color: #3fb950; background: rgba(63,185,80,0.08); border: 1px solid rgba(63,185,80,0.25); }
+        .vm-note-warn { color: #d29922; background: rgba(210,153,34,0.08); border: 1px solid rgba(210,153,34,0.25); }
+
         .vm-actions {
             display: flex;
             gap: 10px;
@@ -253,75 +283,7 @@
     <div class="app-container">
 
         <!-- Sidebar -->
-        <aside class="sidebar" id="sidebar">
-            <div class="logo-area" onclick="document.getElementById('sidebar').classList.toggle('collapsed')">
-                <div class="logo-icon"></div>
-                <div class="logo-text">
-                    <div class="logo-title">SHADOW TRUST</div>
-                    <div class="logo-sub">DEFENSE GRID // V2</div>
-                </div>
-                <i class="fas fa-arrow-left toggle-btn"
-                    style="margin-left: auto; cursor: pointer; color: #555; transition:0.3s;"></i>
-            </div>
-
-            <div class="nav-group">
-                <div class="nav-group-label">Command Center</div>
-                <a href="dashboard.html" class="nav-item"><i class="fas fa-th-large"></i> <span
-                        class="nav-text">Tactical Overview</span></a>
-                <a href="events.html" class="nav-item"><i class="fas fa-list-alt"></i> <span class="nav-text">Event
-                        Log</span></a>
-            </div>
-
-            <div class="nav-group">
-                <div class="nav-group-label">Grid Monitoring</div>
-                <a href="nodes.html" class="nav-item"><i class="fas fa-server"></i> <span class="nav-text">Honeypot
-                        Nodes</span></a>
-                <a href="sectors.html" class="nav-item"><i class="fas fa-network-wired"></i> <span
-                        class="nav-text">Sector Monitors</span></a>
-                <a href="geo.html" class="nav-item"><i class="fas fa-globe-americas"></i> <span class="nav-text">Geo
-                        Intelligence</span></a>
-            </div>
-
-            <div class="nav-group">
-                <div class="nav-group-label">Intelligence</div>
-                <a href="mitre.html" class="nav-item"><i class="fas fa-chess-board"></i> <span class="nav-text">MITRE
-                        Matrix</span></a>
-                <a href="graphs.html" class="nav-item"><i class="fas fa-chart-area"></i> <span class="nav-text">Attack
-                        Analytics</span></a>
-                <a href="credentials.html" class="nav-item"><i class="fas fa-key"></i> <span
-                        class="nav-text">Credentials Vault</span></a>
-                <a href="behavior.html" class="nav-item"><i class="fas fa-user-secret"></i> <span
-                        class="nav-text">Behavior Profiling</span></a>
-                
-            </div>
-
-            <div class="nav-group">
-                <div class="nav-group-label">Tools Suite</div>
-                <a href="malware.html" class="nav-item"><i class="fas fa-biohazard"></i> <span class="nav-text">Binary
-                        Analysis</span></a>
-                <a href="urlscan.html" class="nav-item"><i class="fas fa-search-location"></i> <span
-                        class="nav-text">URL Scanner</span></a>
-                <a href="apk.html" class="nav-item"><i class="fas fa-mobile"></i> <span class="nav-text">APK
-                        Inspector</span></a>
-                <a href="vm_lab.html" class="nav-item active"><i class="fas fa-laptop-code"></i> <span
-                        class="nav-text">Virtual Lab</span></a>
-            </div>
-
-            <div class="nav-group">
-                <div class="nav-group-label">System</div>
-                <a href="admin.html" class="nav-item"><i class="fas fa-user-shield"></i> <span class="nav-text">Admin
-                        Panel</span></a>
-                <a href="aws_connection.html" class="nav-item"><i class="fas fa-cloud"></i> <span class="nav-text">AWS
-                        Connection</span></a>
-                <a href="#" class="nav-item" id="logoutBtn" style="color: var(--accent-critical);"><i
-                        class="fas fa-sign-out-alt"></i> <span class="nav-text">Logout</span></a>
-            </div>
-
-            <div class="build-info">
-                <div>UNIT: <span class="text-green">CYBER-01</span></div>
-                <div>SECURE: <span class="text-green">ENCRYPTED</span></div>
-            </div>
-        </aside>
+        <aside class="sidebar" id="sidebar"></aside>
 
         <!-- Main Content -->
         <main class="main-content">
@@ -346,14 +308,14 @@
                         <i class="fas fa-satellite-dish text-green"></i>
                     </div>
                     <div class="metric-value" id="global-uplink-status">ACTIVE</div>
-                    <div class="metric-sub text-green" id="global-uplink-region">ap-south-1a // 22ms latency</div>
+                    <div class="metric-sub text-green" id="global-uplink-region">resolving host…</div>
                 </div>
                 <div class="soc-card metric-tile">
                     <div class="metric-header">
                         <span>COMPUTE CLUSTER</span>
                         <i class="fas fa-microchip text-yellow"></i>
                     </div>
-                    <div class="metric-value"><span id="global-vcpu-count">0</span> / 32 <span
+                    <div class="metric-value"><span id="global-vcpu-count">0</span> / <span id="global-vcpu-max">–</span> <span
                             style="font-size: 1rem; color: #666;">vCPU</span></div>
                     <div style="background: rgba(255,255,255,0.05); height: 4px; border-radius: 2px; margin-top: 10px;">
                         <div id="global-vcpu-bar"
@@ -366,7 +328,7 @@
                         <span>MEMORY POOL</span>
                         <i class="fas fa-memory text-red"></i>
                     </div>
-                    <div class="metric-value"><span id="global-ram-count">0</span> / 64 <span
+                    <div class="metric-value"><span id="global-ram-count">0</span> / <span id="global-ram-max">–</span> <span
                             style="font-size: 1rem; color: #666;">GB</span></div>
                     <div style="background: rgba(255,255,255,0.05); height: 4px; border-radius: 2px; margin-top: 10px;">
                         <div id="global-ram-bar"
@@ -388,75 +350,31 @@
                 <p>AVAILABLE TARGET PAYLOADS</p>
             </div>
 
-            <div id="vmGrid" class="dashboard-grid grid-3">
+            <div id="vmGrid" class="dashboard-grid grid-2">
 
-                <!-- Windows Baseline -->
-                <div class="soc-card vm-card">
-                    <div>
-                        <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-                            <div class="vm-icon-wrapper"><i class="fab fa-windows"></i></div>
-                            <div style="text-align: right;">
-                                <div class="orb" id="dot_win_base"></div>
-                                <div
-                                    style="font-family: var(--font-mono); font-size: 0.65rem; color: var(--text-muted); margin-top: 5px;">
-                                    AMI-WIN-BASE</div>
-                            </div>
-                        </div>
-                        <h3 style="margin: 0; font-family: var(--font-heading); letter-spacing: 1px;">WINDOWS SERVER
-                            BASELINE</h3>
-                        <p
-                            style="color: var(--text-secondary); font-size: 0.85rem; line-height: 1.5; margin-top: 10px;">
-                            Standard un-configured Windows Server 2022 image. Represents a sterile corporate baseline
-                            environment.</p>
-
-                        <div class="vm-specs">
-                            <div style="margin-bottom: 8px;">Architecture <span>x86_64</span></div>
-                            <div style="margin-bottom: 8px;">Hardware <span>t3.medium</span></div>
-                            <div style="margin-bottom: 8px;">Firewall <span>Port 3389</span></div>
-                            <div>Protocol <span>RDP GUI</span></div>
-                        </div>
-                    </div>
-
-                    <div class="vm-actions">
-                        <select id="protocol_win_base" class="protocol-select">
-                            <option value="rdp">RDP GUI</option>
-                            <option value="ssh">SSH CLI</option>
-                        </select>
-                        <button id="create_win_base" class="soc-btn soc-btn-primary btn-provision"
-                            data-profile="win_base" onclick="window.vmClient.launchInstance('win_base', this)"><i
-                                class="fas fa-bolt"></i> PROVISION</button>
-                        <button id="terminate_win_base" class="soc-btn soc-btn-danger" style="padding: 10px 15px;"
-                            onclick="window.vmClient.terminateInstance('win_base', document.getElementById('create_win_base'), this)"><i
-                                class="fas fa-power-off"></i></button>
-                    </div>
-                </div>
-
-                <!-- Linux Monitoring node -->
+                <!-- Kali Linux offensive lab (local Docker) -->
                 <div class="soc-card vm-card mod-lin">
                     <div>
                         <div style="display: flex; justify-content: space-between; align-items: flex-start;">
                             <div class="vm-icon-wrapper"><i class="fab fa-linux"></i></div>
                             <div style="text-align: right;">
                                 <div class="orb" id="dot_kali_base"></div>
-                                <div
-                                    style="font-family: var(--font-mono); font-size: 0.65rem; color: var(--text-muted); margin-top: 5px;">
-                                    AMI-LINUX-SEC</div>
+                                <div class="vm-env-tag">ENV-KALI · LOCAL</div>
                             </div>
                         </div>
-                        <h3 style="margin: 0; font-family: var(--font-heading); letter-spacing: 1px;">Kali Linux
-                            INTRANET
-                            NODE</h3>
-                        <p
-                            style="color: var(--text-secondary); font-size: 0.85rem; line-height: 1.5; margin-top: 10px;">
-                            Linux Ubuntu 24.04 LTS equipped with generic passive monitoring suites to capture broad
-                            network telemetry.</p>
+                        <h3 style="margin: 0; font-family: var(--font-heading); letter-spacing: 1px;">KALI LINUX LAB</h3>
+                        <p class="vm-desc">
+                            Kali Rolling + XFCE desktop, launched as a disposable Docker container on this host.
+                            Full offensive toolkit (nmap, tcpdump, Metasploit-ready). Streams into the browser
+                            over RDP via Guacamole.</p>
 
                         <div class="vm-specs">
-                            <div style="margin-bottom: 8px;">Architecture <span>x86_64</span></div>
-                            <div style="margin-bottom: 8px;">Hardware <span>t3.micro</span></div>
-                            <div style="margin-bottom: 8px;">Firewall <span>Port 22/3389</span></div>
-                            <div>Protocol <span>SSH / XRDP</span></div>
+                            <div>Image <span>shadowtrust/lab-kali</span></div>
+                            <div>Profile <span>Light · 2 vCPU / 2 GB</span></div>
+                            <div>Access <span>RDP 3389 · SSH 22</span></div>
+                            <div>Login <span>kali / kali</span></div>
                         </div>
+                        <div class="vm-note vm-note-ok"><i class="fas fa-circle-check"></i> Runs locally — no cloud, no cost.</div>
                     </div>
 
                     <div class="vm-actions">
@@ -473,37 +391,36 @@
                     </div>
                 </div>
 
-                <!-- Windows High Value Honeypot -->
+                <!-- Windows analysis lab (AWS / Linux+KVM) -->
                 <div class="soc-card vm-card mod-mal">
                     <div>
                         <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-                            <div class="vm-icon-wrapper"><i class="fas fa-biohazard"></i></div>
+                            <div class="vm-icon-wrapper"><i class="fab fa-windows"></i></div>
                             <div style="text-align: right;">
                                 <div class="orb" id="dot_win_malware"></div>
-                                <div
-                                    style="font-family: var(--font-mono); font-size: 0.65rem; color: var(--text-muted); margin-top: 5px;">
-                                    AMI-HONEY-MAX</div>
+                                <div class="vm-env-tag">ENV-WINDOWS · ADVANCED</div>
                             </div>
                         </div>
-                        <h3 style="margin: 0; font-family: var(--font-heading); letter-spacing: 1px;"> Windows Analysis
-                            Environment</h3>
-                        <p
-                            style="color: var(--text-secondary); font-size: 0.85rem; line-height: 1.5; margin-top: 10px;">
-                            Dangerously misconfigured Windows instance actively running Cowrie, Dionaea, and exposed
-                            vulnerable services.</p>
+                        <h3 style="margin: 0; font-family: var(--font-heading); letter-spacing: 1px;">WINDOWS ANALYSIS LAB</h3>
+                        <p class="vm-desc">
+                            Windows 11 desktop for malware detonation and forensic analysis. Provisions as a KVM
+                            VM (dockurr/windows) or an EC2 instance, and connects over RDP via Guacamole exactly
+                            like the Kali lab.</p>
 
                         <div class="vm-specs">
-                            <div style="margin-bottom: 8px;">Architecture <span>x86_64</span></div>
-                            <div style="margin-bottom: 8px;">Hardware <span>t3.large</span></div>
-                            <div style="margin-bottom: 8px;">Firewall <span>ANY / ANY</span></div>
-                            <div>Protocol <span>RDP GUI</span></div>
+                            <div>Image <span>dockurr/windows · Win 11</span></div>
+                            <div>Profile <span>Heavy · 6 vCPU / 8 GB</span></div>
+                            <div>Access <span>RDP 3389</span></div>
+                            <div>Login <span>Docker / admin</span></div>
                         </div>
+                        <div class="vm-note vm-note-warn"><i class="fas fa-triangle-exclamation"></i>
+                            Needs a Linux host with <code>/dev/kvm</code> (set <code>LAB_WINDOWS_ENABLED=true</code>)
+                            or <code>INFRA_PROVIDER=aws</code>. Not available on macOS.</div>
                     </div>
 
                     <div class="vm-actions">
                         <select id="protocol_win_malware" class="protocol-select">
                             <option value="rdp">RDP GUI</option>
-                            <option value="ssh">SSH CLI</option>
                         </select>
                         <button id="create_win_malware" class="soc-btn soc-btn-primary btn-provision"
                             data-profile="win_malware" onclick="window.vmClient.launchInstance('win_malware', this)"><i

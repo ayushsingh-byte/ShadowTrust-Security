@@ -1,5 +1,14 @@
 # Hybrid Edge + Cloud Honeypot Platform (Architecture)
 
+> **Note — this is the original design sketch, not the current build.**
+> The implemented platform is: FastAPI backend + **MariaDB 11** (managed via
+> phpMyAdmin at `:8081`, driver `mysql+aiomysql`), telemetry ingested by tailing
+> newline-delimited JSON files the sensor containers write to `telemetry/raw/`,
+> and a Server-Sent-Events stream to the dashboard. There is no SQLite, no
+> Supabase, and the Node.js `services/` are opt-in (`--profile extras`). AWS
+> (EC2/S3) remains an optional provider. See `README.md` → *Architecture* and
+> *Local Honeynet* for the shipped topology.
+
 ## Goals
 - **Edge reliability**: each honeypot node ingests raw telemetry locally into SQLite (works offline).
 - **Cloud analytics**: Supabase Postgres stores only **summaries/aggregations/alerts**.

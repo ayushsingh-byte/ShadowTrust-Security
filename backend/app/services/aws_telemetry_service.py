@@ -1,6 +1,4 @@
 import asyncio
-import boto3
-from botocore.config import Config as BotoConfig
 import json
 import uuid
 import logging
@@ -11,17 +9,13 @@ from collections import deque
 from sqlalchemy.future import select
 from sqlalchemy import update
 
-from app.db.sqlite_db import AsyncSessionLocal
+from app.db.database import AsyncSessionLocal
 from app.models.all_models import SystemConfig, RawEventModel, S3SyncState
 
 logger = logging.getLogger(__name__)
 
-# Timeout applied to every boto3 client — prevents pipeline hanging on network issues
-_BOTO_CFG = BotoConfig(
-    connect_timeout=8,
-    read_timeout=20,
-    retries={"max_attempts": 1},
-)
+# Timeouts applied to every boto3 client — prevents pipeline hanging on network issues
+_BOTO_TIMEOUTS = dict(connect_timeout=8, read_timeout=20, retries={"max_attempts": 1})
 
 
 def _pipeline_s3_fetch(
@@ -32,7 +26,15 @@ def _pipeline_s3_fetch(
     Synchronous S3 list + download. Runs in thread pool via asyncio.to_thread()
     so it NEVER blocks the FastAPI / asyncio event loop.
     Returns (list of raw event dicts, set of touched S3 keys).
+
+    boto3 is imported here rather than at module scope so that local mode never
+    loads AWS libraries — the module itself stays importable without boto3.
     """
+    import boto3
+    from botocore.config import Config as BotoConfig
+
+    _BOTO_CFG = BotoConfig(**_BOTO_TIMEOUTS)
+
     session = boto3.Session(
         aws_access_key_id=aws_ak,
         aws_secret_access_key=aws_sk,
@@ -97,31 +99,61 @@ def _pipeline_s3_fetch(
 
 
 class UnifiedTelemetryService:
-    def __init__(self):
+    """
+    Source-agnostic telemetry pipeline.
+
+    Where events come from (local directory or S3) is decided by the
+    TelemetrySource injected at construction; everything below the fetch call —
+    parsing, categorisation, dedup, DB writes — is shared by both.
+    """
+
+    def __init__(self, source=None):
         self.is_running = False
         self.processed_s3_keys: Set[str] = set()
-        
+
         # In-memory FAST cache for dashboard endpoints
         self.recent_events_cache: deque = deque(maxlen=5000)
-        
+
         # Deduplication cache
         self.recent_signatures: deque = deque(maxlen=1000)
-        
-        # Connection state
+
+        # Connection state (only meaningful for the S3 source)
         self.aws_ak = None
         self.aws_sk = None
         self.aws_region = None
         self.s3_bucket = None
 
+        # Resolved lazily so importing this module never selects a source.
+        self._source = source
+
+    @property
+    def source(self):
+        """The configured TelemetrySource, built on first use."""
+        if self._source is None:
+            from app.services.telemetry import get_telemetry_source
+            self._source = get_telemetry_source()
+        return self._source
+
     async def get_config(self, db):
+        """
+        Refresh source configuration.
+
+        For the S3 source this pulls AWS credentials out of SystemConfig, which
+        is where the AWS Connection page saves them. The local source needs no
+        configuration, so this is a no-op for it.
+        """
         result = await db.execute(select(SystemConfig))
         configs = result.scalars().all()
         config_map = {c.key: c.value for c in configs}
-        
+
         self.aws_ak = config_map.get('aws_access_key')
         self.aws_sk = config_map.get('aws_secret_key')
         self.aws_region = config_map.get('aws_region', 'ap-south-1')
         self.s3_bucket = config_map.get('s3_bucket_3rd') or config_map.get('s3_bucket')
+
+        configure = getattr(self.source, "configure", None)
+        if callable(configure):
+            configure(self.aws_ak, self.aws_sk, self.aws_region, self.s3_bucket)
 
     def ml_categorize_attack(self, target_port: int, src_ip: str) -> str:
         """
@@ -146,15 +178,18 @@ class UnifiedTelemetryService:
 
     async def run_pipeline(self):
         self.is_running = True
-        logger.info("Starting Autonomous S3 Telemetry Pipeline...")
+        source = self.source
+        logger.info(f"Starting Autonomous Telemetry Pipeline (source: {source.describe()})...")
 
         while self.is_running:
             try:
                 async with AsyncSessionLocal() as db:
                     await self.get_config(db)
 
-                    if not self.aws_ak or not self.aws_sk or not self.s3_bucket:
-                        logger.debug("S3 Poller sleeping: Missing AWS Credentials in SystemConfig.")
+                    if not source.is_configured():
+                        logger.debug(
+                            f"Telemetry poller sleeping: source '{source.name}' is not configured."
+                        )
                         await asyncio.sleep(30)
                         continue
 
@@ -162,15 +197,13 @@ class UnifiedTelemetryService:
                     processed_query = await db.execute(select(S3SyncState.file_key, S3SyncState.processed_at))
                     processed_state_by_key = {row.file_key: row.processed_at for row in processed_query}
 
-                    # ── Run ALL blocking S3 work in a thread — keeps event loop free ──
+                    # ── Run ALL blocking source I/O in a thread — keeps event loop free ──
                     try:
                         raw_events, touched_keys = await asyncio.to_thread(
-                            _pipeline_s3_fetch,
-                            self.aws_ak, self.aws_sk, self.aws_region,
-                            self.s3_bucket, processed_state_by_key
+                            source.fetch, processed_state_by_key
                         )
-                    except Exception as s3_err:
-                        logger.error(f"S3 fetch failed: {s3_err}")
+                    except Exception as fetch_err:
+                        logger.error(f"Telemetry fetch failed ({source.name}): {fetch_err}")
                         await asyncio.sleep(30)
                         continue
 
@@ -286,7 +319,10 @@ class UnifiedTelemetryService:
 
                         try:
                             await db.commit()
-                            logger.info(f"Ingested {len(db_events)} AWS S3 events from {len(touched_keys)} files.")
+                            logger.info(
+                                f"Ingested {len(db_events)} events from {len(touched_keys)} "
+                                f"files via '{source.name}'."
+                            )
                         except Exception:
                             await db.rollback()
                             # Fallback: insert one by one to skip duplicate signatures

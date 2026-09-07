@@ -53,13 +53,21 @@ SECRET_KEY="any-long-random-string-you-make-up"
 | Field | Required? | What to put |
 |-------|-----------|-------------|
 | `SECRET_KEY` | ✅ YES | Any random 32+ char string (see above) |
-| `SUPABASE_URL` | ⚠️ Optional | Leave blank if not using Supabase |
-| `SUPABASE_KEY` | ⚠️ Optional | Leave blank if not using Supabase |
+| `DATABASE_URL` | ✅ Pre-filled | MariaDB URL. Default works out of the box; compose overrides the host to `db`. |
 | `SMTP_HOST / SMTP_USER / SMTP_PASS` | ⚠️ Optional | Only needed for email credential delivery |
 | `TWILIO_*` | ⚠️ Optional | Only needed for WhatsApp alerts |
-| `AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY` | ⚠️ Optional | Only needed for VM Lab and S3 log sync |
+| `AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY` | ⚠️ Optional | Only for AWS mode (S3 telemetry, Windows/EC2 labs) |
+| `VIRUSTOTAL_API_KEY` | ⚠️ Optional | Malware Lab cross-checks file hashes against VirusTotal when set. Without it, ClamAV alone drives the AV verdict. Free key: virustotal.com → profile → API key |
+| `SPLUNK_API_URL / SPLUNK_WEB_URL / SPLUNK_USER / SPLUNK_PASSWORD` | ⚠️ Pre-filled | Points the **Splunk Blue Team** page at the `~/splunk-lab` Splunk. Defaults assume `admin` / `ChangeMe123!` on `https://host.docker.internal:8089`. |
 
-> **Minimum to get the platform running:** Only `SECRET_KEY` is required. Everything else is optional — you can use the dashboard, events, malware analysis, sector intelligence, admin panel without any external credentials.
+> **Minimum to get the platform running:** Only `SECRET_KEY` is required. Everything else is optional — you can use the dashboard, events, malware analysis, the admin panel without any external credentials.
+
+### Malware engine (ClamAV)
+
+The `clamav` container is part of the main compose file and starts automatically.
+On first boot it downloads ~1.5 GB of signatures (~5 min) — until then the Malware
+Lab still runs and the AV banner shows *"engine offline"*. Check readiness on the
+`/health` page (ClamAV row) or with `docker compose logs clamav`.
 
 ---
 
@@ -110,33 +118,38 @@ Password: admin
 
 ---
 
-## STEP 5 (Optional) — Load Demo Data
+## STEP 5 (Optional) — Generate live telemetry
 
-If you want the Sector dashboards to show live attack data immediately:
+Poke the honeypots so the dashboards fill with real data:
 
 ```bash
-# In a new terminal tab, while the platform is running:
-docker exec -it soc_backend python demo_seed.py
+./scripts/attack_scenarios.sh localhost all      # brute-force, port-scan, HTTP probes
+# or: python3 scripts/replay_telemetry.py --all-sensors --count 60 --rate 5
 ```
-
-This adds 9 demo targets (one per sector) and injects 360 realistic attack events so dashboards show real charts immediately.
 
 ---
 
-## STEP 6 (Optional) — Enable VM Lab (Browser RDP/SSH)
+## STEP 6 — VM Lab (Browser RDP/SSH)
 
-The Virtual Lab page lets you provision AWS EC2 instances and access them in the browser. This needs Guacamole running separately.
+The VM Lab page (`vm_lab.html`) provisions disposable Kali desktops as local
+Docker containers and shows them in the browser via Guacamole. Guacamole + the
+Kali image are part of the default stack now:
 
 ```bash
-# In a new terminal tab:
-cd guacamole
-docker compose up -d
-cd ..
+make labs-up          # builds shadowtrust/lab-kali if missing (slow first run), then docker compose up -d
 ```
 
-Then open `http://localhost:5500/aws_connection.html` and fill in your AWS credentials.
+Open **http://localhost:5500/vm_lab.html**, click **PROVISION** on the *Kali
+Linux* card, wait for `READY`, and the XFCE desktop loads in the page. In-VM
+login: `kali / kali`.
 
-> Guacamole runs on port `8080`. You can visit `http://localhost:8080/guacamole` directly (default login: `guacadmin / guacadmin`).
+- **Windows labs**: set `LAB_WINDOWS_ENABLED=true` in `.env`. Needs a **Linux
+  host with `/dev/kvm`** — not possible on macOS.
+- **AWS EC2 labs** (Windows on any host): set `INFRA_PROVIDER=aws` and fill in
+  `aws_connection.html`.
+
+> Guacamole: `http://localhost:8080/guacamole` (login `guacadmin / guacadmin`) —
+> open it directly to watch live lab sessions.
 
 ---
 
@@ -149,7 +162,8 @@ Then open `http://localhost:5500/aws_connection.html` and fill in your AWS crede
 | **API Docs** | http://localhost:8000/docs | Interactive Swagger UI |
 | **MobSF** | http://localhost:5055 | APK analysis service |
 | **Node Collector** | http://localhost:3000 | Edge honeypot collector |
-| **Guacamole** | http://localhost:8080/guacamole | VM browser terminal (Step 6 only) |
+| **Guacamole** | http://localhost:8080/guacamole | VM Lab remote desktop (guacadmin/guacadmin) |
+| **Status page** | http://localhost:8000/health | Everything at a glance + logins |
 
 ---
 
@@ -190,9 +204,8 @@ A reset script is included. It's interactive and **never touches your login cred
 ```
 
 Menu options:
-- `1` — Clear sector/demo data only
-- `2` — Clear honeypot/attack event data only
-- `3` — Clear everything (but keeps users and credentials)
+- `2` — Clear honeypot / attack event data
+- `3` — Clear everything (keeps users and credentials)
 - `q` — Quit
 
 ---
@@ -224,17 +237,24 @@ docker compose logs backend
 ```
 If you see `SECRET_KEY` errors, re-check Step 2.
 
-### `ingestion.db` error / SQLite error on startup
+### Database connection errors on startup
+The backend needs the `db` (MariaDB) container healthy first. `docker compose up`
+handles the ordering, but if the backend logs show `Can't connect to MySQL server`:
 ```bash
-# Stop containers first
-docker compose down
-
-# Create the DB files manually
-touch backend/ingestion.db backend/honeynet.db
-
-# Start again
-docker compose up -d
+docker compose up -d db          # start just the database
+docker compose logs -f db        # wait for "ready for connections"
+docker compose up -d             # then the rest
 ```
+To wipe the database and start fresh: `docker compose down -v && docker compose up -d`.
+
+### phpMyAdmin can't log in
+Use server `db`, username `shadowtrust`, password `shadowtrust` (or whatever you set
+for `MARIADB_USER` / `MARIADB_PASSWORD` in the root `.env` **before first boot** —
+changing them afterwards needs `docker compose down -v`).
+
+### Port 3307 (or 8081) already in use
+Another MySQL/MariaDB (or app) owns it. Change `MARIADB_PORT` / `PHPMYADMIN_PORT` in
+the root `.env` and re-run `docker compose up -d`.
 
 ### Login says "Failed to fetch"
 Backend is not running. Check:
@@ -242,9 +262,6 @@ Backend is not running. Check:
 docker compose ps        # all containers should show "running"
 docker compose logs backend   # look for errors
 ```
-
-### Sectors dashboard shows no data
-Run the seed script (Step 5) to populate demo data.
 
 ### VM Lab shows "FATAL ERROR: AWS Orchestrator failed"
 - Make sure your AWS credentials are saved in `aws_connection.html`
@@ -267,21 +284,20 @@ ShadowTrust/
 │   ├── app/
 │   │   ├── api/v1/           All API endpoints
 │   │   ├── models/           Database models (SQLAlchemy)
-│   │   ├── services/         Business logic (malware, AWS, sectors...)
-│   │   └── db/               SQLite setup and init
+│   │   ├── services/         Business logic (malware, AWS, telemetry, labs...)
+│   │   └── db/               SQLAlchemy async engine + MariaDB init
 │   ├── .env.example          ← Template — copy to .env
 │   ├── requirements.txt      Python dependencies
-│   └── demo_seed.py          Demo data population script
 │
 ├── frontend/                 HTML/JS dashboard (served by Nginx)
 │   ├── *.html                All pages
 │   ├── js/                   JavaScript modules
-│   ├── demo/                 9 sector honeypot portals
 │   └── nginx.conf            Nginx config
 │
-├── guacamole/                Guacamole VM terminal stack (optional)
-│   ├── docker-compose.yml    Run separately for VM Lab feature
-│   └── init/initdb.sql       Guacamole PostgreSQL schema
+├── database/init/            SQL run on first MariaDB boot (creates test schema)
+│
+├── guacamole/init/initdb.sql   Guacamole Postgres schema (mounted by the main compose)
+├── docker/lab-kali/          Kali + XFCE + XRDP image for local VM Lab containers
 │
 ├── docker-compose.yml        Main service stack
 ├── Dockerfile.backend        Backend container build
@@ -309,8 +325,8 @@ ShadowTrust/
 
 **Optional extras:**
 ```
-[ ] docker exec -it soc_backend python demo_seed.py  (sector demo data)
-[ ] cd guacamole && docker compose up -d             (VM Lab terminal)
+[ ] ./scripts/attack_scenarios.sh localhost all      (generate live telemetry)
+[ ] make labs-up                                    (builds Kali image + starts everything)
 [ ] AWS credentials added in aws_connection.html     (S3 logs + EC2 VMs)
 ```
 
