@@ -1,19 +1,23 @@
 <div align="center">
 
-<img src="frontend/hero_image.png" alt="Shadow Trust" width="100%">
+<img src="https://readme-typing-svg.demolab.com/?font=JetBrains+Mono&weight=800&size=40&pause=1200&color=35C0E8&center=true&vCenter=true&width=760&height=70&lines=SHADOW+TRUST" alt="Shadow Trust" />
 
-# 🛡️ Shadow Trust
+<img src="https://readme-typing-svg.demolab.com/?font=JetBrains+Mono&size=18&pause=1000&color=8FD0EA&center=true&vCenter=true&width=760&height=32&lines=Deception+%C2%B7+Detection+%C2%B7+Investigation+%C2%B7+Compliance;A+honeypot-driven+SOC+platform+that+runs+on+one+laptop;Every+number+traces+to+a+real+query+%E2%80%94+nothing+fake" alt="tagline" />
 
-**Honeypot-driven Security Operations Center — deception, detection, investigation, and compliance in one stack.**
+<br/>
 
-[![Python](https://img.shields.io/badge/Python-3.11-3776AB?style=flat-square&logo=python&logoColor=white)](https://python.org)
-[![FastAPI](https://img.shields.io/badge/FastAPI-0.109-009688?style=flat-square&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
-[![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?style=flat-square&logo=docker&logoColor=white)](https://docker.com)
-[![MariaDB](https://img.shields.io/badge/MariaDB-11-003545?style=flat-square&logo=mariadb&logoColor=white)](https://mariadb.org)
-[![Tests](https://img.shields.io/badge/tests-133%20passing-3fb950?style=flat-square)](backend/tests)
-[![License](https://img.shields.io/badge/License-Private-red?style=flat-square)](.)
+<img src="https://skillicons.dev/icons?i=python,fastapi,docker,mysql,postgres,nginx,js,html,css,linux,bash,githubactions&perline=12" alt="stack" />
 
-[Overview](#overview) · [Quick start](#quick-start) · [Dashboard](#dashboard) · [Reports &amp; compliance](#reports--compliance) · [Architecture](#architecture) · [Configuration](#configuration) · [Team setup](#team-setup)
+<br/><br/>
+
+![Tests](https://img.shields.io/badge/tests-133_passing-3fb950?style=for-the-badge)
+![Python](https://img.shields.io/badge/python-3.11-3776AB?style=for-the-badge&logo=python&logoColor=white)
+![FastAPI](https://img.shields.io/badge/fastapi-async-009688?style=for-the-badge&logo=fastapi&logoColor=white)
+![Docker](https://img.shields.io/badge/docker-compose-2496ED?style=for-the-badge&logo=docker&logoColor=white)
+![MariaDB](https://img.shields.io/badge/mariadb-11-003545?style=for-the-badge&logo=mariadb&logoColor=white)
+![License](https://img.shields.io/badge/license-private-red?style=for-the-badge)
+
+**[Overview](#overview) · [Quick start](#quick-start) · [Dashboard](#dashboard) · [Reports &amp; compliance](#reports--compliance) · [Architecture](#architecture) · [Configuration](#configuration)**
 
 </div>
 
@@ -216,6 +220,10 @@ make help           # full list
 ---
 
 ## Tech stack
+
+<div align="center">
+<img src="https://skillicons.dev/icons?i=python,fastapi,flask,docker,mysql,postgres,redis,sqlite,nginx,linux,bash,js,html,css,githubactions,aws&perline=15" alt="tech stack" />
+</div>
 
 | Layer | Tech |
 |---|---|
