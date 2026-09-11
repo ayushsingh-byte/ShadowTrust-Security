@@ -14,70 +14,70 @@
         /* Terminal style overrides for datatables */
         .dataTables_wrapper .dataTables_length,
         .dataTables_wrapper .dataTables_filter {
-            color: #888;
+            color: var(--st-text-muted);
             margin-bottom: 20px;
         }
 
         .dataTables_wrapper input,
         .dataTables_wrapper select {
-            background: #111;
-            border: 1px solid #333;
+            background: var(--st-surface);
+            border: 1px solid var(--st-border);
             color: var(--neon-cyan);
             padding: 5px;
             outline: none;
-            font-family: 'JetBrains Mono';
+            font-family: var(--st-font-mono);
         }
 
         table.dataTable {
             border-collapse: collapse;
             width: 100%;
-            font-family: 'JetBrains Mono', monospace;
+            font-family: var(--st-font-mono);
             font-size: 0.8rem;
         }
 
         table.dataTable thead th {
-            border-bottom: 2px solid #333;
+            border-bottom: 2px solid var(--st-border);
             color: var(--neon-cyan);
             text-transform: uppercase;
             letter-spacing: 1px;
         }
 
         table.dataTable tbody td {
-            border-bottom: 1px solid #111;
+            border-bottom: 1px solid var(--st-border);
             padding: 12px 10px;
-            color: #ccc;
+            color: var(--st-text-secondary);
         }
 
         .dataTables_info,
         .dataTables_paginate {
-            color: #666 !important;
-            font-family: 'JetBrains Mono';
+            color: var(--st-text-faint) !important;
+            font-family: var(--st-font-mono);
             font-size: 0.8rem;
             margin-top: 20px;
         }
 
         .paginate_button.current {
-            background: #333 !important;
-            border: 1px solid #555 !important;
-            color: #fff !important;
+            background: var(--st-border) !important;
+            border: 1px solid var(--st-border-strong) !important;
+            color: var(--st-text) !important;
         }
 
         .code-block {
-            background: #000;
-            color: #0f0;
-            font-family: 'JetBrains Mono', monospace;
+            background: var(--st-surface-2);
+            color: var(--st-success);
+            font-family: var(--st-font-mono);
             padding: 10px;
             font-size: 0.7rem;
             height: 150px;
             overflow-y: scroll;
-            border: 1px solid #333;
+            border: 1px solid var(--st-border);
         }
 
         .mobsf-launch-panel {
             min-height: 260px;
             padding: 28px;
-            border-top: 1px solid #1e293b;
-            background: rgba(11, 16, 21, 0.95);
+            border-top: 1px solid var(--st-border);
+            background: var(--st-surface);
             color: var(--text-secondary);
             text-align: center;
             flex-direction: column;
@@ -94,48 +94,48 @@
         }
 
         .upload-strip input[type="file"] {
-            background: #0b1320;
-            border: 1px solid #1f2937;
-            color: #cbd5e1;
+            background: var(--st-surface);
+            border: 1px solid var(--st-border);
+            color: var(--st-text-secondary);
             padding: 8px 12px;
             min-width: 280px;
             border-radius: 4px;
-            font-family: 'JetBrains Mono', monospace;
+            font-family: var(--st-font-mono);
             font-size: 0.8rem;
             cursor: pointer;
             transition: all 0.3s ease;
         }
 
         .upload-strip input[type="file"]:hover {
-            border-color: #00c6ff;
-            box-shadow: 0 0 10px rgba(0, 198, 255, 0.15);
+            border-color: var(--st-accent);
+            
         }
 
         .upload-strip input[type="file"]::file-selector-button {
             margin-right: 15px;
-            border: 1px solid #00c6ff;
-            background: rgba(0, 198, 255, 0.1);
+            border: 1px solid var(--st-accent);
+            background: color-mix(in srgb, var(--st-accent) 10%, transparent);
             padding: 8px 16px;
             border-radius: 4px;
-            color: #00c6ff;
+            color: var(--st-accent);
             cursor: pointer;
             transition: all 0.2s ease-in-out;
-            font-family: 'JetBrains Mono', monospace;
+            font-family: var(--st-font-mono);
             font-weight: bold;
             text-transform: uppercase;
             font-size: 0.75rem;
         }
 
         .upload-strip input[type="file"]::file-selector-button:hover {
-            background: #00c6ff;
-            color: #050a0f;
-            box-shadow: 0 0 10px rgba(0, 198, 255, 0.4);
+            background: var(--st-accent);
+            color: var(--st-on-solid);
+            
         }
 
         .terminal-table td,
         .terminal-table th {
             padding: 12px;
-            border-bottom: 1px solid #111827;
+            border-bottom: 1px solid var(--st-border);
             vertical-align: top;
         }
 
@@ -146,8 +146,8 @@
         }
 
         .mobsf-kv-card {
-            border: 1px solid #1f2937;
-            background: #0b1320;
+            border: 1px solid var(--st-border);
+            background: var(--st-surface);
             padding: 12px;
         }
 
@@ -162,18 +162,18 @@
             display: flex;
             justify-content: space-between;
             gap: 10px;
-            border-bottom: 1px solid #111827;
+            border-bottom: 1px solid var(--st-border);
             padding: 6px 0;
             font-size: 0.72rem;
         }
 
         .mobsf-kv-row span:first-child {
-            color: #94a3b8;
+            color: var(--st-text-secondary);
         }
 
         .mobsf-kv-row span:last-child {
-            color: #e2e8f0;
-            font-family: 'JetBrains Mono', monospace;
+            color: var(--st-text);
+            font-family: var(--st-font-mono);
             text-align: right;
             word-break: break-word;
         }
@@ -186,8 +186,8 @@
         }
 
         .component-tile {
-            border: 1px solid #1f2937;
-            background: #0b1320;
+            border: 1px solid var(--st-border);
+            background: var(--st-surface);
             padding: 12px;
             text-align: center;
         }
@@ -201,21 +201,21 @@
         }
 
         .component-tile .lbl {
-            color: #94a3b8;
+            color: var(--st-text-secondary);
             font-size: 0.68rem;
             text-transform: uppercase;
             letter-spacing: 0.08em;
         }
 
         .raw-json-block {
-            background: #020617;
-            color: #93c5fd;
-            font-family: 'JetBrains Mono', monospace;
+            background: var(--st-surface-2);
+            color: var(--st-info);
+            font-family: var(--st-font-mono);
             font-size: 0.7rem;
             padding: 12px;
             max-height: 300px;
             overflow: auto;
-            border: 1px solid #1e293b;
+            border: 1px solid var(--st-border);
             white-space: pre-wrap;
         }
 
@@ -226,8 +226,8 @@
         }
 
         .mobsf-analysis-block {
-            border: 1px solid #1f2937;
-            background: #0b1320;
+            border: 1px solid var(--st-border);
+            background: var(--st-surface);
             overflow: hidden;
             border-radius: 10px;
         }
@@ -237,12 +237,12 @@
             justify-content: space-between;
             align-items: center;
             gap: 12px;
-            border-bottom: 1px solid #1f2937;
+            border-bottom: 1px solid var(--st-border);
             padding: 12px;
         }
 
         .mobsf-analysis-title {
-            color: #e2e8f0;
+            color: var(--st-text);
             font-size: 0.78rem;
             letter-spacing: 0.08em;
             text-transform: uppercase;
@@ -250,7 +250,7 @@
         }
 
         .mobsf-analysis-meta {
-            color: #94a3b8;
+            color: var(--st-text-secondary);
             font-size: 0.68rem;
         }
 
@@ -268,7 +268,7 @@
         }
 
         .mobsf-analysis-block details[open] .mobsf-analysis-header {
-            background: rgba(15, 23, 42, 0.65);
+            background: var(--st-surface-hover);
         }
 
         .mobsf-table-wrap {
@@ -280,39 +280,39 @@
             width: 100%;
             border-collapse: collapse;
             font-size: 0.72rem;
-            font-family: 'JetBrains Mono', monospace;
+            font-family: var(--st-font-mono);
         }
 
         .mobsf-data-table th,
         .mobsf-data-table td {
-            border-bottom: 1px solid #0f172a;
-            border-right: 1px solid #0f172a;
+            border-bottom: 1px solid var(--st-border);
+            border-right: 1px solid var(--st-border);
             padding: 8px 10px;
             vertical-align: top;
-            color: #cbd5e1;
+            color: var(--st-text-secondary);
             text-align: left;
         }
 
         .mobsf-data-table th {
             position: sticky;
             top: 0;
-            background: #0f172a;
-            color: #67e8f9;
+            background: var(--st-surface);
+            color: var(--st-accent);
             text-transform: uppercase;
             letter-spacing: 0.06em;
             z-index: 1;
         }
 
         .mobsf-data-table tbody tr:nth-child(odd) {
-            background: rgba(8, 18, 35, 0.45);
+            background: color-mix(in srgb, var(--st-bg) 90%, transparent);
         }
 
         .mobsf-data-table tbody tr:hover {
-            background: rgba(34, 211, 238, 0.08);
+            background: color-mix(in srgb, var(--st-info) 8%, transparent);
         }
 
         .mobsf-empty {
-            color: #64748b;
+            color: var(--st-text-muted);
             font-size: 0.75rem;
             padding: 14px;
         }
@@ -328,25 +328,25 @@
         }
 
         .sev-high {
-            background: rgba(239, 68, 68, 0.2);
-            color: #f87171;
-            border: 1px solid rgba(239, 68, 68, 0.4);
+            background: color-mix(in srgb, var(--st-danger) 20%, transparent);
+            color: var(--st-danger);
+            border: 1px solid color-mix(in srgb, var(--st-danger) 40%, transparent);
         }
 
         .sev-warning,
         .sev-medium {
-            background: rgba(250, 204, 21, 0.2);
-            color: #facc15;
-            border: 1px solid rgba(250, 204, 21, 0.35);
+            background: color-mix(in srgb, var(--st-warning) 20%, transparent);
+            color: var(--st-warning);
+            border: 1px solid color-mix(in srgb, var(--st-warning) 35%, transparent);
         }
 
         .sev-info,
         .sev-low,
         .sev-normal,
         .sev-secure {
-            background: rgba(45, 212, 191, 0.18);
-            color: #5eead4;
-            border: 1px solid rgba(45, 212, 191, 0.35);
+            background: color-mix(in srgb, var(--st-accent) 18%, transparent);
+            color: var(--st-accent);
+            border: 1px solid color-mix(in srgb, var(--st-accent) 35%, transparent);
         }
 
         @media (max-width: 1100px) {
@@ -359,6 +359,10 @@
             }
         }
     </style>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600;700&amp;display=swap">
+    <link rel="stylesheet" href="css/tokens.css">
+    <script src="js/theme.js"></script>
 </head>
 
 <body>
@@ -459,7 +463,7 @@
                 <div class="soc-card-header" style="padding:15px;">
                     <span class="card-title">MOBSF STATIC ANALYZER DETAILS</span>
                 </div>
-                <div style="padding:15px; border-top:1px solid #1e293b;">
+                <div style="padding:15px; border-top:1px solid var(--st-border);">
                     <div id="mobsfInfoGrid" class="mobsf-kv-grid">
                         <div class="mobsf-kv-card">
                             <h4>APP SCORES</h4>
@@ -509,7 +513,7 @@
                 <div class="soc-card-header" style="padding:15px;">
                     <span class="card-title">FULL MOBSF ANALYSIS BLOCKS</span>
                 </div>
-                <div style="padding:15px; border-top:1px solid #1e293b;">
+                <div style="padding:15px; border-top:1px solid var(--st-border);">
                     <div id="mobsfDynamicBlocks" class="mobsf-block-stack">
                         <div class="mobsf-empty">Run a scan to load full MobSF sections (Permissions, Android API, Browsable Activities, Certificate Analysis, Manifest Analysis, Code Analysis, Binary Analysis, Trackers, Emails, and more).</div>
                     </div>
@@ -547,7 +551,7 @@
                         <i class="fas fa-up-right-from-square"></i> OPEN IN NEW TAB
                     </a>
                 </div>
-                <div style="padding:15px; border-top:1px solid #1e293b; color:var(--text-secondary); font-size:0.78rem;">
+                <div style="padding:15px; border-top:1px solid var(--st-border); color:var(--text-secondary); font-size:0.78rem;">
                     API-only integration. MobSF runs in Docker on the first free port between 8000 and 9000.
                 </div>
                 <div class="mobsf-launch-panel" style="display:flex; min-height:220px;">

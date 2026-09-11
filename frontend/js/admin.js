@@ -65,8 +65,8 @@ function initOrUpdateCharts(timelinePoints) {
                 datasets: [{
                     label: 'Requests',
                     data: values24h,
-                    borderColor: '#00f3ff',
-                    backgroundColor: 'rgba(0, 243, 255, 0.1)',
+                    borderColor: 'var(--st-info)',
+                    backgroundColor: 'color-mix(in srgb, var(--st-info) 10%, transparent)',
                     fill: true,
                     tension: 0.35
                 }]
@@ -76,8 +76,8 @@ function initOrUpdateCharts(timelinePoints) {
                 maintainAspectRatio: false,
                 plugins: { legend: { display: false } },
                 scales: {
-                    y: { grid: { color: '#222' }, ticks: { color: '#666' } },
-                    x: { grid: { display: false }, ticks: { color: '#666' } }
+                    y: { grid: { color: 'var(--st-text-faint)' }, ticks: { color: 'var(--st-text-faint)' } },
+                    x: { grid: { display: false }, ticks: { color: 'var(--st-text-faint)' } }
                 }
             }
         });
@@ -94,7 +94,7 @@ function initOrUpdateCharts(timelinePoints) {
                 datasets: [{
                     label: 'Volume',
                     data: byWeek.buckets,
-                    backgroundColor: '#bc13fe',
+                    backgroundColor: 'var(--st-info)',
                     borderRadius: 4
                 }]
             },
@@ -103,8 +103,8 @@ function initOrUpdateCharts(timelinePoints) {
                 maintainAspectRatio: false,
                 plugins: { legend: { display: false } },
                 scales: {
-                    y: { grid: { color: '#222' }, ticks: { color: '#666' } },
-                    x: { grid: { display: false }, ticks: { color: '#666' } }
+                    y: { grid: { color: 'var(--st-text-faint)' }, ticks: { color: 'var(--st-text-faint)' } },
+                    x: { grid: { display: false }, ticks: { color: 'var(--st-text-faint)' } }
                 }
             }
         });
@@ -389,7 +389,7 @@ window.checkHealth = async () => {
     try {
         const res = await apiService.get('/admin/health');
         healthDiv.innerHTML = `
-            <div style="background:#111; padding:15px; border-radius:5px; border:1px solid #333; margin-top:10px;">
+            <div style="background:var(--st-surface); padding:15px; border-radius:5px; border:1px solid var(--st-border); margin-top:10px;">
                 <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
                     <span class="text-white font-weight-bold">OVERALL STATUS</span>
                     <span class="badge ${res.status === 'HEALTHY' ? 'badge-green' : 'badge-red'}">${res.status}</span>
@@ -398,7 +398,7 @@ window.checkHealth = async () => {
                     <div>DATABASE: <span class="${res.database === 'ONLINE' ? 'text-green' : 'text-red'}">${res.database}</span></div>
                     <div>API VERSION: ${res.api_version}</div>
                     <div>TIMESTAMP: ${res.timestamp}</div>
-                    <hr style="border-color:#333; margin:10px 0;">
+                    <hr style="border-color:var(--st-border); margin:10px 0;">
                     <div>SERVICES:</div>
                     ${Object.entries(res.services || {}).map(([k, v]) => `
                         <div style="display:flex; justify-content:space-between;">

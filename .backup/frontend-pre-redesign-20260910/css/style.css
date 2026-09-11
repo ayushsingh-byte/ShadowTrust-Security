@@ -1,0 +1,414 @@
+/* 
+  SHADOW TRUST - DEFENSE-GRADE COMMAND THEME
+  "Tactical" / Matte Navy / Official & Secure Aesthetic
+*/
+
+@import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=JetBrains+Mono:wght@400;700&display=swap');
+
+:root {
+    /* --- CORE PALETTE (TACTICAL NAVY) --- */
+    --bg-body: #0b1015;
+    /* Deepest Navy/Black mix */
+    --bg-sidebar: #0f171e;
+    /* Slightly lighter Sidebar */
+    --bg-card: #151e27;
+    /* Matte Navy Panel */
+    --bg-card-hover: #1c2630;
+    /* Hover state */
+
+    /* --- TACTICAL ACCENTS --- */
+    --accent-primary: #00c6ff;
+    /* Tactical Green (Success/Safe/Online) */
+    --accent-secondary: #ffaa00;
+    /* Amber (Warning/Caution) */
+    --accent-critical: #ff3333;
+    /* Alert Red (Critical/Attack) */
+    --accent-info: #00d9f7;
+    /* Cyan (Info/Network) */
+
+    /* --- OLD VARS MAPPED TO NEW PALETTE (For Compatibility) --- */
+    --neon-green: var(--accent-primary);
+    --neon-yellow: var(--accent-secondary);
+    --neon-red: var(--accent-critical);
+    --neon-cyan: var(--accent-info);
+    --neon-purple: var(--accent-secondary);
+    /* Remap purple to amber for consistency */
+    --neon-pink: var(--accent-critical);
+    /* Remap pink to red */
+
+    /* --- UI ELEMENTS --- */
+    --border-dim: 1px solid rgba(0, 198, 255, 0.15);
+    /* Subtle Green Border */
+    --border-bright: 1px solid rgba(0, 198, 255, 0.6);
+    --border-critical: 1px solid rgba(255, 51, 51, 0.6);
+
+    /* --- TEXT --- */
+    --text-primary: #e2e8f0;
+    /* Off-white/Silver */
+    --text-secondary: #94a3b8;
+    /* Muted Blue-Grey */
+    --text-muted: #64748b;
+    /* Darker Grey */
+    --text-accent: var(--accent-primary);
+
+    /* --- FONTS --- */
+    --font-heading: 'Arial Rounded MT Bold', 'Helvetica Rounded', Arial, sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
+    --font-main: 'Arial Rounded MT Bold', 'Helvetica Rounded', Arial, sans-serif;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background-color: var(--bg-body);
+    /* Subtle hex grid pattern */
+    background-image:
+        radial-gradient(circle at 50% 50%, rgba(16, 24, 32, 0) 0%, rgba(11, 16, 21, 0.8) 100%),
+        linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+    background-size: 100% 100%, 40px 40px, 40px 40px;
+    color: var(--text-primary);
+    font-family: var(--font-main);
+    overflow-x: hidden;
+    overflow-y: scroll;
+    scrollbar-gutter: stable;
+    line-height: 1.5;
+}
+
+/* --- SCROLLBAR --- */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--bg-body);
+}
+
+::-webkit-scrollbar-thumb {
+    background: #334155;
+    border-radius: 0;
+    /* Square corners */
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--accent-primary);
+}
+
+/* --- TYPOGRAPHY --- */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+    font-family: var(--font-heading);
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: #fff;
+    margin-bottom: 0.5rem;
+}
+
+.text-mono {
+    font-family: var(--font-mono);
+    letter-spacing: -0.5px;
+}
+
+/* TEXT UTILITIES */
+.text-cyan {
+    color: var(--accent-info) !important;
+}
+
+.text-purple {
+    color: var(--accent-secondary) !important;
+}
+
+/* Now Amber */
+.text-pink {
+    color: var(--accent-critical) !important;
+}
+
+/* Now Red */
+.text-red {
+    color: var(--accent-critical) !important;
+}
+
+.text-green {
+    color: var(--accent-primary) !important;
+}
+
+.text-yellow {
+    color: var(--accent-secondary) !important;
+}
+
+.text-blue {
+    color: var(--accent-info) !important;
+}
+
+.text-muted {
+    color: var(--text-muted) !important;
+}
+
+.text-white {
+    color: #fff !important;
+}
+
+/* --- COMPONENTS --- */
+
+/* Buttons */
+.soc-btn {
+    background: rgba(0, 198, 255, 0.05);
+    /* Very faint green bg */
+    border: 1px solid var(--accent-primary);
+    color: var(--accent-primary);
+    padding: 8px 24px;
+    border-radius: 0;
+    /* Sharp tactical corners */
+    font-family: var(--font-heading);
+    font-weight: 600;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    position: relative;
+    overflow: hidden;
+}
+
+.soc-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(0, 198, 255, 0.2), transparent);
+    transition: left 0.5s;
+}
+
+.soc-btn:hover::before {
+    left: 100%;
+}
+
+.soc-btn:hover {
+    background: var(--accent-primary);
+    color: #0b1015;
+    /* Contrast text on green */
+    box-shadow: 0 0 15px rgba(0, 198, 255, 0.4);
+}
+
+.soc-btn-primary {
+    /* Same as base but maybe emphasized */
+    border-width: 2px;
+}
+
+.soc-btn-danger {
+    border-color: var(--accent-critical);
+    color: var(--accent-critical);
+    background: rgba(255, 51, 51, 0.05);
+}
+
+.soc-btn-danger:hover {
+    background: var(--accent-critical);
+    color: #fff;
+    box-shadow: 0 0 15px rgba(255, 51, 51, 0.4);
+}
+
+/* Cards (Tactical Panels) */
+.soc-card {
+    background: var(--bg-card);
+    border: 1px solid #334155;
+    /* Slate border */
+    position: relative;
+    padding: 1.5rem;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+    /* Corner Accents using clip-path or pseudos */
+    clip-path: polygon(0 0,
+            100% 0,
+            100% calc(100% - 15px),
+            calc(100% - 15px) 100%,
+            0 100%);
+    /* Cut bottom right corner */
+}
+
+/* Add a visual "bracket" effect via pseudo-element */
+.soc-card::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 20px;
+    height: 20px;
+    border-top: 2px solid var(--accent-primary);
+    border-left: 2px solid var(--accent-primary);
+    opacity: 0.5;
+    pointer-events: none;
+}
+
+.soc-card:hover {
+    border-color: #475569;
+    background: var(--bg-card-hover);
+}
+
+.soc-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    padding-bottom: 0.8rem;
+    border-bottom: 1px solid #334155;
+}
+
+.card-title {
+    font-family: var(--font-heading);
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    letter-spacing: 1px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.card-title::before {
+    content: '■';
+    color: var(--accent-primary);
+    font-size: 0.8em;
+}
+
+/* Inputs */
+.soc-select,
+.soc-input {
+    background: #0f171e;
+    border: 1px solid #334155;
+    color: var(--text-primary);
+    padding: 8px 12px;
+    border-radius: 0;
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+.soc-select:focus,
+.soc-input:focus {
+    border-color: var(--accent-primary);
+}
+
+/* Tables */
+.soc-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+}
+
+.soc-table th {
+    text-align: left;
+    color: var(--text-secondary);
+    background: rgba(0, 0, 0, 0.2);
+    padding: 12px;
+    border-bottom: 2px solid #334155;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    letter-spacing: 1px;
+}
+
+.soc-table td {
+    padding: 12px;
+    border-bottom: 1px solid #1e293b;
+    color: var(--text-primary);
+}
+
+.soc-table tr:hover {
+    background: rgba(0, 198, 255, 0.05);
+    /* Slight green tint hover */
+}
+
+/* Badges */
+.badge {
+    padding: 4px 8px;
+    border-radius: 0;
+    /* Square badges */
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    font-family: var(--font-heading);
+    letter-spacing: 1px;
+    display: inline-block;
+}
+
+.badge-green,
+.badge-blue {
+    /* Map blue to green for this theme mostly */
+    background: rgba(0, 198, 255, 0.15);
+    color: var(--accent-primary);
+    border: 1px solid var(--accent-primary);
+}
+
+.badge-purple,
+.badge-yellow {
+    /* Map purple to secondary */
+    background: rgba(255, 170, 0, 0.15);
+    color: var(--accent-secondary);
+    border: 1px solid var(--accent-secondary);
+}
+
+.badge-red,
+.badge-pink {
+    background: rgba(255, 51, 51, 0.15);
+    color: var(--accent-critical);
+    border: 1px solid var(--accent-critical);
+}
+
+.badge-orange {
+    background: rgba(249, 115, 22, 0.15);
+    color: #f97316;
+    border: 1px solid #f97316;
+}
+
+.badge-teal {
+    background: rgba(20, 184, 166, 0.15);
+    color: #14b8a6;
+    border: 1px solid #14b8a6;
+}
+
+.badge-gray {
+    background: rgba(136, 146, 164, 0.15);
+    color: #8892a4;
+    border: 1px solid #8892a4;
+}
+
+/* Toggles / Misc */
+.toggle-btn {
+    color: var(--text-secondary) !important;
+    transition: 0.2s;
+}
+
+.toggle-btn:hover {
+    color: var(--accent-primary) !important;
+}
+
+/* Utilities */
+.animate-pulse {
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.5;
+    }
+
+    100% {
+        opacity: 1;
+    }
+}

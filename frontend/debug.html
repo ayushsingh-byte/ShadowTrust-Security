@@ -1,12 +1,12 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-require-admin>
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>System Diagnostics | Shadow Trust</title>
     <link
-        href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Orbitron:wght@500;700&family=Jura:wght@600&display=swap"
+        href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap"
         rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="css/modern.css">
@@ -32,7 +32,7 @@
         }
 
         .terminal-line {
-            font-family: 'JetBrains Mono', monospace;
+            font-family: var(--st-font-mono);
             font-size: 0.85rem;
             margin-bottom: 8px;
             display: flex;
@@ -41,7 +41,7 @@
         }
 
         .ts {
-            color: #666;
+            color: var(--st-text-faint);
             min-width: 80px;
         }
 
@@ -51,7 +51,7 @@
         }
 
         .tag.aws {
-            color: #ff9900;
+            color: var(--st-caution);
             min-width: 50px;
         }
 
@@ -66,12 +66,12 @@
         }
 
         .status.wait {
-            color: #aaa;
+            color: var(--st-text-secondary);
             font-style: italic;
         }
 
         .terminal-detail {
-            color: #ccc;
+            color: var(--st-text-secondary);
             margin-left: auto;
             max-width: 60%;
             text-align: right;
@@ -79,12 +79,12 @@
         }
 
         .error-dump {
-            background: rgba(255, 0, 85, 0.1);
+            background: color-mix(in srgb, var(--st-danger) 10%, transparent);
             border-left: 2px solid var(--neon-pink);
             padding: 10px;
             margin: 10px 0;
             color: var(--neon-pink);
-            font-family: 'JetBrains Mono', monospace;
+            font-family: var(--st-font-mono);
             font-size: 0.8rem;
             white-space: pre-wrap;
         }
@@ -98,13 +98,15 @@
             left: 0;
             bottom: 0;
             right: 0;
-            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+            background: linear-gradient(color-mix(in srgb, var(--st-bg) 0%, transparent) 50%, color-mix(in srgb, var(--st-bg) 50%, transparent) 50%), linear-gradient(90deg, color-mix(in srgb, var(--st-danger) 6%, transparent), color-mix(in srgb, var(--st-success) 2%, transparent), color-mix(in srgb, var(--st-info) 6%, transparent));
             z-index: 2;
             background-size: 100% 2px, 3px 100%;
             pointer-events: none;
             opacity: 0.5;
         }
     </style>
+    <link rel="stylesheet" href="css/tokens.css">
+    <script src="js/theme.js"></script>
 </head>
 
 <body class="dashboard-body">
@@ -125,14 +127,14 @@
             <div class="soc-card">
                 <div class="terminal-header">
                     <div>
-                        <h3 style="margin:0; font-family:'Jura'; color:var(--text-light);"><i
+                        <h3 style="margin:0; font-family:var(--st-font-main); color:var(--text-light);"><i
                                 class="fas fa-microchip"></i> AWS ORCHESTRATION ENGINE TEST</h3>
                         <p class="text-muted" style="margin:5px 0 0 0; font-size: 0.85rem;">Run a deep systemic health
                             check against the Boto3 integration before launching VMs.</p>
                     </div>
                     <div>
                         <button class="soc-btn" onclick="clearTerminal()">CLEAR LOG</button>
-                        <button class="soc-btn" style="background:var(--neon-green); color:#000; border:none;"
+                        <button class="soc-btn" style="background:var(--neon-green); color:var(--st-on-solid); border:none;"
                             id="runScanBtn" onclick="runDiagnostics()">RUN DIAGNOSTICS</button>
                     </div>
                 </div>

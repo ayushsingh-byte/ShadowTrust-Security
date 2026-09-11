@@ -21,10 +21,10 @@
     margin-bottom: 18px;
 }
 
-.usecases-hero-text h1 span { color: #00c6ff; }
+.usecases-hero-text h1 span { color: var(--st-accent); }
 
 .usecases-hero-text p {
-    color: #8892a4;
+    color: var(--st-text-muted);
     font-size: 16px;
     line-height: 1.75;
 }
@@ -33,11 +33,11 @@
 .uc-hero-widget {
     flex: 0 0 380px;
     width: 380px;
-    background: rgba(2,12,27,0.97);
-    border: 1px solid rgba(0,198,255,0.22);
+    background: var(--st-surface-2);
+    border: 1px solid color-mix(in srgb, var(--st-accent) 22%, transparent);
     border-radius: 18px;
     overflow: hidden;
-    box-shadow: 0 24px 60px rgba(0,0,0,0.55), 0 0 40px rgba(0,198,255,0.09);
+    box-shadow: var(--st-shadow-md);
     padding: 20px;
 }
 
@@ -51,7 +51,7 @@
 .uc-widget-title {
     font-size: 11px;
     font-weight: 700;
-    color: #fff;
+    color: var(--st-text);
     text-transform: uppercase;
     letter-spacing: 0.6px;
 }
@@ -59,10 +59,10 @@
 .uc-widget-count {
     font-size: 10px;
     padding: 2px 9px;
-    background: rgba(0,198,255,0.1);
-    color: #00c6ff;
+    background: color-mix(in srgb, var(--st-accent) 10%, transparent);
+    color: var(--st-accent);
     border-radius: 8px;
-    border: 1px solid rgba(0,198,255,0.25);
+    border: 1px solid color-mix(in srgb, var(--st-accent) 25%, transparent);
     font-weight: 700;
 }
 
@@ -79,8 +79,8 @@
     align-items: center;
     gap: 6px;
     padding: 14px 8px;
-    background: rgba(255,255,255,0.03);
-    border: 1px solid rgba(255,255,255,0.07);
+    background: color-mix(in srgb, var(--st-text) 3%, transparent);
+    border: 1px solid color-mix(in srgb, var(--st-text) 7%, transparent);
     border-radius: 12px;
     transition: all 0.3s;
     cursor: default;
@@ -88,16 +88,16 @@
 
 .uc-hex-item:hover,
 .uc-hex-item.highlight {
-    background: rgba(0,198,255,0.07);
-    border-color: rgba(0,198,255,0.22);
+    background: color-mix(in srgb, var(--st-accent) 7%, transparent);
+    border-color: color-mix(in srgb, var(--st-accent) 22%, transparent);
 }
 
 .uc-hex-icon  { font-size: 24px; }
-.uc-hex-label { font-size: 10px; color: #8892a4; font-weight: 600; text-align: center; }
+.uc-hex-label { font-size: 10px; color: var(--st-text-muted); font-weight: 600; text-align: center; }
 
 .uc-stat-strip {
     display: flex;
-    border-top: 1px solid rgba(255,255,255,0.06);
+    border-top: 1px solid color-mix(in srgb, var(--st-text) 6%, transparent);
     padding-top: 14px;
     gap: 0;
 }
@@ -106,7 +106,7 @@
     flex: 1;
     text-align: center;
     font-size: 10px;
-    color: #8892a4;
+    color: var(--st-text-muted);
     position: relative;
 }
 
@@ -115,14 +115,14 @@
     position: absolute;
     left: 0; top: 10%; height: 80%;
     width: 1px;
-    background: rgba(255,255,255,0.07);
+    background: color-mix(in srgb, var(--st-text) 7%, transparent);
 }
 
 .uc-stat span {
     display: block;
     font-size: 20px;
     font-weight: 800;
-    color: #00c6ff;
+    color: var(--st-accent);
     line-height: 1;
     margin-bottom: 4px;
 }
@@ -138,8 +138,8 @@
 .industry-card {
     display: flex;
     gap: 20px;
-    background: rgba(255,255,255,0.03);
-    border: 1px solid rgba(255,255,255,0.07);
+    background: color-mix(in srgb, var(--st-text) 3%, transparent);
+    border: 1px solid color-mix(in srgb, var(--st-text) 7%, transparent);
     border-radius: 16px;
     padding: 28px 24px;
     transition: all 0.35s;
@@ -148,9 +148,9 @@
 
 .industry-card:hover {
     transform: translateY(-6px);
-    background: rgba(0,198,255,0.05);
-    border-color: rgba(0,198,255,0.28);
-    box-shadow: 0 12px 32px rgba(0,0,0,0.35);
+    background: color-mix(in srgb, var(--st-accent) 5%, transparent);
+    border-color: color-mix(in srgb, var(--st-accent) 28%, transparent);
+    box-shadow: var(--st-shadow-md);
 }
 
 .industry-icon {
@@ -160,9 +160,9 @@
     justify-content: center;
     min-width: 56px;
     height: 56px;
-    background: rgba(0,198,255,0.08);
+    background: color-mix(in srgb, var(--st-accent) 8%, transparent);
     border-radius: 12px;
-    border: 1px solid rgba(0,198,255,0.18);
+    border: 1px solid color-mix(in srgb, var(--st-accent) 18%, transparent);
     flex-shrink: 0;
 }
 
@@ -172,11 +172,11 @@
     font-size: 17px;
     font-weight: 700;
     margin-bottom: 8px;
-    color: #fff;
+    color: var(--st-text);
 }
 
 .industry-content p {
-    color: #8892a4;
+    color: var(--st-text-muted);
     line-height: 1.7;
     margin-bottom: 14px;
     font-size: 13px;
@@ -191,7 +191,7 @@
     position: relative;
     padding-left: 18px;
     margin-bottom: 6px;
-    color: #8892a4;
+    color: var(--st-text-muted);
     font-size: 13px;
     line-height: 1.5;
 }
@@ -200,7 +200,7 @@
     content: '›';
     position: absolute;
     left: 0;
-    color: #00c6ff;
+    color: var(--st-accent);
     font-weight: 700;
 }
 

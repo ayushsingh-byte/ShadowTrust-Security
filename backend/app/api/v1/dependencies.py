@@ -24,6 +24,10 @@ def dev_bypass_enabled() -> bool:
         and os.getenv("INFRA_PROVIDER", "local").strip().lower() == "local"
     )
 
+# The persisted account the dev-bypass shortcut signs in as (see AuthService.dev_bypass_token).
+DEV_BYPASS_EMAIL = "admin@gmail.com"
+
+
 async def get_current_user(
     token: str = Depends(oauth2_scheme),
     db: AsyncSession = Depends(get_db)
@@ -37,11 +41,15 @@ async def get_current_user(
         if token == "dev_bypass_token":
             if not dev_bypass_enabled():
                 raise credentials_exception
-            # Mock a super admin user for local development without Supabase
-            return User(email="dev@shadowtrust.local", role="SUPER_ADMIN", status="ACTIVE")
-
-        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
-        email: str = payload.get("sub")
+            # Resolve to the real database row, so the user has an id and serializes like any
+            # other — an unsaved stand-in object made /users/me fail response validation.
+            email = DEV_BYPASS_EMAIL
+            if (await db.execute(select(User.id).where(User.email == email))).first() is None:
+                from app.services.auth_service import auth_service
+                await auth_service.dev_bypass_token(db)
+        else:
+            payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+            email = payload.get("sub")
         if email is None:
             raise credentials_exception
     except jwt.PyJWTError:

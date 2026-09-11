@@ -27,17 +27,26 @@ async def lifespan(app: FastAPI):
     print("Initializing Database...")
     await init_db()
 
+    from app.services import container_status
+    from app.services.event_bus import event_bus
+
     # Start background tasks
     tasks = [
         asyncio.create_task(background_sync_loop()),
         asyncio.create_task(background_session_loop()),
         asyncio.create_task(background_detection_loop()),
         asyncio.create_task(background_analysis_reaper()),
+        # Sensor container CPU/memory/network, pushed to dashboards on the "metrics" channel.
+        asyncio.create_task(container_status.run_metrics_sampler(
+            lambda snapshot: event_bus.publish(snapshot, channel="metrics"))),
     ]
 
-    # Telemetry ingestion. Local mode runs the cursor-based collector, which
-    # tails sensor logs every couple of seconds so the dashboard updates while
-    # an attack is happening. AWS mode keeps the original 30-second S3 poller.
+    # Newly committed telemetry wakes the detection engine immediately.
+    local_collector.add_listener(lambda _count: detection_wakeup.set())
+
+    # Telemetry ingestion. Local mode runs the cursor-based collector, woken by
+    # inotify the moment a sensor writes, so the dashboard updates while an
+    # attack is happening. AWS mode keeps the original 30-second S3 poller.
     # Running both would double-ingest every event.
     if _infra_provider() == "aws":
         print("Telemetry: S3 pipeline (INFRA_PROVIDER=aws)")
@@ -105,21 +114,39 @@ async def background_analysis_reaper():
         await asyncio.sleep(30)
 
 
+# Set whenever the collector commits new telemetry, so detections run within about a
+# second of ingest; DETECTION_ENGINE_INTERVAL_SECONDS is only a fallback tick.
+detection_wakeup = asyncio.Event()
+DETECTION_DEBOUNCE_SECONDS = 0.5
+
+
 async def background_detection_loop():
     """Detection + correlation engine — turns normalized events into detections
     and incidents. Extends the existing risk/sync layer, never replaces it."""
+    from datetime import datetime
+    from app.services.event_bus import event_bus
+
     try:
         interval = max(5.0, float(os.getenv("DETECTION_ENGINE_INTERVAL_SECONDS", "20")))
     except (TypeError, ValueError):
         interval = 20.0
-    # let the collector get a head start on the first ingest
-    await asyncio.sleep(min(interval, 10))
     while True:
         try:
-            await detection_engine.run_cycle()
+            summary = await detection_engine.run_cycle()
+            if summary and (summary.get("detections") or summary.get("incidents")):
+                event_bus.publish(
+                    {**summary, "completed_at": datetime.utcnow().isoformat() + "Z"},
+                    channel="detection",
+                )
         except Exception as e:  # noqa: BLE001
             print(f"Detection Engine Error: {e}")
-        await asyncio.sleep(interval)
+        try:
+            await asyncio.wait_for(detection_wakeup.wait(), timeout=interval)
+            # Coalesce a burst of ingests into one detection pass.
+            await asyncio.sleep(DETECTION_DEBOUNCE_SECONDS)
+        except asyncio.TimeoutError:
+            pass
+        detection_wakeup.clear()
 
 app = FastAPI(
     title="Shadow Trust AI Honeypot",

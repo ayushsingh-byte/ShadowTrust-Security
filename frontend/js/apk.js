@@ -144,15 +144,15 @@ function renderDangerousPermissions(permissions) {
     const items = Array.isArray(permissions) ? permissions : [];
 
     if (items.length === 0) {
-        container.innerHTML = '<div class="text-xs" style="color:#22c55e; font-weight:700;">SAFE: No dangerous permissions detected</div>';
+        container.innerHTML = '<div class="text-xs" style="color:var(--st-success); font-weight:700;">SAFE: No dangerous permissions detected</div>';
         return;
     }
 
     container.innerHTML = items.slice(0, 10).map((permission, index) => {
         const width = Math.max(25, 100 - (index * 12));
         return `
-            <div class="text-xs" style="color:#fca5a5; font-weight:700;">${escapeHtml(permission.short_name || permission.name)}${permission.status ? ` (${escapeHtml(permission.status)})` : ''}</div>
-            <div class="progress-bar"><div class="progress-fill" style="width:${width}%; background:${index === 0 ? '#ff0055' : '#ef4444'};"></div></div>
+            <div class="text-xs" style="color:var(--st-danger); font-weight:700;">${escapeHtml(permission.short_name || permission.name)}${permission.status ? ` (${escapeHtml(permission.status)})` : ''}</div>
+            <div class="progress-bar"><div class="progress-fill" style="width:${width}%; background:${index === 0 ? 'var(--st-danger)' : 'var(--st-danger)'};"></div></div>
         `;
     }).join('');
 }
@@ -199,7 +199,7 @@ function renderFindings(findings) {
 
     tbody.innerHTML = rows.map((finding) => `
         <tr>
-            <td style="color:#fff; padding:12px; vertical-align:top;">${escapeHtml(finding.title)}</td>
+            <td style="color:var(--st-text); padding:12px; vertical-align:top;">${escapeHtml(finding.title)}</td>
             <td style="padding:12px;"><span class="sev-chip ${sevClass(finding.severity)}">${escapeHtml(finding.severity)}</span></td>
             <td class="text-muted" style="padding:12px; line-height:1.5;">${escapeHtml(finding.description || finding.source)}</td>
         </tr>
@@ -495,10 +495,10 @@ function renderHistory(history) {
     if (!Array.isArray(history) || history.length === 0) {
         tbody.innerHTML = `
             <tr>
-                <td style="color:#fff;">No scans yet</td>
-                <td class="text-mono" style="color:#666;">-</td>
+                <td style="color:var(--st-text);">No scans yet</td>
+                <td class="text-mono" style="color:var(--st-text-faint);">-</td>
                 <td class="text-mono">-</td>
-                <td style="font-weight:bold; color:#fff;">-</td>
+                <td style="font-weight:bold; color:var(--st-text);">-</td>
                 <td class="text-muted">Upload an APK to start MobSF analysis</td>
                 <td><span class="badge">N/A</span></td>
             </tr>
@@ -508,10 +508,10 @@ function renderHistory(history) {
             const score = Number(item.score || 0);
             const row = `
                 <tr>
-                    <td style="color:#fff;">${escapeHtml(item.app_name || item.original_filename || 'Unknown App')}</td>
-                    <td class="text-mono" style="color:#666;">${escapeHtml(item.package_name || 'unknown')}</td>
+                    <td style="color:var(--st-text);">${escapeHtml(item.app_name || item.original_filename || 'Unknown App')}</td>
+                    <td class="text-mono" style="color:var(--st-text-faint);">${escapeHtml(item.package_name || 'unknown')}</td>
                     <td class="text-mono">${escapeHtml(item.version_name || 'N/A')}</td>
-                    <td style="font-weight:bold; color:#fff;">${score}/100</td>
+                    <td style="font-weight:bold; color:var(--st-text);">${score}/100</td>
                     <td class="text-muted">Scanned ${escapeHtml(formatTimestamp(item.timestamp))}</td>
                     <td><span class="badge ${badgeForThreatLevel(score)}">${score >= 70 ? 'HIGH' : score >= 35 ? 'MEDIUM' : 'LOW'}</span></td>
                 </tr>

@@ -8,7 +8,10 @@ from app.services.providers import (
     get_provider_name,
 )
 
-router = APIRouter()
+from fastapi import Depends
+from app.api.v1.dependencies import get_current_active_user
+
+router = APIRouter(dependencies=[Depends(get_current_active_user)])
 
 
 @router.post("/{lab_id}/open", response_model=Dict[str, Any])

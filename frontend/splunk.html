@@ -10,39 +10,43 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         .sp-kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 20px; }
-        .sp-kpi { background: #0a0a0f; border: 1px solid #222; border-radius: 8px; padding: 16px; }
-        .sp-kpi .v { font-size: 1.8rem; font-weight: 700; font-family: var(--font-mono, monospace); color: #58e1c1; }
-        .sp-kpi .l { font-size: 0.65rem; letter-spacing: 1px; color: #888; margin-top: 4px; text-transform: uppercase; }
+        .sp-kpi { background: var(--st-surface-2); border: 1px solid var(--st-border); border-radius: 8px; padding: 16px; }
+        .sp-kpi .v { font-size: 1.8rem; font-weight: 700; font-family: var(--font-mono, monospace); color: var(--st-success); }
+        .sp-kpi .l { font-size: 0.65rem; letter-spacing: 1px; color: var(--st-text-muted); margin-top: 4px; text-transform: uppercase; }
         .sp-pill { display: inline-flex; align-items: center; gap: 7px; font-size: 0.75rem; font-family: var(--font-mono, monospace);
-                   padding: 3px 12px; border-radius: 999px; border: 1px solid #333; }
+                   padding: 3px 12px; border-radius: 999px; border: 1px solid var(--st-border); }
         .sp-pill .dot { width: 8px; height: 8px; border-radius: 50%; }
-        .sp-up { color: #3fb950; } .sp-up .dot { background: #3fb950; }
-        .sp-down { color: #f85149; } .sp-down .dot { background: #f85149; }
-        .sp-card { background: #0d1117; border: 1px solid #1c2128; border-radius: 8px; padding: 16px; margin-bottom: 18px; }
-        .sp-card h3 { margin: 0 0 12px; font-size: 0.8rem; letter-spacing: 1px; color: #7d8590; text-transform: uppercase; }
+        .sp-up { color: var(--st-success); } .sp-up .dot { background: var(--st-success); }
+        .sp-down { color: var(--st-danger); } .sp-down .dot { background: var(--st-danger); }
+        .sp-card { background: var(--st-surface); border: 1px solid var(--st-border); border-radius: 8px; padding: 16px; margin-bottom: 18px; }
+        .sp-card h3 { margin: 0 0 12px; font-size: 0.8rem; letter-spacing: 1px; color: var(--st-text-muted); text-transform: uppercase; }
         .sp-search { display: flex; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }
         .sp-search input, .sp-search select {
-            background: #161b22; border: 1px solid #30363d; color: #e6edf3; padding: 8px 10px; border-radius: 6px;
+            background: var(--st-surface-hover); border: 1px solid var(--st-border); color: var(--st-text); padding: 8px 10px; border-radius: 6px;
             font-family: var(--font-mono, monospace); font-size: 0.85rem;
         }
         .sp-search input.spl { flex: 1; min-width: 320px; }
-        .sp-table-wrap { overflow-x: auto; max-height: 460px; overflow-y: auto; border: 1px solid #1c2128; border-radius: 6px; }
+        .sp-table-wrap { overflow-x: auto; max-height: 460px; overflow-y: auto; border: 1px solid var(--st-border); border-radius: 6px; }
         table.sp-table { border-collapse: collapse; width: 100%; font-size: 0.8rem; }
-        table.sp-table th { position: sticky; top: 0; background: #161b22; color: #7d8590; text-align: left;
+        table.sp-table th { position: sticky; top: 0; background: var(--st-surface-hover); color: var(--st-text-muted); text-align: left;
                             padding: 8px 10px; font-weight: 600; white-space: nowrap; }
-        table.sp-table td { padding: 6px 10px; border-top: 1px solid #1c2128; color: #c9d1d9; vertical-align: top;
+        table.sp-table td { padding: 6px 10px; border-top: 1px solid var(--st-border); color: var(--st-text-secondary); vertical-align: top;
                             font-family: var(--font-mono, monospace); max-width: 460px; overflow: hidden; text-overflow: ellipsis; }
-        table.sp-table tr:hover td { background: #11161d; }
-        .sp-note { color: #7d8590; font-size: 0.78rem; margin-top: 6px; }
-        .sp-err { color: #f85149; font-size: 0.82rem; }
+        table.sp-table tr:hover td { background: var(--st-surface); }
+        .sp-note { color: var(--st-text-muted); font-size: 0.78rem; margin-top: 6px; }
+        .sp-err { color: var(--st-danger); font-size: 0.82rem; }
         .sp-chips { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
-        .sp-chip { background: #161b22; border: 1px solid #30363d; color: #58a6ff; font-size: 0.72rem;
+        .sp-chip { background: var(--st-surface-hover); border: 1px solid var(--st-border); color: var(--st-info); font-size: 0.72rem;
                    padding: 3px 9px; border-radius: 6px; cursor: pointer; font-family: var(--font-mono, monospace); }
-        .sp-chip:hover { border-color: #58a6ff; }
-        .sp-drop { border: 2px dashed #30363d; border-radius: 8px; padding: 22px; text-align: center;
-                   color: #7d8590; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 8px; }
-        .sp-drop.drag { border-color: #58a6ff; background: #0d1b2a; color: #c9d1d9; }
+        .sp-chip:hover { border-color: var(--st-info); }
+        .sp-drop { border: 2px dashed var(--st-border); border-radius: 8px; padding: 22px; text-align: center;
+                   color: var(--st-text-muted); cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 8px; }
+        .sp-drop.drag { border-color: var(--st-info); background: var(--st-surface); color: var(--st-text-secondary); }
     </style>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600;700&amp;display=swap">
+    <link rel="stylesheet" href="css/tokens.css">
+    <script src="js/theme.js"></script>
 </head>
 
 <body>
@@ -61,8 +65,8 @@
                 </div>
             </div>
 
-            <div id="sp-offline" class="sp-card" style="display:none; border-color:#f85149;">
-                <h3 style="color:#f85149;">Splunk unreachable</h3>
+            <div id="sp-offline" class="sp-card" style="display:none; border-color:var(--st-danger);">
+                <h3 style="color:var(--st-danger);">Splunk unreachable</h3>
                 <div class="sp-note">
                     Start it: <code>cd ~/splunk-lab &amp;&amp; docker compose up -d</code> — the web UI must be on
                     <code>:8009</code> and the management API <code>:8089</code> must be published
@@ -92,7 +96,7 @@
                     </select>
                     <button class="soc-btn soc-btn-primary" id="spl-run"><i class="fas fa-play"></i> RUN</button>
                     <button class="soc-btn" id="spl-csv"><i class="fas fa-download"></i> CSV</button>
-                    <button class="soc-btn" id="spl-del" style="border-color:#f85149; color:#f85149;" title="Delete the events matching this search"><i class="fas fa-trash"></i> DELETE MATCHES</button>
+                    <button class="soc-btn" id="spl-del" style="border-color:var(--st-danger); color:var(--st-danger);" title="Delete the events matching this search"><i class="fas fa-trash"></i> DELETE MATCHES</button>
                 </div>
                 <div class="sp-chips">
                     <span class="sp-chip" data-spl='search index=* | stats count by sourcetype | sort - count'>count by sourcetype</span>
@@ -135,13 +139,13 @@
                     <span class="sp-note">and / or older than</span>
                     <input id="purge-days" type="number" min="0" placeholder="days" style="width:90px;">
                     <button class="soc-btn" id="purge-refresh" title="reload source list"><i class="fas fa-rotate"></i></button>
-                    <button class="soc-btn" id="purge-run" style="border-color:#f85149; color:#f85149;"><i class="fas fa-trash"></i> PURGE</button>
+                    <button class="soc-btn" id="purge-run" style="border-color:var(--st-danger); color:var(--st-danger);"><i class="fas fa-trash"></i> PURGE</button>
                 </div>
                 <div id="purge-status" class="sp-note" style="margin-top:8px;"></div>
             </div>
 
             <div class="sp-card">
-                <h3>Notable events <span style="color:#7d8590; font-weight:400; text-transform:none;">— failed logons · account changes · blocked actions · sysmon</span></h3>
+                <h3>Notable events <span style="color:var(--st-text-muted); font-weight:400; text-transform:none;">— failed logons · account changes · blocked actions · sysmon</span></h3>
                 <div id="notable-status" class="sp-note"></div>
                 <div class="sp-table-wrap"><table class="sp-table" id="notable-table"></table></div>
             </div>
@@ -156,7 +160,7 @@
         const esc = (s) => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
         function renderTable(el, rows) {
-            if (!rows || !rows.length) { el.innerHTML = '<tbody><tr><td style="color:#7d8590">No results.</td></tr></tbody>'; return; }
+            if (!rows || !rows.length) { el.innerHTML = '<tbody><tr><td style="color:var(--st-text-muted)">No results.</td></tr></tbody>'; return; }
             const cols = [...rows.reduce((set, r) => { Object.keys(r).forEach(k => set.add(k)); return set; }, new Set())]
                 .filter(c => !c.startsWith('_raw')).slice(0, 12);
             el.innerHTML =
@@ -245,7 +249,7 @@
                 res = await apiService.post('/splunk/delete', { spl, earliest: $('#spl-time').value || '0', latest: 'now', confirm: true });
             } catch (e) { $('#spl-status').innerHTML = `<span class="sp-err">${esc(e.message)}</span>`; return; }
             if (!res.ok) { $('#spl-status').innerHTML = `<span class="sp-err">${esc(res.error || 'delete failed')}</span>`; return; }
-            $('#spl-status').innerHTML = `<span style="color:#3fb950">deleted ${res.deleted} event(s)</span>`;
+            $('#spl-status').innerHTML = `<span style="color:var(--st-success)">deleted ${res.deleted} event(s)</span>`;
             loadKpis(); loadNotable();
         };
 
@@ -262,7 +266,7 @@
                 });
             } catch (e) { $('#ing-status').innerHTML = `<span class="sp-err">${esc(e.message)}</span>`; return; }
             if (!res.ok) { $('#ing-status').innerHTML = `<span class="sp-err">${esc(res.error || 'ingest failed')}</span>`; return; }
-            $('#ing-status').innerHTML = `<span style="color:#3fb950">ingested ${res.events} event(s) into ${esc(res.index)} (${esc(res.sourcetype)})</span>`;
+            $('#ing-status').innerHTML = `<span style="color:var(--st-success)">ingested ${res.events} event(s) into ${esc(res.index)} (${esc(res.sourcetype)})</span>`;
             $('#ing-data').value = '';
             setTimeout(() => { loadKpis(); loadNotable(); loadSources(); }, 1500);
         };
@@ -285,7 +289,7 @@
             try { res = await apiService.upload('/splunk/upload', fd); }
             catch (e) { $('#up-status').innerHTML = `<span class="sp-err">${esc(e.message)}</span>`; return; }
             const lines = (res.files || []).map(r =>
-                r.ok ? `<span style="color:#3fb950">✓ ${esc(r.name)} — ${r.events} events (${esc(r.sourcetype)})</span>`
+                r.ok ? `<span style="color:var(--st-success)">✓ ${esc(r.name)} — ${r.events} events (${esc(r.sourcetype)})</span>`
                      : `<span class="sp-err">✗ ${esc(r.name)} — ${esc(r.error || 'failed')}</span>`);
             $('#up-status').innerHTML = `total ${res.total_events} event(s)<br>` + lines.join('<br>');
             fileInput.value = '';
@@ -319,14 +323,14 @@
                 });
             } catch (e) { $('#purge-status').innerHTML = `<span class="sp-err">${esc(e.message)}</span>`; return; }
             if (!res.ok) { $('#purge-status').innerHTML = `<span class="sp-err">${esc(res.error)}</span>`; return; }
-            $('#purge-status').innerHTML = `<span style="color:#3fb950">purged ${res.deleted} event(s)</span>`;
+            $('#purge-status').innerHTML = `<span style="color:var(--st-success)">purged ${res.deleted} event(s)</span>`;
             setTimeout(() => { loadKpis(); loadNotable(); loadSources(); }, 1500);
         };
         loadSources();
         $('#spl-csv').onclick = () => {
             if (!lastRows.length) {
                 const el = $('#sp-search-status') || $('#purge-status');
-                if (el) el.innerHTML = '<span style="color:#d29922">Run a search first — no rows to export.</span>';
+                if (el) el.innerHTML = '<span style="color:var(--st-warning)">Run a search first — no rows to export.</span>';
                 return;
             }
             const blob = new Blob([toCsv(lastRows)], { type: 'text/csv' });

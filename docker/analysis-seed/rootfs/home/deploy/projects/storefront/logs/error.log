@@ -1,0 +1,4 @@
+[error] 2026-02-12 03:11:07 upstream timed out (110: Connection timed out) while reading response header from upstream, client: 198.51.100.9
+[warn]  2026-02-12 03:22:41 client sent invalid method while reading client request line
+[error] 2026-02-12 03:48:55 FastCGI sent in stderr: "PHP message: sqlite3.OperationalError: near "UNION": syntax error in /home/deploy/projects/storefront/app/main.py"
+[error] 2026-02-12 04:01:55 PHP message: Undefined variable $ADMIN_PW in /var/www/html/admin/login.php on line 8

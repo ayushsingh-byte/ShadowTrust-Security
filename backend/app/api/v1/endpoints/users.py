@@ -88,6 +88,83 @@ async def get_me(current_user: User = Depends(get_current_active_user)):
     }
 
 
+@router.get("/me/activity")
+async def get_my_activity(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+):
+    """Counts and a recent timeline built only from records attributed to the signed-in user."""
+    from sqlalchemy import desc, func, or_
+    from app.models.all_models import AdminActivity, GeneratedReport, Incident, IncidentActivity
+
+    identities = [value for value in (current_user.email, current_user.username) if value]
+    closed_statuses = ("RESOLVED", "CLOSED", "FALSE_POSITIVE", "FALSE POSITIVE")
+
+    async def count(query) -> int:
+        return (await db.execute(query)).scalar() or 0
+
+    counts = {
+        "incidents_assigned": await count(
+            select(func.count(Incident.id)).where(Incident.assigned_analyst.in_(identities))
+        ),
+        "incidents_resolved": await count(
+            select(func.count(Incident.id)).where(
+                Incident.assigned_analyst.in_(identities),
+                func.upper(Incident.status).in_(closed_statuses),
+            )
+        ),
+        "investigation_actions": await count(
+            select(func.count(IncidentActivity.id)).where(IncidentActivity.actor.in_(identities))
+        ),
+        "reports_generated": await count(
+            select(func.count(GeneratedReport.id)).where(GeneratedReport.generated_by_email == current_user.email)
+        ),
+        "admin_actions": await count(
+            select(func.count(AdminActivity.id)).where(
+                or_(AdminActivity.admin_id == current_user.id, AdminActivity.admin_username.in_(identities))
+            )
+        ),
+    }
+
+    timeline = []
+    activity_rows = (await db.execute(
+        select(IncidentActivity, Incident.incident_key)
+        .join(Incident, Incident.id == IncidentActivity.incident_id, isouter=True)
+        .where(IncidentActivity.actor.in_(identities))
+        .order_by(desc(IncidentActivity.at)).limit(12)
+    )).all()
+    for activity, incident_key in activity_rows:
+        timeline.append({"at": activity.at, "action": activity.action,
+                         "target": incident_key or f"incident {activity.incident_id}",
+                         "result": activity.detail})
+
+    for report in (await db.execute(
+        select(GeneratedReport).where(GeneratedReport.generated_by_email == current_user.email)
+        .order_by(desc(GeneratedReport.generated_at)).limit(12)
+    )).scalars():
+        timeline.append({"at": report.generated_at, "action": "report generated",
+                         "target": report.title or report.report_type, "result": report.status})
+
+    for entry in (await db.execute(
+        select(AdminActivity).where(
+            or_(AdminActivity.admin_id == current_user.id, AdminActivity.admin_username.in_(identities))
+        ).order_by(desc(AdminActivity.timestamp)).limit(12)
+    )).scalars():
+        timeline.append({"at": entry.timestamp, "action": entry.action,
+                         "target": entry.affected_user, "result": entry.result})
+
+    timeline = sorted((t for t in timeline if t["at"]), key=lambda t: t["at"], reverse=True)[:12]
+    for item in timeline:
+        item["at"] = item["at"].isoformat()
+
+    return {
+        "counts": counts,
+        "timeline": timeline,
+        "member_since": current_user.created_at.isoformat() if current_user.created_at else None,
+        "last_login": current_user.last_login.isoformat() if current_user.last_login else None,
+    }
+
+
 @router.post("/", response_model=UserOut)
 async def create_user(
     user: UserCreate, 

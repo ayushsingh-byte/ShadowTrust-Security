@@ -275,7 +275,8 @@ Click the button below to set a new password. This link expires in <strong>1 hou
 
     async def dev_bypass_token(self, db: AsyncSession):
         # Create or fetch an admin user for dev bypass
-        email = "admin@gmail.com"
+        from app.api.v1.dependencies import DEV_BYPASS_EMAIL
+        email = DEV_BYPASS_EMAIL
         result = await db.execute(select(User).where(User.email == email))
         user = result.scalars().first()
 

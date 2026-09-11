@@ -1,0 +1,85 @@
+{% extends "report_base.html" %}
+{% from "_macros.html" import data_table, kpi_band, bars, trend_row %}
+
+{% block cover_kicker %}Leadership Briefing{% endblock %}
+
+{% block accent %}
+:root { --accent:#1f4e8c; --accent-soft:#e8eef7; --accent-ink:#12365f;
+        --cover-a:#0a1a2e; --cover-b:#123259; --cover-c:#1f4e8c; }
+.rt-executive_summary .kpi-band { border-radius:0; }
+.rt-executive_summary section.block { margin-bottom:12pt; }
+.split { display:flex; gap:14pt; }
+.split > div { flex:1; }
+{% endblock %}
+
+{% block body %}
+<p class="lead">A window-scoped snapshot of honeypot activity, detection output and sensor health for
+platform leadership. Every figure is queried live from the SOC datastore for the period on the cover.</p>
+
+{{ kpi_band(kpi_band) }}
+
+<div class="h-bar"><section class="block loose">
+  <h2><span class="section-num">01</span>Situation narrative</h2>
+  {% for p in narrative %}<p>{{ p }}</p>{% endfor %}
+</section></div>
+
+{% if trend %}
+<div class="h-bar"><section class="block">
+  <h2><span class="section-num">02</span>This window vs. previous</h2>
+  {{ trend_row(trend) }}
+</section></div>
+{% endif %}
+
+<div class="h-bar"><section class="block">
+  <h2><span class="section-num">03</span>Severity &amp; tactic breakdown</h2>
+  <div class="split">
+    <div>
+      <h4>Events by severity</h4>
+      {{ bars(severity_breakdown|map('dictsort')|list and severity_breakdown|selectattr('count')|list) if false }}
+      {% if severity_breakdown %}
+      <div class="bars">
+        {% for s in severity_breakdown %}
+        <div class="row"><div class="lab">{{ s.label }}</div>
+          <div class="track"><div class="fill" style="width:{{ s.pct }}%"></div></div>
+          <div class="val">{{ s.count }} ({{ s.pct }}%)</div></div>
+        {% endfor %}
+      </div>
+      {% else %}<div class="empty">No classified events in this window.</div>{% endif %}
+    </div>
+    <div>
+      <h4>Detections by tactic</h4>
+      {{ bars(tactic_bars) }}
+    </div>
+  </div>
+  {{ data_table(["Severity","Detections"], detection_sev_rows, caption="Detection engine output by severity",
+       empty="No detections fired in this window.") }}
+</section></div>
+
+<div class="h-bar"><section class="block loose">
+  <h2><span class="section-num">04</span>Top threat sources</h2>
+  {{ data_table(
+       ["Source IP","Events","Sensors","Ports","Detections","Auth OK","First seen","Last seen"],
+       top_threats_rows, numcols=[1,2,3,4,5],
+       empty="No source activity in this window.",
+       note="Source: normalized_events grouped by source_ip; detections joined from the detections table.") }}
+</section></div>
+
+<div class="h-bar"><section class="block">
+  <h2><span class="section-num">05</span>Targeted services</h2>
+  {{ data_table(["Port","Service","Events"], port_rows, numcols=[2],
+       empty="No port telemetry in this window.") }}
+</section></div>
+
+<div class="h-bar"><section class="block">
+  <h2><span class="section-num">06</span>Sensor health</h2>
+  {{ data_table(["Sensor","Events","Last event","State"], sensor_health_rows, numcols=[1],
+       empty="No sensor reported telemetry in this window.",
+       note="State = PARTIAL when a sensor has been silent for >1h relative to the newest event.") }}
+</section></div>
+
+<div class="h-bar"><section class="block loose">
+  <h2><span class="section-num">07</span>Open &amp; highest-risk incidents</h2>
+  {{ data_table(["Key","Title","Severity","Status","Risk","First seen"], incident_rows, numcols=[4],
+       empty="No incidents on record.") }}
+</section></div>
+{% endblock %}

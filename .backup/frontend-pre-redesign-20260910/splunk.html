@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Splunk Blue Team | Shadow Trust</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/dashboard.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .sp-kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 20px; }
+        .sp-kpi { background: #0a0a0f; border: 1px solid #222; border-radius: 8px; padding: 16px; }
+        .sp-kpi .v { font-size: 1.8rem; font-weight: 700; font-family: var(--font-mono, monospace); color: #58e1c1; }
+        .sp-kpi .l { font-size: 0.65rem; letter-spacing: 1px; color: #888; margin-top: 4px; text-transform: uppercase; }
+        .sp-pill { display: inline-flex; align-items: center; gap: 7px; font-size: 0.75rem; font-family: var(--font-mono, monospace);
+                   padding: 3px 12px; border-radius: 999px; border: 1px solid #333; }
+        .sp-pill .dot { width: 8px; height: 8px; border-radius: 50%; }
+        .sp-up { color: #3fb950; } .sp-up .dot { background: #3fb950; }
+        .sp-down { color: #f85149; } .sp-down .dot { background: #f85149; }
+        .sp-card { background: #0d1117; border: 1px solid #1c2128; border-radius: 8px; padding: 16px; margin-bottom: 18px; }
+        .sp-card h3 { margin: 0 0 12px; font-size: 0.8rem; letter-spacing: 1px; color: #7d8590; text-transform: uppercase; }
+        .sp-search { display: flex; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }
+        .sp-search input, .sp-search select {
+            background: #161b22; border: 1px solid #30363d; color: #e6edf3; padding: 8px 10px; border-radius: 6px;
+            font-family: var(--font-mono, monospace); font-size: 0.85rem;
+        }
+        .sp-search input.spl { flex: 1; min-width: 320px; }
+        .sp-table-wrap { overflow-x: auto; max-height: 460px; overflow-y: auto; border: 1px solid #1c2128; border-radius: 6px; }
+        table.sp-table { border-collapse: collapse; width: 100%; font-size: 0.8rem; }
+        table.sp-table th { position: sticky; top: 0; background: #161b22; color: #7d8590; text-align: left;
+                            padding: 8px 10px; font-weight: 600; white-space: nowrap; }
+        table.sp-table td { padding: 6px 10px; border-top: 1px solid #1c2128; color: #c9d1d9; vertical-align: top;
+                            font-family: var(--font-mono, monospace); max-width: 460px; overflow: hidden; text-overflow: ellipsis; }
+        table.sp-table tr:hover td { background: #11161d; }
+        .sp-note { color: #7d8590; font-size: 0.78rem; margin-top: 6px; }
+        .sp-err { color: #f85149; font-size: 0.82rem; }
+        .sp-chips { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+        .sp-chip { background: #161b22; border: 1px solid #30363d; color: #58a6ff; font-size: 0.72rem;
+                   padding: 3px 9px; border-radius: 6px; cursor: pointer; font-family: var(--font-mono, monospace); }
+        .sp-chip:hover { border-color: #58a6ff; }
+        .sp-drop { border: 2px dashed #30363d; border-radius: 8px; padding: 22px; text-align: center;
+                   color: #7d8590; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 8px; }
+        .sp-drop.drag { border-color: #58a6ff; background: #0d1b2a; color: #c9d1d9; }
+    </style>
+</head>
+
+<body>
+    <div class="app-container">
+        <aside class="sidebar" id="sidebar"></aside>
+
+        <main class="main-content">
+            <div class="top-bar">
+                <div class="page-header">
+                    <h2>SPLUNK · BLUE TEAM</h2>
+                    <p>SIEM QUERY CONSOLE // <span id="sp-health" class="sp-pill sp-down"><span class="dot"></span> checking…</span></p>
+                </div>
+                <div class="filters-bar">
+                    <a id="sp-open" href="#" target="_blank" class="soc-btn soc-btn-primary">
+                        <i class="fas fa-external-link-alt"></i> OPEN SPLUNK CONSOLE</a>
+                </div>
+            </div>
+
+            <div id="sp-offline" class="sp-card" style="display:none; border-color:#f85149;">
+                <h3 style="color:#f85149;">Splunk unreachable</h3>
+                <div class="sp-note">
+                    Start it: <code>cd ~/splunk-lab &amp;&amp; docker compose up -d</code> — the web UI must be on
+                    <code>:8009</code> and the management API <code>:8089</code> must be published
+                    (see <code>~/splunk-lab/docker-compose.yml</code>). Login: <code>admin</code> / <code>ChangeMe123!</code>.
+                </div>
+            </div>
+
+            <div class="sp-kpis">
+                <div class="sp-kpi"><div class="v" id="kpi-events">—</div><div class="l">Events indexed</div></div>
+                <div class="sp-kpi"><div class="v" id="kpi-hosts">—</div><div class="l">Hosts</div></div>
+                <div class="sp-kpi"><div class="v" id="kpi-sourcetypes">—</div><div class="l">Sourcetypes</div></div>
+                <div class="sp-kpi"><div class="v" id="kpi-indexes">—</div><div class="l">Indexes</div></div>
+            </div>
+
+            <div class="sp-card">
+                <h3>Ad-hoc SPL search</h3>
+                <div class="sp-search">
+                    <input class="spl" id="spl" placeholder='index=* | head 20' value="search index=* | head 20">
+                    <select id="spl-time">
+                        <option value="-15m">last 15m</option>
+                        <option value="-1h">last 1h</option>
+                        <option value="-24h">last 24h</option>
+                        <option value="-7d" selected>last 7d</option>
+                        <option value="-30d">last 30d</option>
+                        <option value="-1y">last year</option>
+                        <option value="0">all time</option>
+                    </select>
+                    <button class="soc-btn soc-btn-primary" id="spl-run"><i class="fas fa-play"></i> RUN</button>
+                    <button class="soc-btn" id="spl-csv"><i class="fas fa-download"></i> CSV</button>
+                    <button class="soc-btn" id="spl-del" style="border-color:#f85149; color:#f85149;" title="Delete the events matching this search"><i class="fas fa-trash"></i> DELETE MATCHES</button>
+                </div>
+                <div class="sp-chips">
+                    <span class="sp-chip" data-spl='search index=* | stats count by sourcetype | sort - count'>count by sourcetype</span>
+                    <span class="sp-chip" data-spl='search index=* EventCode=4625 | stats count by host, Account_Name | sort - count'>failed logons 4625</span>
+                    <span class="sp-chip" data-spl='search index=* sourcetype=*sysmon* EventCode=1 | table _time host Image CommandLine | head 50'>sysmon proc-create</span>
+                    <span class="sp-chip" data-spl='search index=* (action=blocked OR action=denied) | table _time host action src dest | head 50'>blocked/denied</span>
+                    <span class="sp-chip" data-spl='| tstats count where index=* by index, sourcetype | sort - count'>tstats index/sourcetype</span>
+                </div>
+                <div id="spl-status" class="sp-note" style="margin-top:10px;"></div>
+                <div class="sp-table-wrap" style="margin-top:10px;"><table class="sp-table" id="spl-table"></table></div>
+            </div>
+
+            <div class="sp-card">
+                <h3>Manage data — upload log files</h3>
+                <div id="drop" class="sp-drop">
+                    <i class="fas fa-file-upload" style="font-size:1.6rem;"></i>
+                    <div>Drop <code>.log / .txt / .json / .csv</code> files here, or <b>click to choose</b> (multiple OK)</div>
+                    <input id="file-input" type="file" multiple accept=".log,.txt,.json,.jsonl,.csv,.ndjson,.out,.evtx.txt" hidden>
+                </div>
+                <div id="up-status" class="sp-note" style="margin-top:8px;"></div>
+                <details style="margin-top:8px;">
+                    <summary class="sp-note" style="cursor:pointer;">…or paste lines instead</summary>
+                    <div class="sp-search" style="align-items:flex-start; margin-top:8px;">
+                        <textarea id="ing-data" class="spl" rows="4" placeholder="one event per line"
+                                  style="min-width:320px; resize:vertical;"></textarea>
+                        <div style="display:flex; flex-direction:column; gap:8px;">
+                            <input id="ing-sourcetype" placeholder="sourcetype" value="shadowtrust:manual">
+                            <input id="ing-index" placeholder="index" value="main">
+                            <button class="soc-btn soc-btn-primary" id="ing-run"><i class="fas fa-plus"></i> INGEST</button>
+                        </div>
+                    </div>
+                    <div id="ing-status" class="sp-note" style="margin-top:8px;"></div>
+                </details>
+            </div>
+
+            <div class="sp-card">
+                <h3>Purge data — delete by source or age</h3>
+                <div class="sp-search">
+                    <select id="purge-source" style="min-width:280px;"><option value="">— pick a source —</option></select>
+                    <span class="sp-note">and / or older than</span>
+                    <input id="purge-days" type="number" min="0" placeholder="days" style="width:90px;">
+                    <button class="soc-btn" id="purge-refresh" title="reload source list"><i class="fas fa-rotate"></i></button>
+                    <button class="soc-btn" id="purge-run" style="border-color:#f85149; color:#f85149;"><i class="fas fa-trash"></i> PURGE</button>
+                </div>
+                <div id="purge-status" class="sp-note" style="margin-top:8px;"></div>
+            </div>
+
+            <div class="sp-card">
+                <h3>Notable events <span style="color:#7d8590; font-weight:400; text-transform:none;">— failed logons · account changes · blocked actions · sysmon</span></h3>
+                <div id="notable-status" class="sp-note"></div>
+                <div class="sp-table-wrap"><table class="sp-table" id="notable-table"></table></div>
+            </div>
+        </main>
+    </div>
+
+    <script src="js/sidebar.js"></script>
+    <script type="module">
+        import { apiService } from './js/api.js';
+
+        const $ = (s) => document.querySelector(s);
+        const esc = (s) => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+        function renderTable(el, rows) {
+            if (!rows || !rows.length) { el.innerHTML = '<tbody><tr><td style="color:#7d8590">No results.</td></tr></tbody>'; return; }
+            const cols = [...rows.reduce((set, r) => { Object.keys(r).forEach(k => set.add(k)); return set; }, new Set())]
+                .filter(c => !c.startsWith('_raw')).slice(0, 12);
+            el.innerHTML =
+                '<thead><tr>' + cols.map(c => `<th>${esc(c)}</th>`).join('') + '</tr></thead>' +
+                '<tbody>' + rows.map(r => '<tr>' + cols.map(c => `<td title="${esc(r[c])}">${esc(r[c])}</td>`).join('') + '</tr>').join('') + '</tbody>';
+        }
+
+        function toCsv(rows) {
+            if (!rows.length) return '';
+            const cols = [...rows.reduce((s, r) => { Object.keys(r).forEach(k => s.add(k)); return s; }, new Set())];
+            const q = v => { v = String(v ?? ''); return /[",\n]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v; };
+            return cols.join(',') + '\n' + rows.map(r => cols.map(c => q(r[c])).join(',')).join('\n');
+        }
+
+        let lastRows = [];
+        let lastSpl = '';
+        let lastEarliest = '-7d';
+
+        async function loadHealth() {
+            let h;
+            try { h = await apiService.get('/splunk/health'); } catch (e) { h = { reachable: false }; }
+            const pill = $('#sp-health');
+            if (h.reachable && h.authed) {
+                pill.className = 'sp-pill sp-up';
+                pill.innerHTML = `<span class="dot"></span> Splunk ${esc(h.version || 'up')}`;
+                $('#sp-offline').style.display = 'none';
+            } else {
+                pill.className = 'sp-pill sp-down';
+                pill.innerHTML = `<span class="dot"></span> ${h.reachable ? 'auth failed' : 'unreachable'}`;
+                $('#sp-offline').style.display = 'block';
+            }
+            try {
+                const cfg = await apiService.get('/splunk/config');
+                const btn = $('#sp-open');
+                if (cfg.web_url) { btn.href = cfg.web_url; btn.title = cfg.web_url; }
+                else { btn.removeAttribute('href'); btn.style.opacity = '.5'; btn.title = 'SPLUNK_WEB_URL not configured'; }
+            } catch (e) { /* ignore */ }
+        }
+
+        async function loadKpis() {
+            let k;
+            try { k = await apiService.get('/splunk/kpis'); } catch (e) { k = { reachable: false }; }
+            if (!k.reachable) return;
+            $('#kpi-events').textContent = (k.events_total ?? 0).toLocaleString();
+            $('#kpi-hosts').textContent = k.hosts ?? 0;
+            $('#kpi-sourcetypes').textContent = k.sourcetypes ?? 0;
+            $('#kpi-indexes').textContent = k.indexes ?? 0;
+        }
+
+        async function loadNotable() {
+            $('#notable-status').textContent = 'loading…';
+            let n;
+            try { n = await apiService.get('/splunk/notable?limit=40'); } catch (e) { n = { reachable: false }; }
+            if (!n.reachable) { $('#notable-status').innerHTML = '<span class="sp-err">Splunk unreachable.</span>'; return; }
+            $('#notable-status').textContent = `${n.count} event(s)`;
+            renderTable($('#notable-table'), n.rows);
+        }
+
+        async function runSearch() {
+            const spl = $('#spl').value.trim();
+            const earliest = $('#spl-time').value;
+            lastSpl = spl; lastEarliest = earliest;
+            $('#spl-status').textContent = 'running…';
+            $('#spl-table').innerHTML = '';
+            let res;
+            try {
+                res = await apiService.post('/splunk/search', { spl, earliest, latest: 'now' });
+            } catch (e) { $('#spl-status').innerHTML = `<span class="sp-err">${esc(e.message)}</span>`; return; }
+            if (!res.reachable) { $('#spl-status').innerHTML = `<span class="sp-err">Splunk unreachable: ${esc(res.error || '')}</span>`; return; }
+            if (res.error) { $('#spl-status').innerHTML = `<span class="sp-err">${esc(res.error)}</span>`; return; }
+            lastRows = res.rows || [];
+            $('#spl-status').textContent = `${res.count} result(s)`;
+            renderTable($('#spl-table'), lastRows);
+        }
+
+        $('#spl-run').onclick = runSearch;
+        $('#spl').addEventListener('keydown', e => { if (e.key === 'Enter') runSearch(); });
+
+        $('#spl-del').onclick = async () => {
+            const spl = ($('#spl').value || '').trim();
+            if (!/index\s*=/.test(spl)) { $('#spl-status').innerHTML = '<span class="sp-err">Delete needs a search with an explicit index= filter.</span>'; return; }
+            if (!confirm(`Delete ALL Splunk events matching:\n\n${spl}\n\n(time: ${$('#spl-time').value || 'all'})\n\nThis hides them from every search. Continue?`)) return;
+            $('#spl-status').textContent = 'deleting…';
+            let res;
+            try {
+                res = await apiService.post('/splunk/delete', { spl, earliest: $('#spl-time').value || '0', latest: 'now', confirm: true });
+            } catch (e) { $('#spl-status').innerHTML = `<span class="sp-err">${esc(e.message)}</span>`; return; }
+            if (!res.ok) { $('#spl-status').innerHTML = `<span class="sp-err">${esc(res.error || 'delete failed')}</span>`; return; }
+            $('#spl-status').innerHTML = `<span style="color:#3fb950">deleted ${res.deleted} event(s)</span>`;
+            loadKpis(); loadNotable();
+        };
+
+        $('#ing-run').onclick = async () => {
+            const data = $('#ing-data').value;
+            if (!data.trim()) { $('#ing-status').innerHTML = '<span class="sp-err">Nothing to ingest.</span>'; return; }
+            $('#ing-status').textContent = 'ingesting…';
+            let res;
+            try {
+                res = await apiService.post('/splunk/ingest', {
+                    data,
+                    sourcetype: $('#ing-sourcetype').value.trim() || 'shadowtrust:manual',
+                    index: $('#ing-index').value.trim() || 'main'
+                });
+            } catch (e) { $('#ing-status').innerHTML = `<span class="sp-err">${esc(e.message)}</span>`; return; }
+            if (!res.ok) { $('#ing-status').innerHTML = `<span class="sp-err">${esc(res.error || 'ingest failed')}</span>`; return; }
+            $('#ing-status').innerHTML = `<span style="color:#3fb950">ingested ${res.events} event(s) into ${esc(res.index)} (${esc(res.sourcetype)})</span>`;
+            $('#ing-data').value = '';
+            setTimeout(() => { loadKpis(); loadNotable(); loadSources(); }, 1500);
+        };
+
+        // ── file upload ──────────────────────────────────────────────────────
+        const drop = $('#drop'), fileInput = $('#file-input');
+        drop.onclick = () => fileInput.click();
+        ['dragover', 'dragenter'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.add('drag'); }));
+        ['dragleave', 'drop'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.remove('drag'); }));
+        drop.addEventListener('drop', e => uploadFiles(e.dataTransfer.files));
+        fileInput.addEventListener('change', () => uploadFiles(fileInput.files));
+
+        async function uploadFiles(fileList) {
+            const files = [...fileList];
+            if (!files.length) return;
+            $('#up-status').textContent = `uploading ${files.length} file(s)…`;
+            const fd = new FormData();
+            files.forEach(f => fd.append('files', f, f.name));
+            let res;
+            try { res = await apiService.upload('/splunk/upload', fd); }
+            catch (e) { $('#up-status').innerHTML = `<span class="sp-err">${esc(e.message)}</span>`; return; }
+            const lines = (res.files || []).map(r =>
+                r.ok ? `<span style="color:#3fb950">✓ ${esc(r.name)} — ${r.events} events (${esc(r.sourcetype)})</span>`
+                     : `<span class="sp-err">✗ ${esc(r.name)} — ${esc(r.error || 'failed')}</span>`);
+            $('#up-status').innerHTML = `total ${res.total_events} event(s)<br>` + lines.join('<br>');
+            fileInput.value = '';
+            setTimeout(() => { loadKpis(); loadNotable(); loadSources(); }, 2000);
+        }
+
+        // ── purge ────────────────────────────────────────────────────────────
+        async function loadSources() {
+            let s;
+            try { s = await apiService.get('/splunk/sources'); } catch (e) { return; }
+            const sel = $('#purge-source');
+            const cur = sel.value;
+            sel.innerHTML = '<option value="">— pick a source —</option>' +
+                (s.sources || []).map(x =>
+                    `<option value="${esc(x.source)}">${esc(x.source)} · ${x.count.toLocaleString()} ev · ${esc(x.sourcetype)}</option>`).join('');
+            sel.value = cur;
+        }
+        $('#purge-refresh').onclick = loadSources;
+        $('#purge-run').onclick = async () => {
+            const source = $('#purge-source').value;
+            const days = parseInt($('#purge-days').value, 10);
+            if (!source && !(days >= 0)) { $('#purge-status').innerHTML = '<span class="sp-err">Pick a source and/or a day count.</span>'; return; }
+            const what = [source && `source "${source}"`, (days >= 0) && `older than ${days} day(s)`].filter(Boolean).join(' AND ');
+            if (!confirm(`PURGE from index=main:\n\n${what}\n\nThis marks the events deleted (hidden from every search). Continue?`)) return;
+            $('#purge-status').textContent = 'purging…';
+            let res;
+            try {
+                res = await apiService.post('/splunk/purge', {
+                    index: 'main', source: source || null,
+                    older_than_days: (days >= 0) ? days : null, confirm: true
+                });
+            } catch (e) { $('#purge-status').innerHTML = `<span class="sp-err">${esc(e.message)}</span>`; return; }
+            if (!res.ok) { $('#purge-status').innerHTML = `<span class="sp-err">${esc(res.error)}</span>`; return; }
+            $('#purge-status').innerHTML = `<span style="color:#3fb950">purged ${res.deleted} event(s)</span>`;
+            setTimeout(() => { loadKpis(); loadNotable(); loadSources(); }, 1500);
+        };
+        loadSources();
+        $('#spl-csv').onclick = () => {
+            if (!lastRows.length) {
+                const el = $('#sp-search-status') || $('#purge-status');
+                if (el) el.innerHTML = '<span style="color:#d29922">Run a search first — no rows to export.</span>';
+                return;
+            }
+            const blob = new Blob([toCsv(lastRows)], { type: 'text/csv' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = `splunk-results-${new Date().toISOString().replace(/[:.]/g, '-')}.csv`;
+            a.click(); URL.revokeObjectURL(a.href);
+        };
+        document.querySelectorAll('.sp-chip').forEach(c => c.onclick = () => { $('#spl').value = c.dataset.spl; runSearch(); });
+
+        loadHealth();
+        loadKpis();
+        loadNotable();
+        setInterval(loadHealth, 20000);
+    </script>
+</body>
+
+</html>

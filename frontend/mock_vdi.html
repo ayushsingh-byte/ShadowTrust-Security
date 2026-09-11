@@ -4,13 +4,13 @@
 <head>
     <meta charset="UTF-8">
     <title>Mock VDI Session</title>
-    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         body {
-            background-color: #05070a;
-            color: #00ff41;
-            font-family: 'JetBrains Mono', monospace;
+            background-color: var(--st-surface-2);
+            color: var(--st-success);
+            font-family: var(--st-font-mono);
             margin: 0;
             padding: 20px;
             overflow: hidden;
@@ -25,17 +25,17 @@
         .terminal {
             width: 95%;
             height: 95%;
-            border: 1px solid rgba(0, 255, 65, 0.3);
-            background: linear-gradient(135deg, rgba(0, 255, 65, 0.05) 0%, rgba(0, 0, 0, 0.8) 100%);
+            border: 1px solid color-mix(in srgb, var(--st-success) 30%, transparent);
+            background: linear-gradient(135deg, color-mix(in srgb, var(--st-success) 5%, transparent) 0%, var(--st-overlay) 100%);
             padding: 30px;
-            box-shadow: inset 0 0 50px rgba(0, 0, 0, 0.8), 0 0 20px rgba(0, 255, 65, 0.1);
+            
             position: relative;
             border-radius: 4px;
             box-sizing: border-box;
         }
 
         .header {
-            border-bottom: 1px dashed rgba(0, 255, 65, 0.3);
+            border-bottom: 1px dashed color-mix(in srgb, var(--st-success) 30%, transparent);
             padding-bottom: 15px;
             margin-bottom: 25px;
             display: flex;
@@ -43,7 +43,7 @@
             font-weight: bold;
             font-size: 14px;
             letter-spacing: 1px;
-            color: #00ff41;
+            color: var(--st-success);
         }
 
         .blink {
@@ -59,25 +59,25 @@
         .log {
             font-size: 15px;
             line-height: 1.8;
-            color: #aaa;
+            color: var(--st-text-secondary);
         }
 
         .green {
-            color: #00ff41;
-            text-shadow: 0 0 5px #00ff41;
+            color: var(--st-success);
+            
         }
 
         .red {
-            color: #ff0055;
-            text-shadow: 0 0 5px #ff0055;
+            color: var(--st-danger);
+            
         }
 
         .yellow {
-            color: #ff9900;
+            color: var(--st-caution);
         }
 
         .cyan {
-            color: #00ffff;
+            color: var(--st-info);
         }
 
         .matrix-bg {
@@ -86,13 +86,15 @@
             left: 0;
             right: 0;
             bottom: 0;
-            background-image: linear-gradient(rgba(0, 255, 65, 0.1) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(0, 255, 65, 0.1) 1px, transparent 1px);
+            background-image: linear-gradient(color-mix(in srgb, var(--st-success) 10%, transparent) 1px, transparent 1px),
+                linear-gradient(90deg, color-mix(in srgb, var(--st-success) 10%, transparent) 1px, transparent 1px);
             background-size: 20px 20px;
             z-index: -1;
             opacity: 0.2;
         }
     </style>
+    <link rel="stylesheet" href="css/tokens.css">
+    <script src="js/theme.js"></script>
 </head>
 
 <body>

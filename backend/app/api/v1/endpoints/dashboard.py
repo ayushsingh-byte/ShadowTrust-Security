@@ -10,7 +10,9 @@ import requests
 import asyncio
 import time
 
-router = APIRouter()
+from app.api.v1.dependencies import get_current_active_user
+
+router = APIRouter(dependencies=[Depends(get_current_active_user)])
 
 # Simple memory cache for GeoIP to avoid spamming the free API
 GEOIP_CACHE = {}

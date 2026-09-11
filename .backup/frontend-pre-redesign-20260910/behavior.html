@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Behavior Profiling | Shadow Trust</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/dashboard.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Vis.js for Graph -->
+    <script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+
+    <style>
+        /* MITRE ATT&CK Matrix Styling */
+        .attack-matrix {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            /* Added Impact Column */
+            gap: 2px;
+            background: #111;
+            padding: 2px;
+            overflow-x: auto;
+        }
+
+        .tactic-col {
+            background: #050507;
+            padding: 5px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .tactic-header {
+            color: #888;
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 800;
+            padding: 8px 5px;
+            border-bottom: 2px solid #222;
+            margin-bottom: 5px;
+            text-align: center;
+        }
+
+        .tech-card {
+            background: rgba(255, 255, 255, 0.02);
+            padding: 8px;
+            font-size: 0.65rem;
+            border-left: 2px solid #333;
+            color: #888;
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+        }
+
+        .tech-card:hover {
+            background: #1a1a20;
+            color: #fff;
+            transform: translateX(2px);
+        }
+
+        /* Status colors for matrix */
+        .tech-card.active-critical {
+            border-left-color: var(--neon-pink);
+            background: rgba(255, 0, 85, 0.1);
+            color: #fff;
+            box-shadow: inset 0 0 10px rgba(255, 0, 85, 0.05);
+        }
+
+        .tech-card.active-high {
+            border-left-color: var(--neon-purple);
+            background: rgba(188, 19, 254, 0.1);
+            color: #fff;
+        }
+
+        .tech-card.active-med {
+            border-left-color: var(--neon-cyan);
+            background: rgba(0, 243, 255, 0.05);
+            color: #ccc;
+        }
+
+        /* New Graph Container - FIXED ABSOLUTE POSITIONING */
+        #behaviorGraph {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #000;
+            border: 1px solid #222;
+        }
+
+        /* Timeline / Killchain */
+        .killchain-bar {
+            display: flex;
+            gap: 5px;
+            height: 6px;
+            width: 100%;
+            margin: 10px 0;
+            background: #111;
+        }
+
+        .kc-seg {
+            height: 100%;
+            position: relative;
+        }
+
+        .kc-seg[data-label]:hover::after {
+            content: attr(data-label);
+            position: absolute;
+            top: -20px;
+            left: 0;
+            background: #333;
+            color: #fff;
+            padding: 2px 5px;
+            font-size: 0.6rem;
+        }
+
+        /* Psycho-profile */
+        .psy-trait {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 4px;
+            font-size: 0.7rem;
+            color: #aaa;
+        }
+
+        /* Cyberpunk Modal Specific Animations for Behavior Profiling */
+        .export-progress-bar {
+            width: 0%;
+            height: 100%;
+            background: var(--neon-purple);
+            /* Default, overridden in JS */
+            transition: width 2.5s cubic-bezier(0.2, 0.8, 0.2, 1);
+        }
+
+        /* Hex-Dump Animation for STIX Export */
+        @keyframes scroll-hex {
+            0% {
+                transform: translateY(0);
+            }
+
+            100% {
+                transform: translateY(-50%);
+            }
+        }
+
+        .hex-dump-bg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 200%;
+            pointer-events: none;
+            opacity: 0.2;
+            z-index: -1;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.6rem;
+            color: #ff9900;
+            /* Amber */
+            overflow: hidden;
+            animation: scroll-hex 10s linear infinite;
+            display: none;
+            white-space: pre-wrap;
+            line-height: 1.1;
+        }
+
+        /* Fingerprint Scan Animation for Forensics Report */
+        @keyframes scan-fingerprint {
+            0% {
+                top: 0%;
+                box-shadow: 0 5px 15px rgba(0, 243, 255, 0.5);
+            }
+
+            50% {
+                top: 100%;
+                box-shadow: 0 -5px 15px rgba(0, 243, 255, 0.5);
+            }
+
+            100% {
+                top: 0%;
+                box-shadow: 0 5px 15px rgba(0, 243, 255, 0.5);
+            }
+        }
+
+        .fingerprint-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: -1;
+            display: none;
+            background-image: radial-gradient(circle at center, rgba(0, 243, 255, 0.1) 0%, transparent 70%);
+            border: 1px solid var(--neon-cyan);
+            overflow: hidden;
+        }
+
+        .fingerprint-overlay::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: var(--neon-cyan);
+            animation: scan-fingerprint 1.5s ease-in-out infinite;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Custom Modal -->
+    <div id="custom-modal"
+        style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(5, 10, 15, 0.85); z-index:10000; justify-content:center; align-items:center; backdrop-filter:blur(5px);">
+        <div class="soc-card"
+            style="width: 450px; max-width: 90%; border-color: var(--accent-primary); box-shadow: 0 0 20px rgba(0, 0, 0, 0.5); position: relative; overflow: hidden;">
+
+            <!-- Animation Background Layers -->
+            <div id="modal-hex-dump" class="hex-dump-bg"></div>
+            <div id="modal-fingerprint" class="fingerprint-overlay">
+                <div
+                    style="position: absolute; top:50%; left:50%; transform:translate(-50%, -50%); opacity:0.1; font-size:120px; color:var(--neon-cyan);">
+                    <i class="fas fa-fingerprint"></i>
+                </div>
+            </div>
+
+            <div class="soc-card-header"
+                style="border-bottom: 1px solid #334155; padding-bottom: 10px; margin-bottom: 15px; position:relative;">
+                <span id="modal-title" class="card-title text-yellow"><i class="fas fa-exclamation-triangle"></i>
+                    AUTHORIZATION REQUIRED</span>
+            </div>
+
+            <div id="modal-message"
+                style="color: #e2e8f0; font-family: 'JetBrains Mono', monospace; font-size: 0.9rem; margin-bottom: 15px; line-height: 1.5; position:relative;">
+                Please confirm action.
+            </div>
+
+            <!-- Progress Bar Container -->
+            <div id="modal-progress-container"
+                style="display:none; width: 100%; height: 6px; background: #1e293b; margin-bottom: 25px; border-radius: 3px; overflow: hidden; position:relative;">
+                <div id="modal-progress-bar" class="export-progress-bar"></div>
+            </div>
+
+            <div id="modal-buttons" style="display: flex; justify-content: flex-end; gap: 10px; position:relative;">
+                <button id="modal-btn-cancel" class="soc-btn"
+                    style="background: transparent; border: 1px solid #334155; color: #94a3b8;">CANCEL</button>
+                <button id="modal-btn-confirm" class="soc-btn soc-btn-primary">PROCEED</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="app-container">
+
+        <!-- SIDEBAR -->
+        <!-- VOID NEON SIDEBAR (FROM GEO INTEL) -->
+        <aside class="sidebar" id="sidebar"></aside>
+
+        <main class="main-content">
+
+            <div class="top-bar">
+                <div class="page-header">
+                    <h2>ADVERSARY BEHAVIOR PROFILING</h2>
+                    <p>REAL-TIME FINGERPRINTING // <span class="text-purple">AI MODEL v9.2 ACTIVE</span></p>
+                </div>
+                <div class="filters-bar">
+                    <button id="btn-export-stix" class="soc-btn" style="border-color: #ff9900; color: #ff9900;"><i
+                            class="fas fa-share-alt"></i> Export STIX 2.1</button>
+                    <button id="btn-forensics" class="soc-btn soc-btn-primary"
+                        style="background: rgba(0,243,255,0.1); border-color: var(--neon-cyan); color: var(--neon-cyan);"><i
+                            class="fas fa-search"></i> Generate Forensics Report</button>
+                </div>
+            </div>
+
+            <!-- ROW 1: 3-COL LAYOUT (Profile, Graph, Timeline) -->
+            <!-- FIXED HEIGHT TO PREVENT VIS.JS EXPANSION LOOP -->
+            <div class="dashboard-grid grid-3" style="height: 500px; margin-bottom: 2rem;">
+
+                <!-- COL 1: ACTIVE THREAT PROFILE (New "Psychological" Layout) -->
+                <div class="soc-card" style="display:flex; flex-direction:column;">
+                    <div class="soc-card-header">
+                        <span class="card-title">DOMINANT THREAT ACTOR</span>
+                        <span class="badge badge-red">ATP-28 MATCH</span>
+                    </div>
+                    <div style="text-align:center; padding: 20px 0; border-bottom:1px solid #222;">
+                        <i class="fas fa-user-hooded text-purple" style="font-size: 3rem; margin-bottom: 10px;"></i>
+                        <h3 id="actor-name" class="text-white">FANCY BEAR</h3>
+                        <div class="text-xs text-muted">CONFIDENCE: <span id="actor-confidence"
+                                class="text-green">99.4%</span></div>
+                    </div>
+                    <div style="padding: 15px; flex:1;">
+                        <h4 class="text-xs text-cyan" style="margin-bottom:10px;">BEHAVIORAL TRAITS</h4>
+                        <div class="psy-trait"><span>PERSISTENCE</span><span id="trait-persistence"
+                                class="text-white">AGGRESSIVE</span></div>
+                        <div class="psy-trait"><span>LATERAL MOVEMENT</span><span id="trait-lateral"
+                                class="text-white">SMB / WMI</span>
+                        </div>
+                        <div class="psy-trait"><span>OBFUSCATION</span><span id="trait-obfuscation"
+                                class="text-white">HIGH (XOR/BASE64)</span>
+                        </div>
+                        <div class="psy-trait"><span>TARGETING</span><span id="trait-targeting" class="text-white">GOV /
+                                MILITARY</span>
+                        </div>
+
+                        <div style="margin-top:15px;">
+                            <h4 class="text-xs text-muted">KILL CHAIN PROGRESS</h4>
+                            <div id="killchain-bar" class="killchain-bar">
+                                <div class="kc-seg" style="width:20%; background:var(--neon-purple);"
+                                    data-label="Recon"></div>
+                                <div class="kc-seg" style="width:15%; background:var(--neon-purple);"
+                                    data-label="Weaponize"></div>
+                                <div class="kc-seg" style="width:10%; background:var(--neon-purple);"
+                                    data-label="Deliver"></div>
+                                <div class="kc-seg"
+                                    style="width:25%; background:var(--neon-pink); animation:pulse 1s infinite;"
+                                    data-label="Exploit (ACTIVE)"></div>
+                                <div class="kc-seg" style="width:30%; background:#222;" data-label="Pending..."></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- COL 2 & 3: INTERACTIVE BEHAVIOR GRAPH (Network Viz) -->
+                <div class="soc-card"
+                    style="grid-column: span 2; padding:0; display:flex; flex-direction:column; overflow: hidden;">
+                    <div class="soc-card-header" style="padding:15px;">
+                        <span class="card-title">BEHAVIORAL RELATIONSHIP GRAPH</span>
+                        <a href="analysis_lab.html" class="badge" style="text-decoration:none;color:#3fb950;border:1px solid #238636;">
+                            <i class="fas fa-terminal"></i> OPEN ANALYSIS LAB</a>
+                    </div>
+                    <div style="flex:1; position:relative;">
+                        <div id="behaviorGraph"></div>
+                        <div
+                            style="position:absolute; bottom:10px; right:10px; background:rgba(0,0,0,0.8); padding:5px 10px; border:1px solid #333; font-size:0.7rem; color:#aaa; pointer-events: none; z-index: 10;">
+                            <i class="fas fa-circle text-pink"></i> PROCESS
+                            <i class="fas fa-circle text-cyan" style="margin-left:5px;"></i> NETWORK
+                            <i class="fas fa-circle text-purple" style="margin-left:5px;"></i> FILE
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- ROW 2: DETAILED MITRE MATRIX & TERMINAL -->
+            <div class="dashboard-grid grid-1" style="margin-bottom: 2rem;">
+                <div class="soc-card">
+                    <div class="soc-card-header">
+                        <span class="card-title">MITRE ATT&CK TACTICS HEATMAP</span>
+                        <span class="badge badge-purple">LIVE MAPPING</span>
+                    </div>
+                    <div class="attack-matrix">
+                        <!-- Initial Access -->
+                        <div class="tactic-col">
+                            <div class="tactic-header">Initial Access</div>
+                            <div class="tech-card active-critical">T1190 Exploit Public App</div>
+                            <div class="tech-card">T1078 Valid Accounts</div>
+                            <div class="tech-card active-high">T1133 Ext Remote Svcs</div>
+                            <div class="tech-card">T1566 Phishing</div>
+                            <div class="tech-card">T1195 Supply Chain</div>
+                        </div>
+                        <!-- Execution -->
+                        <div class="tactic-col">
+                            <div class="tactic-header">Execution</div>
+                            <div class="tech-card active-critical">T1059 Cmd/Scripting</div>
+                            <div class="tech-card active-med">T1053 Scheduled Task</div>
+                            <div class="tech-card">T1204 User Execution</div>
+                            <div class="tech-card active-critical">T1059.001 PowerShell</div>
+                            <div class="tech-card">T1106 Native API</div>
+                        </div>
+                        <!-- Persistence -->
+                        <div class="tactic-col">
+                            <div class="tactic-header">Persistence</div>
+                            <div class="tech-card active-high">T1098 Account Manip</div>
+                            <div class="tech-card active-med">T1543 Create Process</div>
+                            <div class="tech-card">T1136 Create Account</div>
+                            <div class="tech-card active-med">T1547 Boot Autostart</div>
+                            <div class="tech-card">T1574 Hijack Exec Flow</div>
+                        </div>
+                        <!-- Priv Esc -->
+                        <div class="tactic-col">
+                            <div class="tactic-header">Priv Esc</div>
+                            <div class="tech-card active-critical">T1068 Exploit for Priv</div>
+                            <div class="tech-card">T1548 Abuse Elevation</div>
+                            <div class="tech-card active-high">T1055 Process Injection</div>
+                            <div class="tech-card">T1134 Token Manip</div>
+                        </div>
+                        <!-- Defense Evasion -->
+                        <div class="tactic-col">
+                            <div class="tactic-header">Defense Evasion</div>
+                            <div class="tech-card active-high">T1070 Indicator Removal</div>
+                            <div class="tech-card active-med">T1027 Obfuscated Files</div>
+                            <div class="tech-card">T1222 File Permissions</div>
+                            <div class="tech-card active-med">T1497 Virtualization Check</div>
+                        </div>
+                        <!-- C2 -->
+                        <div class="tactic-col">
+                            <div class="tactic-header">Command & Control</div>
+                            <div class="tech-card active-high">T1071 App Layer Proto</div>
+                            <div class="tech-card active-critical">T1573 Encrypted Chan</div>
+                            <div class="tech-card">T1105 Ingress Tool Tx</div>
+                            <div class="tech-card active-high">T1090 Proxy</div>
+                        </div>
+                        <!-- Impact -->
+                        <div class="tactic-col">
+                            <div class="tactic-header">Impact</div>
+                            <div class="tech-card">T1485 Data Destruction</div>
+                            <div class="tech-card active-med">T1490 Inhibit recovery</div>
+                            <div class="tech-card">T1491 Defacement</div>
+                            <div class="tech-card active-critical">T1486 Data Encrypt</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ROW 3: RECENT COMMANDS (Terminal Style) -->
+            <div class="soc-card" style="padding:0; display:flex; flex-direction:column; height: 300px;">
+                <div class="soc-card-header" style="padding:15px; border-bottom:1px solid #111;">
+                    <span class="card-title">CAPTURED PAYLOAD STREAM</span>
+                    <span class="badge">TTY-S0</span>
+                </div>
+                <div id="terminal-stream"
+                    style="background:#050505; flex:1; padding:15px; overflow-y:auto; font-family:'JetBrains Mono'; font-size:0.8rem;">
+                    <div style="color:#444; margin-bottom:10px;">// Monitoring inject vectors dynamically...</div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <script type="module">
+        import { apiService } from './js/api.js';
+
+        let network = null;
+
+        // Vis.js Network Graph - Dynamics
+        window.addEventListener('load', function () {
+
+            async function fetchAndRenderBehavior() {
+                try {
+                    const profileData = await apiService.get('/behavior/profile');
+
+                    // Render Graph Nodes/Edges
+                    const container = document.getElementById('behaviorGraph');
+
+                    const data = {
+                        nodes: new vis.DataSet(profileData.graph.nodes),
+                        edges: new vis.DataSet(profileData.graph.edges)
+                    };
+
+                    if (!network) {
+                        const options = {
+                            nodes: { font: { color: '#ffffff', face: 'JetBrains Mono' }, borderWidth: 1, shadow: { color: 'rgba(0,0,0,0.8)' } },
+                            edges: { color: '#444', smooth: { type: 'continuous' } },
+                            physics: { stabilization: true, barnesHut: { gravitationalConstant: -3000, springLength: 100, springConstant: 0.04 } },
+                            interaction: { hover: true, zoomView: true }
+                        };
+                        network = new vis.Network(container, data, options);
+                        setTimeout(() => network.fit(), 300);
+                    } else {
+                        network.setData(data); // In-place update
+                    }
+
+                    // Update UI: Threat Actor Panel
+                    document.getElementById('actor-name').innerText = profileData.actor.name;
+                    document.getElementById('actor-confidence').innerText = `${profileData.actor.confidence}%`;
+                    document.getElementById('trait-persistence').innerText = profileData.actor.traits.Persistence;
+                    document.getElementById('trait-lateral').innerText = profileData.actor.traits["Lateral Movement"];
+                    document.getElementById('trait-obfuscation').innerText = profileData.actor.traits.Obfuscation;
+                    document.getElementById('trait-targeting').innerText = profileData.actor.traits.Targeting;
+
+                    // Update Kill Chain Bar
+                    const kcBar = document.getElementById('killchain-bar');
+                    const segments = kcBar.querySelectorAll('.kc-seg');
+
+                    const activeIndex = profileData.killchain.active_index;
+                    let labels = ["Recon", "Weaponize", "Deliver", "Exploit", "Install", "C2", "Actions"];
+                    labels[activeIndex] = `${labels[activeIndex]} (ACTIVE)`;
+
+                    segments.forEach((seg, idx) => {
+                        seg.dataset.label = labels[idx] || "Pending...";
+                        if (idx < activeIndex) {
+                            seg.style.background = 'var(--neon-purple)';
+                            seg.style.animation = 'none';
+                        } else if (idx === activeIndex) {
+                            seg.style.background = 'var(--neon-pink)';
+                            seg.style.animation = 'pulse 1s infinite';
+                        } else {
+                            seg.style.background = '#222';
+                            seg.style.animation = 'none';
+                        }
+                    });
+
+                    // Update MITRE Matrix Classes
+                    const techCards = document.querySelectorAll('.tech-card');
+                    techCards.forEach(card => {
+                        // Strip formatting classes
+                        card.classList.remove('active-critical', 'active-high', 'active-med');
+
+                        // Parse T-Code from HTML text (e.g., "T1190 Exploit Public App" -> "T1190")
+                        const textContent = card.innerText;
+                        const match = textContent.match(/^(T\d{4}(\.\d+)?)/);
+
+                        if (match) {
+                            const tCode = match[1];
+                            const severity = profileData.mitre[tCode];
+
+                            if (severity === 'critical') card.classList.add('active-critical');
+                            else if (severity === 'high') card.classList.add('active-high');
+                            else if (severity === 'med') card.classList.add('active-med');
+                        }
+                    });
+
+                    // Update Terminal Payload Stream
+                    const termStream = document.getElementById('terminal-stream');
+                    termStream.innerHTML = '<div style="color:#444; margin-bottom:10px;">// Extracted Temporal Payloads</div>';
+
+                    profileData.logs.forEach(log => {
+                        const div = document.createElement('div');
+                        div.style.cssText = 'display:flex; gap:10px; border-bottom:1px solid #111; padding:4px 0;';
+                        div.innerHTML = `
+                            <span class="text-muted">${log.time}</span>
+                            <span style="color:${log.userColor}">${log.user}</span>
+                            <span>${log.msg}</span>
+                        `;
+                        termStream.appendChild(div);
+                    });
+
+                    // Auto scroll to bottom
+                    termStream.scrollTop = termStream.scrollHeight;
+
+                } catch (e) {
+                    console.error("Failed to fetch behavior profile:", e);
+                }
+            }
+
+            // Execute on load and poll
+            fetchAndRenderBehavior();
+            setInterval(fetchAndRenderBehavior, 15000);
+
+            // --- CUSTOM MODAL LOGIC FOR BEHAVIOR PROFILING ---
+            const topModal = document.getElementById('custom-modal');
+            const modalTitle = document.getElementById('modal-title');
+            const modalMessage = document.getElementById('modal-message');
+            const btnConfirm = document.getElementById('modal-btn-confirm');
+            const btnCancel = document.getElementById('modal-btn-cancel');
+            const modalButtons = document.getElementById('modal-buttons');
+            const progressContainer = document.getElementById('modal-progress-container');
+            const progressBar = document.getElementById('modal-progress-bar');
+
+            const hexDumpBg = document.getElementById('modal-hex-dump');
+            const fingerprintBg = document.getElementById('modal-fingerprint');
+
+            let modalConfirmCallback = null;
+
+
+            function showModal(title, message, themeColor, callback, isAlert = false) {
+                modalTitle.innerHTML = title;
+                modalMessage.innerHTML = message;
+
+                // Reset all states
+                progressContainer.style.display = 'none';
+                progressBar.style.width = '0%';
+                progressBar.style.transition = 'none'; // skip transition on reset
+                progressBar.offsetHeight; // force reflow
+                progressBar.style.transition = 'width 2.5s cubic-bezier(0.2, 0.8, 0.2, 1)';
+                progressBar.style.background = themeColor;
+
+                hexDumpBg.style.display = 'none';
+                fingerprintBg.style.display = 'none';
+                modalButtons.style.display = 'flex';
+
+                modalTitle.style.color = themeColor;
+                btnConfirm.style.background = `rgba(${themeColor === '#ff9900' ? '255,153,0' : '0,243,255'}, 0.2)`;
+                btnConfirm.style.borderColor = themeColor;
+                btnConfirm.style.color = themeColor;
+                btnConfirm.innerText = isAlert ? 'ACKNOWLEDGE' : 'PROCEED';
+                topModal.querySelector('.soc-card').style.borderColor = themeColor;
+                btnConfirm.className = 'soc-btn'; // Strip dangerous classes
+
+                btnCancel.style.display = isAlert ? 'none' : 'block';
+                modalConfirmCallback = callback;
+                topModal.style.display = 'flex';
+            }
+
+            function hideModal() {
+                topModal.style.display = 'none';
+                modalConfirmCallback = null;
+            }
+
+            btnCancel.addEventListener('click', hideModal);
+            btnConfirm.addEventListener('click', () => {
+                if (modalConfirmCallback) modalConfirmCallback();
+                else hideModal();
+            });
+
+            // STIX Export Event
+            document.getElementById('btn-export-stix').addEventListener('click', async function () {
+                const b = this; b.disabled = true;
+                try {
+                    const d = await (await fetch(`${STReports.apiBase()}/behavior/stix`, { headers: { Authorization: `Bearer ${STReports.token()}` } })).json();
+                    const stamp = new Date().toISOString().replace(/[:.]/g, '-');
+                    STReports.downloadBlob(`ShadowTrust-STIX2.1-bundle-${stamp}.json`, JSON.stringify(d.bundle, null, 2), 'application/json');
+                    STReports.toast(`✓ STIX 2.1 bundle: ${d.counts.objects} objects (${d.counts.indicators} indicators, ${d.counts.attack_patterns} attack-patterns)`, 'ok');
+                } catch (e) { STReports.toast('STIX export failed: ' + e.message, 'err'); }
+                finally { b.disabled = false; }
+            });
+
+            document.getElementById('btn-forensics').addEventListener('click', function () {
+                STReports.generateAndDownload('forensic_dfir', {}, { button: this, title: 'DFIR' });
+            });
+        });
+    </script>
+    <script src="js/report-download.js"></script>
+    <script src="js/sidebar.js"></script>
+</body>
+
+</html>

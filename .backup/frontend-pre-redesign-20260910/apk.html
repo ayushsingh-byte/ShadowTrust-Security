@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>APK Analyzer | Shadow Trust</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/dashboard.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/jquery.dataTables.min.css" />
+    <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+    <style>
+        /* Terminal style overrides for datatables */
+        .dataTables_wrapper .dataTables_length,
+        .dataTables_wrapper .dataTables_filter {
+            color: #888;
+            margin-bottom: 20px;
+        }
+
+        .dataTables_wrapper input,
+        .dataTables_wrapper select {
+            background: #111;
+            border: 1px solid #333;
+            color: var(--neon-cyan);
+            padding: 5px;
+            outline: none;
+            font-family: 'JetBrains Mono';
+        }
+
+        table.dataTable {
+            border-collapse: collapse;
+            width: 100%;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+        }
+
+        table.dataTable thead th {
+            border-bottom: 2px solid #333;
+            color: var(--neon-cyan);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        table.dataTable tbody td {
+            border-bottom: 1px solid #111;
+            padding: 12px 10px;
+            color: #ccc;
+        }
+
+        .dataTables_info,
+        .dataTables_paginate {
+            color: #666 !important;
+            font-family: 'JetBrains Mono';
+            font-size: 0.8rem;
+            margin-top: 20px;
+        }
+
+        .paginate_button.current {
+            background: #333 !important;
+            border: 1px solid #555 !important;
+            color: #fff !important;
+        }
+
+        .code-block {
+            background: #000;
+            color: #0f0;
+            font-family: 'JetBrains Mono', monospace;
+            padding: 10px;
+            font-size: 0.7rem;
+            height: 150px;
+            overflow-y: scroll;
+            border: 1px solid #333;
+        }
+
+        .mobsf-launch-panel {
+            min-height: 260px;
+            padding: 28px;
+            border-top: 1px solid #1e293b;
+            background: rgba(11, 16, 21, 0.95);
+            color: var(--text-secondary);
+            text-align: center;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+        }
+
+        .upload-strip {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .upload-strip input[type="file"] {
+            background: #0b1320;
+            border: 1px solid #1f2937;
+            color: #cbd5e1;
+            padding: 8px 12px;
+            min-width: 280px;
+            border-radius: 4px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .upload-strip input[type="file"]:hover {
+            border-color: #00c6ff;
+            box-shadow: 0 0 10px rgba(0, 198, 255, 0.15);
+        }
+
+        .upload-strip input[type="file"]::file-selector-button {
+            margin-right: 15px;
+            border: 1px solid #00c6ff;
+            background: rgba(0, 198, 255, 0.1);
+            padding: 8px 16px;
+            border-radius: 4px;
+            color: #00c6ff;
+            cursor: pointer;
+            transition: all 0.2s ease-in-out;
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: bold;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+        }
+
+        .upload-strip input[type="file"]::file-selector-button:hover {
+            background: #00c6ff;
+            color: #050a0f;
+            box-shadow: 0 0 10px rgba(0, 198, 255, 0.4);
+        }
+
+        .terminal-table td,
+        .terminal-table th {
+            padding: 12px;
+            border-bottom: 1px solid #111827;
+            vertical-align: top;
+        }
+
+        .mobsf-kv-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 12px;
+        }
+
+        .mobsf-kv-card {
+            border: 1px solid #1f2937;
+            background: #0b1320;
+            padding: 12px;
+        }
+
+        .mobsf-kv-card h4 {
+            margin: 0 0 10px;
+            color: var(--neon-cyan);
+            font-size: 0.72rem;
+            letter-spacing: 0.08em;
+        }
+
+        .mobsf-kv-row {
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+            border-bottom: 1px solid #111827;
+            padding: 6px 0;
+            font-size: 0.72rem;
+        }
+
+        .mobsf-kv-row span:first-child {
+            color: #94a3b8;
+        }
+
+        .mobsf-kv-row span:last-child {
+            color: #e2e8f0;
+            font-family: 'JetBrains Mono', monospace;
+            text-align: right;
+            word-break: break-word;
+        }
+
+        .component-grid {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 10px;
+            margin-top: 12px;
+        }
+
+        .component-tile {
+            border: 1px solid #1f2937;
+            background: #0b1320;
+            padding: 12px;
+            text-align: center;
+        }
+
+        .component-tile .num {
+            display: block;
+            color: var(--neon-cyan);
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin-bottom: 6px;
+        }
+
+        .component-tile .lbl {
+            color: #94a3b8;
+            font-size: 0.68rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+        }
+
+        .raw-json-block {
+            background: #020617;
+            color: #93c5fd;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            padding: 12px;
+            max-height: 300px;
+            overflow: auto;
+            border: 1px solid #1e293b;
+            white-space: pre-wrap;
+        }
+
+        .mobsf-block-stack {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .mobsf-analysis-block {
+            border: 1px solid #1f2937;
+            background: #0b1320;
+            overflow: hidden;
+            border-radius: 10px;
+        }
+
+        .mobsf-analysis-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            border-bottom: 1px solid #1f2937;
+            padding: 12px;
+        }
+
+        .mobsf-analysis-title {
+            color: #e2e8f0;
+            font-size: 0.78rem;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            font-weight: 700;
+        }
+
+        .mobsf-analysis-meta {
+            color: #94a3b8;
+            font-size: 0.68rem;
+        }
+
+        .mobsf-analysis-block details {
+            border: 0;
+        }
+
+        .mobsf-analysis-block summary {
+            list-style: none;
+            cursor: pointer;
+        }
+
+        .mobsf-analysis-block summary::-webkit-details-marker {
+            display: none;
+        }
+
+        .mobsf-analysis-block details[open] .mobsf-analysis-header {
+            background: rgba(15, 23, 42, 0.65);
+        }
+
+        .mobsf-table-wrap {
+            max-height: 340px;
+            overflow: auto;
+        }
+
+        .mobsf-data-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.72rem;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .mobsf-data-table th,
+        .mobsf-data-table td {
+            border-bottom: 1px solid #0f172a;
+            border-right: 1px solid #0f172a;
+            padding: 8px 10px;
+            vertical-align: top;
+            color: #cbd5e1;
+            text-align: left;
+        }
+
+        .mobsf-data-table th {
+            position: sticky;
+            top: 0;
+            background: #0f172a;
+            color: #67e8f9;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            z-index: 1;
+        }
+
+        .mobsf-data-table tbody tr:nth-child(odd) {
+            background: rgba(8, 18, 35, 0.45);
+        }
+
+        .mobsf-data-table tbody tr:hover {
+            background: rgba(34, 211, 238, 0.08);
+        }
+
+        .mobsf-empty {
+            color: #64748b;
+            font-size: 0.75rem;
+            padding: 14px;
+        }
+
+        .sev-chip {
+            display: inline-block;
+            padding: 2px 8px;
+            font-size: 0.62rem;
+            border-radius: 999px;
+            letter-spacing: 0.05em;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .sev-high {
+            background: rgba(239, 68, 68, 0.2);
+            color: #f87171;
+            border: 1px solid rgba(239, 68, 68, 0.4);
+        }
+
+        .sev-warning,
+        .sev-medium {
+            background: rgba(250, 204, 21, 0.2);
+            color: #facc15;
+            border: 1px solid rgba(250, 204, 21, 0.35);
+        }
+
+        .sev-info,
+        .sev-low,
+        .sev-normal,
+        .sev-secure {
+            background: rgba(45, 212, 191, 0.18);
+            color: #5eead4;
+            border: 1px solid rgba(45, 212, 191, 0.35);
+        }
+
+        @media (max-width: 1100px) {
+            .mobsf-kv-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .component-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="app-container">
+
+        <!-- SIDEBAR -->
+        <!-- VOID NEON SIDEBAR (FROM GEO INTEL) -->
+        <!-- SIDEBAR -->
+        <aside class="sidebar" id="sidebar"></aside>
+
+        <main class="main-content">
+
+            <div class="top-bar">
+                <div class="page-header">
+                    <h2>ANDROID FORENSICS</h2>
+                    <p>STATIC ANALYSIS ENGINE // <span class="text-cyan">JADX DECOMPILER</span></p>
+                </div>
+                <div class="filters-bar">
+                    <div class="upload-strip">
+                        <input id="apkFileInput" type="file" accept=".apk">
+                        <button id="startScanBtn" class="soc-btn soc-btn-primary"><i class="fas fa-upload"></i> UPLOAD & SCAN</button>
+                        <button id="openMobSFBt" class="soc-btn"><i class="fab fa-android"></i> OPEN MOBSF API DOCS</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ROW 1: HEADER INFO & UPLOAD -->
+            <div class="dashboard-grid" style="grid-template-columns: 2fr 1fr;">
+                <!-- REPORT CARD -->
+                <div class="soc-card" style="padding:0;">
+                    <div class="soc-card-header" style="padding:15px;">
+                        <span class="card-title">LATEST ANALYSIS: <span id="latestAppName"
+                            class="text-white">No scans yet</span></span>
+                        <span id="latestThreatBadge" class="badge">N/A</span>
+                    </div>
+                    <div id="latestAnalysisDetails" style="padding:15px; display:grid; grid-template-columns: 1fr 1fr; gap:20px;">
+                        <div>
+                            <div class="resource-row"><span>Package Name</span> <span
+                                class="text-mono text-cyan">N/A</span></div>
+                            <div class="resource-row"><span>Version</span> <span class="text-mono">N/A</span></div>
+                            <div class="resource-row"><span>SHA256</span> <span class="text-mono text-xs">N/A</span>
+                            </div>
+                            <div class="resource-row"><span>Last Scan</span> <span class="text-mono">N/A</span></div>
+                        </div>
+                        <div>
+                            <div class="resource-row"><span>Vulnerabilities</span> <span class="text-mono text-pink">0
+                                Detected</span></div>
+                            <div class="resource-row"><span>Permissions</span> <span
+                                class="text-mono text-purple">N/A</span></div>
+                            <div class="resource-row"><span>Score</span> <span class="text-mono">0/100</span></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PERMISSIONS CHART -->
+                <div class="soc-card">
+                    <div class="soc-card-header"><span class="card-title">DANGEROUS PERMISSIONS</span></div>
+                    <div id="dangerousPermissionsList" style="display:flex; flex-direction:column; gap:5px;">
+                        <div class="text-xs text-muted">No dangerous permissions detected</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ROW 2: MANIFEST FULL WIDTH -->
+            <div class="soc-card" style="margin-top:20px; padding:0;">
+                <div class="soc-card-header" style="padding:15px;">
+                    <span class="card-title">AndroidManifest.xml</span>
+                </div>
+                <div id="manifestViewer" class="code-block" style="border:none; height:320px; max-height:320px;">
+                    No APK loaded
+                </div>
+            </div>
+
+            <!-- ROW 2B: VULNERABILITY TABLE BELOW MANIFEST -->
+            <div class="soc-card" style="margin-top:20px; padding:0;">
+                <div class="soc-card-header" style="padding:15px;">
+                    <span class="card-title">DETECTED VULNERABILITIES</span>
+                </div>
+                <table class="terminal-table" style="margin:0;">
+                    <thead>
+                        <tr>
+                            <th>TITLE</th>
+                            <th>SEVERITY</th>
+                            <th>DESCRIPTION</th>
+                        </tr>
+                    </thead>
+                    <tbody id="vulnerabilityTableBody">
+                        <tr>
+                            <td colspan="3" class="text-muted">No data yet</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- ROW 2B: DEEP MOBSF DATA -->
+            <div class="soc-card" style="margin-top:20px; padding:0; overflow:hidden;">
+                <div class="soc-card-header" style="padding:15px;">
+                    <span class="card-title">MOBSF STATIC ANALYZER DETAILS</span>
+                </div>
+                <div style="padding:15px; border-top:1px solid #1e293b;">
+                    <div id="mobsfInfoGrid" class="mobsf-kv-grid">
+                        <div class="mobsf-kv-card">
+                            <h4>APP SCORES</h4>
+                            <div class="mobsf-kv-row"><span>Security Score</span><span>N/A</span></div>
+                            <div class="mobsf-kv-row"><span>Trackers</span><span>N/A</span></div>
+                            <div class="mobsf-kv-row"><span>Threat Score</span><span>N/A</span></div>
+                        </div>
+                        <div class="mobsf-kv-card">
+                            <h4>FILE INFORMATION</h4>
+                            <div class="mobsf-kv-row"><span>File Name</span><span>N/A</span></div>
+                            <div class="mobsf-kv-row"><span>Size</span><span>N/A</span></div>
+                            <div class="mobsf-kv-row"><span>MD5</span><span>N/A</span></div>
+                        </div>
+                        <div class="mobsf-kv-card">
+                            <h4>APP INFORMATION</h4>
+                            <div class="mobsf-kv-row"><span>App Name</span><span>N/A</span></div>
+                            <div class="mobsf-kv-row"><span>Package Name</span><span>N/A</span></div>
+                            <div class="mobsf-kv-row"><span>Main Activity</span><span>N/A</span></div>
+                        </div>
+                    </div>
+
+                    <div class="component-grid" id="componentCounts">
+                        <div class="component-tile"><span class="num">0 / 0</span><span class="lbl">Activities</span></div>
+                        <div class="component-tile"><span class="num">0 / 0</span><span class="lbl">Services</span></div>
+                        <div class="component-tile"><span class="num">0 / 0</span><span class="lbl">Receivers</span></div>
+                        <div class="component-tile"><span class="num">0 / 0</span><span class="lbl">Providers</span></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="dashboard-grid" style="grid-template-columns: 1fr 1fr; margin-top:20px;">
+                <div class="soc-card" style="padding:0; overflow:hidden;">
+                    <div class="soc-card-header" style="padding:15px;">
+                        <span class="card-title">SIGNER CERTIFICATE</span>
+                    </div>
+                    <pre id="signerCertBlock" class="raw-json-block" style="margin:0; border:none; max-height:260px;">No certificate data yet</pre>
+                </div>
+                <div class="soc-card" style="padding:0; overflow:hidden;">
+                    <div class="soc-card-header" style="padding:15px;">
+                        <span class="card-title">RAW MOBSF JSON</span>
+                    </div>
+                    <pre id="rawReportViewer" class="raw-json-block" style="margin:0; border:none; max-height:260px;">No report data yet</pre>
+                </div>
+            </div>
+
+            <div class="soc-card" style="margin-top:20px; padding:0; overflow:hidden;">
+                <div class="soc-card-header" style="padding:15px;">
+                    <span class="card-title">FULL MOBSF ANALYSIS BLOCKS</span>
+                </div>
+                <div style="padding:15px; border-top:1px solid #1e293b;">
+                    <div id="mobsfDynamicBlocks" class="mobsf-block-stack">
+                        <div class="mobsf-empty">Run a scan to load full MobSF sections (Permissions, Android API, Browsable Activities, Certificate Analysis, Manifest Analysis, Code Analysis, Binary Analysis, Trackers, Emails, and more).</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ROW 3: RECENT ANALYSIS TABLE -->
+            <div class="soc-card" style="margin-top:20px; padding:0;">
+                <div class="soc-card-header" style="padding:15px;">
+                    <span class="card-title">ANALYSIS HISTORY</span>
+                </div>
+                <table id="apkTable" class="display" style="width:100%">
+                    <thead>
+                        <tr>
+                            <th>APP NAME</th>
+                            <th>PACKAGE</th>
+                            <th>VER</th>
+                            <th>THREAT SCORE</th>
+                            <th>FINDINGS</th>
+                            <th>STATUS</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- JS Populated -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- ROW 4: MOBSF CONTROL -->
+            <div class="soc-card" style="margin-top:20px; padding:0; overflow:hidden;">
+                <div class="soc-card-header" style="padding:15px;">
+                    <span class="card-title">MOBSF CONTROL PLANE</span>
+                    <a id="mobsfDocsLink" href="#" target="_blank" rel="noopener noreferrer" class="soc-btn"
+                        style="padding:6px 14px; font-size:0.75rem;">
+                        <i class="fas fa-up-right-from-square"></i> OPEN IN NEW TAB
+                    </a>
+                </div>
+                <div style="padding:15px; border-top:1px solid #1e293b; color:var(--text-secondary); font-size:0.78rem;">
+                    API-only integration. MobSF runs in Docker on the first free port between 8000 and 9000.
+                </div>
+                <div class="mobsf-launch-panel" style="display:flex; min-height:220px;">
+                    <div style="max-width:820px; text-align:left; width:100%;">
+                        <div class="card-title" style="margin-bottom:14px;">AUTOMATED WORKFLOW</div>
+                        <div id="mobsfStatus" class="text-muted" style="margin-bottom:16px;">Checking MobSF status...</div>
+                        <div class="text-xs text-muted" style="line-height:1.8;">
+                            1. The Flask bridge checks ports 8000-9000 and starts MobSF on the first free one.<br>
+                            2. Open MobSF API docs once, copy the key, and paste it into backend/mobsf_service/config.py.<br>
+                            3. Upload an APK here to trigger upload, scan, report retrieval, and dashboard refresh.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <script type="module" src="js/apk.js"></script>
+
+    <script src="js/sidebar.js"></script>
+</body>
+
+</html>

@@ -1,4 +1,5 @@
 import json
+import re
 
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel
@@ -18,7 +19,7 @@ from app.models.all_models import (
 )
 from app.api.v1.dependencies import get_current_active_user
 
-router = APIRouter()
+router = APIRouter(dependencies=[Depends(get_current_active_user)])
 
 _ANNOTATIONS_KEY = "mitre_annotations"
 _VALID_STATUS = {"observed", "investigating", "mitigated", "false-positive"}
@@ -69,67 +70,92 @@ ATTACK_CATALOG = [
 ]
 
 # --- MITRE ATT&CK Mapping Rules Engine ---
+# Login / shell services — the lab remaps these off their well-known numbers
+# (Cowrie SSH 2222, Telnet 2223; Dionaea FTP 2121, MSSQL 1433) so the raw port
+# alone is not enough. Both the standard and the lab port are listed.
+_LOGIN_PORTS = {22, 2222, 23, 2223, 21, 2121, 3389, 5900, 3306, 1433, 5432, 6379}
+_WEB_PORTS = {80, 443, 8080, 8443, 8022, 8023, 9200, 5000, 8000}
+_C2_PORTS = {53, 123, 161, 4444, 8443}
+
+# Payload-retrieval / stager commands — the same evidence detection uses for T1105.
+_DOWNLOAD_RE = re.compile(
+    r"\b(wget|curl)\b.+https?://|\btftp\b.+-[gi]|certutil(\.exe)?\s+.*-urlcache"
+    r"|Invoke-WebRequest|IWR\b|Net\.WebClient|\bcurl\b.+\|\s*(sh|bash)",
+    re.IGNORECASE,
+)
+_RECON_CMD_RE = re.compile(
+    r"cat\s+/etc/(passwd|shadow)|\b(id|whoami|uname\s+-a|hostname|netstat|ps\s+aux)\b"
+    r"|crontab\s+-|history\s+-c|chattr\s+[+-]i",
+    re.IGNORECASE,
+)
+
+
 def map_to_mitre(event: RawEventModel):
     """
-    Analyzes raw telemetry from honeypots and maps to MITRE ATT&CK Tactics & Techniques.
-    Returns a dictionary of mapped findings or None if insignificant.
+    Map one raw honeypot event to MITRE ATT&CK tactics/techniques.
+
+    Driven by the sensor's event type and command content first, port second —
+    a Cowrie ``command.input`` is Execution regardless of which port it rode in
+    on, and a login attempt is Credential Access whether it hit 22 or 2222.
     """
     mapped_events = []
-    
-    # 1. Credential Access (T1110 - Brute Force)
-    if event.target_port in [22, 21, 3389, 5900]:
+    etype = (event.event_type or "").lower()
+    cmd = event.commands or ""
+    port = event.target_port
+
+    is_login = "login" in etype or "auth" in etype or "credential" in etype
+    is_command = "command" in etype or "input" in etype or bool(cmd)
+    is_scan = "scan" in etype or "reject" in etype or getattr(event, "ports_scanned", None)
+    is_upload = "upload" in etype or "download" in etype or getattr(event, "uploaded_files", None)
+    is_http = "http" in etype or "web" in etype
+
+    # Credential Access — brute force / password guessing
+    if is_login or (port in _LOGIN_PORTS and "connect" in etype):
         mapped_events.append({
-            "tactic": "Credential Access",
-            "id": "T1110",
-            "technique": "Brute Force",
-            "severity": "HIGH"
+            "tactic": "Credential Access", "id": "T1110",
+            "technique": "Brute Force", "severity": "HIGH",
         })
-        
-    # 2. Initial Access (T1190 - Exploit Public-Facing Application)
-    if event.target_port in [80, 443, 8080, 8443, 9200]:
+
+    # Initial Access — exploit of a public-facing app (web sensors)
+    if is_http or port in _WEB_PORTS:
         mapped_events.append({
-            "tactic": "Initial Access",
-            "id": "T1190",
-            "technique": "Exploit Public-Facing Application",
-            "severity": "CRITICAL"
+            "tactic": "Initial Access", "id": "T1190",
+            "technique": "Exploit Public-Facing Application", "severity": "CRITICAL",
         })
-        
-    # 3. Discovery (T1046 - Network Service Discovery)
-    if "scan" in (event.event_type or "").lower() or event.ports_scanned:
+
+    # Execution — a command ran in a honeypot shell
+    if is_command or port in (23, 2223):
         mapped_events.append({
-            "tactic": "Discovery",
-            "id": "T1046",
-            "technique": "Network Service Discovery",
-            "severity": "MEDIUM"
+            "tactic": "Execution", "id": "T1059",
+            "technique": "Command and Scripting Interpreter", "severity": "HIGH",
         })
-        
-    # 4. Execution (T1059 - Command and Scripting Interpreter)
-    if event.commands or event.target_port == 23:
+
+    # Discovery — port/service scan, or on-host enumeration commands
+    if is_scan or _RECON_CMD_RE.search(cmd):
         mapped_events.append({
-            "tactic": "Execution",
-            "id": "T1059",
-            "technique": "Command and Scripting Interpreter",
-            "severity": "CRITICAL"
+            "tactic": "Discovery", "id": "T1046",
+            "technique": "Network Service Discovery", "severity": "MEDIUM",
         })
-        
-    # 5. Command and Control (T1071 - Application Layer Protocol)
-    if event.target_port in [53, 123, 161] or event.uploaded_files:
+
+    # Command and Control / Ingress Tool Transfer — stager download or file upload
+    if is_upload or _DOWNLOAD_RE.search(cmd):
         mapped_events.append({
-            "tactic": "Command and Control",
-            "id": "T1071",
-            "technique": "Application Layer Protocol",
-            "severity": "HIGH"
+            "tactic": "Command and Control", "id": "T1105",
+            "technique": "Ingress Tool Transfer", "severity": "HIGH",
         })
-        
-    # Fallback for generic connections
-    if not mapped_events and event.target_port:
+    elif port in _C2_PORTS:
         mapped_events.append({
-            "tactic": "Reconnaissance",
-            "id": "T1595",
-            "technique": "Active Scanning",
-            "severity": "LOW"
+            "tactic": "Command and Control", "id": "T1071",
+            "technique": "Application Layer Protocol", "severity": "HIGH",
         })
-        
+
+    # Fallback — a bare connection with nothing else to say about it
+    if not mapped_events and port:
+        mapped_events.append({
+            "tactic": "Reconnaissance", "id": "T1595",
+            "technique": "Active Scanning", "severity": "LOW",
+        })
+
     return mapped_events
 
 

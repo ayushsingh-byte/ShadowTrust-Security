@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Event Log | Shadow Trust</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/dashboard.css">
+    <link rel="stylesheet" href="css/events.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Fit the live-pipeline panels inside the shared sidebar shell. */
+        .main-content .hn-stats,
+        .main-content .hn-panel { margin-bottom: 18px; }
+        .page-header .hn-conn { margin-left: 6px; vertical-align: middle; }
+    </style>
+</head>
+
+<body>
+    <div class="app-container">
+        <aside class="sidebar" id="sidebar"></aside>
+
+        <main class="main-content">
+            <div class="top-bar">
+                <div class="page-header">
+                    <h2>EVENT LOG</h2>
+                    <p>LOCAL PIPELINE // sensor &rarr; collector &rarr; normalizer &rarr; dashboard &nbsp;
+                        <span id="hn-conn" class="hn-conn"><span class="hn-dot"></span><span id="hn-conn-label">Connecting&hellip;</span></span>
+                    </p>
+                </div>
+                <div class="filters-bar">
+                    <button id="ev-export" class="soc-btn soc-btn-primary"><i class="fas fa-download"></i> EXPORT CSV</button>
+                </div>
+            </div>
+
+            <!-- Overview -->
+            <div class="hn-stats">
+                <div class="hn-stat"><div class="label">Total Events</div><div class="value" id="stat-total">0</div></div>
+                <div class="hn-stat"><div class="label">Active Sessions</div><div class="value" id="stat-sessions">0</div></div>
+                <div class="hn-stat"><div class="label">Unique Source IPs</div><div class="value" id="stat-ips">0</div></div>
+                <div class="hn-stat"><div class="label">Commands Executed</div><div class="value" id="stat-commands">0</div></div>
+                <div class="hn-stat crit"><div class="label">High/Critical Events</div><div class="value" id="stat-attacks">0</div></div>
+                <div class="hn-stat"><div class="label">Sensors Online</div><div class="value" id="stat-sensors">0/0</div></div>
+            </div>
+
+            <div class="hn-grid-2">
+                <div class="hn-panel">
+                    <h2>Live Activity <span class="count">newest first, SSE-driven</span></h2>
+                    <div class="hn-feed" id="hn-feed"><div class="hn-empty">Waiting for sensor telemetry&hellip;</div></div>
+                </div>
+                <div class="hn-panel">
+                    <h2>Sensors</h2>
+                    <div class="hn-sensors" id="hn-sensors"><div class="hn-empty">Loading&hellip;</div></div>
+                </div>
+            </div>
+
+            <div class="hn-panel">
+                <h2>Attacker Profiles <span class="count"><span id="hn-attacker-count">0</span> source IP(s)</span></h2>
+                <div class="hn-table-wrap">
+                    <table class="hn-table" id="hn-attackers">
+                        <thead>
+                            <tr>
+                                <th>Source IP</th><th>Severity</th><th>Events</th><th>Sensors</th>
+                                <th>Ports</th><th>Usernames</th><th>Logins OK</th><th>Last Seen</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="hn-grid-2">
+                <div class="hn-panel">
+                    <h2>Event Log <span class="count"><span id="hn-event-count">0</span> shown</span></h2>
+                    <div class="hn-filters">
+                        <select id="filter-sensor">
+                            <option value="">All sensors</option>
+                            <option value="cowrie">Cowrie</option>
+                            <option value="dionaea">Dionaea</option>
+                            <option value="honeytrap">Honeytrap</option>
+                        </select>
+                        <select id="filter-severity">
+                            <option value="">All severities</option>
+                            <option value="INFO">Info</option>
+                            <option value="LOW">Low</option>
+                            <option value="MEDIUM">Medium</option>
+                            <option value="HIGH">High</option>
+                            <option value="CRITICAL">Critical</option>
+                        </select>
+                        <input type="text" id="filter-ip" placeholder="source IP&hellip;">
+                        <button id="filter-apply">Apply</button>
+                        <button id="filter-clear">Clear</button>
+                    </div>
+                    <div class="hn-table-wrap">
+                        <table class="hn-table" id="hn-events">
+                            <thead>
+                                <tr>
+                                    <th>Time</th><th>Sensor</th><th>Event Type</th><th>Source IP</th>
+                                    <th>Username</th><th>Command</th><th>Severity</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="hn-panel">
+                    <h2 id="hn-timeline-title">Select an attacker to see their timeline</h2>
+                    <div class="hn-timeline" id="hn-timeline"></div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="js/sidebar.js"></script>
+    <script src="js/events.js"></script>
+    <script>
+        // CSV export of the event rows currently shown in the table.
+        document.getElementById('ev-export').addEventListener('click', () => {
+            const rows = [...document.querySelectorAll('#hn-events tbody tr')].map(tr =>
+                [...tr.children].map(td => {
+                    const v = (td.innerText || '').replace(/\s+/g, ' ').trim();
+                    return /[",\n]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v;
+                }).join(','));
+            if (!rows.length) return;
+            const header = 'time,sensor,event_type,source_ip,username,command,severity';
+            const blob = new Blob([header + '\n' + rows.join('\n')], { type: 'text/csv' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = `shadowtrust-events-${new Date().toISOString().replace(/[:.]/g, '-')}.csv`;
+            a.click();
+            URL.revokeObjectURL(a.href);
+        });
+    </script>
+</body>
+
+</html>

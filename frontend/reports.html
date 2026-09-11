@@ -8,56 +8,204 @@
     <link rel="stylesheet" href="css/dashboard.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        .rp-bar { display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-end; margin-bottom: 18px;
-            background: #0a0a0f; border: 1px solid #222; border-radius: 8px; padding: 14px; }
-        .rp-bar .fld { display: flex; flex-direction: column; gap: 4px; }
-        .rp-bar label { font-size: .62rem; letter-spacing: 1px; color: #7d8590; text-transform: uppercase; }
-        .rp-bar select, .rp-bar input { background: #161b22; border: 1px solid #30363d; color: #e6edf3;
-            padding: 8px 10px; border-radius: 6px; font: inherit; font-size: .85rem; min-width: 190px; }
-        .rp-wrap { border: 1px solid #1c2128; border-radius: 8px; overflow: auto; }
-        table.rp { border-collapse: collapse; width: 100%; font-size: .8rem; font-family: var(--font-mono, monospace); }
-        table.rp th { position: sticky; top: 0; background: #161b22; color: #7d8590; text-align: left; padding: 9px 12px; white-space: nowrap; }
-        table.rp td { padding: 8px 12px; border-top: 1px solid #14181e; color: #c9d1d9; vertical-align: top; }
-        table.rp tr:hover td { background: #11161d; }
-        .rp-dl { background: #1f6feb; color: #fff; border: 0; padding: 5px 12px; border-radius: 5px; cursor: pointer; font: inherit; font-size: .75rem; }
-        .rp-hash { color: #6e7681; font-size: .7rem; }
-        .rp-type { color: #58a6ff; }
+        /* =========================================================
+           REPORTS — generation + history
+           Neutral greys + single teal accent. All motion respects
+           prefers-reduced-motion (block at end).
+           ========================================================= */
+        .rp-main .top-bar { margin-bottom: 1.1rem; }
+        .rp-main .page-header h2 { animation: fadeUp .4s both; }
+        .rp-main .page-header p { animation: fadeUp .4s .05s both; }
+        .rp-main .filters-bar { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; animation: fadeUp .4s .1s both; }
+
+        .card {
+            background: var(--st-surface); border: 1px solid var(--st-border);
+            border-radius: var(--st-radius-md); box-shadow: var(--st-shadow-sm);
+        }
+
+        .sec-head { display: flex; align-items: baseline; gap: 10px; margin: 0 0 10px; }
+        .sec-head h3 { font-size: .9rem; font-weight: 700; color: var(--st-text); margin: 0; }
+        .sec-head .hint { font-size: .72rem; color: var(--st-text-muted); }
+
+        /* ---------- window toolbar ---------- */
+        .win-bar {
+            display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+            padding: 10px 14px; margin-bottom: 12px;
+            animation: fadeUp .4s .12s both;
+        }
+        .win-bar label { font-size: .64rem; letter-spacing: .08em; text-transform: uppercase; color: var(--st-text-muted); font-weight: 600; }
+        .win-bar select {
+            background: var(--st-surface); border: 1px solid var(--st-border-strong); color: var(--st-text);
+            padding: 7px 10px; border-radius: var(--st-radius-sm); font: inherit; font-size: .82rem;
+        }
+        .win-bar select:focus { outline: none; border-color: var(--st-accent); box-shadow: var(--st-focus-ring); }
+        .win-bar .note { font-size: .72rem; color: var(--st-text-faint); }
+
+        /* ---------- report-type cards ---------- */
+        .rt-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(272px, 1fr)); gap: 10px; margin-bottom: 22px; }
+        .rt-card {
+            display: grid; grid-template-columns: 34px 1fr; grid-template-rows: auto auto;
+            column-gap: 12px; row-gap: 6px; padding: 14px;
+            background: var(--st-surface); border: 1px solid var(--st-border);
+            border-radius: var(--st-radius-md); transition: border-color .15s, background .15s;
+            animation: fadeUp .4s both; animation-delay: calc(var(--i, 0) * 45ms + .12s);
+        }
+        .rt-card:hover { border-color: var(--st-border-strong); }
+        .rt-ic {
+            grid-row: 1 / span 2; width: 34px; height: 34px; border-radius: var(--st-radius-sm);
+            display: flex; align-items: center; justify-content: center;
+            background: var(--st-accent-tint); color: var(--st-accent); font-size: .95rem;
+        }
+        .rt-name { font-size: .84rem; font-weight: 700; color: var(--st-text); display: flex; align-items: center; gap: 7px; flex-wrap: wrap; }
+        .rt-adm {
+            font-size: .56rem; letter-spacing: .06em; text-transform: uppercase; font-weight: 700;
+            color: var(--st-neutral); border: 1px solid var(--st-border-strong); border-radius: 999px; padding: 1px 6px;
+        }
+        .rt-desc { font-size: .74rem; color: var(--st-text-muted); line-height: 1.4; }
+        .rt-foot { grid-column: 2; display: flex; align-items: center; gap: 8px; margin-top: 4px; }
+        .rt-param {
+            flex: 1; min-width: 0; background: var(--st-surface-2); border: 1px solid var(--st-border-strong);
+            color: var(--st-text); padding: 6px 9px; border-radius: var(--st-radius-sm); font: inherit; font-size: .76rem;
+        }
+        .rt-param:focus { outline: none; border-color: var(--st-accent); box-shadow: var(--st-focus-ring); }
+        .rt-go {
+            background: var(--st-accent); border: 1px solid var(--st-accent); color: var(--st-on-solid);
+            padding: 6px 14px; border-radius: var(--st-radius-sm); font: inherit; font-size: .76rem; font-weight: 600;
+            cursor: pointer; white-space: nowrap; transition: background .15s, border-color .15s;
+        }
+        .rt-go:hover { background: var(--st-accent-hover); border-color: var(--st-accent-hover); }
+        .rt-go:disabled { opacity: .55; cursor: not-allowed; }
+        .rt-go i { margin-right: 5px; }
+
+        .sk-card { height: 96px; border-radius: var(--st-radius-md); }
+
+        /* ---------- history ---------- */
+        .hist-head { display: flex; align-items: baseline; gap: 10px; margin-bottom: 10px; }
+        .hist-head h3 { font-size: .9rem; font-weight: 700; margin: 0; color: var(--st-text); }
+        .hist-count {
+            font-family: var(--st-font-mono); font-size: .72rem; color: var(--st-text-muted);
+            border: 1px solid var(--st-border); border-radius: 999px; padding: 2px 9px;
+        }
+
+        .rp-wrap { border: 1px solid var(--st-border); border-radius: var(--st-radius-md); overflow-x: auto; }
+        table.rp { width: 100%; border-collapse: collapse; font-size: .78rem; }
+        table.rp th {
+            text-align: left; padding: 9px 12px; background: var(--st-surface-2); color: var(--st-text-muted);
+            font-size: .62rem; text-transform: uppercase; letter-spacing: .06em; font-weight: 600;
+            border-bottom: 1px solid var(--st-border); white-space: nowrap; position: sticky; top: 0;
+        }
+        table.rp td { padding: 9px 12px; border-bottom: 1px solid var(--st-border); color: var(--st-text-secondary); vertical-align: middle; }
+        table.rp tbody tr:last-child td { border-bottom: 0; }
+        table.rp tbody tr { animation: fadeUp .3s both; animation-delay: calc(var(--i, 0) * 22ms); }
+        table.rp tbody tr:hover td { background: var(--st-surface-hover); }
+        .rp-when { white-space: nowrap; }
+        .rp-when b { color: var(--st-text); font-weight: 600; }
+        .rp-when span { display: block; font-size: .64rem; color: var(--st-text-faint); font-family: var(--st-font-mono); }
+        .rp-title { color: var(--st-text); }
+        .rp-sub { color: var(--st-text-muted); max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .rp-by { font-family: var(--st-font-mono); font-size: .7rem; color: var(--st-text-muted); }
+        .rp-size { font-family: var(--st-font-mono); white-space: nowrap; color: var(--st-text-secondary); }
+
+        .tybadge {
+            display: inline-flex; align-items: center; gap: 5px; padding: 2px 8px; border-radius: 999px;
+            font-size: .64rem; font-weight: 700; letter-spacing: .03em; white-space: nowrap;
+            background: var(--st-accent-tint); color: var(--st-accent);
+            border: 1px solid color-mix(in srgb, var(--st-accent) 26%, transparent);
+        }
+        .tybadge i { font-size: .7em; }
+
+        .hash {
+            font-family: var(--st-font-mono); font-size: .7rem; color: var(--st-text-muted);
+            background: var(--st-surface-2); border: 1px solid var(--st-border); border-radius: var(--st-radius-sm);
+            padding: 2px 7px; cursor: pointer; transition: border-color .15s, color .15s; white-space: nowrap;
+        }
+        .hash:hover { border-color: var(--st-accent); color: var(--st-text-secondary); }
+        .hash.copied { color: var(--st-success); border-color: color-mix(in srgb, var(--st-success) 40%, transparent); }
+
+        .dl {
+            display: inline-flex; align-items: center; gap: 6px;
+            background: var(--st-surface); border: 1px solid var(--st-border-strong); color: var(--st-text);
+            padding: 5px 12px; border-radius: var(--st-radius-sm); font: inherit; font-size: .73rem; font-weight: 600;
+            cursor: pointer; transition: background .15s, border-color .15s;
+        }
+        .dl:hover { background: var(--st-surface-hover); border-color: var(--st-accent); }
+        .dl:disabled { opacity: .55; cursor: not-allowed; }
+
+        .rp-empty { padding: 34px 16px; text-align: center; color: var(--st-text-muted); font-size: .8rem; }
+        .rp-empty i { display: block; font-size: 1.7rem; opacity: .25; margin-bottom: 10px; }
+        .err { color: var(--st-danger); }
+
+        .sk { border-radius: var(--st-radius-sm); background: linear-gradient(90deg, var(--st-surface-hover) 25%, var(--st-border) 37%, var(--st-surface-hover) 63%); background-size: 400% 100%; animation: shimmer 1.4s ease-in-out infinite; }
+        .sk-row td { padding: 8px 12px !important; }
+        .sk-row .sk { height: 14px; }
+        @keyframes shimmer { 0% { background-position: 100% 50%; } 100% { background-position: 0 50%; } }
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(8px); } }
+        .hidden { display: none !important; }
+
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: .001ms !important;
+                animation-delay: 0 !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: .001ms !important;
+            }
+        }
     </style>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600;700&amp;display=swap">
+    <link rel="stylesheet" href="css/tokens.css">
+    <script src="js/theme.js"></script>
 </head>
 <body>
     <div class="app-container">
         <aside class="sidebar" id="sidebar"></aside>
-        <main class="main-content">
+        <main class="main-content rp-main">
             <div class="top-bar">
                 <div class="page-header">
                     <h2>REPORTS</h2>
-                    <p>GENERATED PDF INTELLIGENCE &amp; COMPLIANCE REPORTS &nbsp;<span id="rp-meta" class="rp-hash"></span></p>
+                    <p>Generated PDF intelligence &amp; compliance reports</p>
+                </div>
+                <div class="filters-bar">
+                    <button class="soc-btn" id="rp-refresh"><i class="fas fa-rotate"></i> Refresh</button>
                 </div>
             </div>
 
-            <div class="rp-bar">
-                <div class="fld">
-                    <label>Report type</label>
-                    <select id="rp-type"></select>
-                </div>
-                <div class="fld" id="rp-param-wrap" style="display:none;">
-                    <label id="rp-param-label">Subject</label>
-                    <input id="rp-param" placeholder="">
-                </div>
-                <div class="fld">
-                    <label>Window (days)</label>
-                    <select id="rp-days">
-                        <option value="">all data</option>
-                        <option value="1">1</option><option value="7" selected>7</option><option value="30">30</option><option value="90">90</option>
-                    </select>
-                </div>
-                <button class="soc-btn soc-btn-primary" id="rp-gen"><i class="fas fa-file-pdf"></i> GENERATE</button>
+            <div class="sec-head">
+                <h3>Generate a report</h3>
+                <span class="hint">Runs the backend PDF engine, records it below, and downloads the signed file.</span>
+            </div>
+
+            <div class="card win-bar">
+                <label for="rp-days">Time window</label>
+                <select id="rp-days">
+                    <option value="">All data</option>
+                    <option value="1">Last 24 hours</option>
+                    <option value="7" selected>Last 7 days</option>
+                    <option value="30">Last 30 days</option>
+                    <option value="90">Last 90 days</option>
+                </select>
+                <span class="note">Applies to time-scoped report types.</span>
+            </div>
+
+            <div class="rt-grid" id="rp-types">
+                <div class="sk sk-card"></div><div class="sk sk-card"></div><div class="sk sk-card"></div>
+                <div class="sk sk-card"></div><div class="sk sk-card"></div><div class="sk sk-card"></div>
+            </div>
+
+            <div class="hist-head">
+                <h3>Report history</h3>
+                <span class="hist-count" id="rp-count">&hellip;</span>
             </div>
 
             <div class="rp-wrap">
                 <table class="rp">
                     <thead><tr><th>Generated</th><th>Type</th><th>Title</th><th>Subject</th><th>By</th><th>Size</th><th>SHA-256</th><th></th></tr></thead>
-                    <tbody id="rp-rows"><tr><td colspan="8" style="padding:16px;color:#7d8590;">loading…</td></tr></tbody>
+                    <tbody id="rp-rows">
+                        <tr class="sk-row"><td><div class="sk"></div></td><td><div class="sk"></div></td><td><div class="sk"></div></td><td><div class="sk"></div></td><td><div class="sk"></div></td><td><div class="sk"></div></td><td><div class="sk"></div></td><td><div class="sk"></div></td></tr>
+                        <tr class="sk-row"><td><div class="sk"></div></td><td><div class="sk"></div></td><td><div class="sk"></div></td><td><div class="sk"></div></td><td><div class="sk"></div></td><td><div class="sk"></div></td><td><div class="sk"></div></td><td><div class="sk"></div></td></tr>
+                        <tr class="sk-row"><td><div class="sk"></div></td><td><div class="sk"></div></td><td><div class="sk"></div></td><td><div class="sk"></div></td><td><div class="sk"></div></td><td><div class="sk"></div></td><td><div class="sk"></div></td><td><div class="sk"></div></td></tr>
+                        <tr class="sk-row"><td><div class="sk"></div></td><td><div class="sk"></div></td><td><div class="sk"></div></td><td><div class="sk"></div></td><td><div class="sk"></div></td><td><div class="sk"></div></td><td><div class="sk"></div></td><td><div class="sk"></div></td></tr>
+                    </tbody>
                 </table>
             </div>
         </main>
@@ -70,6 +218,7 @@
         const H = () => ({ 'Authorization': `Bearer ${STReports.token()}` });
         const $ = s => document.querySelector(s);
         const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+        const REDUCE = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
         // report types whose builder needs a subject param
         const NEEDS_PARAM = {
@@ -78,61 +227,147 @@
             forensic_dfir: { label: 'Source IP (optional)', key: 'source_ip' },
         };
 
-        async function loadTypes() {
-            const r = await fetch(`${B}/reports/types`, { headers: H() });
-            const types = await r.json();
-            $('#rp-type').innerHTML = types.map(t => `<option value="${t.type}">${esc(t.title)}${t.admin_only ? ' (admin)' : ''}</option>`).join('');
-            syncParam();
-        }
-        function syncParam() {
-            const t = $('#rp-type').value;
-            const cfg = NEEDS_PARAM[t];
-            $('#rp-param-wrap').style.display = cfg ? '' : 'none';
-            if (cfg) { $('#rp-param-label').textContent = cfg.label; $('#rp-param').value = ''; }
-        }
-        $('#rp-type').addEventListener('change', syncParam);
+        // presentation metadata per known type (icon + one-liner); unknown types fall back gracefully
+        const META = {
+            executive_summary: { icon: 'fa-chart-line', desc: 'Board-level overview of detections, incidents and security posture.' },
+            geo_intel: { icon: 'fa-earth-americas', desc: 'Attack-origin geography — top source countries, cities and ASNs.' },
+            credentials: { icon: 'fa-key', desc: 'Credentials harvested by honeypots, broken down by service and source.' },
+            incident: { icon: 'fa-triangle-exclamation', desc: 'Full timeline, evidence and response actions for one incident.' },
+            forensic_dfir: { icon: 'fa-magnifying-glass-chart', desc: 'DFIR case file — host, network and artifact analysis for a source.' },
+            detection_validation: { icon: 'fa-shield-halved', desc: 'Detection-rule coverage measured across attack scenarios.' },
+            malware: { icon: 'fa-bug', desc: 'Static and behavioural analysis of a captured malware sample.' },
+            soc2_readiness: { icon: 'fa-file-contract', desc: 'SOC 2 Trust Services Criteria self-assessment and gap list.' },
+        };
 
-        async function loadReports() {
+        function humanBytes(n) {
+            n = Number(n) || 0;
+            if (n < 1024) return n + ' B';
+            if (n < 1048576) return (n / 1024).toFixed(1) + ' KB';
+            return (n / 1048576).toFixed(2) + ' MB';
+        }
+        function relTime(s) {
+            if (!s) return '—';
+            const iso = /[Z+]/.test(s) ? s : s + 'Z';
+            const t = new Date(iso).getTime();
+            if (isNaN(t)) return esc(s);
+            const d = (Date.now() - t) / 1000;
+            if (d < 45) return 'just now';
+            if (d < 3600) return Math.round(d / 60) + 'm ago';
+            if (d < 86400) return Math.round(d / 3600) + 'h ago';
+            if (d < 2592000) return Math.round(d / 86400) + 'd ago';
+            return new Date(iso).toISOString().slice(0, 10);
+        }
+        function countUp(el, target, dur = 700) {
+            target = Number(target) || 0;
+            const done = () => el.textContent = target + (target === 1 ? ' report' : ' reports');
+            if (REDUCE) return done();
+            const start = performance.now();
+            (function tick(now) {
+                const p = Math.min(1, (now - start) / dur);
+                el.textContent = Math.round(target * (1 - Math.pow(1 - p, 3))) + ' reports';
+                if (p < 1) requestAnimationFrame(tick); else done();
+            })(performance.now());
+        }
+
+        /* ---------------- report-type cards ---------------- */
+        async function loadTypes() {
             try {
-                const r = await fetch(`${B}/reports`, { headers: H() });
-                const d = await r.json();
-                const rows = d.reports || [];
-                $('#rp-meta').textContent = `${rows.length} report(s) on file`;
-                $('#rp-rows').innerHTML = rows.length ? rows.map(x => `
-                    <tr>
-                        <td>${esc((x.generated_at || '').replace('T', ' ').slice(0, 19))}</td>
-                        <td class="rp-type">${esc(x.report_type)}</td>
-                        <td>${esc(x.title)}</td>
-                        <td>${esc((x.subject || '').slice(0, 40))}</td>
-                        <td>${esc(x.generated_by || '')}</td>
-                        <td>${(x.size_bytes / 1024).toFixed(1)} KB</td>
-                        <td class="rp-hash">${esc((x.sha256 || '').slice(0, 16))}…</td>
-                        <td><button class="rp-dl" data-id="${x.id}" data-name="${esc(x.filename)}">Download</button></td>
-                    </tr>`).join('') : '<tr><td colspan="8" style="padding:16px;color:#7d8590;">No reports generated yet.</td></tr>';
-                $('#rp-rows').querySelectorAll('.rp-dl').forEach(b => b.onclick = async () => {
-                    const dl = await fetch(`${B}/reports/${b.dataset.id}/download`, { headers: H() });
-                    const blob = await dl.blob();
-                    const a = document.createElement('a');
-                    a.href = URL.createObjectURL(blob); a.download = b.dataset.name;
-                    document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(a.href);
-                });
+                const types = await (await fetch(`${B}/reports/types`, { headers: H() })).json();
+                $('#rp-types').innerHTML = types.map((t, i) => {
+                    const m = META[t.type] || { icon: 'fa-file-pdf', desc: 'Generated PDF report.' };
+                    const cfg = NEEDS_PARAM[t.type];
+                    return `<div class="rt-card" data-type="${esc(t.type)}" style="--i:${i}">
+                        <div class="rt-ic"><i class="fas ${m.icon}"></i></div>
+                        <div class="rt-name">${esc(t.title)}${t.admin_only ? '<span class="rt-adm">admin</span>' : ''}</div>
+                        <div class="rt-desc">${esc(m.desc)}</div>
+                        <div class="rt-foot">
+                            ${cfg ? `<input class="rt-param" placeholder="${esc(cfg.label)}">` : ''}
+                            <button class="rt-go"><i class="fas fa-file-pdf"></i>Generate</button>
+                        </div>
+                    </div>`;
+                }).join('');
             } catch (e) {
-                $('#rp-rows').innerHTML = `<tr><td colspan="8" style="padding:16px;color:#f85149;">${esc(e.message)}</td></tr>`;
+                $('#rp-types').innerHTML = `<div class="err">Failed to load report types: ${esc(e.message)}</div>`;
             }
         }
 
-        $('#rp-gen').addEventListener('click', async () => {
-            const type = $('#rp-type').value;
+        $('#rp-types').addEventListener('click', async e => {
+            const btn = e.target.closest('.rt-go');
+            if (!btn) return;
+            const card = btn.closest('.rt-card');
+            const type = card.dataset.type;
             const params = {};
             const days = $('#rp-days').value;
             if (days) params.days = parseInt(days, 10);
             const cfg = NEEDS_PARAM[type];
-            if (cfg && $('#rp-param').value.trim()) params[cfg.key] = $('#rp-param').value.trim();
+            if (cfg) {
+                const v = card.querySelector('.rt-param').value.trim();
+                if (v) params[cfg.key] = v;
+            }
             try {
-                await STReports.generateAndDownload(type, params, { button: $('#rp-gen'), title: type });
+                await STReports.generateAndDownload(type, params, { button: btn, title: card.querySelector('.rt-name').textContent.trim() });
                 loadReports();
-            } catch (_) { }
+            } catch (_) { /* toast already shown by helper */ }
         });
+
+        /* ---------------- history ---------------- */
+        let firstLoad = true;
+        async function loadReports() {
+            try {
+                const d = await (await fetch(`${B}/reports`, { headers: H() })).json();
+                const rows = d.reports || [];
+                countUp($('#rp-count'), rows.length);
+                if (!rows.length) {
+                    $('#rp-rows').innerHTML = `<tr><td colspan="8"><div class="rp-empty"><i class="fas fa-folder-open"></i>No reports generated yet. Pick a type above to create one.</div></td></tr>`;
+                    firstLoad = false;
+                    return;
+                }
+                $('#rp-rows').innerHTML = rows.map((x, i) => {
+                    const m = META[x.report_type] || { icon: 'fa-file-pdf' };
+                    const full = x.sha256 || '';
+                    return `<tr style="--i:${firstLoad ? i : 0}">
+                        <td class="rp-when"><b>${esc(relTime(x.generated_at))}</b><span>${esc((x.generated_at || '').replace('T', ' ').slice(0, 19))}</span></td>
+                        <td><span class="tybadge"><i class="fas ${m.icon}"></i>${esc(x.report_type)}</span></td>
+                        <td class="rp-title">${esc(x.title)}</td>
+                        <td class="rp-sub" title="${esc(x.subject || '')}">${esc(x.subject || '—')}</td>
+                        <td class="rp-by">${esc(x.generated_by || '—')}</td>
+                        <td class="rp-size">${humanBytes(x.size_bytes)}</td>
+                        <td><span class="hash" data-hash="${esc(full)}" title="Click to copy full SHA-256">${esc(full.slice(0, 12))}…</span></td>
+                        <td><button class="dl" data-id="${esc(x.id)}" data-name="${esc(x.filename)}"><i class="fas fa-download"></i>Download</button></td>
+                    </tr>`;
+                }).join('');
+                wireRowActions();
+                firstLoad = false;
+            } catch (e) {
+                $('#rp-rows').innerHTML = `<tr><td colspan="8" class="rp-empty err">${esc(e.message)}</td></tr>`;
+            }
+        }
+
+        function wireRowActions() {
+            $('#rp-rows').querySelectorAll('.hash').forEach(el => el.onclick = async () => {
+                try {
+                    await navigator.clipboard.writeText(el.dataset.hash);
+                    const orig = el.textContent;
+                    el.classList.add('copied'); el.textContent = 'copied ✓';
+                    setTimeout(() => { el.classList.remove('copied'); el.textContent = orig; }, 1400);
+                } catch (_) { STReports.toast('Copy failed — clipboard blocked', 'err'); }
+            });
+            $('#rp-rows').querySelectorAll('.dl').forEach(b => b.onclick = async () => {
+                b.disabled = true;
+                try {
+                    const dl = await fetch(`${B}/reports/${b.dataset.id}/download`, { headers: H() });
+                    if (!dl.ok) throw new Error('HTTP ' + dl.status);
+                    const blob = await dl.blob();
+                    const a = document.createElement('a');
+                    a.href = URL.createObjectURL(blob); a.download = b.dataset.name;
+                    document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(a.href);
+                } catch (e) {
+                    STReports.toast('Download failed: ' + e.message, 'err');
+                } finally { b.disabled = false; }
+            });
+        }
+
+        $('#rp-refresh').onclick = () => loadReports();
 
         loadTypes();
         loadReports();

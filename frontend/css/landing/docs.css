@@ -2,8 +2,8 @@
 
 /* Active link styling for navbar */
 nav ul li a.active-link {
-    color: #00c6ff;
-    border-bottom: 2px solid #00c6ff;
+    color: var(--st-accent);
+    border-bottom: 2px solid var(--st-accent);
     padding-bottom: 5px;
 }
 
@@ -29,10 +29,10 @@ nav ul li a.active-link {
     margin-bottom: 18px;
 }
 
-.docs-hero-text h1 span { color: #00c6ff; }
+.docs-hero-text h1 span { color: var(--st-accent); }
 
 .docs-hero-text p {
-    color: #8892a4;
+    color: var(--st-text-muted);
     font-size: 16px;
     line-height: 1.75;
     margin-bottom: 24px;
@@ -49,8 +49,8 @@ nav ul li a.active-link {
     flex: 1;
     padding: 13px 18px;
     border-radius: 30px;
-    border: 1px solid rgba(0, 198, 255, 0.3);
-    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid color-mix(in srgb, var(--st-accent) 30%, transparent);
+    background: color-mix(in srgb, var(--st-text) 5%, transparent);
     color: white;
     font-size: 14px;
     outline: none;
@@ -58,21 +58,21 @@ nav ul li a.active-link {
 }
 
 .search-bar input:focus {
-    border-color: #00c6ff;
-    background: rgba(255, 255, 255, 0.1);
-    box-shadow: 0 0 15px rgba(0, 198, 255, 0.2);
+    border-color: var(--st-accent);
+    background: color-mix(in srgb, var(--st-text) 10%, transparent);
+    
 }
 
 /* ── Terminal Widget ────────────────────────────────────────── */
 .docs-terminal {
     flex: 0 0 400px;
     width: 400px;
-    background: #010a14;
-    border: 1px solid rgba(0,198,255,0.2);
+    background: var(--st-surface-2);
+    border: 1px solid color-mix(in srgb, var(--st-accent) 20%, transparent);
     border-radius: 14px;
     overflow: hidden;
-    box-shadow: 0 24px 60px rgba(0,0,0,0.55), 0 0 40px rgba(0,198,255,0.08);
-    font-family: 'JetBrains Mono', 'Courier New', monospace;
+    box-shadow: var(--st-shadow-md);
+    font-family: var(--st-font-mono);
 }
 
 .dt-bar {
@@ -80,34 +80,34 @@ nav ul li a.active-link {
     align-items: center;
     gap: 7px;
     padding: 12px 16px;
-    background: rgba(255,255,255,0.04);
-    border-bottom: 1px solid rgba(255,255,255,0.06);
+    background: color-mix(in srgb, var(--st-text) 4%, transparent);
+    border-bottom: 1px solid color-mix(in srgb, var(--st-text) 6%, transparent);
 }
 
 .dt-dot { width: 12px; height: 12px; border-radius: 50%; }
-.dt-red    { background: #ff5f57; }
-.dt-yellow { background: #febc2e; }
-.dt-green  { background: #28c840; }
+.dt-red    { background: var(--st-danger); }
+.dt-yellow { background: var(--st-warning); }
+.dt-green  { background: var(--st-success); }
 
 .dt-title {
     margin-left: 8px;
     font-size: 11px;
-    color: #8892a4;
+    color: var(--st-text-muted);
     font-weight: 500;
 }
 
 .dt-body { padding: 18px 20px; display: flex; flex-direction: column; gap: 5px; }
 
-.dt-line { font-size: 12px; line-height: 1.6; color: #8892a4; }
-.dt-prompt { color: #00c6ff; margin-right: 8px; font-weight: 700; }
-.dt-comment { color: rgba(136,146,164,0.5); }
-.dt-out     { color: #8892a4; padding-left: 4px; }
-.dt-success { color: #00ff88; font-weight: 700; }
-.dt-info    { color: rgba(0,198,255,0.7); padding-left: 4px; }
+.dt-line { font-size: 12px; line-height: 1.6; color: var(--st-text-muted); }
+.dt-prompt { color: var(--st-accent); margin-right: 8px; font-weight: 700; }
+.dt-comment { color: var(--st-text-muted); }
+.dt-out     { color: var(--st-text-muted); padding-left: 4px; }
+.dt-success { color: var(--st-success); font-weight: 700; }
+.dt-info    { color: color-mix(in srgb, var(--st-accent) 70%, transparent); padding-left: 4px; }
 
 .dt-cursor {
     display: inline-block;
-    color: #00c6ff;
+    color: var(--st-accent);
     animation: blink-cur 1s step-end infinite;
 }
 
@@ -128,17 +128,17 @@ nav ul li a.active-link {
 .docs-sidebar {
     width: 250px;
     min-width: 250px;
-    background: rgba(255, 255, 255, 0.02);
+    background: color-mix(in srgb, var(--st-text) 2%, transparent);
     padding: 30px 20px;
     border-radius: 15px;
-    border: 1px solid rgba(255, 255, 255, 0.05);
+    border: 1px solid color-mix(in srgb, var(--st-text) 5%, transparent);
     position: sticky;
     top: 20px;
 }
 
 .docs-sidebar h3 {
     font-size: 14px;
-    color: #888;
+    color: var(--st-text-muted);
     text-transform: uppercase;
     letter-spacing: 1px;
     margin-bottom: 15px;
@@ -159,7 +159,7 @@ nav ul li a.active-link {
 }
 
 .docs-sidebar ul li a {
-    color: #cfcfcf;
+    color: var(--st-text-secondary);
     font-size: 15px;
     transition: 0.3s;
     display: block;
@@ -168,31 +168,31 @@ nav ul li a.active-link {
 }
 
 .docs-sidebar ul li a:hover {
-    background: rgba(0, 198, 255, 0.1);
+    background: color-mix(in srgb, var(--st-accent) 10%, transparent);
     color: white;
 }
 
 .docs-sidebar ul li a.active-doc {
-    background: rgba(0, 198, 255, 0.15);
-    color: #00c6ff;
+    background: color-mix(in srgb, var(--st-accent) 15%, transparent);
+    color: var(--st-accent);
     font-weight: 600;
-    border-left: 3px solid #00c6ff;
+    border-left: 3px solid var(--st-accent);
 }
 
 /* Main Content Area */
 .docs-content {
     flex-grow: 1;
-    background: rgba(255, 255, 255, 0.02);
+    background: color-mix(in srgb, var(--st-text) 2%, transparent);
     padding: 40px;
     border-radius: 15px;
-    border: 1px solid rgba(255, 255, 255, 0.05);
+    border: 1px solid color-mix(in srgb, var(--st-text) 5%, transparent);
 }
 
 .content-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    border-bottom: 1px solid color-mix(in srgb, var(--st-text) 10%, transparent);
     padding-bottom: 20px;
     margin-bottom: 30px;
 }
@@ -202,23 +202,23 @@ nav ul li a.active-link {
 }
 
 .badge {
-    background: rgba(0, 198, 255, 0.15);
-    color: #00c6ff;
+    background: color-mix(in srgb, var(--st-accent) 15%, transparent);
+    color: var(--st-accent);
     padding: 5px 12px;
     border-radius: 20px;
     font-size: 14px;
     font-weight: 600;
-    border: 1px solid rgba(0, 198, 255, 0.3);
+    border: 1px solid color-mix(in srgb, var(--st-accent) 30%, transparent);
 }
 
 .docs-content h3 {
     font-size: 24px;
     margin: 40px 0 20px 0;
-    color: #fff;
+    color: var(--st-text);
 }
 
 .docs-content p {
-    color: #cfcfcf;
+    color: var(--st-text-secondary);
     line-height: 1.7;
     margin-bottom: 20px;
     font-size: 16px;
@@ -226,9 +226,9 @@ nav ul li a.active-link {
 
 /* Code Snippets */
 .code-block-wrapper {
-    background: #000814;
+    background: var(--st-surface-2);
     border-radius: 10px;
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 1px solid color-mix(in srgb, var(--st-text) 10%, transparent);
     margin: 30px 0;
     overflow: hidden;
 }
@@ -238,20 +238,20 @@ nav ul li a.active-link {
     justify-content: space-between;
     align-items: center;
     padding: 10px 20px;
-    background: rgba(255, 255, 255, 0.05);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    background: color-mix(in srgb, var(--st-text) 5%, transparent);
+    border-bottom: 1px solid color-mix(in srgb, var(--st-text) 5%, transparent);
 }
 
 .code-header span {
-    color: #888;
+    color: var(--st-text-muted);
     font-size: 14px;
-    font-family: monospace;
+    font-family: var(--st-font-mono);
 }
 
 .copy-btn {
     background: none;
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    color: #cfcfcf;
+    border: 1px solid color-mix(in srgb, var(--st-text) 20%, transparent);
+    color: var(--st-text-secondary);
     padding: 4px 12px;
     border-radius: 5px;
     cursor: pointer;
@@ -260,7 +260,7 @@ nav ul li a.active-link {
 }
 
 .copy-btn:hover {
-    background: rgba(255, 255, 255, 0.1);
+    background: color-mix(in srgb, var(--st-text) 10%, transparent);
     color: white;
 }
 
@@ -271,26 +271,26 @@ nav ul li a.active-link {
 }
 
 .code-block-wrapper code {
-    font-family: 'Courier New', Courier, monospace;
-    color: #00c6ff;
+    font-family: var(--st-font-mono);
+    color: var(--st-accent);
     font-size: 15px;
     line-height: 1.6;
 }
 
 /* Info Alert Box */
 .info-alert {
-    background: rgba(0, 198, 255, 0.05);
-    border-left: 4px solid #00c6ff;
+    background: color-mix(in srgb, var(--st-accent) 5%, transparent);
+    border-left: 4px solid var(--st-accent);
     padding: 15px 20px;
     border-radius: 4px;
     margin: 30px 0;
-    color: #cfcfcf;
+    color: var(--st-text-secondary);
     font-size: 15px;
     line-height: 1.6;
 }
 
 .info-alert strong {
-    color: #00c6ff;
+    color: var(--st-accent);
 }
 
 /* Next Steps Cards */
@@ -302,22 +302,22 @@ nav ul li a.active-link {
 }
 
 .step-card {
-    background: rgba(255, 255, 255, 0.03);
+    background: color-mix(in srgb, var(--st-text) 3%, transparent);
     padding: 20px;
     border-radius: 10px;
-    border: 1px solid rgba(255, 255, 255, 0.05);
+    border: 1px solid color-mix(in srgb, var(--st-text) 5%, transparent);
     transition: 0.3s;
     display: block;
 }
 
 .step-card:hover {
     transform: translateY(-5px);
-    background: rgba(0, 198, 255, 0.05);
-    border-color: rgba(0, 198, 255, 0.3);
+    background: color-mix(in srgb, var(--st-accent) 5%, transparent);
+    border-color: color-mix(in srgb, var(--st-accent) 30%, transparent);
 }
 
 .step-card h4 {
-    color: #00c6ff;
+    color: var(--st-accent);
     margin-bottom: 10px;
     font-size: 18px;
 }
@@ -325,7 +325,7 @@ nav ul li a.active-link {
 .step-card p {
     margin: 0;
     font-size: 14px;
-    color: #cfcfcf;
+    color: var(--st-text-secondary);
 }
 
 /* Responsive */

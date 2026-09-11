@@ -77,7 +77,7 @@ def clamav_scan(file_path: str) -> Dict[str, Any]:
     return out
 
 
-def virustotal_lookup(sha256: str) -> Dict[str, Any]:
+def _virustotal_query(sha256: str) -> Dict[str, Any]:
     """
     Hash lookup only (no file upload). Returns:
       {available, known, malicious, suspicious, harmless, undetected, total,
@@ -133,3 +133,22 @@ def virustotal_lookup(sha256: str) -> Dict[str, Any]:
     except Exception as e:  # noqa: BLE001
         out["error"] = f"parse: {e}"
     return out
+
+
+# Outcome of the most recent lookup, so the status check can report a rejected key
+# without spending quota on a test request (free tier: 4 lookups/min, 500/day).
+_VT_LAST: Dict[str, Any] = {"error": None}
+
+
+def virustotal_lookup(sha256: str) -> Dict[str, Any]:
+    result = _virustotal_query(sha256)
+    _VT_LAST["error"] = result.get("error")
+    return result
+
+
+def virustotal_status() -> Dict[str, Any]:
+    if not VIRUSTOTAL_API_KEY:
+        return {"available": False, "detail": "no API key configured"}
+    if str(_VT_LAST["error"] or "").startswith(("VirusTotal HTTP 401", "VirusTotal HTTP 403")):
+        return {"available": False, "detail": "API key rejected by VirusTotal"}
+    return {"available": True, "detail": "hash lookup on every new sample"}

@@ -11,7 +11,11 @@ import uuid
 from app.db.database import get_db, AsyncSessionLocal
 from app.models.all_models import RawEventModel, Node
 from app.api.v1.dependencies import get_current_active_user, User
-from app.services.container_status import sensor_container_states, SENSOR_CONTAINERS
+from app.services.container_status import (
+    SENSOR_CONTAINERS,
+    sensor_container_metrics,
+    sensor_container_states,
+)
 
 router = APIRouter()
 
@@ -22,7 +26,7 @@ class NodeService:
         process = psutil.Process()
         uptime_seconds = time.time() - process.create_time()
         net_io = psutil.net_io_counters()
-        
+
         return {
             "cpu_percent": psutil.cpu_percent(interval=None),
             "memory": psutil.virtual_memory()._asdict(),
@@ -42,11 +46,17 @@ async def get_nodes(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
 ):
-    """Fetch active nodes from the database."""
-    # Real statically defined nodes or dynamically added
+    """
+    Registered nodes plus the compose-managed honeypot sensors.
+
+    Sensors report real Docker state and resource samples (`metrics`,
+    `verified: True`). Registered nodes are stored records with no container
+    or heartbeat behind them, so they are returned with `verified: False` and
+    no metrics rather than a status the platform cannot confirm.
+    """
     result = await db.execute(select(Node))
     nodes = result.scalars().all()
-    
+
     # Real per-sensor activity load: events seen in the last 15 min, mapped to a
     # 0-100 "load" gauge. This is the honest signal for a honeypot grid — how
     # much an attacker is currently poking each sensor.
@@ -67,6 +77,7 @@ async def get_nodes(
     risk_by_type = {(t or "").upper(): (r or 0) for t, r in risk_rows}
 
     container_state = sensor_container_states()
+    container_metrics = sensor_container_metrics()
 
     def _load(sensor_type: str) -> int:
         return min(100, int(load_by_type.get(sensor_type.upper(), 0)) * 6)
@@ -86,7 +97,12 @@ async def get_nodes(
             "ip_address": n.ip_address,
             "uptime_seconds": n.uptime_seconds,
             "risk_level": n.risk_level,
+            # Legacy key read by the dashboard's node tiles: the event-activity gauge.
             "cpu_percent": _load(n.type or ""),
+            "activity_load": _load(n.type or ""),
+            "source": "registry",
+            "verified": False,
+            "metrics": None,
         })
 
     # Core honeypot sensors — status/uptime from the real container, load from
@@ -128,6 +144,10 @@ async def get_nodes(
             "uptime_seconds": uptime,
             "risk_level": _risk_level(sensor),
             "cpu_percent": _load(sensor) if online else 0,
+            "activity_load": _load(sensor) if online else 0,
+            "source": "docker",
+            "verified": bool(st.get("available")),
+            "metrics": container_metrics.get(sensor),
         })
 
     return nodes_data

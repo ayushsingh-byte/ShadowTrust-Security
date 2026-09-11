@@ -133,7 +133,7 @@ class VMLabClient {
                     if (btn) this.setButtonState(btn, 'DEFAULT', 'PROVISION');
 
                     const orb = document.getElementById(`dot_${profileId}`);
-                    if (orb) { orb.style.background = '#555'; orb.style.boxShadow = 'none'; orb.style.animation = 'none'; }
+                    if (orb) { orb.style.background = 'var(--st-text-faint)'; orb.style.boxShadow = 'none'; orb.style.animation = 'none'; }
                     continue;
                 }
 
@@ -142,7 +142,7 @@ class VMLabClient {
                     if (btn) {
                         this.setButtonState(btn, 'LOADING', 'LAUNCHING...');
                         const orb = document.getElementById(`dot_${profileId}`);
-                        if (orb) { orb.style.background = '#f59e0b'; orb.style.boxShadow = '0 0 10px #f59e0b'; orb.style.animation = 'pulse-red 2s infinite'; }
+                        if (orb) { orb.style.background = 'var(--st-warning)'; orb.style.boxShadow = 'none'; orb.style.animation = 'pulse-red 2s infinite'; }
                     }
                     // Start polling in background — once READY it will switch to CONNECT TERMINAL
                     this._pollProvisioningStatus(profileId, labId, btn);
@@ -153,7 +153,7 @@ class VMLabClient {
                 if (btn) {
                     this.setButtonState(btn, 'ACTIVE', 'CONNECT TERMINAL');
                     const orb = document.getElementById(`dot_${profileId}`);
-                    if (orb) { orb.style.background = 'var(--accent-primary)'; orb.style.boxShadow = '0 0 10px var(--accent-primary)'; orb.style.animation = 'pulse-red 2s infinite'; }
+                    if (orb) { orb.style.background = 'var(--accent-primary)'; orb.style.boxShadow = 'none'; orb.style.animation = 'pulse-red 2s infinite'; }
                 }
 
             } catch (error) {
@@ -164,7 +164,7 @@ class VMLabClient {
                 this.saveState();
                 if (btn) this.setButtonState(btn, 'DEFAULT', 'PROVISION');
                 const orb = document.getElementById(`dot_${profileId}`);
-                if (orb) { orb.style.background = '#555'; orb.style.boxShadow = 'none'; orb.style.animation = 'none'; }
+                if (orb) { orb.style.background = 'var(--st-text-faint)'; orb.style.boxShadow = 'none'; orb.style.animation = 'none'; }
                 continue;
             }
         }
@@ -184,7 +184,7 @@ class VMLabClient {
                     clearInterval(interval);
                     if (btn) this.setButtonState(btn, 'ACTIVE', 'CONNECT TERMINAL');
                     const orb = document.getElementById(`dot_${profileId}`);
-                    if (orb) { orb.style.background = 'var(--accent-primary)'; orb.style.boxShadow = '0 0 10px var(--accent-primary)'; }
+                    if (orb) { orb.style.background = 'var(--accent-primary)'; orb.style.boxShadow = 'none'; }
                     this.showNotification(`${profileId} is ready!`, 'success');
                 } else if (['ERROR', 'TERMINATED', 'NOT_FOUND'].includes(status)) {
                     clearInterval(interval);
@@ -192,14 +192,14 @@ class VMLabClient {
                     this.saveState();
                     if (btn) this.setButtonState(btn, 'DEFAULT', 'PROVISION');
                     const orb = document.getElementById(`dot_${profileId}`);
-                    if (orb) { orb.style.background = '#555'; orb.style.boxShadow = 'none'; orb.style.animation = 'none'; }
+                    if (orb) { orb.style.background = 'var(--st-text-faint)'; orb.style.boxShadow = 'none'; orb.style.animation = 'none'; }
                 } else if (attempts >= maxAttempts) {
                     clearInterval(interval);
                     delete this.instances[profileId];
                     this.saveState();
                     if (btn) this.setButtonState(btn, 'DEFAULT', 'PROVISION');
                     const orb = document.getElementById(`dot_${profileId}`);
-                    if (orb) { orb.style.background = '#555'; orb.style.boxShadow = 'none'; orb.style.animation = 'none'; }
+                    if (orb) { orb.style.background = 'var(--st-text-faint)'; orb.style.boxShadow = 'none'; orb.style.animation = 'none'; }
                     this.showNotification(`${profileId} timed out during provisioning.`, 'error');
                 }
                 // else still PROVISIONING — keep polling
@@ -224,9 +224,6 @@ class VMLabClient {
         try {
             this.setButtonState(btnElement, 'LOADING', 'LAUNCHING...');
 
-            // Mocking a session ID for now. In production, this comes from Supabase Auth.
-            const sessionId = "sess_" + Math.random().toString(36).substr(2, 9);
-
             // Card -> provider-independent environment + resource tier.
             // The backend maps these to a container image or an AMI; the UI
             // never names an EC2 instance type.
@@ -241,7 +238,7 @@ class VMLabClient {
                 environment_type: card.environment,
                 profile: card.profile,
                 protocol: protocolStr,
-                user_id: sessionId,
+                // The lab owner is the signed-in user; the backend derives it from the token.
                 // AWS credentials are only read when the backend runs with
                 // INFRA_PROVIDER=aws; in local mode they are ignored.
                 aws_access_key: localStorage.getItem('_st_aws_ak') || undefined,
@@ -263,7 +260,7 @@ class VMLabClient {
                 this.setButtonState(btnElement, 'LOADING', 'BOOTING...');
 
                 const orb = document.getElementById(`dot_${profileId}`);
-                if (orb) { orb.style.background = '#f59e0b'; orb.style.boxShadow = '0 0 10px #f59e0b'; orb.style.animation = 'pulse-red 2s infinite'; }
+                if (orb) { orb.style.background = 'var(--st-warning)'; orb.style.boxShadow = 'none'; orb.style.animation = 'pulse-red 2s infinite'; }
 
                 this.showNotification(`Instance ${response.lab_id} is booting. This takes 3-10 minutes...`, 'success');
 
@@ -307,7 +304,7 @@ class VMLabClient {
                 this.setButtonState(terminateBtnElement, 'DEFAULT', '');
 
                 const orb = document.getElementById(`dot_${profileId}`);
-                if (orb) { orb.style.background = '#555'; orb.style.boxShadow = 'none'; orb.style.animation = 'none'; }
+                if (orb) { orb.style.background = 'var(--st-text-faint)'; orb.style.boxShadow = 'none'; orb.style.animation = 'none'; }
 
                 this.showNotification(`Lab ${labId} terminated.`, 'success');
             } else {
@@ -348,7 +345,7 @@ class VMLabClient {
                 btn.innerHTML = `<i class="fas fa-terminal"></i> ${text}`;
                 btn.style.opacity = '1';
                 btn.style.background = 'var(--accent-primary)'; // Matrix green for active
-                btn.style.color = '#000';
+                btn.style.color = 'var(--st-on-solid)';
 
                 // Swap click handler to open inline workspace
                 const labId = this.instances[btn.getAttribute('data-profile')]?.labId;
@@ -386,7 +383,7 @@ class VMLabClient {
         }
         document.getElementById('vdiLoaderText').style.display = 'block';
         document.getElementById('vdiSubLoader').innerText = 'Negotiating cryptographic keys...';
-        document.getElementById('vdiSubLoader').style.color = '#666';
+        document.getElementById('vdiSubLoader').style.color = 'var(--st-text-faint)';
 
         this._setupKeyboardCapture();
         this.pollVdiStatus(labId);
@@ -490,7 +487,7 @@ class VMLabClient {
                     loader.innerHTML = `
                         <i class="fas fa-exclamation-triangle" style="font-size:2rem;color:var(--accent-secondary);margin-bottom:10px;"></i>
                         <div style="color:var(--accent-secondary)">INSTANCE READY — NO BROWSER SESSION</div>
-                        <div style="font-size:0.8rem;color:#888;margin-top:8px;">Guacamole session was not registered. Instance is running.</div>
+                        <div style="font-size:0.8rem;color:var(--st-text-muted);margin-top:8px;">Guacamole session was not registered. Instance is running.</div>
                         <div style="font-size:0.85rem;color:var(--text-primary);margin-top:6px;font-family:var(--font-mono);">
                             IP: <span style="color:var(--accent-primary)">${response.host || response.private_ip || 'pending'}</span>
                         </div>
@@ -515,7 +512,7 @@ class VMLabClient {
                         const btn = document.querySelector(`button[data-profile="${profileId}"]`);
                         if (btn) this.setButtonState(btn, 'DEFAULT', 'PROVISION');
                         const orb = document.getElementById(`dot_${profileId}`);
-                        if (orb) { orb.style.background = '#555'; orb.style.boxShadow = 'none'; orb.style.animation = 'none'; }
+                        if (orb) { orb.style.background = 'var(--st-text-faint)'; orb.style.boxShadow = 'none'; orb.style.animation = 'none'; }
                         break;
                     }
                 }
@@ -536,7 +533,7 @@ class VMLabClient {
         this.showNotification('Re-registering Guacamole session...', 'success');
         const loader = document.getElementById('vdiLoaderText');
         if (loader) {
-            loader.innerHTML = `<i class="fas fa-spinner fa-spin" style="font-size:2rem;color:var(--accent-primary);margin-bottom:10px;"></i><div style="color:#aaa;margin-top:8px;">Re-registering browser session...</div>`;
+            loader.innerHTML = `<i class="fas fa-spinner fa-spin" style="font-size:2rem;color:var(--accent-primary);margin-bottom:10px;"></i><div style="color:var(--st-text-secondary);margin-top:8px;">Re-registering browser session...</div>`;
         }
         try {
             await apiService.post(`/labs/reattach/${labId}`, {});
@@ -590,12 +587,12 @@ class VMLabClient {
         notif.style.right = '20px';
         notif.style.padding = '15px 25px';
         notif.style.borderRadius = '4px';
-        notif.style.color = '#fff';
+        notif.style.color = 'var(--st-text)';
         notif.style.fontFamily = "'JetBrains Mono', monospace";
         notif.style.zIndex = '9999';
         notif.style.boxShadow = '0 4px 12px rgba(0,0,0,0.5)';
         notif.style.background = type === 'success' ? 'var(--accent-primary)' : 'var(--accent-critical)';
-        notif.style.color = type === 'success' ? '#000' : '#fff';
+        notif.style.color = type === 'success' ? 'var(--st-on-solid)' : 'var(--st-text)';
         notif.innerHTML = type === 'success' ? `<i class="fas fa-check-circle"></i> ${message}` : `<i class="fas fa-exclamation-triangle"></i> ${message}`;
 
         document.body.appendChild(notif);

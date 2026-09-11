@@ -7,7 +7,9 @@ from app.db.database import get_db
 from app.models.all_models import RawEventModel
 from app.ai_engine.gnn_profiler import TemporalGNNProfiler
 
-router = APIRouter()
+from app.api.v1.dependencies import get_current_active_user
+
+router = APIRouter(dependencies=[Depends(get_current_active_user)])
 
 @router.get("/profile")
 async def get_behavior_profile(

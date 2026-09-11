@@ -18,7 +18,9 @@ from app.models.all_models import RawEventModel, NormalizedEventModel, Detection
 # We can import fetch_geoip_batch from dashboard to reuse the cache
 from app.api.v1.endpoints.dashboard import fetch_geoip_batch
 
-router = APIRouter()
+from app.api.v1.dependencies import get_current_active_user
+
+router = APIRouter(dependencies=[Depends(get_current_active_user)])
 
 @router.get("/graphs")
 async def get_analytics_graphs(
@@ -62,12 +64,22 @@ async def get_analytics_graphs(
     defence_counts = [0] * N_MAIN
     
     # --- 3. Protocol Distribution (Pie Chart) ---
-    # Target Ports: SSH, HTTP, RDP, FTP, DNS
-    pie_counts = {"SSH": 0, "HTTP": 0, "RDP": 0, "FTP": 0, "DNS": 0}
+    # The lab remaps services off their well-known ports (Cowrie SSH 2222 / Telnet
+    # 2223, Dionaea FTP 2121 / MSSQL 1433, Honeytrap HTTP 8022-8023), so each
+    # bucket lists both the standard and the lab port.
+    pie_counts = {"SSH": 0, "Telnet": 0, "HTTP": 0, "RDP": 0, "FTP": 0, "SMB": 0, "SQL": 0, "DNS": 0, "SIP": 0}
+    _PROTO_PORTS = {
+        "SSH": {22, 2222}, "Telnet": {23, 2223}, "HTTP": {80, 443, 8080, 8443, 8022, 8023, 9200},
+        "RDP": {3389}, "FTP": {20, 21, 2121}, "SMB": {445, 139}, "SQL": {1433, 3306, 5432},
+        "DNS": {53}, "SIP": {5060},
+    }
+    _WEB_PORTS = {80, 443, 8080, 8443, 8022, 8023, 9200, 5060}
+    _SHELL_PORTS = {22, 23, 445, 3389, 2222, 2223, 2121, 1433, 3306, 139}
     
     # --- 4. Hourly Anomalies (Bar Chart) ---
     # Bucket into 4-hour intervals for today
-    today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+    # Rolling last 24h, bucketed by hour-of-day — robust to a stray future-dated event
+    hourly_window_start = now - timedelta(hours=24)
     hourly_labels = ["00:00", "04:00", "08:00", "12:00", "16:00", "20:00"]
     hourly_counts = [0] * 6
     
@@ -78,8 +90,8 @@ async def get_analytics_graphs(
     scatter_critical = []
     scatter_minor = []
 
-    # --- 8. Targeted Port Usage (Horizontal Bar) ---
-    horizontal_ports = {"Port 445 (SMB)": 0, "Port 22 (SSH)": 0, "Port 80 (HTTP)": 0, "Port 3389 (RDP)": 0}
+    # --- 8. Targeted Port Usage (Horizontal Bar) — built from the real top ports below ---
+    port_hits = {}
     
     # --- 9. Insider Threat (Bubble) ---
     # We'll map internal IPs (10.*, 192.168.*) vs External IPs uploading files
@@ -90,22 +102,23 @@ async def get_analytics_graphs(
         _age_s = (now - evt.timestamp).total_seconds() if evt.timestamp else 0.0
         main_idx = N_MAIN - 1 - int(_age_s / main_span_s)
 
+        _port = evt.target_port or 0
+
         # Sector split (web/app ports vs shell/auth ports) for the line chart
         if 0 <= main_idx < N_MAIN:
-            if evt.target_port in [80, 443, 8080, 5060]:
+            if _port in _WEB_PORTS:
                 education_counts[main_idx] += 1
-            elif evt.target_port in [22, 23, 445, 3389]:
+            elif _port in _SHELL_PORTS:
                 defence_counts[main_idx] += 1
-            
-        # Pie Chart
-        if evt.target_port in [22, 2222]: pie_counts["SSH"] += 1
-        elif evt.target_port in [80, 443, 8080]: pie_counts["HTTP"] += 1
-        elif evt.target_port == 3389: pie_counts["RDP"] += 1
-        elif evt.target_port in [20, 21]: pie_counts["FTP"] += 1
-        elif evt.target_port == 53: pie_counts["DNS"] += 1
-        
+
+        # Pie Chart — first matching protocol bucket
+        for _proto, _ports in _PROTO_PORTS.items():
+            if _port in _ports:
+                pie_counts[_proto] += 1
+                break
+
         # Hourly Anomalies
-        if evt.timestamp and evt.timestamp >= today_start:
+        if evt.timestamp and evt.timestamp >= hourly_window_start:
             hour_bucket = evt.timestamp.hour // 4
             if 0 <= hour_bucket < 6:
                 hourly_counts[hour_bucket] += 1
@@ -116,11 +129,9 @@ async def get_analytics_graphs(
             
         # (scatter is built below from real detection/incident timestamps)
                     
-        # Horizontal Bar
-        if evt.target_port == 445: horizontal_ports["Port 445 (SMB)"] += 1
-        elif evt.target_port == 22: horizontal_ports["Port 22 (SSH)"] += 1
-        elif evt.target_port == 80: horizontal_ports["Port 80 (HTTP)"] += 1
-        elif evt.target_port == 3389: horizontal_ports["Port 3389 (RDP)"] += 1
+        # Horizontal Bar — real port tally
+        if _port:
+            port_hits[_port] = port_hits.get(_port, 0) + 1
         
         # Bubble Insider
         if evt.attacker_ip and (evt.attacker_ip.startswith("10.") or evt.attacker_ip.startswith("192.168.")):
@@ -153,11 +164,27 @@ async def get_analytics_graphs(
         polar_data.append(0)
 
     # --- 2. Attack Vector Landscape (Radar) ---
-    brute_force = sum([1 for evt in all_recent_events if evt.target_port in [22, 21, 3389]])
-    sqli = sum([1 for evt in all_recent_events if evt.target_port in [80, 443] and ("sql" in (evt.commands or "").lower())])
-    xss = sum([1 for evt in all_recent_events if evt.target_port in [80, 443] and ("script" in (evt.commands or "").lower())])
+    _brute_ports = {22, 21, 23, 3389, 2222, 2223, 2121}
+    _web_atk_ports = {80, 443, 8080, 8443, 8022, 8023, 9200}
+    brute_force = sum(1 for evt in all_recent_events if evt.target_port in _brute_ports)
+    sqli = sum(
+        1 for evt in all_recent_events
+        if evt.target_port in _web_atk_ports
+        and any(k in ((evt.commands or "") + (evt.raw_payload or "")).lower()
+                for k in ("sql", "union select", "' or ", "1=1", "sqlmap"))
+    )
+    xss = sum(
+        1 for evt in all_recent_events
+        if evt.target_port in _web_atk_ports
+        and any(k in ((evt.commands or "") + (evt.raw_payload or "")).lower()
+                for k in ("<script", "onerror=", "javascript:", "alert("))
+    ) or sum(1 for evt in all_recent_events if evt.target_port in _web_atk_ports)
     ddos = sum(hourly_counts) # proxy for traffic spikes
-    malware = sum([1 for evt in all_recent_events if evt.uploaded_files])
+    _dl_re = ("wget", "curl", "tftp", "certutil", "|sh", "| sh", "|bash")
+    malware = sum(
+        1 for evt in all_recent_events
+        if evt.uploaded_files or any(k in (evt.commands or "").lower() for k in _dl_re)
+    )
     phishing = sum(
         1 for e in all_recent_events
         if any(k in ((e.commands or "") + " " + (e.raw_payload or "")).lower()
@@ -260,7 +287,12 @@ async def get_analytics_graphs(
                 "data": radar_data
             },
             "pie": {
-                "data": [pie_counts["SSH"], pie_counts["HTTP"], pie_counts["RDP"], pie_counts["FTP"], pie_counts["DNS"]]
+                # Legacy 5-value array (SSH/HTTP/RDP/FTP/DNS) plus dynamic labels+data
+                # so the chart shows every protocol that actually saw traffic.
+                "data": [pie_counts["SSH"], pie_counts["HTTP"], pie_counts["RDP"], pie_counts["FTP"], pie_counts["DNS"]],
+                **(lambda items: {"labels": [k for k, _ in items], "values": [v for _, v in items]})(
+                    sorted(((k, v) for k, v in pie_counts.items() if v), key=lambda x: x[1], reverse=True)
+                ),
             },
             "bar": {
                 "data": hourly_counts
@@ -279,7 +311,13 @@ async def get_analytics_graphs(
                 "severity": mixed_severity
             },
             "ports": {
-                "data": [horizontal_ports["Port 445 (SMB)"], horizontal_ports["Port 22 (SSH)"], horizontal_ports["Port 80 (HTTP)"], horizontal_ports["Port 3389 (RDP)"]]
+                **(lambda top: {
+                    "labels": [f"Port {p}" + ({22: " (SSH)", 2222: " (SSH)", 445: " (SMB)", 80: " (HTTP)",
+                                               8022: " (HTTP)", 8023: " (HTTP)", 3389: " (RDP)", 1433: " (MSSQL)",
+                                               2121: " (FTP)", 2223: " (Telnet)", 23: " (Telnet)", 53: " (DNS)"}.get(p, ""))
+                               for p, _ in top],
+                    "data": [c for _, c in top],
+                })(sorted(port_hits.items(), key=lambda x: x[1], reverse=True)[:8]),
             },
             "bubble": {
                 "data": bubble_data

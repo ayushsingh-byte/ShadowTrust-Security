@@ -26,9 +26,9 @@
             document.body.appendChild(el);
         }
         const colors = {
-            ok: 'background:#0f2a17;border:1px solid #2ea043;color:#7ee2a8',
-            err: 'background:#2a0f0f;border:1px solid #f85149;color:#ff9a92',
-            info: 'background:#0f1e2a;border:1px solid #58a6ff;color:#9ecbff',
+            ok: 'background:var(--st-surface-hover);border:1px solid var(--st-success);color:var(--st-success)',
+            err: 'background:var(--st-surface);border:1px solid var(--st-danger);color:var(--st-danger)',
+            info: 'background:var(--st-surface-hover);border:1px solid var(--st-info);color:var(--st-info)',
         };
         el.style.cssText += ';' + (colors[kind] || colors.info);
         el.textContent = msg;

@@ -16,16 +16,16 @@
         #geoMap {
             height: 60vh;
             width: 100%;
-            background: #000;
+            background: var(--st-surface-2);
             z-index: 1;
         }
 
         .leaflet-container {
-            background: #050507 !important;
+            background: var(--st-surface-2) !important;
         }
 
         .leaflet-tile-pane {
-            filter: invert(1) hue-rotate(180deg) brightness(0.85) contrast(1.05) saturate(0.7);
+            filter: var(--st-map-filter);
         }
 
         /* Blinking Marker Animation */
@@ -37,13 +37,13 @@
             0% {
                 transform: scale(0.5);
                 opacity: 1;
-                box-shadow: 0 0 0 0 rgba(255, 0, 85, 0.7);
+                box-shadow: 0 0 0 0 color-mix(in srgb, var(--st-danger) 70%, transparent);
             }
 
             70% {
                 transform: scale(2);
                 opacity: 0;
-                box-shadow: 0 0 0 20px rgba(255, 0, 85, 0);
+                box-shadow: 0 0 0 20px color-mix(in srgb, var(--st-danger) 1%, transparent);
             }
 
             100% {
@@ -57,13 +57,14 @@
             position: absolute;
             top: 20px;
             right: 20px;
-            background: rgba(0, 0, 0, 0.8);
+            background: color-mix(in srgb, var(--st-surface) 94%, transparent);
+            box-shadow: var(--st-shadow-md);
             border: 1px solid var(--neon-cyan);
             padding: 15px;
             z-index: 500;
             width: 250px;
-            backdrop-filter: blur(5px);
-            font-family: 'JetBrains Mono', monospace;
+            
+            font-family: var(--st-font-mono);
         }
 
         .overlay-row {
@@ -98,7 +99,7 @@
             width: 100%;
             height: 100%;
             pointer-events: none;
-            background: linear-gradient(to bottom, transparent, rgba(0, 198, 255, 0.2) 50%, transparent);
+            background: linear-gradient(to bottom, transparent, color-mix(in srgb, var(--st-accent) 20%, transparent) 50%, transparent);
             animation: scanline 3s linear infinite;
             z-index: -1;
             display: none;
@@ -113,7 +114,7 @@
             pointer-events: none;
             opacity: 0.15;
             z-index: -2;
-            font-family: 'JetBrains Mono', monospace;
+            font-family: var(--st-font-mono);
             font-size: 0.5rem;
             line-height: 1;
             color: var(--accent-primary);
@@ -123,39 +124,43 @@
             display: none;
         }
     </style>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600;700&amp;display=swap">
+    <link rel="stylesheet" href="css/tokens.css">
+    <script src="js/theme.js"></script>
 </head>
 
 <body>
 
     <!-- Custom Modal -->
     <div id="custom-modal"
-        style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(5, 10, 15, 0.85); z-index:10000; justify-content:center; align-items:center; backdrop-filter:blur(5px);">
+        style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:var(--st-overlay); z-index:10000; justify-content:center; align-items:center; ">
         <div class="soc-card"
-            style="width: 400px; max-width: 90%; border-color: var(--accent-primary); box-shadow: 0 0 20px rgba(0, 0, 0, 0.5); position: relative; overflow: hidden;">
+            style="width: 400px; max-width: 90%; border-color: var(--accent-primary);  position: relative; overflow: hidden;">
 
             <div id="modal-radar-scan" class="radar-scan-bg"></div>
             <div id="modal-data-stream" class="data-stream-bg"></div>
 
             <div class="soc-card-header"
-                style="border-bottom: 1px solid #334155; padding-bottom: 10px; margin-bottom: 15px; position:relative;">
+                style="border-bottom: 1px solid var(--st-border); padding-bottom: 10px; margin-bottom: 15px; position:relative;">
                 <span id="modal-title" class="card-title text-yellow"><i class="fas fa-exclamation-triangle"></i>
                     AUTHORIZATION REQUIRED</span>
             </div>
 
             <div id="modal-message"
-                style="color: #e2e8f0; font-family: 'JetBrains Mono', monospace; font-size: 0.9rem; margin-bottom: 15px; line-height: 1.5; position:relative;">
+                style="color: var(--st-text); font-family: var(--st-font-mono); font-size: 0.9rem; margin-bottom: 15px; line-height: 1.5; position:relative;">
                 Please confirm action.
             </div>
 
             <!-- Progress Bar Container -->
             <div id="modal-progress-container"
-                style="display:none; width: 100%; height: 6px; background: #1e293b; margin-bottom: 25px; border-radius: 3px; overflow: hidden; position:relative;">
+                style="display:none; width: 100%; height: 6px; background: var(--st-surface-hover); margin-bottom: 25px; border-radius: 3px; overflow: hidden; position:relative;">
                 <div id="modal-progress-bar" class="export-progress-bar"></div>
             </div>
 
             <div id="modal-buttons" style="display: flex; justify-content: flex-end; gap: 10px; position:relative;">
                 <button id="modal-btn-cancel" class="soc-btn"
-                    style="background: transparent; border: 1px solid #334155; color: #94a3b8;">CANCEL</button>
+                    style="background: transparent; border: 1px solid var(--st-border); color: var(--st-text-secondary);">CANCEL</button>
                 <button id="modal-btn-confirm" class="soc-btn soc-btn-primary">PROCEED</button>
             </div>
         </div>
@@ -190,7 +195,7 @@
 
                 <!-- LIVE STATS OVERLAY -->
                 <div class="map-overlay">
-                    <div style="border-bottom:1px solid #333; margin-bottom:10px; padding-bottom:5px;">
+                    <div style="border-bottom:1px solid var(--st-border); margin-bottom:10px; padding-bottom:5px;">
                         <span class="text-cyan">LIVE ATTACK FEEDS</span>
                     </div>
                     <div class="overlay-row">
@@ -240,7 +245,7 @@
                     </div>
 
                     <div
-                        style="background:rgba(255,255,255,0.02); padding:1rem; border-radius:4px; margin-bottom:15px; border:1px solid #222;">
+                        style="background:color-mix(in srgb, var(--st-text) 2%, transparent); padding:1rem; border-radius:4px; margin-bottom:15px; border:1px solid var(--st-border);">
                         <span class="text-xs text-muted">TOP OFFENDING ISP</span>
                         <div class="text-xl text-white" id="topOffendingIspName">—</div>
                         <div class="text-xs text-pink" id="topOffendingIspCount">—</div>

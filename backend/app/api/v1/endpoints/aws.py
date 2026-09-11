@@ -27,7 +27,9 @@ from app.services.aws_telemetry_service import telemetry_engine
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter()
+from app.api.v1.dependencies import require_role
+
+router = APIRouter(dependencies=[Depends(require_role(["SUPER_ADMIN", "ADMIN"]))])
 
 class AWSTestRequest(BaseModel):
     aws_access_key: str

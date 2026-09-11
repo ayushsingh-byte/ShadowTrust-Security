@@ -9,32 +9,407 @@
     <link rel="stylesheet" href="css/dashboard.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        .vk { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 18px; }
-        .vk div { background: #0a0a0f; border: 1px solid #222; border-radius: 8px; padding: 12px 18px; }
-        .vk .v { font-size: 1.5rem; font-weight: 700; font-family: var(--font-mono, monospace); }
-        .vk .l { font-size: .6rem; letter-spacing: 1px; color: #888; text-transform: uppercase; margin-top: 2px; }
-        table.vt { width: 100%; border-collapse: collapse; font-size: .8rem; }
-        table.vt th { text-align: left; background: #161b22; color: #7d8590; font-size: .66rem; letter-spacing: 1px;
-            text-transform: uppercase; padding: 9px 10px; border-bottom: 1px solid #30363d; }
-        table.vt td { padding: 9px 10px; border-top: 1px solid #14181e; color: #c9d1d9; vertical-align: top; }
-        .res { font-weight: 700; font-family: var(--font-mono, monospace); }
-        .res.PASS { color: #3fb950; }
-        .res.FAIL { color: #f85149; }
-        .res.PARTIAL { color: #d29922; }
-        .res.NONE { color: #6e7681; }
-        .mono { font-family: var(--font-mono, monospace); font-size: .72rem; }
-        .rb { color: #7d8590; font-size: .7rem; }
-        .runbtn { background: #161b22; border: 1px solid #30363d; color: #adbac7; font-size: .7rem; padding: 4px 9px;
-            border-radius: 6px; cursor: pointer; }
-        .runbtn:hover { border-color: #58a6ff; color: #58a6ff; }
-        .runbtn:disabled { opacity: .4; cursor: wait; }
-        .chip { display: inline-block; padding: 0 6px; border-radius: 4px; font-size: .66rem; background: rgba(88,166,255,.13);
-            color: #58a6ff; margin: 1px 2px; font-family: var(--font-mono, monospace); }
-        .miss { background: rgba(248,81,73,.14); color: #f85149; }
-        .bar { height: 6px; background: #21262d; border-radius: 3px; overflow: hidden; margin-top: 6px; }
-        .bar > span { display: block; height: 100%; background: #3fb950; }
-        .note { color: #7d8590; font-size: .75rem; margin: 8px 0 18px; }
+        /* =========================================================
+           DETECTION VALIDATION  —  SOC testing coverage board
+           Neutral greys + single teal accent. Semantic colour for
+           status only. Motion is entrance-only + hover.
+           ========================================================= */
+
+        .dv-note {
+            display: flex;
+            gap: 10px;
+            align-items: flex-start;
+            background: var(--st-surface-2);
+            border: 1px solid var(--st-border);
+            border-left: 3px solid var(--st-accent);
+            border-radius: var(--st-radius-md);
+            padding: 12px 14px;
+            font-size: 0.78rem;
+            line-height: 1.55;
+            color: var(--st-text-secondary);
+            margin: 0 0 1.25rem;
+            animation: dv-up 0.4s 0.16s both;
+        }
+
+        .dv-note i {
+            color: var(--st-accent);
+            margin-top: 2px;
+            flex-shrink: 0;
+        }
+
+        .dv-note b {
+            color: var(--st-text);
+            font-weight: 600;
+        }
+
+        /* ---------- KPI cards ---------- */
+        .dv-kpis {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 0.9rem;
+            margin-bottom: 1.25rem;
+        }
+
+        @media (max-width: 1200px) {
+            .dv-kpis { grid-template-columns: repeat(3, 1fr); }
+        }
+
+        @media (max-width: 720px) {
+            .dv-kpis { grid-template-columns: repeat(2, 1fr); }
+        }
+
+        .dv-kpi {
+            background: var(--st-surface);
+            border: 1px solid var(--st-border);
+            border-radius: var(--st-radius-md);
+            box-shadow: var(--st-shadow-sm);
+            padding: 14px 15px 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            transition: border-color 0.15s ease, transform 0.15s ease;
+            animation: dv-up 0.42s both;
+            animation-delay: calc(var(--i, 0) * 55ms);
+        }
+
+        .dv-kpi:hover { border-color: var(--st-border-strong); }
+
+        .dv-kpi-head {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            font-size: 0.66rem;
+            font-weight: 600;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            color: var(--st-text-muted);
+        }
+
+        .dv-kpi-head i {
+            font-size: 0.72rem;
+            color: var(--st-text-faint);
+        }
+
+        .dv-kpi-val {
+            font-family: var(--st-font-mono);
+            font-size: 1.7rem;
+            font-weight: 700;
+            line-height: 1;
+            color: var(--st-text);
+            font-variant-numeric: tabular-nums;
+        }
+
+        .dv-kpi.good .dv-kpi-val { color: var(--st-success); }
+        .dv-kpi.bad .dv-kpi-val { color: var(--st-danger); }
+        .dv-kpi.muted .dv-kpi-val { color: var(--st-text-muted); }
+
+        .dv-kpi-bar {
+            height: 5px;
+            border-radius: 999px;
+            background: var(--st-surface-hover);
+            overflow: hidden;
+        }
+
+        .dv-kpi-bar > span {
+            display: block;
+            height: 100%;
+            width: 0;
+            border-radius: 999px;
+            background: var(--st-accent);
+            transition: width 0.9s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        .dv-kpi.good .dv-kpi-bar > span { background: var(--st-success); }
+        .dv-kpi-foot { font-size: 0.64rem; color: var(--st-text-faint); }
+
+        /* ---------- table ---------- */
+        .dv-table-wrap {
+            background: var(--st-surface);
+            border: 1px solid var(--st-border);
+            border-radius: var(--st-radius-md);
+            box-shadow: var(--st-shadow-sm);
+            overflow: hidden;
+            animation: dv-up 0.4s 0.22s both;
+        }
+
+        .dv-table-scroll { overflow-x: auto; }
+
+        table.dv-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.8rem;
+            min-width: 940px;
+        }
+
+        table.dv-table th {
+            text-align: left;
+            background: var(--st-surface-2);
+            color: var(--st-text-muted);
+            font-size: 0.64rem;
+            font-weight: 600;
+            letter-spacing: 0.07em;
+            text-transform: uppercase;
+            padding: 11px 14px;
+            border-bottom: 1px solid var(--st-border);
+            white-space: nowrap;
+        }
+
+        table.dv-table td {
+            padding: 13px 14px;
+            border-top: 1px solid var(--st-border);
+            color: var(--st-text-secondary);
+            vertical-align: top;
+        }
+
+        table.dv-table tbody tr { animation: dv-up 0.4s both; animation-delay: calc(var(--i, 0) * 35ms); }
+        table.dv-table tbody tr:hover td { background: var(--st-surface-hover); }
+
+        .dv-col-scn { width: 26%; }
+        .dv-col-exp { width: 23%; }
+        .dv-col-act { width: 27%; }
+        .dv-col-res { width: 96px; }
+        .dv-col-run { width: 132px; }
+
+        .dv-scn-name {
+            font-family: var(--st-font-mono);
+            font-weight: 600;
+            font-size: 0.82rem;
+            color: var(--st-text);
+        }
+
+        .dv-scn-desc {
+            margin-top: 4px;
+            font-size: 0.72rem;
+            line-height: 1.5;
+            color: var(--st-text-muted);
+        }
+
+        .dv-req {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            margin-top: 6px;
+            font-size: 0.62rem;
+            font-family: var(--st-font-mono);
+            color: var(--st-caution);
+        }
+
+        /* ---------- chips ---------- */
+        .dv-chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            align-items: center;
+        }
+
+        .dv-chip {
+            display: inline-flex;
+            align-items: center;
+            padding: 2px 7px;
+            border-radius: var(--st-radius-sm);
+            font-size: 0.66rem;
+            font-family: var(--st-font-mono);
+            background: var(--st-accent-tint);
+            color: var(--st-accent);
+            border: 1px solid color-mix(in srgb, var(--st-accent) 22%, transparent);
+            white-space: nowrap;
+        }
+
+        .dv-chip.tech {
+            background: var(--st-info-bg);
+            color: var(--st-info);
+            border-color: color-mix(in srgb, var(--st-info) 22%, transparent);
+        }
+
+        .dv-chip.miss {
+            background: var(--st-danger-bg);
+            color: var(--st-danger);
+            border-color: color-mix(in srgb, var(--st-danger) 26%, transparent);
+        }
+
+        .dv-chip.dim {
+            background: var(--st-surface-hover);
+            color: var(--st-text-faint);
+            border-color: var(--st-border);
+        }
+
+        .dv-sev {
+            display: inline-flex;
+            align-items: center;
+            padding: 2px 7px;
+            border-radius: var(--st-radius-sm);
+            font-size: 0.6rem;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            border: 1px solid transparent;
+        }
+
+        .dv-sev.CRITICAL { background: var(--st-danger-bg); color: var(--st-danger); border-color: color-mix(in srgb, var(--st-danger) 30%, transparent); }
+        .dv-sev.HIGH { background: var(--st-caution-bg); color: var(--st-caution); border-color: color-mix(in srgb, var(--st-caution) 30%, transparent); }
+        .dv-sev.MEDIUM { background: var(--st-warning-bg); color: var(--st-warning); border-color: color-mix(in srgb, var(--st-warning) 30%, transparent); }
+        .dv-sev.LOW { background: var(--st-neutral-bg); color: var(--st-neutral); border-color: color-mix(in srgb, var(--st-neutral) 30%, transparent); }
+
+        .dv-line { margin-top: 7px; font-size: 0.66rem; color: var(--st-text-faint); font-family: var(--st-font-mono); line-height: 1.5; }
+        .dv-muted { color: var(--st-text-faint); font-size: 0.72rem; }
+
+        .dv-minibar {
+            height: 4px;
+            border-radius: 999px;
+            background: var(--st-surface-hover);
+            overflow: hidden;
+            margin-top: 8px;
+            max-width: 160px;
+        }
+
+        .dv-minibar > span {
+            display: block;
+            height: 100%;
+            border-radius: 999px;
+            background: var(--st-success);
+            transition: width 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        /* ---------- result pill ---------- */
+        .dv-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 3px 9px;
+            border-radius: 999px;
+            font-size: 0.66rem;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+            font-family: var(--st-font-main);
+            border: 1px solid transparent;
+            white-space: nowrap;
+        }
+
+        .dv-pill::before {
+            content: "";
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: currentColor;
+        }
+
+        .dv-pill.PASS { background: var(--st-success-bg); color: var(--st-success); border-color: color-mix(in srgb, var(--st-success) 30%, transparent); }
+        .dv-pill.FAIL { background: var(--st-danger-bg); color: var(--st-danger); border-color: color-mix(in srgb, var(--st-danger) 30%, transparent); }
+        .dv-pill.PARTIAL { background: var(--st-warning-bg); color: var(--st-warning); border-color: color-mix(in srgb, var(--st-warning) 30%, transparent); }
+        .dv-pill.NONE { background: var(--st-surface-hover); color: var(--st-text-muted); border-color: var(--st-border); }
+
+        /* ---------- run buttons ---------- */
+        .dv-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .dv-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            min-width: 84px;
+            padding: 6px 12px;
+            border-radius: var(--st-radius-sm);
+            font-family: var(--st-font-main);
+            font-size: 0.72rem;
+            font-weight: 600;
+            letter-spacing: 0.02em;
+            cursor: pointer;
+            border: 1px solid var(--st-border-strong);
+            background: var(--st-surface);
+            color: var(--st-text-secondary);
+            transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+            white-space: nowrap;
+        }
+
+        .dv-btn:hover:not(:disabled) {
+            background: var(--st-surface-hover);
+            border-color: var(--st-text-faint);
+            color: var(--st-text);
+        }
+
+        .dv-btn:focus-visible {
+            outline: none;
+            border-color: var(--st-accent);
+            box-shadow: var(--st-focus-ring);
+        }
+
+        .dv-btn.exec {
+            border-color: color-mix(in srgb, var(--st-caution) 50%, transparent);
+            color: var(--st-caution);
+        }
+
+        .dv-btn.exec:hover:not(:disabled) {
+            background: var(--st-caution);
+            border-color: var(--st-caution);
+            color: var(--st-on-solid);
+        }
+
+        .dv-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        .dv-btn.is-loading {
+            cursor: progress;
+            color: transparent;
+            position: relative;
+        }
+
+        .dv-btn.is-loading::after {
+            content: "";
+            position: absolute;
+            width: 12px;
+            height: 12px;
+            border: 2px solid currentColor;
+            border-right-color: transparent;
+            border-radius: 50%;
+            color: var(--st-text-muted);
+            animation: dv-spin 0.7s linear infinite;
+        }
+
+        .dv-btn.exec.is-loading::after { color: var(--st-caution); }
+
+        /* ---------- skeleton ---------- */
+        .dv-sk {
+            display: block;
+            height: 10px;
+            border-radius: 4px;
+            background: linear-gradient(90deg, var(--st-surface-hover) 25%, var(--st-border) 37%, var(--st-surface-hover) 63%);
+            background-size: 400% 100%;
+            animation: dv-shimmer 1.4s ease-in-out infinite;
+        }
+
+        .dv-sk-kpi { height: 46px; border-radius: var(--st-radius-sm); margin-top: 4px; }
+        tr.dv-sk-row td { padding: 15px 14px; }
+        tr.dv-sk-row .dv-sk + .dv-sk { margin-top: 7px; }
+
+        /* ---------- animations ---------- */
+        @keyframes dv-up {
+            from { opacity: 0; transform: translateY(9px); }
+            to { opacity: 1; transform: none; }
+        }
+
+        @keyframes dv-spin { to { transform: rotate(360deg); } }
+
+        @keyframes dv-shimmer {
+            0% { background-position: 100% 50%; }
+            100% { background-position: 0 50%; }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: 0.001ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.001ms !important;
+            }
+        }
     </style>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600;700&amp;display=swap">
+    <link rel="stylesheet" href="css/tokens.css">
+    <script src="js/theme.js"></script>
 </head>
 
 <body>
@@ -46,25 +421,59 @@
                     <h2>DETECTION VALIDATION</h2>
                     <p>SOC TESTING // does Shadow Trust actually detect these attacks?</p>
                 </div>
-                <div class="filters-bar">
+                <div class="filters-bar" style="display:flex;gap:10px;flex-wrap:wrap;">
                     <button class="soc-btn" id="v-report"><i class="fas fa-file-pdf"></i> COVERAGE REPORT (PDF)</button>
                     <button class="soc-btn soc-btn-primary" id="v-refresh"><i class="fas fa-rotate"></i> REFRESH</button>
                 </div>
             </div>
 
-            <div class="vk" id="v-kpi"></div>
-            <div class="note">
-                <b>Evaluate</b> grades what the pipeline already produced. <b>Execute</b> fires the matching
-                controlled scenario at the local honeypots (target hard-locked to 127.0.0.1, admin only), waits for
-                one detection cycle, then grades the real result.
+            <div class="dv-kpis" id="v-kpi">
+                <div class="dv-kpi" style="--i:0"><div class="dv-kpi-head"><i class="fas fa-bullseye"></i>detection rate</div><span class="dv-sk dv-sk-kpi"></span></div>
+                <div class="dv-kpi" style="--i:1"><div class="dv-kpi-head"><i class="fas fa-sitemap"></i>ATT&amp;CK coverage</div><span class="dv-sk dv-sk-kpi"></span></div>
+                <div class="dv-kpi" style="--i:2"><div class="dv-kpi-head"><i class="fas fa-circle-check"></i>scenarios passing</div><span class="dv-sk dv-sk-kpi"></span></div>
+                <div class="dv-kpi" style="--i:3"><div class="dv-kpi-head"><i class="fas fa-triangle-exclamation"></i>failed / partial</div><span class="dv-sk dv-sk-kpi"></span></div>
+                <div class="dv-kpi" style="--i:4"><div class="dv-kpi-head"><i class="fas fa-circle-minus"></i>never run</div><span class="dv-sk dv-sk-kpi"></span></div>
             </div>
 
-            <table class="vt">
-                <thead>
-                    <tr><th>scenario</th><th>expected detection / ATT&amp;CK / severity</th><th>actual</th><th>result</th><th></th></tr>
-                </thead>
-                <tbody id="v-rows"><tr><td colspan="5" class="rb" style="padding:16px;">loading…</td></tr></tbody>
-            </table>
+            <div class="dv-note">
+                <i class="fas fa-circle-info"></i>
+                <div>
+                    <b>Evaluate</b> grades what the pipeline already produced. <b>Execute</b> fires the matching
+                    controlled scenario at the local honeypots (target hard-locked to 127.0.0.1, admin only), waits for
+                    one detection cycle, then grades the real result.
+                </div>
+            </div>
+
+            <div class="dv-table-wrap">
+                <div class="dv-table-scroll">
+                    <table class="dv-table">
+                        <thead>
+                            <tr>
+                                <th class="dv-col-scn">scenario</th>
+                                <th class="dv-col-exp">expected&nbsp;&middot;&nbsp;ATT&amp;CK&nbsp;&middot;&nbsp;severity</th>
+                                <th class="dv-col-act">actual result</th>
+                                <th class="dv-col-res">result</th>
+                                <th class="dv-col-run">run</th>
+                            </tr>
+                        </thead>
+                        <tbody id="v-rows">
+                            <tr class="dv-sk-row"><td colspan="5">
+                                <span class="dv-sk" style="width:30%"></span>
+                                <span class="dv-sk" style="width:80%"></span>
+                                <span class="dv-sk" style="width:55%"></span>
+                            </td></tr>
+                            <tr class="dv-sk-row"><td colspan="5">
+                                <span class="dv-sk" style="width:26%"></span>
+                                <span class="dv-sk" style="width:72%"></span>
+                            </td></tr>
+                            <tr class="dv-sk-row"><td colspan="5">
+                                <span class="dv-sk" style="width:34%"></span>
+                                <span class="dv-sk" style="width:64%"></span>
+                            </td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </main>
     </div>
 
@@ -78,53 +487,124 @@
         const $ = s => document.querySelector(s);
         const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
+        // count-up helper for KPI numbers (respects reduced motion)
+        const REDUCE = matchMedia('(prefers-reduced-motion: reduce)').matches;
+        function countUp(el, to, suffix = '') {
+            to = Number(to) || 0;
+            if (REDUCE) { el.textContent = to + suffix; return; }
+            const dur = 750, t0 = performance.now();
+            (function step(t) {
+                const p = Math.min(1, (t - t0) / dur);
+                const e = 1 - Math.pow(1 - p, 3);
+                el.textContent = Math.round(to * e) + suffix;
+                if (p < 1) requestAnimationFrame(step);
+            })(t0);
+        }
+
+        function relTime(iso) {
+            if (!iso) return 'never run';
+            const then = new Date(iso.includes('Z') || iso.includes('+') ? iso : iso + 'Z');
+            const s = (Date.now() - then.getTime()) / 1000;
+            if (isNaN(s)) return 'ran ' + esc(iso.replace('T', ' ').slice(0, 16));
+            if (s < 60) return 'ran just now';
+            const units = [['w', 604800], ['d', 86400], ['h', 3600], ['m', 60]];
+            for (const [u, sec] of units) { if (s >= sec) return `ran ${Math.floor(s / sec)}${u} ago`; }
+            return 'ran just now';
+        }
+
+        function kpiCard(i, label, icon, valText, to, suffix, pct, cls) {
+            return `<div class="dv-kpi ${cls || ''}" style="--i:${i}">
+                <div class="dv-kpi-head"><i class="fas ${icon}"></i>${label}</div>
+                <div class="dv-kpi-val" data-count="${to}" data-suffix="${suffix || ''}">${valText}</div>
+                ${pct == null ? '<div class="dv-kpi-foot">&nbsp;</div>'
+                    : `<div class="dv-kpi-bar"><span data-w="${pct}"></span></div>`}
+            </div>`;
+        }
+
         async function load() {
             const [cov, scen] = await Promise.all([
                 apiService.get('/soc-testing/coverage'),
                 apiService.get('/soc-testing/scenarios'),
             ]);
             const pct = v => Math.round((v || 0) * 100);
-            $('#v-kpi').innerHTML = `
-                <div><div class="v" style="color:#3fb950">${pct(cov.detection_success_rate)}%</div><div class="l">detection success rate</div></div>
-                <div><div class="v">${pct(cov.attack_coverage)}%</div><div class="l">ATT&CK coverage</div></div>
-                <div><div class="v">${cov.scenarios_passing}/${cov.scenarios_total}</div><div class="l">scenarios passing</div></div>
-                <div><div class="v" style="color:#f85149">${(cov.failed_scenarios || []).length}</div><div class="l">failed / partial</div></div>
-                <div><div class="v" style="color:#6e7681">${(cov.untested_scenarios || []).length}</div><div class="l">never run</div></div>`;
+            const total = cov.scenarios_total || 0;
+            const passing = cov.scenarios_passing || 0;
+            const failed = (cov.failed_scenarios || []).length;
+            const never = (cov.untested_scenarios || []).length;
+            const dr = pct(cov.detection_success_rate);
+            const ac = pct(cov.attack_coverage);
+
+            $('#v-kpi').innerHTML = [
+                kpiCard(0, 'detection rate', 'fa-bullseye', dr + '%', dr, '%', dr, dr >= 60 ? 'good' : ''),
+                kpiCard(1, 'ATT&CK coverage', 'fa-sitemap', ac + '%', ac, '%', ac, ''),
+                kpiCard(2, 'scenarios passing', 'fa-circle-check', `${passing}/${total}`, passing, `/${total}`,
+                    total ? Math.round(passing / total * 100) : 0, passing && passing === total ? 'good' : ''),
+                kpiCard(3, 'failed / partial', 'fa-triangle-exclamation', String(failed), failed, '',
+                    total ? Math.round(failed / total * 100) : 0, failed ? 'bad' : ''),
+                kpiCard(4, 'never run', 'fa-circle-minus', String(never), never, '',
+                    total ? Math.round(never / total * 100) : 0, 'muted'),
+            ].join('');
+            $('#v-kpi').querySelectorAll('.dv-kpi-val').forEach(el =>
+                countUp(el, el.dataset.count, el.dataset.suffix));
+            requestAnimationFrame(() => $('#v-kpi').querySelectorAll('.dv-kpi-bar > span')
+                .forEach(s => s.style.width = (s.dataset.w || 0) + '%'));
 
             const byId = Object.fromEntries((scen.scenarios || []).map(s => [s.id, s]));
-            $('#v-rows').innerHTML = (cov.scenarios || []).map(r => {
-                const s = byId[r.scenario_id] || {};
-                const m = r.metrics || {};
-                const result = r.last_result || 'NONE';
-                return `<tr>
-                    <td><b>${esc(r.scenario_id)}</b><div class="rb">${esc(r.description || '')}</div>
-                        ${s.requires ? `<div class="rb">requires: ${esc(s.requires)}</div>` : ''}</td>
-                    <td>
-                        ${(r.expected_detections || []).map(x => `<span class="chip">${esc(x)}</span>`).join('') || '<span class="rb">—</span>'}
-                        ${(r.expected_techniques || []).map(x => `<span class="chip">${esc(x)}</span>`).join('')}
-                        <span class="rb">sev ${esc(r.expected_severity || '—')}</span>
-                    </td>
-                    <td>
-                        ${(r.actual_detections || []).map(x => `<span class="chip">${esc(x)}</span>`).join('') || '<span class="rb">—</span>'}
-                        ${(r.actual_techniques || []).map(x => `<span class="chip">${esc(x)}</span>`).join('')}
-                        ${r.actual_severity ? `<span class="rb">sev ${esc(r.actual_severity)}</span>` : ''}
-                        ${(m.missing_detections || []).map(x => `<span class="chip miss">missing ${esc(x)}</span>`).join('')}
-                        ${(m.false_positive_rules || []).length ? `<div class="rb">false positives: ${(m.false_positive_rules).map(esc).join(', ')}</div>` : ''}
-                        ${m.detection_success_rate != null ? `<div class="bar"><span style="width:${Math.round(m.detection_success_rate * 100)}%"></span></div>` : ''}
-                        <div class="rb">${r.last_run_at ? 'ran ' + esc(r.last_run_at.replace('T', ' ').slice(0, 19)) : 'never run'}</div>
-                    </td>
-                    <td class="res ${result}">${result}</td>
-                    <td>
-                        <button class="runbtn" data-id="${esc(r.scenario_id)}" data-mode="evaluate">evaluate</button>
-                        <button class="runbtn" data-id="${esc(r.scenario_id)}" data-mode="execute">execute</button>
-                    </td>
-                </tr>`;
-            }).join('');
+            const rows = cov.scenarios || [];
+            $('#v-rows').innerHTML = rows.length === 0
+                ? `<tr><td colspan="5" class="dv-muted" style="padding:24px 14px;">No scenarios registered.</td></tr>`
+                : rows.map((r, i) => {
+                    const s = byId[r.scenario_id] || {};
+                    const m = r.metrics || {};
+                    const result = r.last_result || 'NONE';
+                    const expChips = (r.expected_detections || []).map(x => `<span class="dv-chip">${esc(x)}</span>`).join('')
+                        + (r.expected_techniques || []).map(x => `<span class="dv-chip tech">${esc(x)}</span>`).join('');
+                    const actChips = (r.actual_detections || []).map(x => `<span class="dv-chip">${esc(x)}</span>`).join('')
+                        + (r.actual_techniques || []).map(x => `<span class="dv-chip tech">${esc(x)}</span>`).join('')
+                        + (m.missing_detections || []).map(x => `<span class="dv-chip miss">missing ${esc(x)}</span>`).join('');
+                    const req = s.requires ? `<div class="dv-req"><i class="fas fa-plug"></i>requires ${esc(s.requires)}</div>` : '';
+                    const fp = (m.false_positive_rules || []).length
+                        ? `<div class="dv-line">false positives: ${(m.false_positive_rules).map(esc).join(', ')}</div>` : '';
+                    const bar = m.detection_success_rate != null
+                        ? `<div class="dv-minibar"><span style="width:0%" data-w="${Math.round(m.detection_success_rate * 100)}"></span></div>` : '';
+                    return `<tr style="--i:${i}">
+                        <td class="dv-col-scn">
+                            <div class="dv-scn-name">${esc(r.scenario_id)}</div>
+                            <div class="dv-scn-desc">${esc(r.description || '')}</div>
+                            ${req}
+                        </td>
+                        <td class="dv-col-exp">
+                            <div class="dv-chips">
+                                ${expChips || '<span class="dv-chip dim">none</span>'}
+                                <span class="dv-sev ${esc(r.expected_severity || 'LOW')}">${esc(r.expected_severity || '—')}</span>
+                            </div>
+                        </td>
+                        <td class="dv-col-act">
+                            <div class="dv-chips">${actChips || '<span class="dv-muted">— not observed</span>'}</div>
+                            ${r.actual_severity ? `<div class="dv-line">observed severity: ${esc(r.actual_severity)}</div>` : ''}
+                            ${fp}${bar}
+                            <div class="dv-line">${esc(relTime(r.last_run_at))}</div>
+                        </td>
+                        <td class="dv-col-res"><span class="dv-pill ${result}">${result}</span></td>
+                        <td class="dv-col-run">
+                            <div class="dv-actions">
+                                <button class="dv-btn eval" data-id="${esc(r.scenario_id)}" data-mode="evaluate">
+                                    <i class="fas fa-clipboard-check"></i> evaluate</button>
+                                <button class="dv-btn exec" data-id="${esc(r.scenario_id)}" data-mode="execute" title="fires the live scenario — admin only">
+                                    <i class="fas fa-bolt"></i> execute</button>
+                            </div>
+                        </td>
+                    </tr>`;
+                }).join('');
 
-            $('#v-rows').querySelectorAll('.runbtn').forEach(b => b.onclick = async () => {
-                const buttons = $('#v-rows').querySelectorAll('.runbtn');
-                buttons.forEach(x => x.disabled = true);
-                b.textContent = b.dataset.mode === 'execute' ? 'firing…' : 'grading…';
+            requestAnimationFrame(() => $('#v-rows').querySelectorAll('.dv-minibar > span')
+                .forEach(s => s.style.width = (s.dataset.w || 0) + '%'));
+
+            $('#v-rows').querySelectorAll('.dv-btn').forEach(b => b.onclick = async () => {
+                const all = $('#v-rows').querySelectorAll('.dv-btn');
+                all.forEach(x => { x.disabled = true; });
+                b.classList.add('is-loading');
+                b.dataset.label = b.innerHTML;
                 try {
                     await apiService.post(`/soc-testing/scenarios/${b.dataset.id}/run`, { mode: b.dataset.mode });
                 } catch (e) {

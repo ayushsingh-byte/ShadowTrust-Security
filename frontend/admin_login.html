@@ -10,7 +10,7 @@
     <title>Admin Login | Shadow Trust</title>
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         body,
         html {
@@ -19,8 +19,8 @@
             height: 100vh;
             width: 100vw;
             display: flex;
-            background: #050000;
-            font-family: 'Outfit', sans-serif;
+            background: var(--st-bg);
+            font-family: var(--st-font-main);
             overflow: hidden;
         }
 
@@ -45,13 +45,13 @@
             width: 100%;
             height: 100%;
             /* Red tint for danger/admin */
-            background: linear-gradient(to top, rgba(15, 0, 2, 0.98) 0%, rgba(55, 0, 10, 0.6) 100%);
+            background: linear-gradient(to top, var(--st-surface-2) 0%, color-mix(in srgb, var(--st-surface-2) 55%, transparent) 100%);
         }
 
         .visual-content {
             position: relative;
             z-index: 2;
-            color: #fff;
+            color: var(--st-text);
             max-width: 600px;
         }
 
@@ -59,16 +59,16 @@
             display: inline-flex;
             align-items: center;
             gap: 8px;
-            background: rgba(255, 0, 85, 0.15);
-            backdrop-filter: blur(5px);
+            background: color-mix(in srgb, var(--st-danger) 15%, transparent);
+            
             padding: 8px 16px;
             border-radius: 4px;
             font-size: 0.8rem;
             margin-bottom: 20px;
             text-transform: uppercase;
             letter-spacing: 1px;
-            border: 1px solid rgba(255, 0, 85, 0.4);
-            color: #ff0055;
+            border: 1px solid color-mix(in srgb, var(--st-danger) 40%, transparent);
+            color: var(--st-danger);
             font-weight: 700;
         }
 
@@ -77,7 +77,7 @@
             font-weight: 700;
             margin-bottom: 20px;
             line-height: 1.1;
-            background: linear-gradient(90deg, #fff 0%, #ff80ab 100%);
+            background: linear-gradient(90deg, var(--st-text) 0%, var(--st-text) 100%);
             -webkit-background-clip: text;
             background-clip: text;
             -webkit-text-fill-color: transparent;
@@ -86,9 +86,9 @@
         .visual-text {
             font-size: 1.1rem;
             line-height: 1.6;
-            color: #ffb3c1;
+            color: var(--st-danger);
             font-weight: 300;
-            border-left: 3px solid #ff0055;
+            border-left: 3px solid var(--st-danger);
             padding-left: 20px;
         }
 
@@ -96,13 +96,13 @@
         .login-pane {
             width: 35%;
             min-width: 500px;
-            background: #080102;
+            background: var(--st-surface-2);
             /* Very dark red/black */
             display: flex;
             flex-direction: column;
             justify-content: center;
             padding: 80px;
-            border-left: 1px solid #330510;
+            border-left: 1px solid color-mix(in srgb, var(--st-danger) 35%, var(--st-border));
             position: relative;
         }
 
@@ -119,8 +119,8 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            border: 2px solid #ff0055;
-            color: #ff0055;
+            border: 2px solid var(--st-danger);
+            color: var(--st-danger);
             font-size: 1.2rem;
             font-weight: bold;
         }
@@ -129,7 +129,7 @@
             font-size: 1.2rem;
             font-weight: 700;
             letter-spacing: 2px;
-            color: #fff;
+            color: var(--st-text);
         }
 
         .login-header {
@@ -138,7 +138,7 @@
 
         .login-header h1 {
             font-size: 2rem;
-            color: #ff0055;
+            color: var(--st-danger);
             /* Red Header */
             margin-bottom: 10px;
             font-weight: 600;
@@ -147,9 +147,9 @@
         }
 
         .login-header p {
-            color: #888;
+            color: var(--st-text-muted);
             font-size: 0.9rem;
-            font-family: 'JetBrains Mono', monospace;
+            font-family: var(--st-font-mono);
         }
 
         .input-group {
@@ -160,7 +160,7 @@
         .input-group label {
             display: block;
             margin-bottom: 12px;
-            color: #a05060;
+            color: var(--st-danger);
             font-size: 0.8rem;
             font-weight: 600;
             text-transform: uppercase;
@@ -170,29 +170,29 @@
         .clean-input {
             width: 100%;
             padding: 16px;
-            background: rgba(255, 0, 85, 0.05);
+            background: color-mix(in srgb, var(--st-danger) 5%, transparent);
             /* Subtle red bg */
-            border: 1px solid #440a15;
+            border: 1px solid color-mix(in srgb, var(--st-danger) 35%, var(--st-border));
             border-radius: 0;
             /* Sharp corners for security feel */
-            color: #fff;
+            color: var(--st-text);
             font-size: 1rem;
             outline: none;
             transition: 0.3s;
-            font-family: 'JetBrains Mono', monospace;
+            font-family: var(--st-font-mono);
         }
 
         .clean-input:focus {
-            border-color: #ff0055;
-            background: rgba(255, 0, 85, 0.1);
-            box-shadow: 0 0 15px rgba(255, 0, 85, 0.2);
+            border-color: var(--st-danger);
+            background: color-mix(in srgb, var(--st-danger) 10%, transparent);
+            
         }
 
         .btn-clean {
             width: 100%;
             padding: 18px;
-            background: #ff0055;
-            color: #fff;
+            background: var(--st-danger);
+            color: var(--st-on-solid);
             border: none;
             font-size: 0.95rem;
             font-weight: 700;
@@ -207,33 +207,33 @@
         }
 
         .btn-clean:hover {
-            background: #cc0044;
-            box-shadow: 0 0 30px rgba(255, 0, 85, 0.4);
+            background: var(--st-danger);
+            
         }
 
         .warning-box {
             margin-top: 40px;
             padding: 20px;
-            border: 1px dashed #ff0055;
-            color: #ff0055;
+            border: 1px dashed var(--st-danger);
+            color: var(--st-danger);
             font-size: 0.75rem;
             text-align: center;
-            background: rgba(255, 0, 85, 0.05);
-            font-family: 'JetBrains Mono', monospace;
+            background: color-mix(in srgb, var(--st-danger) 5%, transparent);
+            font-family: var(--st-font-mono);
         }
 
         .logout-link {
             position: absolute;
             top: 40px;
             right: 40px;
-            color: #666;
+            color: var(--st-text-faint);
             text-decoration: none;
             font-size: 0.9rem;
             transition: 0.3s;
         }
 
         .logout-link:hover {
-            color: #fff;
+            color: var(--st-text);
         }
 
         @media (max-width: 1000px) {
@@ -247,12 +247,14 @@
             }
         }
     </style>
+    <link rel="stylesheet" href="css/tokens.css">
+    <script src="js/theme.js"></script>
 </head>
 
 <body>
 
     <!-- LEFT: SECURITY VISUAL -->
-    <div class="visual-pane">
+    <div class="visual-pane st-theme-dark">
         <div class="visual-overlay"></div>
         <div class="visual-content">
             <div class="visual-badge"><i class="fas fa-exclamation-triangle"></i> &nbsp; RESTRICTED AREA</div>
@@ -268,9 +270,9 @@
     <div class="login-pane">
 
         <div class="logout-link">
-            <a href="login.html" style="color:#666; text-decoration:none; margin-right:20px; transition:0.3s;"><i
+            <a href="login.html" style="color:var(--st-text-faint); text-decoration:none; margin-right:20px; transition:0.3s;"><i
                     class="fas fa-sign-out-alt"></i> Back to Login</a>
-            <a href="dashboard.html" style="color:#ff0055; text-decoration:none; font-weight:bold; transition:0.3s;"><i
+            <a href="dashboard.html" style="color:var(--st-danger); text-decoration:none; font-weight:bold; transition:0.3s;"><i
                     class="fas fa-arrow-left"></i> Back to Dashboard</a>
         </div>
 
@@ -319,12 +321,12 @@
             if (!el) {
                 el = document.createElement('div');
                 el.id = 'adminMsg';
-                el.style.cssText = 'margin-top:20px;padding:14px 18px;border-radius:4px;font-size:0.85rem;font-family:monospace;';
+                el.style.cssText = 'margin-top:20px;padding:14px 18px;border-radius:4px;font-size:0.85rem;font-family:var(--st-font-mono);';
                 document.getElementById('adminLoginForm').after(el);
             }
-            el.style.border = type === 'error' ? '1px solid #ff0055' : '1px solid #10b981';
-            el.style.background = type === 'error' ? 'rgba(255,0,85,0.08)' : 'rgba(16,185,129,0.08)';
-            el.style.color = type === 'error' ? '#ff0055' : '#10b981';
+            el.style.border = type === 'error' ? '1px solid var(--st-danger)' : '1px solid var(--st-success)';
+            el.style.background = type === 'error' ? 'color-mix(in srgb, var(--st-danger) 8%, transparent)' : 'color-mix(in srgb, var(--st-success) 8%, transparent)';
+            el.style.color = type === 'error' ? 'var(--st-danger)' : 'var(--st-success)';
             el.textContent = msg;
         }
 

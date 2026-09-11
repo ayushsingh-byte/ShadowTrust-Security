@@ -14,8 +14,8 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            background: rgba(0, 0, 0, 0.4);
-            border: 1px solid #333;
+            background: color-mix(in srgb, var(--st-bg) 80%, transparent);
+            border: 1px solid var(--st-border);
             padding: 20px;
             margin-bottom: 20px;
             position: relative;
@@ -37,7 +37,7 @@
             padding: 5px 12px;
             border: 1px solid var(--neon-red);
             color: var(--neon-red);
-            background: rgba(255, 51, 51, 0.1);
+            background: color-mix(in srgb, var(--st-danger) 10%, transparent);
             text-transform: uppercase;
             font-weight: 700;
             letter-spacing: 1px;
@@ -46,15 +46,15 @@
 
         @keyframes pulse-red {
             0% {
-                box-shadow: 0 0 0 0 rgba(255, 51, 51, 0.4);
+                box-shadow: 0 0 0 0 color-mix(in srgb, var(--st-danger) 40%, transparent);
             }
 
             70% {
-                box-shadow: 0 0 0 10px rgba(255, 51, 51, 0);
+                box-shadow: 0 0 0 10px color-mix(in srgb, var(--st-danger) 1%, transparent);
             }
 
             100% {
-                box-shadow: 0 0 0 0 rgba(255, 51, 51, 0);
+                box-shadow: 0 0 0 0 color-mix(in srgb, var(--st-danger) 1%, transparent);
             }
         }
 
@@ -67,7 +67,7 @@
 
         .stat-box {
             background: var(--bg-card);
-            border: 1px solid #333;
+            border: 1px solid var(--st-border);
             padding: 15px;
             display: flex;
             flex-direction: column;
@@ -75,25 +75,25 @@
 
         .terminal-log-container {
             height: 300px;
-            background: #000;
-            border: 1px solid #333;
+            background: var(--st-surface-2);
+            border: 1px solid var(--st-border);
             padding: 10px;
             overflow-y: auto;
-            font-family: 'JetBrains Mono';
+            font-family: var(--st-font-mono);
             font-size: 0.75rem;
-            color: #ccc;
+            color: var(--st-text-secondary);
         }
 
         .log-entry {
             margin-bottom: 4px;
-            border-bottom: 1px solid #111;
+            border-bottom: 1px solid var(--st-border);
             padding-bottom: 2px;
             display: flex;
             gap: 10px;
         }
 
         .log-time {
-            color: #666;
+            color: var(--st-text-faint);
             width: 70px;
         }
 
@@ -108,7 +108,7 @@
         }
 
         .log-payload {
-            color: #aaa;
+            color: var(--st-text-secondary);
             flex: 1;
             white-space: nowrap;
             overflow: hidden;
@@ -116,13 +116,13 @@
         }
 
         .ioc-tag {
-            background: #111;
-            border: 1px solid #333;
+            background: var(--st-surface);
+            border: 1px solid var(--st-border);
             padding: 2px 6px;
             font-size: 0.7rem;
             color: var(--neon-cyan);
             margin-right: 5px;
-            font-family: 'JetBrains Mono';
+            font-family: var(--st-font-mono);
             display: inline-block;
             margin-bottom: 5px;
             cursor: pointer;
@@ -130,18 +130,22 @@
 
         .ioc-tag:hover {
             border-color: var(--neon-cyan);
-            background: rgba(0, 243, 255, 0.1);
+            background: color-mix(in srgb, var(--st-info) 10%, transparent);
         }
 
         .country-bar {
             height: 4px;
-            background: #222;
+            background: var(--st-surface-hover);
             width: 100%;
             margin-top: 5px;
             border-radius: 2px;
             overflow: hidden;
         }
     </style>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600;700&amp;display=swap">
+    <link rel="stylesheet" href="css/tokens.css">
+    <script src="js/theme.js"></script>
 </head>
 
 <body>
@@ -156,7 +160,7 @@
 
             <div class="top-bar">
                 <div class="page-header">
-                    <h2><a href="nodes.html" style="text-decoration: none; color: #888;">NODES</a> / INVESTIGATION</h2>
+                    <h2><a href="nodes.html" style="text-decoration: none; color: var(--st-text-muted);">NODES</a> / INVESTIGATION</h2>
                     <p>SOC ANALYST CONSOLE // <span class="text-cyan">LIVE FORENSICS</span></p>
                 </div>
                 <div>
@@ -169,10 +173,10 @@
             <!-- SECTION 1: IDENTITY HEADER -->
             <div class="node-header">
                 <div style="display: flex; gap: 20px; align-items: center;">
-                    <i class="fas fa-server" style="font-size: 2.5rem; color: #fff;"></i>
+                    <i class="fas fa-server" style="font-size: 2.5rem; color: var(--st-text);"></i>
                     <div>
-                        <h1 style="font-size: 1.5rem; color: #fff; margin-bottom: 5px;">—</h1>
-                        <div class="text-mono" style="color: #888; font-size: 0.85rem;">
+                        <h1 style="font-size: 1.5rem; color: var(--st-text); margin-bottom: 5px;">—</h1>
+                        <div class="text-mono" style="color: var(--st-text-muted); font-size: 0.85rem;">
                             IP: <span class="text-white">—</span> |
                             TYPE: <span class="text-cyan">—</span> |
                             SECTOR: <span class="text-white">—</span>
@@ -301,7 +305,7 @@
 
                     <!-- SECTION H: ALERTS -->
                     <div class="soc-card" style="padding: 0;">
-                        <div class="soc-card-header" style="padding: 10px 15px; border-bottom: 1px solid #333;">
+                        <div class="soc-card-header" style="padding: 10px 15px; border-bottom: 1px solid var(--st-border);">
                             <span class="card-title">ACTIVE ALERTS</span>
                         </div>
                         <div class="text-muted" style="padding:10px 15px;">No data yet</div>
@@ -328,7 +332,7 @@
     <script>
         const logContainer = document.getElementById('liveLog');
         if (logContainer) {
-            logContainer.innerHTML = '<div style="color:#666; padding:10px;">No live data yet.</div>';
+            logContainer.innerHTML = '<div style="color:var(--st-text-faint); padding:10px;">No live data yet.</div>';
         }
 
     </script>

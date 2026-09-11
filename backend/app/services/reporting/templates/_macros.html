@@ -12,11 +12,78 @@
 {%- if s == "met" %}<span class="pill ok">MET</span>
 {%- elif s == "partial" %}<span class="pill partial">PARTIAL</span>
 {%- elif s == "gap" %}<span class="pill gap">GAP</span>
-{%- else %}<span class="pill manual">MANUAL</span>{%- endif %}
+{%- elif s == "pass" %}<span class="pill pass">PASS</span>
+{%- elif s in ("fail","partial-fail") %}<span class="pill fail">{{ s|upper }}</span>
+{%- elif s in ("none","never") %}<span class="pill none">NEVER RUN</span>
+{%- else %}<span class="pill manual">{{ (s or "manual")|upper }}</span>{%- endif %}
 {% endmacro %}
 
-{% macro kpi_row(items) %}
+{% macro cell(c) %}
+{%- if c is mapping and c.pill == "sev" %}{{ sev_pill(c.text) }}
+{%- elif c is mapping and c.pill == "status" %}{{ status_pill(c.text) }}
+{%- elif c is mapping %}{{ c.text }}
+{%- else %}{{ c }}{% endif -%}
+{% endmacro %}
+
+{# generic data table with an honest empty-state #}
+{% macro data_table(columns, rows, empty="No records in the selected window.", cls="data", caption=None, note=None, numcols=[]) %}
+  {% if caption %}<h4>{{ caption }}</h4>{% endif %}
+  {% if rows and rows|length %}
+  <table class="{{ cls }}">
+    <thead><tr>{% for c in columns %}<th class="{{ 'num' if loop.index0 in numcols else '' }}">{{ c }}</th>{% endfor %}</tr></thead>
+    <tbody>
+    {% for row in rows %}
+      <tr>{% for cval in row %}<td class="{{ 'num' if loop.index0 in numcols else '' }}">{{ cell(cval) }}</td>{% endfor %}</tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  {% if note %}<p class="evidence-src">{{ note }}</p>{% endif %}
+  {% else %}
+  <div class="empty">{{ empty }}</div>
+  {% endif %}
+{% endmacro %}
+
+{% macro kpi_grid(items) %}
 <div class="kpis">
-{% for it in items %}<div class="kpi"><div class="v">{{ it.value }}</div><div class="l">{{ it.label }}</div></div>{% endfor %}
+{% for it in items %}<div class="kpi"><div class="v">{{ it.value }}</div><div class="l">{{ it.label }}</div>{% if it.sub %}<div class="s">{{ it.sub }}</div>{% endif %}</div>{% endfor %}
 </div>
+{% endmacro %}
+
+{% macro kpi_band(items) %}
+<div class="kpi-band">
+{% for it in items %}<div class="cell"><div class="v">{{ it.value }}</div><div class="l">{{ it.label }}</div>{% if it.sub %}<div class="s">{{ it.sub }}</div>{% endif %}</div>{% endfor %}
+</div>
+{% endmacro %}
+
+{# horizontal CSS bar chart. items = list of {label,value,pct}  #}
+{% macro bars(items, unit="") %}
+{% if items and items|length %}
+<div class="bars">
+{% for it in items %}
+  <div class="row">
+    <div class="lab">{{ it.label }}</div>
+    <div class="track"><div class="fill" style="width:{{ it.pct if it.pct is not none else 0 }}%"></div></div>
+    <div class="val">{{ it.value }}{{ unit }}</div>
+  </div>
+{% endfor %}
+</div>
+{% else %}<div class="empty">No data to chart for this window.</div>{% endif %}
+{% endmacro %}
+
+{% macro trend_row(items) %}
+<div class="trend">
+{% for it in items %}
+  <div class="t">
+    <div class="l">{{ it.label }}</div>
+    <div class="v">{{ it.current }}</div>
+    <div class="d {{ it.dir }}">{{ it.delta }} vs prev ({{ it.previous }})</div>
+  </div>
+{% endfor %}
+</div>
+{% endmacro %}
+
+{% macro kv(pairs) %}
+<dl class="kv">
+{% for k, v in pairs %}<div><dt>{{ k }}</dt><dd>{{ v }}</dd></div>{% endfor %}
+</dl>
 {% endmacro %}

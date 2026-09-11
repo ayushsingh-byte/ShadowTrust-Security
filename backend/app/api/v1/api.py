@@ -92,3 +92,6 @@ api_router.include_router(reports_router, prefix="/reports", tags=["reports"])
 
 from app.api.v1.endpoints.compliance import router as compliance_router
 api_router.include_router(compliance_router, prefix="/compliance", tags=["compliance"])
+
+from app.api.v1.endpoints.public import router as public_router
+api_router.include_router(public_router, prefix="/public", tags=["public"])

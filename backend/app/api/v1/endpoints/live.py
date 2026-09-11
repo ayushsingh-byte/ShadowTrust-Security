@@ -6,26 +6,29 @@ Cowrie- or Dionaea-specific field name. The older dashboard/geo/events
 endpoints continue to read raw_events and are left alone.
 
 Real-time delivery is Server-Sent Events rather than WebSockets: the stream is
-one-directional (server -> browser), SSE reconnects automatically, it needs no
-extra dependency, and it survives an nginx proxy with one buffering directive.
-A WebSocket would add a handshake, a heartbeat protocol and a reconnect loop to
-write, for no capability this dashboard uses.
+one-directional (server -> browser), SSE needs no extra dependency, and it
+survives an nginx proxy with one buffering directive. Every route requires a
+signed-in user; the stream authenticates with a short-lived single-use ticket
+because EventSource cannot send an Authorization header.
 """
 
 from __future__ import annotations
 
 import asyncio
 import json
+import secrets
+import time
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
-from fastapi import APIRouter, Depends, Query, Request
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fastapi.responses import StreamingResponse
 from sqlalchemy import desc, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.api.v1.dependencies import get_current_active_user
 from app.db.database import get_db
-from app.models.all_models import NormalizedEventModel
+from app.models.all_models import NormalizedEventModel, User
 from app.services.event_bus import event_bus
 from app.services.telemetry.collector import local_collector
 from app.services.telemetry.normalize import KNOWN_SENSORS
@@ -41,6 +44,11 @@ SENSOR_ACTIVE_WINDOW = timedelta(minutes=5)
 # connection is closed by intermediate proxies, and the dashboard would go
 # quiet without knowing it had been disconnected.
 SSE_HEARTBEAT_SECONDS = 15.0
+
+STREAM_TICKET_TTL_SECONDS = 60
+
+# ticket -> (monotonic expiry, user email)
+_stream_tickets: Dict[str, Tuple[float, str]] = {}
 
 
 def _serialize(event: NormalizedEventModel) -> Dict[str, Any]:
@@ -65,39 +73,51 @@ def _serialize(event: NormalizedEventModel) -> Dict[str, Any]:
     }
 
 
+def _sse(name: str, data: Dict[str, Any]) -> str:
+    return f"event: {name}\ndata: {json.dumps(data, default=str)}\n\n"
+
+
+@router.post("/stream-ticket")
+async def create_stream_ticket(current_user: User = Depends(get_current_active_user)) -> Dict[str, Any]:
+    """Trade the bearer token for a single-use stream ticket, so the JWT never goes in a URL."""
+    now = time.monotonic()
+    for key, (expires_at, _email) in list(_stream_tickets.items()):
+        if expires_at < now:
+            _stream_tickets.pop(key, None)
+    ticket = secrets.token_urlsafe(32)
+    _stream_tickets[ticket] = (now + STREAM_TICKET_TTL_SECONDS, current_user.email)
+    return {"ticket": ticket, "expires_in": STREAM_TICKET_TTL_SECONDS}
+
+
 @router.get("/stream")
-async def stream_events(request: Request):
+async def stream_events(request: Request, ticket: str = Query(default="")):
     """
-    Server-Sent Events stream of normalized events.
-
-    Emits three event types:
-      * ``event``     — one normalized honeypot event
-      * ``heartbeat`` — periodic keepalive so proxies hold the connection
+    Server-Sent Events stream. Event types:
       * ``ready``     — sent once on connect, so the UI can show "live"
-
-    The client disconnect check matters: without it a closed browser tab leaves
-    the generator parked on the queue forever, and the bus keeps a subscriber
-    that will never be read.
+      * ``event``     — one normalized honeypot event
+      * ``detection`` — a detection cycle that produced detections or incidents
+      * ``metrics``   — a resource sample for every sensor container
+      * ``heartbeat`` — periodic keepalive so proxies hold the connection
     """
+    entry = _stream_tickets.pop(ticket, None) if ticket else None
+    if entry is None or entry[0] < time.monotonic():
+        raise HTTPException(status_code=401, detail="Stream ticket missing, expired or already used")
 
     async def generator():
-        yield f"event: ready\ndata: {json.dumps({'status': 'connected'})}\n\n"
-
-        subscription = event_bus.subscribe()
+        queue = event_bus.open()
         try:
-            while True:
-                if await request.is_disconnected():
-                    break
+            yield _sse("ready", {"status": "connected", "server_time": datetime.utcnow().isoformat() + "Z"})
+            # The disconnect check matters: without it a closed tab leaves this
+            # generator parked forever and the bus keeps a dead subscriber.
+            while not await request.is_disconnected():
                 try:
-                    event = await asyncio.wait_for(
-                        subscription.__anext__(), timeout=SSE_HEARTBEAT_SECONDS
-                    )
-                    yield f"event: event\ndata: {json.dumps(event, default=str)}\n\n"
+                    channel, payload = await asyncio.wait_for(queue.get(), timeout=SSE_HEARTBEAT_SECONDS)
                 except asyncio.TimeoutError:
-                    payload = json.dumps({"ts": datetime.utcnow().isoformat()})
-                    yield f"event: heartbeat\ndata: {payload}\n\n"
+                    yield _sse("heartbeat", {"ts": datetime.utcnow().isoformat() + "Z"})
+                    continue
+                yield _sse(channel, payload)
         finally:
-            await subscription.aclose()
+            event_bus.close(queue)
 
     return StreamingResponse(
         generator(),
@@ -113,7 +133,10 @@ async def stream_events(request: Request):
 
 
 @router.get("/overview")
-async def get_overview(db: AsyncSession = Depends(get_db)) -> Dict[str, Any]:
+async def get_overview(
+    db: AsyncSession = Depends(get_db),
+    _user: User = Depends(get_current_active_user),
+) -> Dict[str, Any]:
     """Headline counters for the dashboard's overview strip."""
     total = (await db.execute(select(func.count(NormalizedEventModel.event_id)))).scalar() or 0
     unique_ips = (
@@ -184,6 +207,7 @@ async def get_events(
     severity: Optional[str] = None,
     session_id: Optional[str] = None,
     db: AsyncSession = Depends(get_db),
+    _user: User = Depends(get_current_active_user),
 ) -> List[Dict[str, Any]]:
     """Recent normalized events, newest first, with optional filters."""
     query = select(NormalizedEventModel)
@@ -206,6 +230,7 @@ async def get_events(
 async def get_attackers(
     limit: int = Query(default=50, le=500),
     db: AsyncSession = Depends(get_db),
+    _user: User = Depends(get_current_active_user),
 ) -> List[Dict[str, Any]]:
     """
     One profile per source IP.
@@ -285,7 +310,11 @@ async def get_attackers(
 
 
 @router.get("/attackers/{source_ip}")
-async def get_attacker(source_ip: str, db: AsyncSession = Depends(get_db)) -> Dict[str, Any]:
+async def get_attacker(
+    source_ip: str,
+    db: AsyncSession = Depends(get_db),
+    _user: User = Depends(get_current_active_user),
+) -> Dict[str, Any]:
     """Full profile plus chronological timeline for one source IP."""
     rows = (
         await db.execute(
@@ -328,7 +357,10 @@ async def get_attacker(source_ip: str, db: AsyncSession = Depends(get_db)) -> Di
 
 
 @router.get("/sensors")
-async def get_sensors(db: AsyncSession = Depends(get_db)) -> List[Dict[str, Any]]:
+async def get_sensors(
+    db: AsyncSession = Depends(get_db),
+    _user: User = Depends(get_current_active_user),
+) -> List[Dict[str, Any]]:
     """
     Per-sensor health.
 
@@ -378,7 +410,11 @@ async def get_sensors(db: AsyncSession = Depends(get_db)) -> List[Dict[str, Any]
 
 
 @router.get("/sessions/{session_id}")
-async def get_session(session_id: str, db: AsyncSession = Depends(get_db)) -> Dict[str, Any]:
+async def get_session(
+    session_id: str,
+    db: AsyncSession = Depends(get_db),
+    _user: User = Depends(get_current_active_user),
+) -> Dict[str, Any]:
     """Chronological timeline for one attacker session."""
     rows = (
         await db.execute(
@@ -405,6 +441,6 @@ async def get_session(session_id: str, db: AsyncSession = Depends(get_db)) -> Di
 
 
 @router.get("/collector")
-async def get_collector_status() -> Dict[str, Any]:
-    """Collector health, for the dashboard's pipeline indicator."""
+async def get_collector_status(_user: User = Depends(get_current_active_user)) -> Dict[str, Any]:
+    """Collector health and measured write-to-publish latency."""
     return local_collector.status()

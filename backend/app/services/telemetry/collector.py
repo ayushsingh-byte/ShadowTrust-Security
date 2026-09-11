@@ -9,6 +9,12 @@ The ingestion pipeline for INFRA_PROVIDER=local. One cycle is:
         -> publish        (event_bus -> SSE -> dashboard)
         -> save cursors   (IngestCursor)
 
+Cycles are driven by inotify (telemetry.fs_watch): the kernel wakes the
+collector as soon as a sensor appends to its log. Interval polling is only a
+fallback where inotify is unavailable, and a slow safety sweep covers any
+notification that is missed. Every published batch records how long it took
+from the sensor's write to publication, surfaced by /api/v1/live/collector.
+
 Cursors are committed in the same transaction as the events. If the process
 dies mid-cycle the transaction rolls back and the same bytes are re-read next
 time; the content-hash primary key on normalized_events then absorbs the
@@ -16,18 +22,18 @@ repeat. Committing cursors separately would risk the opposite — advancing past
 events that were never stored, silently losing them.
 
 The S3 path (INFRA_PROVIDER=aws) still runs through UnifiedTelemetryService in
-aws_telemetry_service.py. Both now share this module's normalization, so the
-two no longer drift.
+aws_telemetry_service.py. Both share this module's normalization.
 """
 
 from __future__ import annotations
 
 import asyncio
-import json
 import logging
 import os
+import time
+from collections import deque
 from datetime import datetime
-from typing import Dict, List
+from typing import Callable, Deque, Dict, List, Optional
 
 from sqlalchemy import insert, select
 from sqlalchemy.dialects.mysql import insert as mysql_insert
@@ -35,15 +41,33 @@ from sqlalchemy.dialects.mysql import insert as mysql_insert
 from app.db.database import AsyncSessionLocal
 from app.models.all_models import IngestCursor, NormalizedEventModel, RawEventModel
 from app.services.event_bus import event_bus
+from app.services.telemetry.fs_watch import DirectoryWatcher
 from app.services.telemetry.local_source import FileCursor, LocalDirectorySource
 from app.services.telemetry.normalize import NormalizedEvent, normalize
 
 logger = logging.getLogger(__name__)
 
-# How often to look for new telemetry. The demo in the README depends on an
-# attack appearing "within seconds", so this is deliberately short — tailing a
-# handful of local files is cheap. Override with COLLECTOR_INTERVAL_SECONDS.
+# Poll interval used only when inotify is unavailable. Override with
+# COLLECTOR_INTERVAL_SECONDS.
 DEFAULT_INTERVAL_SECONDS = 2.0
+
+# With inotify active, rescan at least this often in case a notification was
+# missed. Override with COLLECTOR_SAFETY_SWEEP_SECONDS.
+DEFAULT_SAFETY_SWEEP_SECONDS = 30.0
+
+# After a notification, wait this long so a burst of appended lines is read in
+# one batch rather than one line per cycle.
+DEBOUNCE_SECONDS = 0.02
+
+# Latency statistics cover the most recent live batches.
+LATENCY_WINDOW = 500
+
+# Rows per multi-row INSERT. A whole 8 MB read at once exceeds max_allowed_packet.
+PERSIST_CHUNK_ROWS = 500
+
+# A batch whose newest bytes are older than this is a backlog catch-up (e.g.
+# after a restart), not a live delivery, and is kept out of the statistics.
+LIVE_WINDOW_SECONDS = 60
 
 # Backoff after an unexpected error, so a persistent failure (bad permissions,
 # corrupt DB) does not spin the loop at full speed.
@@ -60,12 +84,26 @@ SEVERITY_RISK_SCORE = {
 }
 
 
-def _interval_seconds() -> float:
-    """Poll interval, overridable for tests and busy deployments."""
+def _env_seconds(name: str, default: float, minimum: float) -> float:
     try:
-        return max(0.2, float(os.getenv("COLLECTOR_INTERVAL_SECONDS", DEFAULT_INTERVAL_SECONDS)))
+        return max(minimum, float(os.getenv(name, default)))
     except (TypeError, ValueError):
-        return DEFAULT_INTERVAL_SECONDS
+        return default
+
+
+def _interval_seconds() -> float:
+    """Fallback poll interval, overridable for tests and busy deployments."""
+    return _env_seconds("COLLECTOR_INTERVAL_SECONDS", DEFAULT_INTERVAL_SECONDS, 0.2)
+
+
+def _safety_sweep_seconds() -> float:
+    return _env_seconds("COLLECTOR_SAFETY_SWEEP_SECONDS", DEFAULT_SAFETY_SWEEP_SECONDS, 1.0)
+
+
+def _percentile(sorted_values: List[float], q: float) -> Optional[float]:
+    if not sorted_values:
+        return None
+    return sorted_values[min(len(sorted_values) - 1, int(round(q * (len(sorted_values) - 1))))]
 
 
 def to_normalized_row(event: NormalizedEvent) -> dict:
@@ -130,12 +168,17 @@ def to_raw_event_row(event: NormalizedEvent) -> RawEventModel:
 
 
 class LocalCollector:
-    """Polls the telemetry directory and ingests whatever is new."""
+    """Ingests new telemetry whenever the watched directory changes."""
 
     def __init__(self, source: LocalDirectorySource = None, publish: bool = True):
         self.source = source or LocalDirectorySource()
         self.publish = publish
         self.is_running = False
+        self.mode = "stopped"
+        self.watcher: Optional[DirectoryWatcher] = None
+        self.watch_error: Optional[str] = None
+        self._listeners: List[Callable[[int], None]] = []
+        self._latency_ms: Deque[float] = deque(maxlen=LATENCY_WINDOW)
 
         # Observability, surfaced by /api/v1/live/collector.
         self.cycles = 0
@@ -143,7 +186,12 @@ class LocalCollector:
         self.events_skipped = 0
         self.last_cycle_at: datetime = None
         self.last_run_at: datetime = None
+        self.last_publish_at: datetime = None
         self.last_error: str = None
+
+    def add_listener(self, callback: Callable[[int], None]) -> None:
+        """Call ``callback(event_count)`` after each commit that stored new events."""
+        self._listeners.append(callback)
 
     async def _load_cursors(self, db) -> Dict[str, FileCursor]:
         """Read stored file positions into the source's cursor shape."""
@@ -194,8 +242,6 @@ class LocalCollector:
             return 0
 
         rows = [to_normalized_row(event) for event in events]
-        statement = insert(NormalizedEventModel).values(rows).prefix_with("IGNORE")
-        await db.execute(statement)
 
         # Mirror into the legacy table the existing dashboard reads.
         raw_rows = [
@@ -216,8 +262,22 @@ class LocalCollector:
             }
             for event in events
         ]
-        raw_statement = insert(RawEventModel).values(raw_rows).prefix_with("IGNORE")
-        await db.execute(raw_statement)
+
+        # Insert in bounded chunks: a single multi-row INSERT of a whole 8 MB
+        # read (tens of thousands of rows) blows past max_allowed_packet and the
+        # server drops the connection. 500 rows/statement stays well under it.
+        for start in range(0, len(rows), PERSIST_CHUNK_ROWS):
+            await db.execute(
+                insert(NormalizedEventModel)
+                .values(rows[start:start + PERSIST_CHUNK_ROWS])
+                .prefix_with("IGNORE")
+            )
+        for start in range(0, len(raw_rows), PERSIST_CHUNK_ROWS):
+            await db.execute(
+                insert(RawEventModel)
+                .values(raw_rows[start:start + PERSIST_CHUNK_ROWS])
+                .prefix_with("IGNORE")
+            )
 
         return len(rows)
 
@@ -278,54 +338,113 @@ class LocalCollector:
             self.events_ingested += stored
             self.last_cycle_at = datetime.utcnow()
 
+            if not unique:
+                return stored
+
+            published_at = time.time()
+            newest_write = max((c.mtime for c in updated_cursors.values() if c.mtime), default=0.0)
+            latency_ms = round(max(0.0, published_at - newest_write) * 1000, 1) if newest_write else None
+
             # Publish only after a successful commit, so the dashboard never
             # shows an event that is not in the database.
-            if self.publish and unique:
-                event_bus.publish_many(event.to_dict() for event in unique)
+            if self.publish:
+                stamp = datetime.utcfromtimestamp(published_at).isoformat() + "Z"
+                for event in unique:
+                    payload = event.to_dict()
+                    payload["published_at"] = stamp
+                    payload["pipeline_latency_ms"] = latency_ms
+                    event_bus.publish(payload)
+                self.last_publish_at = datetime.utcfromtimestamp(published_at)
 
-            if unique:
-                logger.info(
-                    f"Collector ingested {len(unique)} event(s) from "
-                    f"{len(updated_cursors)} file(s)."
-                )
+            if latency_ms is not None and latency_ms <= LIVE_WINDOW_SECONDS * 1000:
+                self._latency_ms.append(latency_ms)
 
+            for listener in list(self._listeners):
+                try:
+                    listener(len(unique))
+                except Exception as exc:  # noqa: BLE001 — a listener must not break ingestion
+                    logger.warning(f"Collector listener failed: {exc}")
+
+            logger.info(
+                f"Collector ingested {len(unique)} event(s) from "
+                f"{len(updated_cursors)} file(s)."
+            )
             return stored
 
     async def run_forever(self) -> None:
-        """Poll until cancelled."""
+        """Ingest on every filesystem change (or poll) until cancelled."""
         self.is_running = True
         interval = _interval_seconds()
+        sweep = _safety_sweep_seconds()
+
+        watcher: Optional[DirectoryWatcher] = None
+        if self.source.is_configured():
+            watcher = DirectoryWatcher(self.source.directory)
+            if not watcher.start():
+                self.watch_error = watcher.last_error
+                logger.warning(f"Collector falling back to {interval}s polling: {watcher.last_error}")
+                watcher = None
+        self.watcher = watcher
+        self.mode = "inotify" if watcher else "polling"
         logger.info(
-            f"Local telemetry collector started "
-            f"(source: {self.source.describe()}, interval: {interval}s)"
+            f"Local telemetry collector started (source: {self.source.describe()}, "
+            f"mode: {self.mode}, "
+            + (f"safety sweep: {sweep}s)" if watcher else f"interval: {interval}s)")
         )
 
-        while self.is_running:
-            try:
-                await self.run_once()
-                self.cycles += 1
-                await asyncio.sleep(interval)
-            except asyncio.CancelledError:
-                # Normal shutdown path — re-raise so the task actually stops.
-                raise
-            except Exception as exc:
-                self.last_error = str(exc)
-                logger.error(f"Collector cycle failed: {exc}")
-                await asyncio.sleep(ERROR_BACKOFF_SECONDS)
+        try:
+            while self.is_running:
+                try:
+                    await self.run_once()
+                    self.cycles += 1
+                    if watcher:
+                        if await watcher.wait(sweep):
+                            await asyncio.sleep(DEBOUNCE_SECONDS)
+                    else:
+                        await asyncio.sleep(interval)
+                except asyncio.CancelledError:
+                    # Normal shutdown path — re-raise so the task actually stops.
+                    raise
+                except Exception as exc:
+                    self.last_error = str(exc)
+                    logger.error(f"Collector cycle failed: {exc}")
+                    await asyncio.sleep(ERROR_BACKOFF_SECONDS)
+        finally:
+            if watcher:
+                watcher.stop()
+            self.mode = "stopped"
 
     def status(self) -> dict:
         """Health snapshot for the sensors/collector API."""
+        samples = sorted(self._latency_ms)
+        watcher = self.watcher
         return {
             "running": self.is_running,
+            "mode": self.mode,
             "source": self.source.describe(),
             "interval_seconds": _interval_seconds(),
+            "safety_sweep_seconds": _safety_sweep_seconds(),
+            "watch": {
+                "directories": watcher.watch_count if watcher else 0,
+                "notifications": watcher.notifications if watcher else 0,
+                "error": (watcher.last_error if watcher else self.watch_error),
+            },
             "cycles": self.cycles,
             "events_ingested": self.events_ingested,
             "events_skipped": self.events_skipped,
             "last_cycle_at": self.last_cycle_at.isoformat() if self.last_cycle_at else None,
             "last_run_at": self.last_run_at.isoformat() if self.last_run_at else None,
+            "last_publish_at": self.last_publish_at.isoformat() if self.last_publish_at else None,
             "last_error": self.last_error,
+            "write_to_publish_latency_ms": {
+                "samples": len(samples),
+                "p50": _percentile(samples, 0.50),
+                "p95": _percentile(samples, 0.95),
+                "max": samples[-1] if samples else None,
+                "last": self._latency_ms[-1] if self._latency_ms else None,
+            },
             "subscribers": event_bus.subscriber_count,
+            "published": event_bus.published_counts,
             "dropped_to_slow_clients": event_bus.dropped_count,
         }
 

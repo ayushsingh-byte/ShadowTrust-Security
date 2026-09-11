@@ -7,10 +7,16 @@ from app.schemas.event import RawEventSchema
 from app.models.all_models import RawEventModel
 from app.db.database import get_db
 
-router = APIRouter()
+from app.api.v1.dependencies import get_current_active_user, require_role
+
+router = APIRouter(dependencies=[Depends(get_current_active_user)])
 
 @router.post("/ingest")
-async def ingest_telemetry(events: List[RawEventSchema], db: AsyncSession = Depends(get_db)):
+async def ingest_telemetry(
+    events: List[RawEventSchema],
+    db: AsyncSession = Depends(get_db),
+    _admin=Depends(require_role(["SUPER_ADMIN", "ADMIN"])),
+):
     """
     High-throughput endpoint for honeypot agents to push structured logs.
     Writes raw telemetry directly to the database.

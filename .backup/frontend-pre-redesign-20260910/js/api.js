@@ -1,0 +1,122 @@
+/* API Service Module */
+
+class ApiService {
+    constructor() {
+        // Automatically determine API URL based on environment
+        const isLocalDev = window.location.hostname === '127.0.0.1' ||
+            window.location.hostname === 'localhost' ||
+            window.location.hostname === '0.0.0.0' ||
+            window.location.protocol === 'file:';
+
+        this.baseUrl = isLocalDev ? 'http://127.0.0.1:8000/api/v1' : '/api/v1';
+    }
+
+    async get(endpoint) {
+        return this._request(endpoint, 'GET');
+    }
+
+    async post(endpoint, data) {
+        return this._request(endpoint, 'POST', data);
+    }
+
+    async put(endpoint, data) {
+        return this._request(endpoint, 'PUT', data);
+    }
+
+    async delete(endpoint) {
+        return this._request(endpoint, 'DELETE');
+    }
+
+    async upload(endpoint, formData) {
+        const url = `${this.baseUrl}${endpoint}`;
+        const headers = {
+            'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+            // Content-Type is auto-set by browser for FormData
+        };
+
+        try {
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: headers,
+                body: formData
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.detail || 'Upload Failed');
+            }
+            return await response.json();
+        } catch (error) {
+            console.error(`[API] UPLOAD ${endpoint} Failed:`, error);
+            throw error;
+        }
+    }
+
+    async _request(endpoint, method, data = null, timeoutMs = 90000) {
+        const url = `${this.baseUrl}${endpoint}`;
+        const headers = {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+        };
+
+        const config = {
+            method,
+            headers,
+            cache: 'no-store'
+        };
+
+        if (data) {
+            config.body = JSON.stringify(data);
+        }
+
+        const controller = new AbortController();
+        config.signal = controller.signal;
+        const timer = setTimeout(() => controller.abort(), timeoutMs);
+
+        try {
+            const response = await fetch(url, config);
+            clearTimeout(timer);
+
+            // Handle 401 Unauthorized (Token Expired)
+            if (response.status === 401) {
+                localStorage.removeItem('access_token');
+                localStorage.removeItem('authToken');
+                localStorage.removeItem('isAdmin');
+                window.location.href = 'login.html';
+                throw new Error('Unauthorized - Session Expired. Please log in again.');
+            }
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.detail || 'API Request Failed');
+            }
+
+            return await response.json();
+        } catch (error) {
+            clearTimeout(timer);
+            if (error.name === 'AbortError') {
+                const timeoutError = new Error(`Request timed out after ${timeoutMs / 1000}s`);
+                console.error(`[API] ${method} ${endpoint} Timed Out`);
+                throw timeoutError;
+            }
+            console.error(`[API] ${method} ${endpoint} Failed:`, error);
+            throw error;
+        }
+    }
+    setToken(token) {
+        localStorage.setItem('access_token', token);
+    }
+
+    getToken() {
+        return localStorage.getItem('access_token');
+    }
+
+    clearToken() {
+        localStorage.removeItem('access_token');
+        localStorage.removeItem('authToken');
+        localStorage.removeItem('isAdmin');
+    }
+}
+
+export const apiService = new ApiService();
+

@@ -1,0 +1,1294 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Tactical Command | Shadow Trust</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/dashboard.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        /* Custom Map Styles for Tactical Look */
+        #geoMap {
+            cursor: crosshair;
+            /* Tactical cursor */
+            height: 480px;
+            width: 100%;
+            background: #050a0f;
+            z-index: 1;
+        }
+
+        .leaflet-container {
+            background: #050a0f !important;
+        }
+
+        /* Darken the keyless OSM tiles to match the tactical theme */
+        .leaflet-tile-pane {
+            filter: invert(1) hue-rotate(180deg) brightness(0.85) contrast(1.05) saturate(0.7);
+        }
+
+        /* Radar Sweep Animation */
+        .radar-sweep {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: conic-gradient(from 0deg, transparent 0deg, rgba(0, 198, 255, 0.1) 60deg, transparent 60deg);
+            border-radius: 50%;
+            animation: radar-spin 4s linear infinite;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        @keyframes radar-spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* Blinking Marker Animation */
+        .blinking-marker-css {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* Tactical Overlay */
+        .map-overlay {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(11, 16, 21, 0.9);
+            border: 1px solid var(--accent-primary);
+            padding: 15px;
+            z-index: 500;
+            width: 280px;
+            backdrop-filter: blur(5px);
+            font-family: 'JetBrains Mono', monospace;
+            clip-path: polygon(0 0, 100% 0, 100% calc(100% - 15px), calc(100% - 15px) 100%, 0 100%);
+        }
+
+        .overlay-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+
+        .status-dot {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            background: var(--accent-primary);
+        }
+
+        .blink-red {
+            background: var(--accent-critical);
+            box-shadow: 0 0 5px var(--accent-critical);
+            animation: pulse-red 1s infinite;
+        }
+
+        @keyframes pulse-red {
+            0% {
+                opacity: 1;
+                box-shadow: 0 0 5px var(--accent-critical);
+            }
+
+            50% {
+                opacity: 0.5;
+                box-shadow: 0 0 15px var(--accent-critical);
+            }
+
+            100% {
+                opacity: 1;
+                box-shadow: 0 0 5px var(--accent-critical);
+            }
+        }
+    </style>
+    <!-- Leaflet for Map -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+</head>
+
+<body class="dashboard-page">
+
+    <!-- Loading Overlay -->
+    <div id="full-page-loading"
+        style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(5, 10, 15, 0.8); z-index:9999; justify-content:center; align-items:center; flex-direction:column; backdrop-filter:blur(5px);">
+        <i class="fas fa-circle-notch fa-spin" style="font-size:3rem; color:#00c6ff; margin-bottom:15px;"></i>
+        <div style="color:#ffffff; font-family:'JetBrains Mono', monospace; font-size:1.2rem;" class="animate-pulse">
+            REFRESHING INTELLIGENCE GRID...</div>
+    </div>
+
+    <!-- Custom Modal -->
+    <div id="custom-modal"
+        style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(5, 10, 15, 0.85); z-index:10002; justify-content:center; align-items:center; backdrop-filter:blur(5px);">
+        <div class="soc-card"
+            style="width: 400px; max-width: 90%; border-color: var(--accent-primary); box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);">
+            <div class="soc-card-header"
+                style="border-bottom: 1px solid #334155; padding-bottom: 10px; margin-bottom: 15px;">
+                <span id="modal-title" class="card-title text-yellow"><i class="fas fa-exclamation-triangle"></i>
+                    AUTHORIZATION REQUIRED</span>
+            </div>
+            <div id="modal-message"
+                style="color: #e2e8f0; font-family: 'JetBrains Mono', monospace; font-size: 0.9rem; margin-bottom: 25px; line-height: 1.5;">
+                Please confirm action.
+            </div>
+            <div style="display: flex; justify-content: flex-end; gap: 10px;">
+                <button id="modal-btn-cancel" class="soc-btn"
+                    style="background: transparent; border: 1px solid #334155; color: #94a3b8;">CANCEL</button>
+                <button id="modal-btn-confirm" class="soc-btn soc-btn-primary">PROCEED</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Lockdown Shutters & Overlay -->
+    <style>
+        @keyframes heartbeat {
+            0% {
+                transform: scale(1);
+            }
+
+            14% {
+                transform: scale(1.1);
+            }
+
+            28% {
+                transform: scale(1);
+            }
+
+            42% {
+                transform: scale(1.1);
+            }
+
+            70% {
+                transform: scale(1);
+            }
+        }
+
+        .heartbeat {
+            animation: heartbeat 1.5s infinite;
+        }
+    </style>
+    <div id="shutter-top"
+        style="position:fixed; top:0; left:0; width:100%; height:50vh; background:#050a0f; z-index:9998; border-bottom:4px solid var(--accent-critical); transform:translateY(-100%); transition:transform 0.5s ease-in-out; display:flex; justify-content:center; align-items:flex-end; overflow:hidden;">
+        <div style="font-family:'JetBrains Mono', monospace; color:var(--accent-critical); font-size:2rem; padding-bottom:20px; opacity:0; transition:opacity 0.2s 0.5s;"
+            class="shutter-text">LOCKDOWN SEQUENCE INITIATED</div>
+    </div>
+    <div id="shutter-bottom"
+        style="position:fixed; bottom:0; left:0; width:100%; height:50vh; background:#050a0f; z-index:9998; border-top:4px solid var(--accent-critical); transform:translateY(100%); transition:transform 0.5s ease-in-out; display:flex; justify-content:center; align-items:flex-start; overflow:hidden;">
+        <div style="font-family:'JetBrains Mono', monospace; color:var(--accent-critical); font-size:2rem; padding-top:20px; opacity:0; transition:opacity 0.2s 0.5s;"
+            class="shutter-text">ACCESS RESTRICTED</div>
+    </div>
+
+    <div id="lockdown-overlay"
+        style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(40, 0, 0, 0.5); backdrop-filter:blur(10px); z-index:9997; justify-content:center; align-items:center; flex-direction:column;">
+        <i class="fas fa-biohazard heartbeat"
+            style="font-size:6rem; color:var(--accent-critical); margin-bottom:20px;"></i>
+        <h1
+            style="color:var(--accent-critical); font-family:'JetBrains Mono', monospace; font-size:3rem; letter-spacing:5px; text-shadow:0 0 20px rgba(255, 51, 51, 0.7); margin-bottom: 5px;">
+            CONSOLE LOCKED</h1>
+        <div
+            style="color:#ffffff; font-family:'JetBrains Mono', monospace; font-size:1.2rem; margin-top: 10px; background:rgba(0,0,0,0.7); padding:15px 30px; border:1px solid var(--accent-critical); box-shadow: 0 0 15px rgba(255,51,51,0.3);">
+            Local screen guard — press NORMAL MODE to restore</div>
+    </div>
+
+    <div class="app-container">
+
+        <!-- SIDEBAR -->
+        <aside class="sidebar" id="sidebar"></aside>
+
+        <!-- MAIN CONTENT -->
+        <main class="main-content">
+
+            <div class="top-bar">
+                <div class="page-header">
+                    <h2>TACTICAL COMMAND</h2>
+                    <p>THREAT LEVEL: <span id="hdrThreatLevel" class="text-muted">—</span> // ENGINE: <span
+                            id="hdrEngine" class="text-muted">—</span></p>
+                </div>
+                <div class="filters-bar" style="display:flex; flex-direction:column; align-items:flex-end; gap:10px;">
+                    <div style="text-align:right;">
+                        <div class="text-mono" style="font-size:0.7rem; color:#64748b; letter-spacing:1px; margin-bottom:2px;">ZULU TIME</div>
+                        <div class="text-mono" id="clock" style="font-size:1.2rem; color:#fff; font-weight:700; letter-spacing:1px;">
+                            00:00:00</div>
+                    </div>
+                    <div style="display:flex; gap:15px;">
+                        <button id="btn-exec-report" class="soc-btn"
+                            style="background: rgba(88,166,255,0.1); border-color: #58a6ff; color: #58a6ff; padding: 6px 15px; font-size: 0.8rem;">
+                            <i class="fas fa-file-pdf"></i> EXEC SUMMARY
+                        </button>
+                        <button id="btn-refresh-intel" class="soc-btn"
+                            style="background: rgba(0, 198, 255, 0.1); border-color: #00c6ff; color: #00c6ff; padding: 6px 15px; font-size: 0.8rem;">
+                            <i class="fas fa-sync-alt" id="refresh-icon"></i> REFRESH DATA
+                        </button>
+                        <button id="btn-lockdown" class="soc-btn"
+                            style="background: rgba(255, 51, 51, 0.1); border-color: #ff3333; color: #ff3333; padding: 6px 15px; font-size: 0.8rem;">
+                            <i class="fas fa-lock"></i> LOCKDOWN
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ROW 1: 8 HIGH DENSITY METRICS -->
+            <div class="dashboard-grid grid-4">
+
+                <div class="soc-card metric-tile">
+                    <div class="metric-header">
+                        <span>TOTAL EVENTS</span>
+                        <i class="fas fa-bolt text-yellow"></i>
+                    </div>
+                    <div id="honeypotEventsValue" class="metric-value">0</div>
+                    <div id="honeypotEventsSub" class="metric-sub text-green">Honeypot Hits Logged</div>
+                </div>
+
+                <div class="soc-card metric-tile">
+                    <div class="metric-header">
+                        <span>UNIQUE ATTACKERS</span>
+                        <i class="fas fa-globe text-cyan"></i>
+                    </div>
+                    <div id="uniqueAttackersValue" class="metric-value">0</div>
+                    <div id="uniqueAttackersSub" class="metric-sub">Distinct Threat IPs</div>
+                </div>
+
+                <div class="soc-card metric-tile">
+                    <div class="metric-header">
+                        <span>UNIQUE PAYLOADS</span>
+                        <i class="fas fa-bug text-red"></i>
+                    </div>
+                    <div id="malwareCapturedCount" class="metric-value">0</div>
+                    <div id="malwareCapturedSub" class="metric-sub">Distinct commands / uploads</div>
+                </div>
+
+                <div class="soc-card metric-tile">
+                    <div class="metric-header">
+                        <span>SYSTEM INTEGRITY</span>
+                        <i class="fas fa-shield-alt text-green" id="sysIntegrityIcon"></i>
+                    </div>
+                    <div id="sysIntegrityValue" class="metric-value">SECURE</div>
+                    <div id="sysIntegritySub" class="metric-sub">Core Systems Nominal</div>
+                </div>
+
+                <!-- ROW 1b -->
+                <div class="soc-card metric-tile">
+                    <div class="metric-header">
+                        <span>NETWORK FLOW</span>
+                        <i class="fas fa-network-wired text-cyan"></i>
+                    </div>
+                    <div id="networkFlowValue" class="metric-value text-cyan">0.0 KB/s</div>
+                    <div class="metric-sub">Bandwidth Active</div>
+                </div>
+
+                <div class="soc-card metric-tile">
+                    <div class="metric-header">
+                        <span>HIGH RISK ALERTS</span>
+                        <i class="fas fa-siren-on text-red"></i>
+                    </div>
+                    <div id="highRiskAlertsValue" class="metric-value text-red">0</div>
+                    <div class="metric-sub">Risk score &ge; 80</div>
+                </div>
+
+                <div class="soc-card metric-tile">
+                    <div class="metric-header">
+                        <span>SYSTEM UPTIME</span>
+                        <i class="fas fa-server text-green"></i>
+                    </div>
+                    <div id="systemUptimeValue" class="metric-value text-green">0.0h</div>
+                    <div class="metric-sub">Backend process uptime</div>
+                </div>
+
+                <div class="soc-card metric-tile">
+                    <div class="metric-header">
+                        <span>ACTIVE SENSORS</span>
+                        <i class="fas fa-satellite-dish text-yellow"></i>
+                    </div>
+                    <div id="activeNodes" class="metric-value" style="color:#d97706;">- / -</div>
+                    <div class="metric-sub">Sensor Grid Status</div>
+                </div>
+
+            </div>
+
+            <!-- ROW 1.5: OPERATIONAL STATUS BAR -->
+            <div class="dashboard-grid grid-6" style="margin-bottom: 20px;">
+                <div class="micro-metric">
+                    <div class="label">ANALYSIS ENGINE</div>
+                    <div id="analysisEngineValue" class="value text-muted">—</div>
+                    <div style="height:2px; background:#334155; margin-top:5px;">
+                        <div id="analysisEngineBar" style="width:0%; height:100%; background:var(--accent-info); transition:width .5s;"></div>
+                    </div>
+                </div>
+                <div class="micro-metric">
+                    <div class="label">THREAT LEVEL</div>
+                    <div id="threatLevelValue" class="value text-green">LOW</div>
+                    <div style="height:2px; background:#334155; margin-top:5px;">
+                        <div id="threatLevelBar"
+                            style="width:10%; height:100%; background:var(--accent-primary); transition: width 0.5s, background 0.5s;">
+                        </div>
+                    </div>
+                </div>
+                <div class="micro-metric">
+                    <div class="label">DECEPTION</div>
+                    <div id="deceptionValue" class="value text-muted">—</div>
+                    <div style="height:2px; background:#334155; margin-top:5px;">
+                        <div id="deceptionBar" style="width:0%; height:100%; background:var(--accent-secondary); transition:width .5s;"></div>
+                    </div>
+                </div>
+                <div class="micro-metric">
+                    <div class="label">LURES TRIPPED</div>
+                    <div id="luresTrippedValue" class="value text-yellow">0</div>
+                    <div style="height:2px; background:#334155; margin-top:5px;">
+                        <div id="luresTrippedBar"
+                            style="width:0%; height:100%; background:var(--accent-secondary); transition: width 0.5s;">
+                        </div>
+                    </div>
+                </div>
+                <div class="micro-metric">
+                    <div class="label">NOVEL PATTERNS</div>
+                    <div id="zeroDaysValue" class="value text-muted">—</div>
+                    <div style="height:2px; background:#334155; margin-top:5px;">
+                        <div id="zeroDaysBar" style="width:0%; height:100%; background:var(--accent-critical); transition:width .5s;"></div>
+                    </div>
+                </div>
+                <div class="micro-metric">
+                    <div class="label">DEFENSE MATRIX</div>
+                    <div id="defenseMatrixValue" class="value text-green">OPTIMIZED</div>
+                    <div style="height:2px; background:#334155; margin-top:5px;">
+                        <div id="defenseMatrixBar"
+                            style="width:100%; height:100%; background:var(--accent-primary); transition: width 0.5s, background 0.5s;">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ROW 1.8: GEO MAP (FULL WIDTH) -->
+            <div class="soc-card"
+                style="padding: 0; overflow: hidden; margin-bottom: 2rem; position: relative; border-color: var(--accent-secondary);">
+                <div class="soc-card-header"
+                    style="position:absolute; top:10px; left:10px; z-index:400; background:rgba(11, 16, 21, 0.9); padding:8px 15px; border: 1px solid var(--accent-secondary);">
+                    <span class="card-title text-yellow"><i class="fas fa-globe-americas"></i> GLOBAL THREAT MAP</span>
+                </div>
+                <div id="geoMap"></div>
+
+                <!-- LIVE STATS OVERLAY -->
+                <div class="map-overlay" onclick="window.location.href='geo.html'" style="cursor: pointer;">
+                    <div style="border-bottom:1px solid #334155; margin-bottom:10px; padding-bottom:5px;">
+                        <span class="text-cyan">LIVE INTERCEPTIONS</span>
+                    </div>
+                    <div class="overlay-row">
+                        <span class="text-muted">HOSTILE SOURCES</span>
+                        <span class="text-red" id="activeSrc">0</span>
+                    </div>
+                    <div class="overlay-row">
+                        <span class="text-muted">TARGETED SECTORS</span>
+                        <span class="text-yellow" id="targetedSectorsValue">0</span>
+                    </div>
+                    <div class="overlay-row" style="margin-top:10px;">
+                        <span class="text-xs text-green">LAST CONTACT:</span>
+                    </div>
+                    <div id="lastDetect" class="text-mono text-xs text-white">—</div>
+                </div>
+            </div>
+
+
+            <!-- ROW 2: MAIN VISUAL & LIVE FEED -->
+            <div class="dashboard-grid grid-2-1">
+                <div class="soc-card" style="height: 400px; display:flex; flex-direction:column;">
+                    <div class="soc-card-header">
+                        <span class="card-title">ATTACK TRAFFIC VOLUME</span>
+                        <div>
+                            <span class="badge badge-blue">SSH</span>
+                            <span class="badge badge-green">HTTP</span>
+                            <span class="badge badge-red">MALWARE</span>
+                        </div>
+                    </div>
+                    <div style="flex:1; position:relative;">
+                        <canvas id="trafficChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="soc-card" style="height: 400px; display:flex; flex-direction:column; padding:0;">
+                    <div class="soc-card-header" style="padding:15px;">
+                        <span class="card-title">HONEYPOT LIVE FEED</span>
+                        <span class="badge badge-blue animate-pulse">LIVE</span>
+                    </div>
+                    <div id="liveFeed"
+                        style="flex:1; overflow-y:auto; overflow-x:hidden; background:rgba(0,0,0,0.2); padding:10px; font-family:'JetBrains Mono', monospace; font-size:0.75rem;">
+                        <!-- JS Feed -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- ROW 3: DETAILED TABLES -->
+            <style>
+                .scrollable-tbody {
+                    display: block;
+                    max-height: 200px;
+                    overflow-y: auto;
+                    overflow-x: hidden;
+                    width: 100%;
+                }
+
+                .scrollable-tbody::-webkit-scrollbar {
+                    width: 4px;
+                }
+
+                .scrollable-tbody::-webkit-scrollbar-thumb {
+                    background: #334155;
+                }
+
+                .terminal-table thead,
+                .terminal-table tbody tr {
+                    display: table;
+                    width: 100%;
+                    table-layout: fixed;
+                }
+
+                .terminal-table td {
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                    white-space: nowrap;
+                    padding-right: 5px;
+                }
+            </style>
+            <div class="dashboard-grid grid-3">
+
+                <!-- TOP ASNs -->
+                <div class="soc-card" style="padding:0; display:flex; flex-direction:column;">
+                    <div
+                        style="padding:10px 15px; border-bottom:1px solid #334155; display:flex; justify-content:space-between; align-items:center;">
+                        <span class="card-title">TOP ATTACKER NETWORKS (ASN)</span>
+                        <a href="graphs.html"
+                            style="color:#64748b; font-size: 0.9em; transform: scale(0.9); transition: color 0.2s;"><i
+                                class="fas fa-external-link-alt hover-cyan"></i></a>
+                    </div>
+                    <table class="terminal-table" style="flex:1; margin:0;">
+                        <thead>
+                            <tr>
+                                <th style="width:10%">ASN</th>
+                                <th style="width:30%">IP</th>
+                                <th style="width:40%">ORG</th>
+                                <th style="width:10%">HITS</th>
+                                <th style="width:10%">RISK</th>
+                            </tr>
+                        </thead>
+                        <tbody class="scrollable-tbody">
+                            <tr>
+                                <td colspan="4" class="text-muted">No data yet</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- RECENT MALWARE -->
+                <div class="soc-card" style="padding:0; display:flex; flex-direction:column;">
+                    <div
+                        style="padding:10px 15px; border-bottom:1px solid #334155; display:flex; justify-content:space-between; align-items:center;">
+                        <span class="card-title">RECENT UNIQUE PAYLOADS</span>
+                        <a href="events.html"
+                            style="color:#64748b; font-size: 0.9em; transform: scale(0.9); transition: color 0.2s;"><i
+                                class="fas fa-external-link-alt hover-cyan"></i></a>
+                    </div>
+                    <table class="terminal-table" style="flex:1; margin:0;">
+                        <thead>
+                            <tr>
+                                <th style="width:12%">KIND</th>
+                                <th style="width:58%">PAYLOAD / EVENT</th>
+                                <th style="width:15%">SENSOR</th>
+                                <th style="width:15%">DISPOSITION</th>
+                            </tr>
+                        </thead>
+                        <tbody class="scrollable-tbody">
+                            <tr>
+                                <td colspan="4" class="text-muted">No data yet</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- ATTACK VECTORS -->
+                <div class="soc-card" style="padding:0; display:flex; flex-direction:column;">
+                    <div
+                        style="padding:10px 15px; border-bottom:1px solid #334155; display:flex; justify-content:space-between; align-items:center;">
+                        <span class="card-title">EXPLOIT VECTORS BY PORT</span>
+                        <a href="mitre.html"
+                            style="color:#64748b; font-size: 0.9em; transform: scale(0.9); transition: color 0.2s;"><i
+                                class="fas fa-external-link-alt hover-cyan"></i></a>
+                    </div>
+                    <table class="terminal-table" style="flex:1; margin:0;">
+                        <thead>
+                            <tr>
+                                <th>PORT</th>
+                                <th>SERVICE</th>
+                                <th>THREAT</th>
+                                <th>COUNT</th>
+                            </tr>
+                        </thead>
+                        <tbody class="scrollable-tbody">
+                            <tr>
+                                <td colspan="4" class="text-muted">No data yet</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+            </div>
+
+            <!-- ROW 4: ADVANCED METRICS (RADAR & NODES) -->
+            <div class="dashboard-grid grid-2" style="margin-top:20px;">
+
+                <!-- PROTOCOL RADAR -->
+                <div class="soc-card" style="height:480px; display:flex; flex-direction:column;">
+                    <div class="soc-card-header">
+                        <span class="card-title">PROTOCOL ANOMALY RADAR</span>
+                        <span class="badge badge-purple">BEHAVIORAL ANALYSIS</span>
+                    </div>
+                    <div
+                        style="flex:1; position:relative; padding:10px; display:flex; justify-content:center; align-items:center;">
+                        <div class="radar-sweep"></div> <!-- Radar visual overlay -->
+                        <canvas id="protocolRadar"></canvas>
+                    </div>
+                </div>
+
+                <!-- NODE CLUSTER STATUS -->
+                <div class="soc-card" style="height:480px; display:flex; flex-direction:column;">
+                    <div class="soc-card-header">
+                        <span class="card-title">SENSOR GRID STATUS</span>
+                        <span id="sensorGridBadge" class="badge badge-gray">—</span>
+                    </div>
+                    <div id="nodeGrid" class="node-grid"
+                        style="display:grid; grid-template-columns: 1fr 1fr; gap:15px; flex:1; padding:10px; overflow-y: auto;">
+                        <!-- JS Rendered -->
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- FOOTER SYSTEM STATUS -->
+            <div
+                style="margin-top:20px; border-top:1px solid #334155; padding-top:10px; display:flex; justify-content:space-between; color:#64748b; font-size:0.7rem; font-family:'JetBrains Mono';">
+                <div id="footerBuild">SHADOW TRUST DEFENSE GRID</div>
+                <div>
+                    <span style="margin-right:15px;"><i id="footerApiDot" class="fas fa-circle text-muted" style="font-size:0.5rem;"></i>
+                        <span id="footerApi">API: —</span></span>
+                    <span style="margin-right:15px;"><i id="footerDbDot" class="fas fa-circle text-muted" style="font-size:0.5rem;"></i>
+                        <span id="footerDb">DB: —</span></span>
+                    <span id="footerWorkers"><i class="fas fa-circle text-muted" style="font-size:0.5rem;"></i> SENSORS: —</span>
+                </div>
+                <div id="footerLatency">LATENCY: —</div>
+            </div>
+
+        </main>
+    </div>
+<script src="js/report-download.js"></script>
+<script src="js/sidebar.js"></script>
+    <script type="module">
+        import { apiService } from './js/api.js';
+        // System Clock
+        setInterval(() => {
+            const now = new Date();
+            document.getElementById('clock').innerText = now.toISOString().replace('T', ' ').split('.')[0] + ' Z';
+        }, 1000);
+
+        // Live Feed
+        const feed = document.getElementById('liveFeed');
+        if (feed) {
+            feed.innerHTML = `<div style="color:#64748b; padding:8px;">Analyzing sensor matrix...</div>`;
+        }
+
+        // Global Chart instances so we can update them dynamically
+        let trafficChartInstance = null;
+        let radarChartInstance = null;
+
+        // Traffic Chart (Tactical Colors)
+        const ctx = document.getElementById('trafficChart').getContext('2d');
+        trafficChartInstance = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: Array.from({ length: 60 }, (_, i) => i),
+                datasets: [{
+                    label: 'SSH',
+                    data: Array.from({ length: 60 }, () => 0),
+                    backgroundColor: '#00c6ff',
+                    borderWidth: 0, barPercentage: 0.9, categoryPercentage: 1.0, stack: 's'
+                }, {
+                    label: 'HTTP',
+                    data: Array.from({ length: 60 }, () => 0),
+                    backgroundColor: '#22c55e',
+                    borderWidth: 0, barPercentage: 0.9, categoryPercentage: 1.0, stack: 's'
+                }, {
+                    label: 'MALWARE / OTHER',
+                    data: Array.from({ length: 60 }, () => 0),
+                    backgroundColor: '#ff3333',
+                    borderWidth: 0, barPercentage: 0.9, categoryPercentage: 1.0, stack: 's'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: { display: false, stacked: true },
+                    y: {
+                        display: true, stacked: true,
+                        grid: { color: '#1e293b' },
+                        ticks: { color: '#64748b', font: { family: 'JetBrains Mono' }, precision: 0 }
+                    }
+                },
+                animation: false
+            }
+        });
+
+        /* --- GEO MAP LOGIC --- */
+        // Initialize Map with Dark Tiles (Static & Clickable)
+        const map = L.map('geoMap', {
+            zoomControl: false,
+            attributionControl: false,
+            center: [25, -10],
+            zoom: 2,
+            dragging: false,
+            scrollWheelZoom: false,
+            doubleClickZoom: false,
+            boxZoom: false,
+            keyboard: false,
+            tap: false,
+            touchZoom: false
+        });
+
+        // Redirect to Geo Intelligence on Click
+        map.on('click', () => {
+            window.location.href = 'geo.html';
+        });
+
+        // Keyless OSM tiles, darkened with a CSS filter (CARTO's dark basemap
+        // now requires an API key).
+        L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            crossOrigin: true
+        }).addTo(map);
+
+        // Live geo events are loaded from the backend; no client-side fake/simulated data.
+
+        // --- DYNAMIC NODE FETCHING ---
+        // API calls go through apiService (imported above) which auto-resolves the base URL
+
+        function formatCompactNumber(value) {
+            const num = Number(value || 0);
+            if (num >= 1_000_000) return `${(num / 1_000_000).toFixed(1)}M`;
+            if (num >= 1_000) return `${(num / 1_000).toFixed(1)}k`;
+            return `${num}`;
+        }
+
+        function applyThreatLevel(levelRaw) {
+            const threatEl = document.getElementById('threatLevelValue');
+            if (!threatEl) return;
+
+            const level = String(levelRaw || 'LOW').toUpperCase();
+            threatEl.textContent = level;
+            threatEl.classList.remove('text-green', 'text-yellow', 'text-red');
+
+            let cls = 'text-green';
+            if (level === 'CRITICAL' || level === 'HIGH') cls = 'text-red';
+            else if (level === 'MEDIUM' || level === 'ELEVATED') cls = 'text-yellow';
+            threatEl.classList.add(cls);
+
+            const hdr = document.getElementById('hdrThreatLevel');
+            if (hdr) { hdr.textContent = level; hdr.className = cls; }
+        }
+
+        // Removed fetchApkStats() as requested to only show live honeypot telemetry
+
+        function setFooter(id, text, dotId, cls) {
+            const el = document.getElementById(id);
+            if (el) el.textContent = text;
+            if (dotId) {
+                const dot = document.getElementById(dotId);
+                if (dot) dot.className = `fas fa-circle ${cls}`;
+            }
+        }
+
+        function applySystemBlock(system) {
+            if (!system) return;
+            const ae = system.analysis_engine || {};
+            const dec = system.deception || {};
+
+            // Header
+            const hdrEngine = document.getElementById('hdrEngine');
+            if (hdrEngine) {
+                hdrEngine.textContent = ae.state || '—';
+                hdrEngine.className = ae.state === 'ACTIVE' ? 'text-green' : 'text-red';
+            }
+
+            // ANALYSIS ENGINE micro-metric
+            const aeVal = document.getElementById('analysisEngineValue');
+            const aeBar = document.getElementById('analysisEngineBar');
+            if (aeVal) {
+                aeVal.textContent = ae.state === 'ACTIVE' ? `${ae.classified_pct ?? 0}% CLASSIFIED` : 'OFFLINE';
+                aeVal.className = ae.state === 'ACTIVE' ? 'value text-green' : 'value text-red';
+            }
+            if (aeBar) aeBar.style.width = `${ae.state === 'ACTIVE' ? (ae.classified_pct ?? 0) : 0}%`;
+
+            // DECEPTION micro-metric
+            const decVal = document.getElementById('deceptionValue');
+            const decBar = document.getElementById('deceptionBar');
+            const pct = dec.sensors_total ? Math.round(100 * dec.sensors_online / dec.sensors_total) : 0;
+            if (decVal) {
+                decVal.textContent = dec.sensors_total ? `${dec.sensors_online}/${dec.sensors_total} SENSORS` : (dec.state || '—');
+                decVal.className = pct === 100 ? 'value text-green' : (pct > 0 ? 'value text-yellow' : 'value text-red');
+            }
+            if (decBar) decBar.style.width = `${pct}%`;
+
+            // NOVEL PATTERNS micro-metric
+            const npVal = document.getElementById('zeroDaysValue');
+            const npBar = document.getElementById('zeroDaysBar');
+            const np = system.novel_patterns || 0;
+            if (npVal) {
+                npVal.textContent = String(np);
+                npVal.className = np > 0 ? 'value text-red' : 'value text-green';
+            }
+            if (npBar) npBar.style.width = `${Math.min(100, np * 10)}%`;
+
+            // Footer
+            setFooter('footerApi', 'API: UP', 'footerApiDot', 'text-green');
+            const dbUp = ae.state === 'ACTIVE' || (system.last_event_at != null);
+            setFooter('footerDb', dbUp ? 'DB: UP' : 'DB: ?', 'footerDbDot', dbUp ? 'text-green' : 'text-yellow');
+            const fw = document.getElementById('footerWorkers');
+            if (fw) fw.innerHTML = `<i class="fas fa-circle ${pct === 100 ? 'text-green' : 'text-yellow'}" style="font-size:0.5rem;"></i> SENSORS: ${dec.sensors_online}/${dec.sensors_total}`;
+            const lat = document.getElementById('footerLatency');
+            if (lat && system.generated_in_ms != null) lat.textContent = `BACKEND: ${system.generated_in_ms} ms`;
+
+            const badge = document.getElementById('sensorGridBadge');
+            if (badge) {
+                badge.textContent = `${dec.sensors_online}/${dec.sensors_total} ONLINE`;
+                badge.className = `badge ${pct === 100 ? 'badge-green' : (pct > 0 ? 'badge-yellow' : 'badge-red')}`;
+            }
+        }
+
+        async function fetchHoneypotStats() {
+            try {
+                const payload = await apiService.get('/dashboard/stats');
+                if (!payload) return;
+                applySystemBlock(payload.system);
+
+                const summary = payload.summary || {};
+                const recentLogs = payload.recent || [];
+
+                const honeypotEventsValueEl = document.getElementById('honeypotEventsValue');
+                const uniqueAttackersValueEl = document.getElementById('uniqueAttackersValue');
+                const malwareCapturedEl = document.getElementById('malwareCapturedCount');
+                const highRiskAlertsEl = document.getElementById('highRiskAlertsValue');
+                const luresTrippedEl = document.getElementById('luresTrippedValue');
+                const hostileSrcEl = document.getElementById('activeSrc');
+                const targetedSectorsEl = document.getElementById('targetedSectorsValue');
+                const sysIntegrityVal = document.getElementById('sysIntegrityValue');
+                const sysIntegrityIcon = document.getElementById('sysIntegrityIcon');
+
+                if (honeypotEventsValueEl) {
+                    honeypotEventsValueEl.textContent = formatCompactNumber(summary.total_attacks || 0);
+                }
+                if (uniqueAttackersValueEl) {
+                    uniqueAttackersValueEl.textContent = formatCompactNumber(summary.unique_attackers || 0);
+                }
+                if (malwareCapturedEl) malwareCapturedEl.textContent = formatCompactNumber(summary.unique_payloads || 0);
+                if (highRiskAlertsEl) highRiskAlertsEl.textContent = formatCompactNumber(summary.high_risk_alerts || 0);
+                if (luresTrippedEl) luresTrippedEl.textContent = formatCompactNumber(summary.lures_tripped || 0);
+                if (hostileSrcEl) hostileSrcEl.textContent = summary.hostile_sources || 0;
+                if (targetedSectorsEl) targetedSectorsEl.textContent = summary.targeted_sectors || 0;
+
+                const tLevel = summary.current_threat_level || 'LOW';
+                applyThreatLevel(tLevel);
+
+                const tBar = document.getElementById('threatLevelBar');
+                if (tBar) {
+                    if (tLevel === 'CRITICAL' || tLevel === 'HIGH') {
+                        tBar.style.width = '90%';
+                        tBar.style.background = 'var(--accent-critical)';
+                    } else if (tLevel === 'MEDIUM' || tLevel === 'ELEVATED') {
+                        tBar.style.width = '50%';
+                        tBar.style.background = 'var(--accent-secondary)';
+                    } else {
+                        tBar.style.width = '10%';
+                        tBar.style.background = 'var(--accent-primary)';
+                    }
+                }
+
+                const lTrippedStr = summary.lures_tripped || 0;
+                const lBar = document.getElementById('luresTrippedBar');
+                if (lBar) {
+                    const lNum = Math.min((tLevel === 'CRITICAL' ? 100 : Number(lTrippedStr) / 10), 100);
+                    lBar.style.width = `${lNum}%`;
+                }
+
+                if (sysIntegrityVal) {
+                    const dBar = document.getElementById('defenseMatrixBar');
+                    const dMatrix = document.getElementById('defenseMatrixValue');
+                    const sub = document.getElementById('sysIntegritySub');
+                    const alerts = summary.high_risk_alerts || 0;
+                    if (tLevel === 'CRITICAL' || tLevel === 'HIGH') {
+                        sysIntegrityVal.textContent = 'UNDER ATTACK';
+                        sysIntegrityVal.className = 'metric-value text-red';
+                        if (sysIntegrityIcon) sysIntegrityIcon.className = 'fas fa-shield-virus text-red';
+                        if (dMatrix) { dMatrix.textContent = 'ENGAGED'; dMatrix.className = 'value text-red'; }
+                        if (dBar) { dBar.style.width = '40%'; dBar.style.background = 'var(--accent-critical)'; }
+                        if (sub) sub.textContent = `${alerts} high-risk alerts active`;
+                    } else if (tLevel === 'MEDIUM' || tLevel === 'ELEVATED') {
+                        sysIntegrityVal.textContent = 'ELEVATED';
+                        sysIntegrityVal.className = 'metric-value text-yellow';
+                        if (sysIntegrityIcon) sysIntegrityIcon.className = 'fas fa-shield-alt text-yellow';
+                        if (dMatrix) { dMatrix.textContent = 'ADAPTING'; dMatrix.className = 'value text-yellow'; }
+                        if (dBar) { dBar.style.width = '70%'; dBar.style.background = 'var(--accent-secondary)'; }
+                        if (sub) sub.textContent = `${alerts} high-risk alerts (24h)`;
+                    } else {
+                        sysIntegrityVal.textContent = 'SECURE';
+                        sysIntegrityVal.className = 'metric-value text-green';
+                        if (sysIntegrityIcon) sysIntegrityIcon.className = 'fas fa-shield-alt text-green';
+                        if (dMatrix) { dMatrix.textContent = 'OPTIMIZED'; dMatrix.className = 'value text-green'; }
+                        if (dBar) { dBar.style.width = '100%'; dBar.style.background = 'var(--accent-primary)'; }
+                        if (sub) sub.textContent = 'Core systems nominal';
+                    }
+                }
+
+                // Global Threat Map Markers
+                if (typeof map !== 'undefined' && recentLogs.length > 0) {
+                    if (!window.attackMarkersLayer) {
+                        window.attackMarkersLayer = L.layerGroup().addTo(map);
+                    }
+                    window.attackMarkersLayer.clearLayers();
+
+                    const markerHtmlStyles = `
+                        background-color: var(--accent-critical);
+                        width: 10px;
+                        height: 10px;
+                        display: block;
+                        left: -5px;
+                        top: -5px;
+                        position: relative;
+                        border-radius: 50%;
+                        box-shadow: 0 0 10px var(--accent-critical);
+                        animation: pulse-red 1s infinite;
+                    `;
+
+                    recentLogs.slice(0, 15).forEach(log => {
+                        if (typeof log.lat === 'number' && typeof log.lon === 'number' && !(log.lat === 0 && log.lon === 0)) {
+                            const icon = L.divIcon({
+                                className: "custom-pin",
+                                html: `<span style="${markerHtmlStyles}"></span>`
+                            });
+                            L.marker([log.lat, log.lon], { icon }).addTo(window.attackMarkersLayer);
+                        }
+                    });
+                }
+
+                if (recentLogs.length > 0 && feed) {
+                    feed.innerHTML = '';
+                    recentLogs.forEach(item => {
+                        const div = document.createElement('div');
+                        div.style.marginBottom = '6px';
+                        div.style.borderLeft = '2px solid #334155';
+                        div.style.paddingLeft = '8px';
+
+                        const timeStr = item.timestamp ? new Date(item.timestamp).toLocaleTimeString() : '--:--:--';
+                        const ip = item.attacker_ip || 'UNKNOWN';
+                        const port = item.target_port || '0';
+                        const honeypot_type = item.honeypot_type || 'SYSTEM';
+
+                        div.innerHTML = `<span style="color:#00c6ff;"> [${timeStr}]</span> <span style="color:#ffcc00;">[${honeypot_type}]</span> <span style="color:#ff3333">${ip}:${port}</span>`;
+                        feed.appendChild(div);
+                    });
+
+                    const latest = recentLogs[0];
+                    if (latest) {
+                        const lastDetectEl = document.getElementById('lastDetect');
+                        if (lastDetectEl) {
+                            lastDetectEl.textContent = `${latest.attacker_ip} // PT:${latest.target_port}`;
+                        }
+                    }
+                }
+
+                // Update Traffic Volume Chart (real per-minute buckets, last hour)
+                if (payload.traffic_chart && trafficChartInstance) {
+                    trafficChartInstance.data.datasets[0].data = payload.traffic_chart.ssh || Array(60).fill(0);
+                    trafficChartInstance.data.datasets[1].data = payload.traffic_chart.http || Array(60).fill(0);
+                    trafficChartInstance.data.datasets[2].data = payload.traffic_chart.malware || Array(60).fill(0);
+                    trafficChartInstance.update();
+                }
+
+                // Update Protocol Radar
+                if (payload.protocol_radar && radarChartInstance) {
+                    radarChartInstance.data.datasets[0].data = payload.protocol_radar;
+                    radarChartInstance.update();
+                }
+
+                // Update Top Attacker Networks Table (Using IPs)
+                const attackTableBody = document.querySelector('.dashboard-grid.grid-3 .soc-card:nth-child(1) tbody');
+                if (attackTableBody && payload.top_attackers) {
+                    attackTableBody.innerHTML = '';
+                    if (payload.top_attackers.length === 0) {
+                        attackTableBody.innerHTML = `<tr><td colspan="4" class="text-muted">No data yet</td></tr>`;
+                    } else {
+                        payload.top_attackers.forEach(a => {
+                            const riskColor = a.risk === 'HIGH' ? 'text-red' : 'text-yellow';
+                            attackTableBody.innerHTML += `
+                                <tr>
+                                    <td title="${a.asn}">${a.asn}</td>
+                                    <td class="text-mono text-muted" title="${a.ip}">${a.ip}</td>
+                                    <td title="${a.org}">${a.org}</td>
+                                    <td>${a.hits}</td>
+                                    <td class="${riskColor}">${a.risk}</td>
+                                </tr>
+                            `;
+                        });
+                    }
+                }
+
+                // Update Exploit Vectors By Port Table
+                const exploitTableBody = document.querySelector('.dashboard-grid.grid-3 .soc-card:nth-child(3) tbody');
+                if (exploitTableBody && payload.top_vectors) {
+                    exploitTableBody.innerHTML = '';
+                    if (payload.top_vectors.length === 0) {
+                        exploitTableBody.innerHTML = `<tr><td colspan="4" class="text-muted">No data yet</td></tr>`;
+                    } else {
+                        const tC = t => t === 'HIGH' ? 'text-red' : (t === 'MEDIUM' ? 'text-yellow' : 'text-muted');
+                        payload.top_vectors.forEach(v => {
+                            exploitTableBody.innerHTML += `
+                                <tr>
+                                    <td class="text-cyan">${v.port}</td>
+                                    <td>${v.service}</td>
+                                    <td class="${tC(v.threat)}">${v.threat}</td>
+                                    <td>${v.count}</td>
+                                </tr>
+                            `;
+                        });
+                    }
+                }
+
+                // Update Recent Malware Artifacts -> Recent Unique Payloads Table
+                const artifactsTableBody = document.querySelector('.dashboard-grid.grid-3 .soc-card:nth-child(2) tbody');
+                if (artifactsTableBody && payload.recent_artifacts) {
+                    artifactsTableBody.innerHTML = '';
+                    if (payload.recent_artifacts.length === 0) {
+                        artifactsTableBody.innerHTML = `<tr><td colspan="4" class="text-muted">No payload data</td></tr>`;
+                    } else {
+                        const dispColor = s => s === 'BLOCKED' ? 'text-red' : (s === 'FLAGGED' ? 'text-yellow' : 'text-green');
+                        payload.recent_artifacts.forEach(r => {
+                            artifactsTableBody.innerHTML += `
+                                <tr>
+                                    <td class="text-muted text-xs">${r.hash}</td>
+                                    <td title="${r.type}">${r.type}</td>
+                                    <td class="text-yellow" title="${r.sensor}">${r.sensor}</td>
+                                    <td class="${dispColor(r.status)}">${r.status}</td>
+                                </tr>
+                            `;
+                        });
+                    }
+
+                }
+
+            } catch (error) {
+                console.error('Failed to fetch dashboard stats:', error);
+                // Show a non-blocking indicator so users know data failed to load
+                const feedEl = document.getElementById('liveFeed');
+                if (feedEl && feedEl.children.length === 0) {
+                    feedEl.innerHTML = '<div style="color:#ff3333; font-size:0.8rem; padding:8px; font-family:\'JetBrains Mono\',monospace;"><i class="fas fa-exclamation-triangle"></i> Data load failed — backend may be starting. Auto-retrying...</div>';
+                }
+            }
+        }
+
+        let lastNetBytes = 0;
+        let lastNetTime = 0;
+
+        async function fetchNodes() {
+            try {
+                // Fetch nodes array
+                const nodes = await apiService.get('/nodes/');
+                renderNodes(nodes);
+
+                // Fetch host system stats
+                const stats = await apiService.get('/nodes/stats');
+
+                // Calculate Uptime
+                if (stats && stats.uptime_seconds) {
+                    const hrs = (stats.uptime_seconds / 3600).toFixed(1);
+                    const uptimeEl = document.getElementById('systemUptimeValue');
+                    if (uptimeEl) uptimeEl.textContent = `${hrs}h`;
+                }
+
+                // Real network flow: delta of the host's psutil byte counters
+                // between two /nodes/stats polls. No jitter — shows IDLE when idle.
+                if (stats && stats.network) {
+                    const currentTotalBytes = stats.network.bytes_recv + stats.network.bytes_sent;
+                    const nowTs = Date.now();
+                    const flowEl = document.getElementById('networkFlowValue');
+
+                    if (lastNetBytes > 0 && lastNetTime > 0) {
+                        const deltaBytes = Math.max(0, currentTotalBytes - lastNetBytes);
+                        const deltaSecs = (nowTs - lastNetTime) / 1000;
+                        const bytesPerSec = deltaSecs > 0 ? deltaBytes / deltaSecs : 0;
+
+                        let displayVal;
+                        if (bytesPerSec < 1024) displayVal = `${bytesPerSec.toFixed(0)} B/s`;
+                        else if (bytesPerSec < 1048576) displayVal = `${(bytesPerSec / 1024).toFixed(1)} KB/s`;
+                        else displayVal = `${(bytesPerSec / 1048576).toFixed(2)} MB/s`;
+
+                        if (flowEl) flowEl.textContent = displayVal;
+                    } else if (flowEl) {
+                        flowEl.textContent = 'measuring…';
+                    }
+
+                    lastNetBytes = currentTotalBytes;
+                    lastNetTime = nowTs;
+                }
+
+            } catch (error) {
+                console.error("Failed to fetch nodes/stats:", error);
+                document.getElementById('nodeGrid').innerHTML = `<div style="text-align:center; padding:20px; color:#ff3333;">GRID OFFLINE</div>`;
+            }
+        }
+
+        function renderNodes(nodes) {
+            const container = document.getElementById('nodeGrid');
+            container.innerHTML = '';
+
+            let onlineCount = 0;
+
+            nodes.forEach(node => {
+                if (node.status === 'ONLINE' || node.status === 'RUNNING') onlineCount++;
+
+                // Color Logic
+                let statusColor = 'text-green';
+                let dotClass = 'status-dot';
+                let cpuColor = '#00c6ff'; // Green
+                let iconClass = 'fa-server';
+
+                if (node.status === 'OFFLINE' || node.status === 'STOPPED') {
+                    statusColor = 'text-muted';
+                    dotClass = 'status-dot';
+                    cpuColor = '#334155';
+                    iconClass = 'fa-power-off';
+                } else if (node.risk_level === 'HIGH' || node.status === 'UNDER ATTACK') {
+                    statusColor = 'text-red';
+                    dotClass = 'status-dot blink-red';
+                    cpuColor = '#ff3333'; // Red
+                    iconClass = 'fa-shield-alt';
+                }
+
+                const cpu = (typeof node.cpu_percent === 'number') ? node.cpu_percent : 0;
+
+                const html = `
+                    <div class="node-item">
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <span class="text-mono ${statusColor}">${node.name || 'UNKNOWN'}</span>
+                            <i class="fas ${iconClass} text-muted"></i>
+                        </div>
+                        <div class="text-xs text-muted">${node.type || 'Generic Sensor'}</div>
+                        <div style="margin-top:10px;">
+                            <div style="display:flex; justify-content:space-between; font-size:0.7rem; margin-bottom:3px;">
+                                <span>LOAD</span>
+                                <span class="${statusColor}">${cpu}%</span>
+                            </div>
+                            <div style="width:100%; height:4px; background:#334155;">
+                                <div style="width:${cpu}%; height:100%; background:${cpuColor};"></div>
+                            </div>
+                        </div>
+                        <div style="text-align:right; margin-top:5px;">
+                            ${node.status === 'OFFLINE' ?
+                        `<span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:#444;"></span>` :
+                        `<span class="${dotClass}"></span>`
+                    } 
+                            <span class="text-xs ${statusColor}">${node.status}</span>
+                        </div>
+                    </div>
+                `;
+                container.innerHTML += html;
+            });
+
+            // Footer sensor count is owned by applySystemBlock (Docker-truthed).
+
+            // Update Active Nodes Metric Tile
+            const activeNodesTile = document.getElementById('activeNodes');
+            if (activeNodesTile) {
+                activeNodesTile.innerText = `${onlineCount} / ${nodes.length}`;
+                if (onlineCount < nodes.length) {
+                    activeNodesTile.style.color = '#ffaa00'; // Amber warning
+                } else {
+                    activeNodesTile.style.color = '#00c6ff'; // Green
+                }
+            }
+        }
+
+        // Fetch initially and loop
+        fetchNodes();
+        // second poll shortly after so NETWORK FLOW has two samples to diff
+        setTimeout(fetchNodes, 3000);
+        setInterval(fetchNodes, 12000);
+
+        fetchHoneypotStats();
+        setInterval(fetchHoneypotStats, 20000);
+
+        // Protocol Radar Chart (Tactical)
+        const radarCtx = document.getElementById('protocolRadar').getContext('2d');
+        radarChartInstance = new Chart(radarCtx, {
+            type: 'radar',
+            data: {
+                labels: ['SSH', 'HTTP', 'RDP', 'SMB', 'TELNET', 'FTP'],
+                datasets: [{
+                    label: 'PROTOCOL MIX (LIVE)',
+                    data: [0, 0, 0, 0, 0, 0],
+                    backgroundColor: 'rgba(0, 198, 255, 0.2)',
+                    borderColor: '#00c6ff',
+                    borderWidth: 2,
+                    pointBackgroundColor: '#00c6ff'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    r: {
+                        angleLines: { color: '#334155' },
+                        grid: { color: '#1e293b' },
+                        pointLabels: { color: '#94a3b8', font: { family: 'JetBrains Mono' } },
+                        ticks: { display: false, backdropColor: 'transparent' }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        labels: { color: '#e2e8f0', font: { family: 'JetBrains Mono', size: 10 } }
+                    }
+                },
+                animation: {
+                    duration: 2000,
+                    easing: 'easeOutQuart'
+                }
+            }
+        });
+
+        // Modal & Interactive Button Logic
+        const topModal = document.getElementById('custom-modal');
+        const modalTitle = document.getElementById('modal-title');
+        const modalMessage = document.getElementById('modal-message');
+        const btnConfirm = document.getElementById('modal-btn-confirm');
+        const btnCancel = document.getElementById('modal-btn-cancel');
+
+        let modalConfirmCallback = null;
+
+        function showModal(title, message, isDanger, callback, isAlert = false) {
+            modalTitle.innerHTML = title;
+            modalMessage.innerHTML = message;
+
+            if (isDanger) {
+                modalTitle.className = 'card-title text-red';
+                btnConfirm.className = 'soc-btn soc-btn-danger';
+                btnConfirm.innerText = isAlert ? 'ACKNOWLEDGE' : 'INITIATE';
+                topModal.querySelector('.soc-card').style.borderColor = 'var(--accent-critical)';
+            } else {
+                modalTitle.className = 'card-title text-yellow';
+                btnConfirm.className = 'soc-btn soc-btn-primary';
+                btnConfirm.innerText = isAlert ? 'ACKNOWLEDGE' : 'PROCEED';
+                topModal.querySelector('.soc-card').style.borderColor = 'var(--accent-primary)';
+            }
+
+            btnCancel.style.display = isAlert ? 'none' : 'block';
+
+            modalConfirmCallback = callback;
+            topModal.style.display = 'flex';
+        }
+
+        function hideModal() {
+            topModal.style.display = 'none';
+            modalConfirmCallback = null;
+        }
+
+        btnCancel.addEventListener('click', hideModal);
+        btnConfirm.addEventListener('click', () => {
+            if (modalConfirmCallback) modalConfirmCallback();
+            hideModal();
+        });
+
+        document.getElementById('btn-exec-report').addEventListener('click', function () {
+            STReports.generateAndDownload('executive_summary', {}, { button: this, title: 'executive summary' });
+        });
+        document.getElementById('btn-refresh-intel').addEventListener('click', async () => {
+            const btn = document.getElementById('btn-refresh-intel');
+            const icon = document.getElementById('refresh-icon');
+            if (icon) icon.classList.add('fa-spin');
+            btn.disabled = true;
+            try {
+                await Promise.all([fetchHoneypotStats(), fetchNodes()]);
+            } finally {
+                if (icon) icon.classList.remove('fa-spin');
+                btn.disabled = false;
+            }
+        });
+
+        let isLockedDown = false;
+        const topShutter = document.getElementById('shutter-top');
+        const bottomShutter = document.getElementById('shutter-bottom');
+        const lockdownOverlay = document.getElementById('lockdown-overlay');
+        const btnLockdown = document.getElementById('btn-lockdown');
+
+        btnLockdown.addEventListener('click', () => {
+            if (!isLockedDown) {
+                showModal(
+                    '<i class="fas fa-biohazard"></i> CONSOLE LOCKDOWN',
+                    'Blank this console screen behind a lockdown shutter? This is a local screen guard for shoulder-surfing — it does not change backend state. Click again to restore.',
+                    true,
+                    () => {
+                        isLockedDown = true;
+                        btnLockdown.style.position = 'relative';
+                        btnLockdown.style.zIndex = '10001';
+
+                        topShutter.style.transform = 'translateY(0)';
+                        bottomShutter.style.transform = 'translateY(0)';
+                        document.querySelectorAll('.shutter-text').forEach(el => el.style.opacity = '1');
+
+                        setTimeout(() => {
+                            lockdownOverlay.style.display = 'flex';
+                            btnLockdown.className = 'soc-btn soc-btn-primary';
+                            btnLockdown.innerHTML = '<i class="fas fa-unlock"></i> NORMAL MODE';
+
+                            setTimeout(() => {
+                                topShutter.style.transform = 'translateY(-100%)';
+                                bottomShutter.style.transform = 'translateY(100%)';
+                                document.querySelectorAll('.shutter-text').forEach(el => el.style.opacity = '0');
+                            }, 500);
+                        }, 600);
+                    }
+                );
+            } else {
+                showModal(
+                    '<i class="fas fa-unlock"></i> RESTORE NORMAL MODE',
+                    'Confirm restoration of normal system operations?',
+                    false,
+                    () => {
+                        topShutter.style.transform = 'translateY(0)';
+                        bottomShutter.style.transform = 'translateY(0)';
+                        document.querySelectorAll('.shutter-text').forEach(el => el.style.opacity = '0'); // Optional: change visual text on unlock
+
+                        setTimeout(() => {
+                            lockdownOverlay.style.display = 'none';
+                            btnLockdown.className = 'soc-btn soc-btn-danger';
+                            btnLockdown.innerHTML = '<i class="fas fa-lock"></i> LOCKDOWN';
+                            btnLockdown.style.zIndex = 'auto'; // restore
+                            isLockedDown = false;
+
+                            setTimeout(() => {
+                                topShutter.style.transform = 'translateY(-100%)';
+                                bottomShutter.style.transform = 'translateY(100%)';
+                            }, 500);
+                        }, 600);
+                    }
+                );
+            }
+        });
+    </script>
+
+</body>
+
+</html>

@@ -8,6 +8,10 @@
     <link rel="stylesheet" href="css/dashboard.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600;700&amp;display=swap">
+    <link rel="stylesheet" href="css/tokens.css">
+    <script src="js/theme.js"></script>
 </head>
 
 <body>
@@ -122,8 +126,7 @@
     <script type="module">
         import { apiService } from './js/api.js';
 
-        Chart.defaults.color = '#666';
-        Chart.defaults.borderColor = 'rgba(255,255,255,0.05)';
+        // Default chart colors are set (and re-applied on theme change) by js/theme.js.
         Chart.defaults.font.family = "'JetBrains Mono', monospace";
 
         // Chart References
@@ -133,70 +136,70 @@
             // 1. Main Line Chart
             charts.main = new Chart(document.getElementById('mainChart'), {
                 type: 'line',
-                data: { labels: [], datasets: [{ label: 'Education Sector', data: [], borderColor: '#bc13fe', tension: 0.4 }, { label: 'Defence Sector', data: [], borderColor: '#ff0055', tension: 0.4 }] },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: "#fff" } } } }
+                data: { labels: [], datasets: [{ label: 'Education Sector', data: [], borderColor: 'var(--st-info)', tension: 0.4 }, { label: 'Defence Sector', data: [], borderColor: 'var(--st-danger)', tension: 0.4 }] },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: "var(--st-text)" } } } }
             });
 
             // 2. Radar Chart
             charts.radar = new Chart(document.getElementById('radarChart'), {
                 type: 'radar',
-                data: { labels: ['Brute Force', 'Exploit', 'XSS', 'DDoS', 'Malware', 'Phishing'], datasets: [{ label: 'Risk Score', data: [], backgroundColor: 'rgba(0, 243, 255, 0.2)', borderColor: '#00f3ff', pointBackgroundColor: '#fff' }] },
-                options: { responsive: true, maintainAspectRatio: false, scales: { r: { grid: { color: '#333' } } } }
+                data: { labels: ['Brute Force', 'Exploit', 'XSS', 'DDoS', 'Malware', 'Phishing'], datasets: [{ label: 'Risk Score', data: [], backgroundColor: 'color-mix(in srgb, var(--st-info) 20%, transparent)', borderColor: 'var(--st-info)', pointBackgroundColor: 'var(--st-text)' }] },
+                options: { responsive: true, maintainAspectRatio: false, scales: { r: { grid: { color: 'var(--st-text-faint)' } } } }
             });
 
             // 3. Pie Chart
             charts.pie = new Chart(document.getElementById('pieChart'), {
                 type: 'doughnut',
-                data: { labels: ['SSH', 'HTTP', 'RDP', 'FTP', 'DNS'], datasets: [{ data: [], backgroundColor: ['#bc13fe', '#00f3ff', '#ff0055', '#ffee00', '#00ff41'], borderWidth: 0 }] },
+                data: { labels: ['SSH', 'HTTP', 'RDP', 'FTP', 'DNS'], datasets: [{ data: [], backgroundColor: ['var(--st-info)', 'var(--st-info)', 'var(--st-danger)', 'var(--st-warning)', 'var(--st-success)'], borderWidth: 0 }] },
                 options: { responsive: true, maintainAspectRatio: false }
             });
 
             // 4. Bar Chart
             charts.bar = new Chart(document.getElementById('barChart'), {
                 type: 'bar',
-                data: { labels: ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00'], datasets: [{ label: 'Anomalies', data: [], backgroundColor: '#ef4444' }] },
+                data: { labels: ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00'], datasets: [{ label: 'Anomalies', data: [], backgroundColor: 'var(--st-danger)' }] },
                 options: { responsive: true, maintainAspectRatio: false }
             });
 
             // 5. Polar Chart
             charts.polar = new Chart(document.getElementById('polarChart'), {
                 type: 'polarArea',
-                data: { labels: [], datasets: [{ data: [], backgroundColor: ['#ff0055', '#bc13fe', '#00f3ff', '#00ff41', '#ffee00'] }] },
+                data: { labels: [], datasets: [{ data: [], backgroundColor: ['var(--st-danger)', 'var(--st-info)', 'var(--st-info)', 'var(--st-success)', 'var(--st-warning)'] }] },
                 options: { responsive: true, maintainAspectRatio: false, scales: { r: { grid: { display: false } } } }
             });
 
             // 6. Scatter Chart (TTD vs TTR)
             charts.scatter = new Chart(document.getElementById('scatterChart'), {
                 type: 'scatter',
-                data: { datasets: [{ label: 'Crit Incidents', data: [], backgroundColor: '#ff0055' }, { label: 'Minor Incidents', data: [], backgroundColor: '#00ff41' }] },
-                options: { responsive: true, maintainAspectRatio: false, scales: { x: { title: { display: true, text: 'Time To Detect (min)', color: '#666' } }, y: { title: { display: true, text: 'Time To Respond (min)', color: '#666' } } } }
+                data: { datasets: [{ label: 'Crit Incidents', data: [], backgroundColor: 'var(--st-danger)' }, { label: 'Minor Incidents', data: [], backgroundColor: 'var(--st-success)' }] },
+                options: { responsive: true, maintainAspectRatio: false, scales: { x: { title: { display: true, text: 'Time To Detect (min)', color: 'var(--st-text-faint)' } }, y: { title: { display: true, text: 'Time To Respond (min)', color: 'var(--st-text-faint)' } } } }
             });
 
             // 7. Mixed Chart (Malware Trends)
             charts.mixed = new Chart(document.getElementById('mixedChart'), {
                 type: 'bar',
-                data: { labels: [], datasets: [{ label: 'Volume', data: [], backgroundColor: 'rgba(6, 182, 212, 0.5)', order: 2 }, { label: 'Avg Severity', data: [], type: 'line', borderColor: '#ffee00', tension: 0.4, yAxisID: 'y1', order: 1 }] },
+                data: { labels: [], datasets: [{ label: 'Volume', data: [], backgroundColor: 'color-mix(in srgb, var(--st-info) 50%, transparent)', order: 2 }, { label: 'Avg Severity', data: [], type: 'line', borderColor: 'var(--st-warning)', tension: 0.4, yAxisID: 'y1', order: 1 }] },
                 options: { responsive: true, maintainAspectRatio: false, scales: { y: { position: 'left' }, y1: { position: 'right', min: 0, max: 5, grid: { drawOnChartArea: false } } } }
             });
 
             // 8. Horizontal Bar (Ports)
             charts.ports = new Chart(document.getElementById('portsChart'), {
                 type: 'bar', indexAxis: 'y',
-                data: { labels: ['Port 445 (SMB)', 'Port 22 (SSH)', 'Port 80 (HTTP)', 'Port 3389 (RDP)'], datasets: [{ label: 'Hits', data: [], backgroundColor: '#bc13fe' }] },
+                data: { labels: ['Port 445 (SMB)', 'Port 22 (SSH)', 'Port 80 (HTTP)', 'Port 3389 (RDP)'], datasets: [{ label: 'Hits', data: [], backgroundColor: 'var(--st-info)' }] },
                 options: { responsive: true, maintainAspectRatio: false }
             });
 
             // 9. Bubble Chart (Insider Threat)
             charts.bubble = new Chart(document.getElementById('bubbleChart'), {
                 type: 'bubble',
-                data: { datasets: [{ label: 'Internal IPs', data: [], backgroundColor: function (c) { return (c.raw && c.raw.r > 20) ? '#ef4444' : '#00f3ff'; } }] },
-                options: { responsive: true, maintainAspectRatio: false, scales: { x: { title: { display: true, text: 'Login Ops', color: '#666' } }, y: { title: { display: true, text: 'Data Exfil (MB)', color: '#666' } } } }
+                data: { datasets: [{ label: 'Internal IPs', data: [], backgroundColor: function (c) { return (c.raw && c.raw.r > 20) ? 'var(--st-danger)' : 'var(--st-info)'; } }] },
+                options: { responsive: true, maintainAspectRatio: false, scales: { x: { title: { display: true, text: 'Login Ops', color: 'var(--st-text-faint)' } }, y: { title: { display: true, text: 'Data Exfil (MB)', color: 'var(--st-text-faint)' } } } }
             });
 
             // 10. System Chart (Area)
             charts.system = new Chart(document.getElementById('systemChart'), {
                 type: 'line',
-                data: { labels: ['10m', '8m', '6m', '4m', '2m', 'Now'], datasets: [{ label: 'CPU Load %', data: [], fill: true, borderColor: '#ff0055', backgroundColor: 'rgba(255, 0, 85, 0.2)', tension: 0.4 }] },
+                data: { labels: ['10m', '8m', '6m', '4m', '2m', 'Now'], datasets: [{ label: 'CPU Load %', data: [], fill: true, borderColor: 'var(--st-danger)', backgroundColor: 'color-mix(in srgb, var(--st-danger) 20%, transparent)', tension: 0.4 }] },
                 options: { responsive: true, maintainAspectRatio: false, scales: { y: { min: 0, max: 100 } } }
             });
         }
@@ -226,8 +229,13 @@
                 charts.radar.data.datasets[0].data = c.radar.data;
                 charts.radar.update();
 
-                // 3. Pie
-                charts.pie.data.datasets[0].data = c.pie.data;
+                // 3. Pie — dynamic protocol labels when present
+                if (c.pie.labels && c.pie.values) {
+                    charts.pie.data.labels = c.pie.labels;
+                    charts.pie.data.datasets[0].data = c.pie.values;
+                } else {
+                    charts.pie.data.datasets[0].data = c.pie.data;
+                }
                 charts.pie.update();
 
                 // 4. Bar
@@ -250,7 +258,8 @@
                 charts.mixed.data.datasets[1].data = c.mixed.severity;
                 charts.mixed.update();
 
-                // 8. Ports
+                // 8. Ports — real top ports with labels
+                if (c.ports.labels) charts.ports.data.labels = c.ports.labels;
                 charts.ports.data.datasets[0].data = c.ports.data;
                 charts.ports.update();
 
@@ -269,13 +278,13 @@
                 if (!banner) {
                     banner = document.createElement('div');
                     banner.id = 'graphs-error-banner';
-                    banner.style.cssText = 'position:fixed;bottom:20px;right:20px;z-index:9999;padding:12px 18px;background:rgba(20,20,30,0.95);border:1px solid #ff3333;border-left:3px solid #ff3333;color:#ff6666;font-family:"JetBrains Mono",monospace;font-size:0.8rem;border-radius:4px;max-width:340px;';
+                    banner.style.cssText = 'position:fixed;bottom:20px;right:20px;z-index:9999;padding:12px 18px;background:var(--st-surface);border:1px solid var(--st-danger);border-left:3px solid var(--st-danger);color:var(--st-danger);font-family:"JetBrains Mono",monospace;font-size:0.8rem;border-radius:4px;max-width:340px;';
                     document.body.appendChild(banner);
                 }
                 const isAuth = err.message && err.message.toLowerCase().includes('unauthorized');
                 banner.innerHTML = isAuth
-                    ? '<i class="fas fa-lock"></i> Session expired. <a href="login.html" style="color:#ff9966;">Log in again</a>.'
-                    : `<i class="fas fa-exclamation-triangle"></i> Analytics data failed to load. Backend may be starting. <button onclick="fetchAnalytics();this.parentElement.style.display='none';" style="margin-left:8px;background:transparent;border:1px solid #ff3333;color:#ff6666;padding:2px 8px;cursor:pointer;font-family:inherit;">RETRY</button>`;
+                    ? '<i class="fas fa-lock"></i> Session expired. <a href="login.html" style="color:var(--st-caution);">Log in again</a>.'
+                    : `<i class="fas fa-exclamation-triangle"></i> Analytics data failed to load. Backend may be starting. <button onclick="fetchAnalytics();this.parentElement.style.display='none';" style="margin-left:8px;background:transparent;border:1px solid var(--st-danger);color:var(--st-danger);padding:2px 8px;cursor:pointer;font-family:inherit;">RETRY</button>`;
                 banner.style.display = 'block';
                 setTimeout(() => { if (banner) banner.style.display = 'none'; }, 8000);
             }

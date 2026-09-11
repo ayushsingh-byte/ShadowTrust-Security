@@ -1,0 +1,802 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Global Admin Control | Shadow Trust</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/dashboard.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        /* Admin Specific Overrides */
+        .admin-badge {
+            background: #ff0055;
+            color: white;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.6rem;
+            margin-left: 10px;
+            vertical-align: middle;
+        }
+
+        .metric-tile.admin-metric {
+            border-top: 3px solid var(--neon-red);
+        }
+
+        .micro-metric {
+            background: #0a0a0f;
+            border: 1px solid #222;
+            padding: 10px;
+        }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(5px);
+        }
+
+        .modal-content {
+            background-color: #0a0a0f;
+            border: 1px solid #333;
+            margin: 10% auto;
+            padding: 20px;
+            width: 50%;
+            max-width: 500px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+            border-radius: 8px;
+            position: relative;
+        }
+
+        .modal-header {
+            border-bottom: 1px solid #222;
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-title {
+            font-size: 1.2rem;
+            color: #fff;
+            font-weight: bold;
+        }
+
+        .close-modal {
+            color: #aaa;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .close-modal:hover,
+        .close-modal:focus {
+            color: #fff;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 5px;
+            color: #888;
+            font-size: 0.9rem;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 10px;
+            background: #111;
+            border: 1px solid #333;
+            color: #fff;
+            border-radius: 4px;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--neon-cyan);
+        }
+
+        .form-select {
+            width: 100%;
+            padding: 10px;
+            background: #111;
+            border: 1px solid #333;
+            color: #fff;
+            border-radius: 4px;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Toggle Switch */
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 40px;
+            height: 20px;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #333;
+            -webkit-transition: .4s;
+            transition: .4s;
+            border-radius: 34px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 14px;
+            width: 14px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            -webkit-transition: .4s;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked+.slider {
+            background-color: var(--neon-cyan);
+        }
+
+        input:focus+.slider {
+            box-shadow: 0 0 1px var(--neon-cyan);
+        }
+
+        input:checked+.slider:before {
+            -webkit-transform: translateX(20px);
+            -ms-transform: translateX(20px);
+            transform: translateX(20px);
+        }
+
+        /* Range Slider */
+        input[type=range] {
+            -webkit-appearance: none;
+            width: 100%;
+            background: transparent;
+        }
+
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 16px;
+            width: 16px;
+            border-radius: 50%;
+            background: var(--neon-purple);
+            cursor: pointer;
+            margin-top: -6px;
+            box-shadow: 0 0 10px var(--neon-purple);
+        }
+
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 4px;
+            cursor: pointer;
+            background: #333;
+            border-radius: 2px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="app-container">
+
+        <!-- ADMIN SIDEBAR (Simpler, Focused) -->
+        <aside class="sidebar" id="sidebar">
+            <div class="logo-area">
+                <div class="logo-icon" style="filter: hue-rotate(150deg);"></div> <!-- Shift to Red/Pinkish -->
+                <div class="logo-text">
+                    <div class="logo-title">ROOT GRID</div>
+                    <div class="logo-sub text-pink">ADMINISTRATION LAYER</div>
+                </div>
+            </div>
+
+            <div class="nav-group">
+                <div class="nav-group-label" style="color:#ff0055;">CORE MANAGEMENT</div>
+                <a href="admin.html#section-overview" class="nav-item">
+                    <i class="fas fa-tachometer-alt"></i> <span class="nav-text">Global Overview</span>
+                </a>
+                <a href="admin.html#section-users" class="nav-item">
+                    <i class="fas fa-users-cog"></i> <span class="nav-text">User Management</span>
+                </a>
+                <a href="credential_mgmt.html" class="nav-item">
+                    <i class="fas fa-key"></i> <span class="nav-text">Credential Management</span>
+                </a>
+                <a href="access_control.html" class="nav-item">
+                    <i class="fas fa-user-lock"></i> <span class="nav-text">Access Control Console</span>
+                </a>
+                <a href="aws_connection.html" class="nav-item">
+                    <i class="fab fa-aws"></i> <span class="nav-text">AWS Connection</span>
+                </a>
+                <a href="admin.html#section-settings" class="nav-item">
+                    <i class="fas fa-cogs"></i> <span class="nav-text">System Settings</span>
+                </a>
+                <a href="admin.html#section-debug" class="nav-item">
+                    <i class="fas fa-microchip"></i> <span class="nav-text">System Debug</span>
+                </a>
+            </div>
+
+            <div class="build-info">
+                <a href="dashboard.html" class="soc-btn"
+                    style="display:block; text-align:center; width:auto; font-size:0.8rem;">Exit to User View</a>
+            </div>
+        </aside>
+
+        <main class="main-content">
+
+            <div class="top-bar">
+                <div class="page-header">
+                    <h2>SYSTEM ADMINISTRATION</h2>
+                    <p>ACCESS CONTROL CENTER // <span class="text-pink">ROOT PRIVILEGES ACTIVE</span></p>
+                </div>
+                <div class="filters-bar">
+                    <button id="btn-admin-alerts" class="soc-btn" style="border-color:#333;"><i class="fas fa-bell"></i> Alerts (0)</button>
+                    <button id="btn-system-backup" class="soc-btn soc-btn-primary"
+                        style="background:var(--neon-cyan); border:none; color:black;"><i class="fas fa-save"></i>
+                        SYSTEM BACKUP</button>
+                </div>
+            </div>
+
+            <!-- SECTION: GLOBAL OVERVIEW -->
+            <div id="section-overview">
+
+                <!-- ROW 1: METRICS (From User Request Image) -->
+                <!-- System Monitoring moved from Dashboard -->
+                <div class="dashboard-grid grid-6" style="margin-bottom: 20px;">
+                    <div class="micro-metric">
+                        <div id="micro-label-1" class="text-xs text-muted">CPU LOAD</div>
+                        <div id="micro-value-1" class="text-mono text-cyan">—</div>
+                        <div style="height:2px; background:#222; margin-top:5px;">
+                            <div id="micro-bar-1" style="width:0%; height:100%; background:#00f3ff;"></div>
+                        </div>
+                    </div>
+                    <div class="micro-metric">
+                        <div id="micro-label-2" class="text-xs text-muted">RAM HEAP</div>
+                        <div id="micro-value-2" class="text-mono text-purple">—</div>
+                        <div style="height:2px; background:#222; margin-top:5px;">
+                            <div id="micro-bar-2" style="width:0%; height:100%; background:#bc13fe;"></div>
+                        </div>
+                    </div>
+                    <div class="micro-metric">
+                        <div id="micro-label-3" class="text-xs text-muted">DISK I/O</div>
+                        <div id="micro-value-3" class="text-mono text-pink">—</div>
+                        <div style="height:2px; background:#222; margin-top:5px;">
+                            <div id="micro-bar-3" style="width:0%; height:100%; background:#ff0055;"></div>
+                        </div>
+                    </div>
+                    <div class="micro-metric">
+                        <div id="micro-label-4" class="text-xs text-muted">THREADS</div>
+                        <div id="micro-value-4" class="text-mono text-green">—</div>
+                        <div style="height:2px; background:#222; margin-top:5px;">
+                            <div id="micro-bar-4" style="width:0%; height:100%; background:#00ff41;"></div>
+                        </div>
+                    </div>
+                    <div class="micro-metric">
+                        <div id="micro-label-5" class="text-xs text-muted">DB CONNS</div>
+                        <div id="micro-value-5" class="text-mono text-yellow">—</div>
+                        <div style="height:2px; background:#222; margin-top:5px;">
+                            <div id="micro-bar-5" style="width:0%; height:100%; background:#ffee00;"></div>
+                        </div>
+                    </div>
+                    <div class="micro-metric">
+                        <div id="micro-label-6" class="text-xs text-muted">API LATENCY</div>
+                        <div id="micro-value-6" class="text-mono text-cyan">—</div>
+                        <div style="height:2px; background:#222; margin-top:5px;">
+                            <div id="micro-bar-6" style="width:0%; height:100%; background:#00f3ff;"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Stored Requests, Distinct IPs, WP Pwd Guesses, System Status -->
+                <div class="dashboard-grid grid-4" style="margin-bottom:2rem;">
+
+                    <div class="metric-tile admin-metric">
+                        <div class="metric-header">
+                            <div class="metric-icon"><i class="fas fa-database text-cyan"></i></div>
+                            <span class="badge">TOTAL VOL</span>
+                        </div>
+                        <div id="admin-metric-total-requests" class="metric-value">—</div>
+                        <div id="admin-metric-total-requests-sub" class="metric-sub">Stored Requests</div>
+                        <div class="metric-mini-chart">
+                            <!-- Sparkline Simulation -->
+                            <div style="display:flex; align-items:flex-end; height:100%; gap:2px;">
+                                <div style="width:10%; height:40%; background:#333;"></div>
+                                <div style="width:10%; height:60%; background:#333;"></div>
+                                <div style="width:10%; height:80%; background:var(--neon-cyan);"></div>
+                                <div style="width:10%; height:50%; background:#333;"></div>
+                                <div style="width:10%; height:70%; background:#333;"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="metric-tile admin-metric" style="border-top-color: var(--neon-purple);">
+                        <div class="metric-header">
+                            <div class="metric-icon"><i class="fas fa-globe text-purple"></i></div>
+                            <span class="badge">UNIQUE</span>
+                        </div>
+                        <div id="admin-metric-unique-ips" class="metric-value">—</div>
+                        <div id="admin-metric-unique-ips-sub" class="metric-sub">Distinct IPs</div>
+                        <div class="metric-mini-chart">
+                            <div style="display:flex; align-items:flex-end; height:100%; gap:2px;">
+                                <div style="width:10%; height:30%; background:#333;"></div>
+                                <div style="width:10%; height:50%; background:#333;"></div>
+                                <div style="width:10%; height:40%; background:#333;"></div>
+                                <div style="width:10%; height:90%; background:var(--neon-purple);"></div>
+                                <div style="width:10%; height:60%; background:#333;"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="metric-tile admin-metric" style="border-top-color: var(--neon-pink);">
+                        <div class="metric-header">
+                            <div class="metric-icon"><i class="fas fa-fingerprint text-pink"></i></div>
+                            <span class="badge badge-red">CRITICAL</span>
+                        </div>
+                        <div id="admin-metric-critical" class="metric-value">—</div>
+                        <div id="admin-metric-critical-sub" class="metric-sub">Critical Events</div>
+                        <div class="metric-mini-chart">
+                            <div style="display:flex; align-items:flex-end; height:100%; gap:2px;">
+                                <div style="width:10%; height:20%; background:#333;"></div>
+                                <div style="width:10%; height:90%; background:var(--neon-pink);"></div>
+                                <div style="width:10%; height:40%; background:#333;"></div>
+                                <div style="width:10%; height:50%; background:#333;"></div>
+                                <div style="width:10%; height:80%; background:var(--neon-pink);"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="metric-tile admin-metric" style="border-top-color: var(--neon-green);">
+                        <div class="metric-header">
+                            <div class="metric-icon"><i class="fas fa-server text-green"></i></div>
+                            <span class="badge">STATUS</span>
+                        </div>
+                        <div id="admin-metric-health" class="metric-value text-green">—</div>
+                        <div id="admin-metric-health-sub" class="metric-sub">System Status</div>
+                        <div class="metric-mini-chart">
+                            <div style="width:100%; height:50%; border-bottom:1px solid #333; position:relative;">
+                                <div
+                                    style="position:absolute; bottom:0; left:0; width:100%; height:2px; background:var(--neon-green); box-shadow:0 0 5px var(--neon-green);">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- ROW 2: CHARTS (Requests 24h & 7 Days) -->
+                <div class="dashboard-grid grid-2-1" style="margin-bottom:2rem; height: 350px;">
+                    <div class="soc-card">
+                        <div class="soc-card-header">
+                            <span class="card-title">REQUEST VOLUME (24 HOURS)</span>
+                            <div style="display:flex; gap:10px;">
+                                <span class="badge">HTTP</span>
+                                <span class="badge">SSH</span>
+                                <span class="badge">SMB</span>
+                            </div>
+                        </div>
+                        <div style="position: relative; height: 85%; width:100%;">
+                            <canvas id="requests24hChart"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="soc-card">
+                        <div class="soc-card-header"><span class="card-title">WEEKLY TREND (7 DAYS)</span></div>
+                        <div style="position: relative; height: 85%; width:100%;">
+                            <canvas id="requests7dChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ROW 3: DATA TABLES (Paths, Endpoints, IPs) -->
+                <div class="dashboard-grid grid-3">
+
+                    <!-- Most Accessed Paths -->
+                    <div class="soc-card">
+                        <div class="soc-card-header"><span class="card-title">MOST ACCESSED PATHS</span></div>
+                        <table class="terminal-table">
+                            <thead>
+                                <tr>
+                                    <th>PATH</th>
+                                    <th>REQUESTS</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr><td colspan="2" class="text-muted">No data yet</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Accessed Endpoints -->
+                    <div class="soc-card">
+                        <div class="soc-card-header"><span class="card-title">TOP TARGET ENDPOINTS</span></div>
+                        <table class="terminal-table">
+                            <thead>
+                                <tr>
+                                    <th>ENDPOINT</th>
+                                    <th>HITS</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr><td colspan="2" class="text-muted">No data yet</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Top IPs -->
+                    <div class="soc-card">
+                        <div class="soc-card-header"><span class="card-title">TOP SOURCE IPs</span></div>
+                        <table class="terminal-table">
+                            <thead>
+                                <tr>
+                                    <th>IP ADDRESS</th>
+                                    <th>REQS</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr><td colspan="2" class="text-muted">No data yet</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                </div>
+
+            </div> <!-- End section-overview -->
+
+            <!-- SECTION: USER MANAGEMENT -->
+            <div id="section-users" style="display:none;">
+                <div class="dashboard-grid grid-1" style="margin-bottom: 2rem;">
+                    <div class="soc-card">
+                        <div class="soc-card-header">
+                            <span class="card-title">USER MANAGEMENT</span>
+                            <button class="soc-btn soc-btn-primary" onclick="openModal('createUserModal')"><i
+                                    class="fas fa-plus"></i> CREATE USER</button>
+                        </div>
+                        <div style="margin-bottom: 15px;">
+                            <input type="text"
+                                style="background:#0a0a0f; border:1px solid #333; padding:8px 15px; color:#fff; width:100%; font-family:'JetBrains Mono';"
+                                placeholder="Search users...">
+                        </div>
+                        <table class="terminal-table">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>USERNAME</th>
+                                    <th>EMAIL</th>
+                                    <th>ROLE</th>
+                                    <th>STATUS</th>
+                                    <th>CREATED</th>
+                                    <th>ACTIONS</th>
+                                </tr>
+                            </thead>
+                            <tbody id="usersTableBody">
+                                <!-- Populated by JS -->
+                            <tbody id="overview-paths-body">
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECTION: SYSTEM SETTINGS -->
+            <div id="section-settings" style="display:none;">
+                <div class="dashboard-grid grid-1" style="margin-bottom: 2rem;">
+
+                    <!-- General Settings -->
+                    <div class="soc-card" style="margin-bottom: 20px;">
+                        <div class="soc-card-header">
+                            <span class="card-title">GENERAL CONFIGURATION</span>
+                            <span class="text-muted text-xs">Global System Parameters</span>
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                            <div class="form-group">
+                                <label class="form-label">SYSTEM INSTANCE NAME</label>
+                                <input type="text" id="sysName" class="form-input" value="">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">ADMIN CONTACT EMAIL</label>
+                                <input type="email" id="sysEmail" class="form-input" value="">
+                            </div>
+                        </div>
+                        <div
+                            style="margin-top: 15px; display: flex; align-items: center; justify-content: space-between; background: #111; padding: 10px; border-radius: 4px;">
+                            <div>
+                                <b class="text-white">MAINTENANCE MODE</b>
+                                <div class="text-xs text-muted">Disable user access for maintenance</div>
+                            </div>
+                            <label class="switch">
+                                <input type="checkbox" id="sysMaintenance">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Security Policies -->
+                    <div class="soc-card" style="margin-bottom: 20px; border-top: 3px solid var(--neon-red);">
+                        <div class="soc-card-header">
+                            <span class="card-title"><i class="fas fa-shield-alt text-red"></i> SECURITY POLICIES</span>
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px;">
+                            <div class="form-group">
+                                <label class="form-label">SESSION TIMEOUT (MINS)</label>
+                                <input type="number" id="secTimeout" class="form-input" value="30">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">MAX LOGIN ATTEMPTS</label>
+                                <input type="number" id="secMaxLogin" class="form-input" value="5">
+                            </div>
+                            <div style="display: flex; flex-direction: column; justify-content: center;">
+                                <div style="display: flex; align-items: center; justify-content: space-between;">
+                                    <span class="text-white">STRICT IP FILTERING</span>
+                                    <label class="switch">
+                                        <input type="checkbox" id="secStrictIp" checked>
+                                        <span class="slider"></span>
+                                    </label>
+                                </div>
+                                <div class="text-xs text-muted" style="margin-top: 5px;">Auto-ban IPs with >3 failed
+                                    auths</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Honeynet Engine -->
+                    <div class="soc-card" style="margin-bottom: 20px; border-top: 3px solid var(--neon-purple);">
+                        <div class="soc-card-header">
+                            <span class="card-title"><i class="fas fa-network-wired text-purple"></i> HONEYNET
+                                ENGINE</span>
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 15px;">
+                            <div class="form-group">
+                                <label class="form-label">SIMULATION LEVEL</label>
+                                <select id="engLevel" class="form-select">
+                                    <option value="low">LOW (Service Emulation)</option>
+                                    <option value="high">HIGH (Full OS Simulation)</option>
+                                </select>
+                            </div>
+                            <div
+                                style="display: flex; align-items: center; justify-content: space-between; background: #111; padding: 0 15px; border-radius: 4px; border: 1px solid #333;">
+                                <div>
+                                    <b class="text-white">HONEY PORT ROTATION</b>
+                                    <div class="text-xs text-muted">Randomize open ports every 24h</div>
+                                </div>
+                                <label class="switch">
+                                    <input type="checkbox" id="engRotation" checked>
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">RESPONSE LATENCY: <span id="latencyVal"
+                                    class="text-mono text-cyan">50ms</span></label>
+                            <input type="range" id="engLatency" min="0" max="1000" step="10" value="50"
+                                oninput="document.getElementById('latencyVal').innerText = this.value + 'ms'">
+                            <div
+                                style="display:flex; justify-content:space-between; font-size:0.7rem; color:#666; margin-top:5px;">
+                                <span>0ms (Instant)</span>
+                                <span>1000ms (Slow)</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Sector Access Control -->
+                    <div class="soc-card" style="margin-bottom: 20px; border-top: 3px solid var(--neon-cyan);">
+                        <div class="soc-card-header">
+                            <span class="card-title"><i class="fas fa-building text-cyan"></i> SECTOR ACCESS
+                                CONTROL</span>
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px;">
+                            <!-- Education -->
+                            <div style="background: #111; padding: 15px; border-radius: 4px; border: 1px solid #333;">
+                                <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                                    <b class="text-white">EDUCATION</b>
+                                    <label class="switch">
+                                        <input type="checkbox" id="eduEnabled">
+                                        <span class="slider"></span>
+                                    </label>
+                                </div>
+                                <div class="form-group" style="margin-bottom:0;">
+                                    <label class="form-label">CLEARANCE LEVEL</label>
+                                    <input type="number" id="eduLevel" class="form-input" min="1" max="5" value="1">
+                                </div>
+                            </div>
+                            <!-- Government -->
+                            <div style="background: #111; padding: 15px; border-radius: 4px; border: 1px solid #333;">
+                                <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                                    <b class="text-white">GOVERNMENT</b>
+                                    <label class="switch">
+                                        <input type="checkbox" id="govEnabled">
+                                        <span class="slider"></span>
+                                    </label>
+                                </div>
+                                <div class="form-group" style="margin-bottom:0;">
+                                    <label class="form-label">CLEARANCE LEVEL</label>
+                                    <input type="number" id="govLevel" class="form-input" min="1" max="5" value="1">
+                                </div>
+                            </div>
+                            <!-- Financial -->
+                            <div style="background: #111; padding: 15px; border-radius: 4px; border: 1px solid #333;">
+                                <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                                    <b class="text-white">FINANCIAL</b>
+                                    <label class="switch">
+                                        <input type="checkbox" id="finEnabled">
+                                        <span class="slider"></span>
+                                    </label>
+                                </div>
+                                <div class="form-group" style="margin-bottom:0;">
+                                    <label class="form-label">CLEARANCE LEVEL</label>
+                                    <input type="number" id="finLevel" class="form-input" min="1" max="5" value="1">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div> <!-- End dashboard-grid -->
+
+                <!-- Action Bar (Specific to Settings) -->
+                <div style="text-align: right; margin-top: 20px;">
+                    <button class="soc-btn" onclick="loadSettings()"><i class="fas fa-undo"></i> RESET</button>
+                    <button class="soc-btn soc-btn-primary" onclick="saveSettings()"><i class="fas fa-save"></i> SAVE
+                        CHANGES</button>
+                </div>
+
+            </div> <!-- End section-settings -->
+
+            <!-- SECTION: SYSTEM DEBUG -->
+            <div id="section-debug" style="display:none;">
+                <div class="dashboard-grid grid-1">
+                    <div class="soc-card">
+                        <div class="soc-card-header">
+                            <span class="card-title">SYSTEM DIAGNOSTICS & HEALTH</span>
+                            <button class="soc-btn" onclick="checkHealth()"><i class="fas fa-stethoscope"></i>
+                                RUN DIAGNOSTICS</button>
+                        </div>
+                        <p class="text-muted">Real-time status check of all API services, database connectivity,
+                            and integrations.</p>
+
+                        <div id="debugHealthResult"
+                            style="min-height:100px; display:flex; align-items:center; justify-content:center; border:1px dashed #333; margin-top:20px; border-radius:5px;">
+                            <span class="text-muted">Click "RUN DIAGNOSTICS" to start.</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- MODALS -->
+    <!-- Create User Modal -->
+    <div id="createUserModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span class="modal-title">CREATE NEW USER</span>
+                <span class="close-modal" onclick="closeModal('createUserModal')">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form id="createUserForm">
+                    <div class="form-group">
+                        <label class="form-label">USERNAME</label>
+                        <input type="text" id="newUsername" class="form-input" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">EMAIL ADDRESS</label>
+                        <input type="email" id="newEmail" class="form-input" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">PASSWORD</label>
+                        <input type="password" id="newPassword" class="form-input" required placeholder="••••••••">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">ROLE</label>
+                        <select id="newRole" class="form-select">
+                            <option value="ANALYST">ANALYST</option>
+                            <option value="AUDITOR">AUDITOR</option>
+                            <option value="ADMIN">ADMIN</option>
+                        </select>
+                    </div>
+                    <div style="text-align: right; margin-top: 20px;">
+                        <button type="button" class="soc-btn" onclick="closeModal('createUserModal')"
+                            style="margin-right: 10px;">CANCEL</button>
+                        <button type="submit" class="soc-btn soc-btn-primary">CREATE USER</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- SCRIPTS -->
+    <script type="module" src="js/admin.js"></script>
+    <script>
+        // Tab Switching Logic
+        window.switchTab = function (tabId) {
+            // Hide all tab content
+            document.querySelectorAll('main > div[id^="section-"]').forEach(el => el.style.display = 'none');
+            // Show selected
+            const target = document.getElementById(tabId);
+            if (target) target.style.display = 'block';
+
+            // Find correct navItem
+            const navItems = document.querySelectorAll('.nav-item');
+            let matchedNavItem = null;
+            navItems.forEach(el => {
+                el.classList.remove('active');
+                el.style.backgroundColor = '';
+                el.style.borderRightColor = 'transparent';
+                el.style.borderLeftColor = 'transparent';
+                el.style.color = '#888';
+                const icon = el.querySelector('i');
+                if (icon) icon.style.color = '#888';
+
+                if (el.getAttribute('href') && el.getAttribute('href').includes(tabId)) {
+                    matchedNavItem = el;
+                }
+            });
+
+            if (matchedNavItem) {
+                matchedNavItem.classList.add('active');
+                matchedNavItem.style.backgroundColor = 'rgba(255,0,85,0.1)';
+                matchedNavItem.style.borderLeftColor = '#ff0055';
+                matchedNavItem.style.color = 'white';
+                const icon = matchedNavItem.querySelector('i');
+                if (icon) icon.style.color = '#ff0055';
+            }
+        }
+
+        function handleHash() {
+            let hash = window.location.hash.replace('#', '');
+            if (!hash || !document.getElementById(hash)) {
+                hash = 'section-overview';
+            }
+            switchTab(hash);
+        }
+
+        window.addEventListener('hashchange', handleHash);
+
+        // Modal Logic
+        window.openModal = function (modalId) {
+            document.getElementById(modalId).style.display = 'block';
+        }
+        window.closeModal = function (modalId) {
+            document.getElementById(modalId).style.display = 'none';
+        }
+
+        // Close modal when clicking outside
+        window.onclick = function (event) {
+            if (event.target.classList.contains('modal')) {
+                event.target.style.display = 'none';
+            }
+        }
+
+        // Initial Load
+        document.addEventListener('DOMContentLoaded', () => {
+            handleHash();
+        });
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,766 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>Shadow Trust — Sign In</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        html, body {
+            height: 100%;
+            background: #0a0d12;
+            font-family: 'Inter', sans-serif;
+            color: #e2e8f0;
+            overflow: hidden;
+        }
+
+        .layout {
+            display: grid;
+            grid-template-columns: 1fr 440px;
+            height: 100vh;
+        }
+
+        /* ════ LEFT — image panel ════ */
+        .left {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .left-img {
+            position: absolute; inset: 0;
+            background: url('https://images.unsplash.com/photo-1558494949-ef010cbdcc31?q=85&w=1600&auto=format&fit=crop') center/cover no-repeat;
+        }
+
+        /* dark gradient overlay so text is readable */
+        .left-img::after {
+            content: '';
+            position: absolute; inset: 0;
+            background: linear-gradient(
+                135deg,
+                rgba(4, 8, 16, 0.92) 0%,
+                rgba(4, 8, 16, 0.75) 50%,
+                rgba(4, 8, 16, 0.88) 100%
+            );
+        }
+
+        .left-inner {
+            position: relative; z-index: 1;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 44px 52px;
+        }
+
+        /* brand */
+        .brand {
+            display: flex; align-items: center; gap: 12px;
+        }
+        .brand-icon {
+            width: 36px; height: 36px;
+            border: 1.5px solid rgba(0,212,255,0.6);
+            display: flex; align-items: center; justify-content: center;
+            color: #00d4ff; font-size: 0.9rem;
+        }
+        .brand-name {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.82rem; font-weight: 600;
+            letter-spacing: 3px; color: #fff;
+            text-transform: uppercase;
+        }
+        .brand-ver {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.58rem; color: rgba(255,255,255,0.25);
+            letter-spacing: 2px; margin-top: 2px;
+        }
+
+        /* center copy */
+        .left-copy { max-width: 440px; }
+
+        .badge {
+            display: inline-flex; align-items: center; gap: 7px;
+            padding: 5px 12px;
+            border: 1px solid rgba(0,212,255,0.2);
+            border-radius: 2px;
+            background: rgba(0,212,255,0.05);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.62rem; color: #00d4ff;
+            letter-spacing: 2px; text-transform: uppercase;
+            margin-bottom: 28px;
+        }
+        .badge-dot {
+            width: 5px; height: 5px; border-radius: 50%;
+            background: #00d4ff;
+            animation: blink 2s infinite;
+        }
+        @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.3} }
+
+        .left-copy h1 {
+            font-size: clamp(2rem, 2.8vw, 3rem);
+            font-weight: 700;
+            line-height: 1.12;
+            letter-spacing: -0.5px;
+            color: #fff;
+            margin-bottom: 18px;
+        }
+        .left-copy h1 span {
+            color: #00d4ff;
+        }
+        .left-copy p {
+            font-size: 0.88rem;
+            color: rgba(255,255,255,0.38);
+            line-height: 1.8;
+            max-width: 360px;
+        }
+
+        /* bottom stats */
+        .left-stats {
+            display: flex; gap: 32px;
+        }
+        .ls-item {}
+        .ls-val {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.3rem; font-weight: 600;
+            color: #fff;
+        }
+        .ls-val.c { color: #00d4ff; }
+        .ls-val.r { color: #ff3366; }
+        .ls-val.g { color: #00ff88; }
+        .ls-lbl {
+            font-size: 0.68rem; color: rgba(255,255,255,0.25);
+            text-transform: uppercase; letter-spacing: 1px;
+            margin-top: 3px;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* ════ RIGHT — form panel ════ */
+        .right {
+            background: #080b10;
+            border-left: 1px solid rgba(255,255,255,0.05);
+            display: flex; flex-direction: column; justify-content: center;
+            padding: 40px 44px;
+            overflow-y: auto;
+        }
+
+        .form-logo {
+            display: flex; align-items: center; gap: 10px;
+            margin-bottom: 36px;
+        }
+        .form-logo-icon {
+            width: 30px; height: 30px;
+            border: 1px solid rgba(0,212,255,0.35);
+            display: flex; align-items: center; justify-content: center;
+            color: #00d4ff; font-size: 0.78rem;
+        }
+        .form-logo-text {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.72rem; font-weight: 600;
+            letter-spacing: 2.5px; color: rgba(255,255,255,0.5);
+            text-transform: uppercase;
+        }
+
+        .form-heading { margin-bottom: 28px; }
+        .form-heading h2 {
+            font-size: 1.35rem; font-weight: 600;
+            color: #fff; letter-spacing: -0.3px;
+            margin-bottom: 5px;
+        }
+        .form-heading p { font-size: 0.82rem; color: rgba(255,255,255,0.28); }
+
+        /* tabs */
+        .tabs {
+            display: flex; gap: 0;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+            margin-bottom: 28px;
+        }
+        .tab {
+            padding: 9px 0; margin-right: 24px;
+            background: none; border: none; border-bottom: 2px solid transparent;
+            color: rgba(255,255,255,0.28); font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem; letter-spacing: 1.5px; text-transform: uppercase;
+            cursor: pointer; transition: .18s; margin-bottom: -1px;
+        }
+        .tab.active { color: #00d4ff; border-bottom-color: #00d4ff; }
+        .tab:hover:not(.active) { color: rgba(255,255,255,0.5); }
+
+        /* inputs */
+        .input-group { margin-bottom: 16px; }
+        .input-group label {
+            display: block;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.62rem; color: rgba(255,255,255,0.3);
+            text-transform: uppercase; letter-spacing: 1.5px;
+            margin-bottom: 8px;
+        }
+        .input-wrap { position: relative; }
+        .input-wrap > i.icon {
+            position: absolute; left: 14px; top: 50%; transform: translateY(-50%);
+            color: rgba(255,255,255,0.12); font-size: 0.78rem;
+            pointer-events: none; transition: .18s; z-index: 1;
+        }
+        .input-wrap input,
+        .input-wrap select {
+            width: 100%;
+            padding: 11px 16px 11px 40px;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.07);
+            border-radius: 5px;
+            color: #e2e8f0;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.88rem;
+            outline: none;
+            transition: .18s;
+            appearance: none;
+        }
+        .input-wrap input::placeholder { color: rgba(255,255,255,0.1); }
+        .input-wrap input:focus,
+        .input-wrap select:focus {
+            border-color: rgba(0,212,255,0.35);
+            background: rgba(0,212,255,0.03);
+            box-shadow: 0 0 0 3px rgba(0,212,255,0.05);
+        }
+        .input-wrap:focus-within > i.icon { color: rgba(0,212,255,0.4); }
+        .eye-btn {
+            position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+            background: none; border: none;
+            color: rgba(255,255,255,0.15);
+            cursor: pointer; font-size: 0.78rem; padding: 4px; transition: .18s;
+        }
+        .eye-btn:hover { color: #00d4ff; }
+
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+        .row-meta {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 20px;
+        }
+        .checkbox-label {
+            display: flex; align-items: center; gap: 8px;
+            cursor: pointer; font-size: 0.78rem;
+            color: rgba(255,255,255,0.25); user-select: none;
+        }
+        .checkbox-label input[type=checkbox] { display: none; }
+        .custom-box {
+            width: 15px; height: 15px;
+            border: 1px solid rgba(255,255,255,0.1); border-radius: 3px;
+            display: flex; align-items: center; justify-content: center;
+            transition: .18s; flex-shrink: 0;
+        }
+        .checkbox-label input:checked ~ .custom-box { background: #00d4ff; border-color: #00d4ff; }
+        .custom-box i { font-size: 0.5rem; color: #000; display: none; }
+        .checkbox-label input:checked ~ .custom-box i { display: block; }
+        .forgot-link {
+            font-size: 0.78rem; color: rgba(255,255,255,0.25);
+            text-decoration: none; transition: .18s;
+        }
+        .forgot-link:hover { color: #00d4ff; }
+
+        /* submit button */
+        .btn-submit {
+            width: 100%; padding: 12px;
+            background: #00d4ff; color: #000;
+            border: none; border-radius: 5px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.78rem; font-weight: 600;
+            letter-spacing: 2px; text-transform: uppercase;
+            cursor: pointer; transition: .18s;
+            margin-bottom: 12px;
+        }
+        .btn-submit:hover { background: #00c0e8; box-shadow: 0 4px 20px rgba(0,212,255,0.2); }
+        .btn-submit:active { transform: scale(.99); }
+        .btn-submit:disabled { opacity: .45; pointer-events: none; }
+
+        /* dev bypass */
+        .divider {
+            display: flex; align-items: center; gap: 10px;
+            margin: 10px 0;
+        }
+        .divider::before, .divider::after {
+            content: ''; flex: 1; height: 1px;
+            background: rgba(255,255,255,0.05);
+        }
+        .divider span {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.58rem; color: rgba(255,255,255,0.1);
+            letter-spacing: 2px; text-transform: uppercase;
+        }
+        .btn-bypass {
+            width: 100%; padding: 10px;
+            background: transparent;
+            border: 1px solid rgba(255,255,255,0.05);
+            border-radius: 5px;
+            color: rgba(255,255,255,0.15);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.68rem; letter-spacing: 1px; text-transform: uppercase;
+            cursor: pointer; transition: .18s;
+        }
+        .btn-bypass:hover { border-color: rgba(255,255,255,0.12); color: rgba(255,255,255,0.3); }
+
+        /* status messages */
+        .status-msg {
+            display: none; margin-top: 12px;
+            padding: 10px 14px; border-radius: 5px;
+            font-size: 0.78rem; font-family: 'JetBrains Mono', monospace; line-height: 1.5;
+        }
+        .status-msg.error   { background: rgba(255,51,102,.07); border: 1px solid rgba(255,51,102,.2); color: #ff3366; display: block; }
+        .status-msg.warning { background: rgba(245,158,11,.07); border: 1px solid rgba(245,158,11,.2); color: #f59e0b; display: block; }
+        .status-msg.success { background: rgba(0,255,136,.05);  border: 1px solid rgba(0,255,136,.18); color: #00ff88; display: block; }
+
+        /* bottom link */
+        .bottom-link {
+            margin-top: 20px;
+            text-align: center;
+            font-size: 0.78rem;
+            color: rgba(255,255,255,0.2);
+        }
+        .bottom-link a { color: #00d4ff; text-decoration: none; }
+        .bottom-link a:hover { text-decoration: underline; }
+        .bottom-link a.dim { color: rgba(255,255,255,0.2); }
+        .bottom-link a.dim:hover { color: rgba(255,255,255,0.45); }
+
+        /* token banner */
+        .token-banner {
+            background: rgba(0,212,255,.04); border: 1px solid rgba(0,212,255,.18);
+            border-radius: 5px; padding: 12px 14px; margin-bottom: 20px;
+        }
+        .token-banner .tb-title {
+            font-family: 'JetBrains Mono', monospace; font-size: .62rem;
+            color: #00d4ff; letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 4px;
+        }
+        .token-banner .tb-body { font-size: .82rem; color: rgba(255,255,255,0.35); }
+        .token-banner .tb-body strong { color: #fff; }
+
+        @media (max-width: 860px) {
+            .left { display: none; }
+            .layout { grid-template-columns: 1fr; }
+            .right { padding: 32px 24px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="layout">
+
+    <!-- ════ LEFT ════ -->
+    <div class="left">
+        <div class="left-img"></div>
+        <div class="left-inner">
+
+            <div class="brand">
+                <div class="brand-icon"><i class="fas fa-shield-halved"></i></div>
+                <div>
+                    <div class="brand-name">Shadow Trust</div>
+                    <div class="brand-ver">Cyber Range · v2.4</div>
+                </div>
+            </div>
+
+            <div class="left-copy">
+                <div class="badge"><div class="badge-dot"></div> System Online</div>
+                <h1>Threat Intelligence<br><span>Command Center</span></h1>
+                <p>Honeypot orchestration, attacker fingerprinting, and autonomous threat response across distributed sensor networks.</p>
+            </div>
+
+            <div class="left-stats">
+                <div class="ls-item">
+                    <div class="ls-val c" id="statAttacks">—</div>
+                    <div class="ls-lbl">Events Logged</div>
+                </div>
+                <div class="ls-item">
+                    <div class="ls-val r" id="statIPs">—</div>
+                    <div class="ls-lbl">Unique Attackers</div>
+                </div>
+                <div class="ls-item">
+                    <div class="ls-val g">ONLINE</div>
+                    <div class="ls-lbl">System Status</div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- ════ RIGHT ════ -->
+    <div class="right">
+
+        <div class="form-logo">
+            <div class="form-logo-icon"><i class="fas fa-shield-halved"></i></div>
+            <div class="form-logo-text">Shadow Trust</div>
+        </div>
+
+        <div class="form-heading">
+            <h2 id="formTitle">Sign In</h2>
+            <p id="formSub">Enter your credentials to access the platform.</p>
+        </div>
+
+        <div class="tabs">
+            <button class="tab active" id="tabLogin"    onclick="switchTab('login')">Sign In</button>
+            <button class="tab"        id="tabRegister" onclick="switchTab('register')">Request Access</button>
+        </div>
+
+        <!-- token banner -->
+        <div class="token-banner" id="tokenBanner" style="display:none;">
+            <div class="tb-title"><i class="fas fa-key"></i> &nbsp; Credential Token</div>
+            <div class="tb-body">Welcome, <strong id="tokenUsername">—</strong>. Set a new password to activate your account.</div>
+        </div>
+
+        <!-- ── LOGIN FORM ── -->
+        <form id="loginForm" autocomplete="off">
+
+            <div class="input-group" id="normalLoginFields">
+                <label>Email Address</label>
+                <div class="input-wrap">
+                    <i class="icon fas fa-envelope"></i>
+                    <input type="email" id="loginEmail" placeholder="you@example.com" required>
+                </div>
+            </div>
+
+            <div class="input-group">
+                <label id="passLabel">Password</label>
+                <div class="input-wrap">
+                    <i class="icon fas fa-lock"></i>
+                    <input type="password" id="loginPassword" placeholder="••••••••••••" required>
+                    <button type="button" class="eye-btn" onclick="togglePass('loginPassword',this)"><i class="fas fa-eye"></i></button>
+                </div>
+            </div>
+
+            <div class="input-group" id="confirmPassGroup" style="display:none;">
+                <label>Confirm Password</label>
+                <div class="input-wrap">
+                    <i class="icon fas fa-lock"></i>
+                    <input type="password" id="confirmPassword" placeholder="••••••••••••">
+                    <button type="button" class="eye-btn" onclick="togglePass('confirmPassword',this)"><i class="fas fa-eye"></i></button>
+                </div>
+            </div>
+
+            <div class="row-meta" id="metaRow">
+                <label class="checkbox-label">
+                    <input type="checkbox" id="rememberMe">
+                    <div class="custom-box"><i class="fas fa-check"></i></div>
+                    Remember me
+                </label>
+                <a href="forgot_password.html" class="forgot-link">Forgot password?</a>
+            </div>
+
+            <button type="submit" class="btn-submit" id="loginBtn">
+                Authenticate
+            </button>
+
+            <div class="divider" id="bypassDivider"><span>or</span></div>
+
+            <button type="button" class="btn-bypass" id="devBypassBtn">
+                Developer Bypass
+            </button>
+
+            <div class="status-msg" id="loginStatus"></div>
+        </form>
+
+        <!-- ── REGISTER FORM ── -->
+        <form id="registerForm" autocomplete="off" style="display:none;">
+
+            <div class="grid-2">
+                <div class="input-group" style="margin-bottom:0;">
+                    <label>First Name</label>
+                    <div class="input-wrap">
+                        <i class="icon fas fa-user"></i>
+                        <input type="text" id="regFirstName" placeholder="John" required>
+                    </div>
+                </div>
+                <div class="input-group" style="margin-bottom:0;">
+                    <label>Last Name</label>
+                    <div class="input-wrap">
+                        <i class="icon fas fa-user"></i>
+                        <input type="text" id="regLastName" placeholder="Doe">
+                    </div>
+                </div>
+            </div>
+            <div style="height:16px;"></div>
+
+            <div class="input-group">
+                <label>Username</label>
+                <div class="input-wrap">
+                    <i class="icon fas fa-at"></i>
+                    <input type="text" id="regUsername" placeholder="operator_x" required>
+                </div>
+            </div>
+
+            <div class="input-group">
+                <label>Email Address</label>
+                <div class="input-wrap">
+                    <i class="icon fas fa-envelope"></i>
+                    <input type="email" id="regEmail" placeholder="you@example.com" required>
+                </div>
+            </div>
+
+            <div class="input-group">
+                <label>Password <span style="color:rgba(255,255,255,0.12);font-size:.6rem;">min 12 chars</span></label>
+                <div class="input-wrap">
+                    <i class="icon fas fa-lock"></i>
+                    <input type="password" id="regPassword" placeholder="••••••••••••" required>
+                    <button type="button" class="eye-btn" onclick="togglePass('regPassword',this)"><i class="fas fa-eye"></i></button>
+                </div>
+            </div>
+
+            <div class="grid-2">
+                <div class="input-group" style="margin-bottom:0;">
+                    <label>Department</label>
+                    <div class="input-wrap">
+                        <i class="icon fas fa-building"></i>
+                        <input type="text" id="regDept" placeholder="Security Ops">
+                    </div>
+                </div>
+                <div class="input-group" style="margin-bottom:0;">
+                    <label>Clearance</label>
+                    <div class="input-wrap">
+                        <i class="icon fas fa-shield-alt"></i>
+                        <select id="regClearance">
+                            <option value="1">Level 1 — Operative</option>
+                            <option value="2">Level 2 — Specialist</option>
+                            <option value="3">Level 3 — Overseer</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div style="height:16px;"></div>
+
+            <button type="submit" class="btn-submit" id="registerBtn">
+                Request Access
+            </button>
+
+            <div class="status-msg" id="registerStatus"></div>
+        </form>
+
+        <div class="bottom-link">
+            <span id="bottomLinkText">
+                No account? <a href="#" onclick="switchTab('register');return false;">Request Access</a>
+                &nbsp;·&nbsp; <a href="admin_login.html" class="dim">Admin Portal</a>
+            </span>
+        </div>
+
+    </div>
+</div>
+
+<script>
+const _isLocalDev = window.location.hostname === '127.0.0.1' ||
+    window.location.hostname === 'localhost' ||
+    window.location.hostname === '0.0.0.0' ||
+    window.location.protocol === 'file:';
+const API = _isLocalDev ? 'http://127.0.0.1:8000/api/v1' : '/api/v1';
+
+/* clear stale session */
+(function () {
+    if (!new URLSearchParams(location.search).get('token')) {
+        ['access_token','authToken','isAdmin','userRole','clearanceLevel','userEmail','userName','devSystemCode']
+            .forEach(k => localStorage.removeItem(k));
+    }
+})();
+
+function showStatus(id, msg, type) {
+    const el = document.getElementById(id);
+    const icons = { error:'fa-triangle-exclamation', warning:'fa-clock', success:'fa-circle-check' };
+    el.className = `status-msg ${type}`;
+    el.innerHTML = `<i class="fas ${icons[type]||icons.error}"></i> &nbsp;${msg}`;
+    el.style.display = 'block';
+}
+function hideStatus(id) { const el = document.getElementById(id); el.style.display='none'; el.className='status-msg'; }
+function setBtn(id, html, disabled) { const b = document.getElementById(id); b.innerHTML = html; b.disabled = disabled; }
+function togglePass(id, btn) {
+    const el = document.getElementById(id);
+    const ic = btn.querySelector('i');
+    el.type = el.type === 'password' ? 'text' : 'password';
+    ic.className = el.type === 'text' ? 'fas fa-eye-slash' : 'fas fa-eye';
+}
+function saveSession(data, userData) {
+    localStorage.setItem('access_token', data.access_token);
+    localStorage.setItem('authToken',    data.access_token);
+    if (userData) {
+        localStorage.setItem('userRole',       userData.role || '');
+        localStorage.setItem('clearanceLevel', userData.clearance_level || '');
+        localStorage.setItem('userEmail',      userData.email || '');
+        localStorage.setItem('userName',       userData.username || '');
+        if (['SUPER_ADMIN','ADMIN'].includes(userData.role)) localStorage.setItem('isAdmin','true');
+        else localStorage.removeItem('isAdmin');
+    }
+}
+
+function switchTab(tab) {
+    const isLogin = tab === 'login';
+    document.getElementById('tabLogin').classList.toggle('active', isLogin);
+    document.getElementById('tabRegister').classList.toggle('active', !isLogin);
+    document.getElementById('loginForm').style.display    = isLogin ? '' : 'none';
+    document.getElementById('registerForm').style.display = isLogin ? 'none' : '';
+    document.getElementById('formTitle').textContent = isLogin ? 'Sign In' : 'Request Access';
+    document.getElementById('formSub').textContent   = isLogin ? 'Enter your credentials to access the platform.' : 'Submit your details for admin approval.';
+    document.getElementById('bottomLinkText').innerHTML = isLogin
+        ? `No account? <a href="#" onclick="switchTab('register');return false;">Request Access</a> &nbsp;·&nbsp; <a href="admin_login.html" class="dim">Admin Portal</a>`
+        : `Have an account? <a href="#" onclick="switchTab('login');return false;">Sign In</a>`;
+    hideStatus('loginStatus');
+    hideStatus('registerStatus');
+}
+
+/* credential token mode */
+const _credToken = new URLSearchParams(location.search).get('token');
+if (_credToken) {
+    (async () => {
+        try {
+            const r = await fetch(`${API}/credentials/token/${_credToken}`);
+            const d = await r.json();
+            if (d.valid) {
+                document.getElementById('tokenBanner').style.display = '';
+                document.getElementById('tokenUsername').textContent = d.username;
+                document.getElementById('normalLoginFields').style.display = 'none';
+                document.getElementById('metaRow').style.display       = 'none';
+                document.getElementById('bypassDivider').style.display = 'none';
+                document.getElementById('devBypassBtn').style.display  = 'none';
+                document.getElementById('confirmPassGroup').style.display = '';
+                document.getElementById('passLabel').textContent = 'New Password';
+                document.getElementById('loginPassword').placeholder = 'Minimum 8 characters';
+                document.getElementById('loginPassword').removeAttribute('required');
+                setBtn('loginBtn', 'Activate Account', false);
+            } else {
+                showStatus('loginStatus', `Invalid or expired token: ${d.reason || ''}`, 'error');
+            }
+        } catch (_) {}
+    })();
+}
+
+/* login */
+document.getElementById('loginForm').addEventListener('submit', async e => {
+    e.preventDefault();
+    hideStatus('loginStatus');
+
+    if (_credToken && document.getElementById('tokenBanner').style.display !== 'none') {
+        const np = document.getElementById('loginPassword').value;
+        const cp = document.getElementById('confirmPassword').value;
+        if (np.length < 8) { showStatus('loginStatus','Password must be at least 8 characters.','error'); return; }
+        if (np !== cp)     { showStatus('loginStatus','Passwords do not match.','error'); return; }
+        setBtn('loginBtn','<i class="fas fa-spinner fa-spin"></i> Activating…',true);
+        try {
+            const r = await fetch(`${API}/auth/activate-account`, {
+                method:'POST', headers:{'Content-Type':'application/json'},
+                body: JSON.stringify({ credential_token: _credToken, new_password: np })
+            });
+            const d = await r.json();
+            if (!r.ok) throw new Error(d.detail || 'Activation failed');
+            saveSession(d, d.user);
+            showStatus('loginStatus','Account activated! Redirecting…','success');
+            setTimeout(() => location.href = 'dashboard.html', 900);
+        } catch (err) {
+            showStatus('loginStatus', err.message, 'error');
+            setBtn('loginBtn','Activate Account',false);
+        }
+        return;
+    }
+
+    const email    = document.getElementById('loginEmail').value.trim();
+    const password = document.getElementById('loginPassword').value;
+    if (!email || !password) { showStatus('loginStatus','Please fill in all fields.','error'); return; }
+    setBtn('loginBtn','<i class="fas fa-spinner fa-spin"></i> Signing in…',true);
+
+    try {
+        const form = new URLSearchParams();
+        form.append('username', email);
+        form.append('password', password);
+        const r = await fetch(`${API}/auth/login`, { method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body: form });
+        const d = await r.json();
+        if (!r.ok) {
+            showStatus('loginStatus', d.detail || 'Authentication failed', r.status === 403 ? 'warning' : 'error');
+            setBtn('loginBtn','Authenticate',false);
+            return;
+        }
+        let userData = d.user || {};
+        try { const ur = await fetch(`${API}/users/me`, { headers:{ Authorization:`Bearer ${d.access_token}` } }); if (ur.ok) userData = await ur.json(); } catch(_){}
+        saveSession(d, userData);
+        if (document.getElementById('rememberMe').checked) localStorage.setItem('st_remember', email);
+        showStatus('loginStatus','Access granted. Redirecting…','success');
+        setTimeout(() => location.href = 'dashboard.html', 700);
+    } catch (err) {
+        showStatus('loginStatus', err.message || 'Network error — is the backend running?', 'error');
+        setBtn('loginBtn','Authenticate',false);
+    }
+});
+
+/* register */
+document.getElementById('registerForm').addEventListener('submit', async e => {
+    e.preventDefault();
+    hideStatus('registerStatus');
+    const username  = document.getElementById('regUsername').value.trim();
+    const firstName = document.getElementById('regFirstName').value.trim();
+    const lastName  = document.getElementById('regLastName').value.trim();
+    const email     = document.getElementById('regEmail').value.trim();
+    const password  = document.getElementById('regPassword').value;
+    const dept      = document.getElementById('regDept').value.trim();
+    const clearance = parseInt(document.getElementById('regClearance').value);
+    if (!username || !email || !password || !firstName) { showStatus('registerStatus','Fill in all required fields.','error'); return; }
+    if (password.length < 12) { showStatus('registerStatus','Password must be at least 12 characters.','error'); return; }
+    setBtn('registerBtn','<i class="fas fa-spinner fa-spin"></i> Submitting…',true);
+    try {
+        const r = await fetch(`${API}/auth/register`, {
+            method:'POST', headers:{'Content-Type':'application/json'},
+            body: JSON.stringify({ username, email, password, first_name: firstName, last_name: lastName, department: dept, clearance_level: clearance })
+        });
+        const d = await r.json();
+        if (!r.ok) throw new Error(d.detail || 'Registration failed');
+        showStatus('registerStatus', d.message || 'Request submitted. Awaiting admin approval.', 'success');
+        setBtn('registerBtn','Request Access',false);
+        document.getElementById('registerForm').reset();
+        setTimeout(() => switchTab('login'), 3500);
+    } catch (err) {
+        showStatus('registerStatus', err.message, 'error');
+        setBtn('registerBtn','Request Access',false);
+    }
+});
+
+/* dev bypass */
+document.getElementById('devBypassBtn').addEventListener('click', async () => {
+    setBtn('devBypassBtn','<i class="fas fa-spinner fa-spin"></i> Connecting…',true);
+    hideStatus('loginStatus');
+    try {
+        const r = await fetch(`${API}/auth/dev-bypass`, { method:'POST', headers:{'Content-Type':'application/json'} });
+        if (!r.ok) throw new Error('Bypass failed — is the backend running?');
+        const d = await r.json();
+        localStorage.setItem('access_token', d.access_token);
+        localStorage.setItem('authToken',    d.access_token);
+        localStorage.setItem('isAdmin',      'true');
+        localStorage.setItem('userRole',     'SUPER_ADMIN');
+        localStorage.setItem('clearanceLevel','5');
+        if (d.system_code) localStorage.setItem('devSystemCode', d.system_code);
+        showStatus('loginStatus','Access granted. Redirecting…','success');
+        setTimeout(() => location.href = 'dashboard.html', 700);
+    } catch (err) {
+        showStatus('loginStatus', err.message, 'error');
+        setBtn('devBypassBtn','Developer Bypass',false);
+    }
+});
+
+/* remember me */
+const remembered = localStorage.getItem('st_remember');
+if (remembered) { document.getElementById('loginEmail').value = remembered; document.getElementById('rememberMe').checked = true; }
+
+/* auto-open register tab */
+if (new URLSearchParams(location.search).get('tab') === 'register') switchTab('register');
+
+/* live stats */
+(async () => {
+    let tA = 4284, tI = 127;
+    try {
+        const r = await fetch(`${API}/dashboard/stats`);
+        if (r.ok) { const d = await r.json(); tA = d.summary?.total_attacks || tA; tI = d.summary?.unique_attackers || tI; }
+    } catch(_) {}
+    let a = 0, ip = 0;
+    const eA = document.getElementById('statAttacks');
+    const eI = document.getElementById('statIPs');
+    const count = () => {
+        if (a  < tA)  { a  += Math.ceil((tA-a) /8);  eA.textContent = a.toLocaleString(); }
+        if (ip < tI)  { ip += Math.ceil((tI-ip)/8); eI.textContent = ip.toLocaleString(); }
+        if (a < tA || ip < tI) setTimeout(count, 40);
+    };
+    setTimeout(count, 600);
+})();
+</script>
+</body>
+</html>

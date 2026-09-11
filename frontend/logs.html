@@ -10,39 +10,43 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         .lg-kpis { display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; margin-bottom: 16px; }
-        .lg-kpi { background: #0a0a0f; border: 1px solid #222; border-radius: 8px; padding: 12px; text-align: center; cursor: pointer; }
-        .lg-kpi.sel { border-color: #58a6ff; }
+        .lg-kpi { background: var(--st-surface-2); border: 1px solid var(--st-border); border-radius: 8px; padding: 12px; text-align: center; cursor: pointer; }
+        .lg-kpi.sel { border-color: var(--st-info); }
         .lg-kpi .v { font-size: 1.4rem; font-weight: 700; font-family: var(--font-mono, monospace); }
-        .lg-kpi .l { font-size: 0.6rem; letter-spacing: 1px; color: #888; text-transform: uppercase; margin-top: 3px; }
+        .lg-kpi .l { font-size: 0.6rem; letter-spacing: 1px; color: var(--st-text-muted); text-transform: uppercase; margin-top: 3px; }
         .lg-bar { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 14px; }
-        .lg-bar select, .lg-bar input { background: #161b22; border: 1px solid #30363d; color: #e6edf3;
+        .lg-bar select, .lg-bar input { background: var(--st-surface-hover); border: 1px solid var(--st-border); color: var(--st-text);
             padding: 7px 10px; border-radius: 6px; font: inherit; font-size: 0.85rem; }
         .lg-bar input.q { flex: 1; min-width: 200px; }
         .lg-src { display: flex; gap: 6px; }
-        .lg-src label { background: #161b22; border: 1px solid #30363d; border-radius: 6px; padding: 6px 9px;
+        .lg-src label { background: var(--st-surface-hover); border: 1px solid var(--st-border); border-radius: 6px; padding: 6px 9px;
             font-size: 0.75rem; font-family: var(--font-mono, monospace); cursor: pointer; user-select: none; }
-        .lg-src label.on { border-color: #58a6ff; color: #58a6ff; }
-        .lg-wrap { border: 1px solid #1c2128; border-radius: 8px; overflow: auto; max-height: calc(100vh - 320px); }
+        .lg-src label.on { border-color: var(--st-info); color: var(--st-info); }
+        .lg-wrap { border: 1px solid var(--st-border); border-radius: 8px; overflow: auto; max-height: calc(100vh - 320px); }
         table.lg { border-collapse: collapse; width: 100%; font-size: 0.78rem; font-family: var(--font-mono, monospace); }
-        table.lg th { position: sticky; top: 0; background: #161b22; color: #7d8590; text-align: left; padding: 8px 10px; white-space: nowrap; }
-        table.lg td { padding: 5px 10px; border-top: 1px solid #14181e; color: #c9d1d9; vertical-align: top; }
-        table.lg tr:hover td { background: #11161d; }
+        table.lg th { position: sticky; top: 0; background: var(--st-surface-hover); color: var(--st-text-muted); text-align: left; padding: 8px 10px; white-space: nowrap; }
+        table.lg td { padding: 5px 10px; border-top: 1px solid var(--st-border); color: var(--st-text-secondary); vertical-align: top; }
+        table.lg tr:hover td { background: var(--st-surface); }
         .chip { display: inline-block; padding: 1px 7px; border-radius: 5px; font-size: 0.68rem; letter-spacing: .3px; }
-        .cat-auth { background: rgba(88,166,255,.14); color: #58a6ff; }
-        .cat-recon { background: rgba(210,153,34,.14); color: #d29922; }
-        .cat-exec, .cat-c2 { background: rgba(219,109,40,.16); color: #db6d28; }
-        .cat-malware { background: rgba(248,81,73,.18); color: #f85149; }
-        .cat-lateral, .cat-exfil, .cat-persistence, .cat-privilege, .cat-defense-evasion { background: rgba(188,140,255,.16); color: #bc8cff; }
-        .cat-error { background: rgba(248,81,73,.12); color: #f85149; }
-        .cat-network, .cat-system, .cat-info { background: rgba(139,148,158,.14); color: #8b949e; }
-        .cat-audit { background: rgba(63,185,80,.14); color: #3fb950; }
-        .sev-CRITICAL { color: #f85149; font-weight: 700; }
-        .sev-HIGH { color: #db6d28; } .sev-MEDIUM { color: #d29922; }
-        .sev-LOW { color: #8b949e; } .sev-INFO { color: #6e7681; }
+        .cat-auth { background: color-mix(in srgb, var(--st-info) 14%, transparent); color: var(--st-info); }
+        .cat-recon { background: color-mix(in srgb, var(--st-warning) 14%, transparent); color: var(--st-warning); }
+        .cat-exec, .cat-c2 { background: color-mix(in srgb, var(--st-caution) 16%, transparent); color: var(--st-caution); }
+        .cat-malware { background: color-mix(in srgb, var(--st-danger) 18%, transparent); color: var(--st-danger); }
+        .cat-lateral, .cat-exfil, .cat-persistence, .cat-privilege, .cat-defense-evasion { background: color-mix(in srgb, var(--st-info) 16%, transparent); color: var(--st-info); }
+        .cat-error { background: color-mix(in srgb, var(--st-danger) 12%, transparent); color: var(--st-danger); }
+        .cat-network, .cat-system, .cat-info { background: color-mix(in srgb, var(--st-text) 14%, transparent); color: var(--st-text-muted); }
+        .cat-audit { background: color-mix(in srgb, var(--st-success) 14%, transparent); color: var(--st-success); }
+        .sev-CRITICAL { color: var(--st-danger); font-weight: 700; }
+        .sev-HIGH { color: var(--st-caution); } .sev-MEDIUM { color: var(--st-warning); }
+        .sev-LOW { color: var(--st-text-muted); } .sev-INFO { color: var(--st-text-muted); }
         .lg-msg { max-width: 780px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .lg-msg.exp { white-space: pre-wrap; overflow: visible; }
-        .lg-src-tag { color: #7d8590; }
+        .lg-src-tag { color: var(--st-text-muted); }
     </style>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600;700&amp;display=swap">
+    <link rel="stylesheet" href="css/tokens.css">
+    <script src="js/theme.js"></script>
 </head>
 
 <body>
@@ -88,7 +92,7 @@
             <div class="lg-wrap">
                 <table class="lg">
                     <thead><tr><th>time</th><th>source</th><th>category</th><th>sev</th><th>message</th></tr></thead>
-                    <tbody id="lg-rows"><tr><td colspan="5" style="padding:16px; color:#7d8590;">loading…</td></tr></tbody>
+                    <tbody id="lg-rows"><tr><td colspan="5" style="padding:16px; color:var(--st-text-muted);">loading…</td></tr></tbody>
                 </table>
             </div>
         </main>
@@ -119,7 +123,7 @@
                     <td><span class="chip cat-${esc(r.category)}">${esc(r.category)}</span></td>
                     <td class="sev-${esc(r.severity)}">${esc(r.severity)}</td>
                     <td><div class="lg-msg" title="${esc(r.reason)}" data-i="${i}">${esc(r.text)}</div></td>
-                </tr>`).join('') : '<tr><td colspan="5" style="padding:16px;color:#7d8590;">no matching log lines</td></tr>';
+                </tr>`).join('') : '<tr><td colspan="5" style="padding:16px;color:var(--st-text-muted);">no matching log lines</td></tr>';
             $('#lg-rows').querySelectorAll('.lg-msg').forEach(el => el.onclick = () => el.classList.toggle('exp'));
         }
 
@@ -149,7 +153,7 @@
                 renderKpis(sum);
                 render();
             } catch (e) {
-                $('#lg-rows').innerHTML = `<tr><td colspan="5" style="padding:16px;color:#f85149;">${esc(e.message)}</td></tr>`;
+                $('#lg-rows').innerHTML = `<tr><td colspan="5" style="padding:16px;color:var(--st-danger);">${esc(e.message)}</td></tr>`;
             }
         }
 

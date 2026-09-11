@@ -26,7 +26,7 @@
     // relative /api/v1 goes through the same-origin proxy in nginx.conf.
     const API_BASE = isLocalDev ? 'http://127.0.0.1:8000/api/v1' : '/api/v1';
 
-    const POLL_INTERVAL_MS = 5000;
+    const POLL_INTERVAL_MS = 30000;  // fallback only; pushed events trigger refreshes
     const MAX_FEED_ROWS = 200;
 
     const $ = (sel) => document.querySelector(sel);
@@ -110,7 +110,15 @@
     }
 
     async function getJSON(path) {
-        const res = await fetch(`${API_BASE}${path}`, { cache: 'no-store' });
+        const token = localStorage.getItem('access_token') || localStorage.getItem('authToken');
+        const res = await fetch(`${API_BASE}${path}`, {
+            cache: 'no-store',
+            headers: token ? { Authorization: `Bearer ${token}` } : {},
+        });
+        if (res.status === 401) {
+            window.location.href = 'login.html';
+            throw new Error('Session expired');
+        }
         if (!res.ok) throw new Error(`${path} -> HTTP ${res.status}`);
         return res.json();
     }
@@ -236,6 +244,19 @@
         return params.toString();
     }
 
+    let feedSeeded = false;
+
+    // The live feed fills from the SSE "event" channel, but that only carries NEW
+    // telemetry. Seed it once from the most recent stored events so an idle honeypot
+    // doesn't sit on "Waiting for telemetry"; a filter change forces a reseed.
+    function seedFeed(events) {
+        if (feedSeeded) return;
+        el.feed.innerHTML = events && events.length
+            ? '' : '<div class="hn-empty">No events recorded yet</div>';
+        (events || []).slice(0, MAX_FEED_ROWS).reverse().forEach((ev) => prependFeedRow(ev, false));
+        feedSeeded = true;
+    }
+
     async function pollAll() {
         try {
             const [overview, sensors, attackers, events] = await Promise.all([
@@ -248,6 +269,7 @@
             renderSensors(sensors);
             renderAttackers(attackers);
             renderEvents(events);
+            seedFeed(events);
             if (selectedIp) selectAttacker(selectedIp);
         } catch (e) {
             console.error('[honeynet] poll failed', e);
@@ -262,40 +284,42 @@
     }
 
     function connectStream() {
-        setConn('', 'Connecting…');
-        const source = new EventSource(`${API_BASE}/live/stream`);
+        if (!window.STLive) {
+            setConn('down', 'Live stream unavailable');
+            return;
+        }
+        const labels = { idle: 'Connecting…', connecting: 'Connecting…', reconnecting: 'Reconnecting…', 'signed-out': 'Signed out' };
+        const showStatus = (status) => {
+            if (status === 'live') setConn('live', 'Live');
+            else setConn(status === 'signed-out' ? 'down' : '', labels[status] || status);
+        };
+        showStatus(window.STLive.status);
+        document.addEventListener('st-live-status', (e) => showStatus(e.detail.status));
 
-        source.addEventListener('ready', () => setConn('live', 'Live'));
-
-        source.addEventListener('event', (msg) => {
-            try {
-                const ev = JSON.parse(msg.data);
-                prependFeedRow(ev, true);
-            } catch (e) {
-                console.error('[honeynet] bad event payload', e);
+        // Counters, sensors and attacker profiles re-query shortly after pushed events.
+        const refreshAggregates = window.STLive.debounce(pollAll, 1500);
+        window.STLive.on('event', (ev) => {
+            prependFeedRow(ev, true);
+            refreshAggregates();
+            const published = Date.parse(ev.published_at || '');
+            if (typeof ev.pipeline_latency_ms === 'number' && !Number.isNaN(published)) {
+                const endToEnd = Math.max(0, Math.round(ev.pipeline_latency_ms + (Date.now() - published)));
+                setConn('live', `Live · ${endToEnd} ms sensor→browser`);
             }
         });
-
-        source.addEventListener('heartbeat', () => setConn('live', 'Live'));
-
-        source.onerror = () => {
-            // EventSource retries on its own; this just reflects that to the
-            // operator so a dead backend during a demo is visibly obvious
-            // instead of the feed just going quiet.
-            setConn('down', 'Reconnecting…');
-        };
     }
 
     // ── wiring ───────────────────────────────────────────────────────────────
 
-    el.filterApply.addEventListener('click', pollAll);
+    const reFilter = () => { feedSeeded = false; pollAll(); };
+    el.filterApply.addEventListener('click', reFilter);
     el.filterClear.addEventListener('click', () => {
         el.filterSensor.value = '';
         el.filterSeverity.value = '';
         el.filterIp.value = '';
-        pollAll();
+        reFilter();
     });
-    el.filterIp.addEventListener('keydown', (e) => { if (e.key === 'Enter') pollAll(); });
+    el.filterIp.addEventListener('keydown', (e) => { if (e.key === 'Enter') reFilter(); });
 
     connectStream();
     pollAll();

@@ -18,20 +18,20 @@
         }
 
         .tactic-column {
-            background: #050507;
-            border: 1px solid #333;
+            background: var(--st-surface-2);
+            border: 1px solid var(--st-border);
             min-width: 190px;
             display: flex;
             flex-direction: column;
         }
 
         .tactic-header {
-            background: #111;
+            background: var(--st-surface);
             padding: 10px;
             text-align: center;
             font-weight: bold;
-            border-bottom: 1px solid #333;
-            color: #fff;
+            border-bottom: 1px solid var(--st-border);
+            color: var(--st-text);
             font-size: 0.82rem;
             text-transform: uppercase;
         }
@@ -44,7 +44,7 @@
 
         .tcol-empty {
             padding: 14px 8px;
-            color: #2c2c2c;
+            color: var(--st-text-faint);
             font-style: italic;
             font-size: 0.7rem;
             text-align: center;
@@ -53,8 +53,8 @@
         .tcol-add {
             margin: 6px 8px 8px;
             background: transparent;
-            border: 1px dashed #333;
-            color: #666;
+            border: 1px dashed var(--st-border);
+            color: var(--st-text-faint);
             font-size: 0.7rem;
             padding: 5px;
             cursor: pointer;
@@ -67,20 +67,20 @@
         }
 
         .technique-card {
-            background: #0a0a0a;
-            border: 1px solid #222;
+            background: var(--st-surface-2);
+            border: 1px solid var(--st-border);
+            border-left: 3px solid var(--st-border);
             margin: 6px 0;
             padding: 8px;
             font-size: 0.78rem;
-            color: #aaa;
+            color: var(--st-text-secondary);
             position: relative;
             border-radius: 4px;
         }
 
         .technique-card.active {
-            background: rgba(255, 0, 0, 0.08);
-            border-color: var(--neon-red);
-            color: #fff;
+            background: color-mix(in srgb, var(--st-danger) 8%, transparent);
+            color: var(--st-text);
         }
 
         .technique-card.manual {
@@ -100,7 +100,7 @@
 
         .tc-id {
             font-weight: bold;
-            font-family: 'JetBrains Mono', monospace;
+            font-family: var(--st-font-mono);
         }
 
         .tc-name {
@@ -110,7 +110,7 @@
 
         .count-badge {
             background: var(--neon-red);
-            color: #000;
+            color: var(--st-on-solid);
             font-size: 0.6rem;
             padding: 1px 5px;
             border-radius: 4px;
@@ -119,8 +119,8 @@
 
         .tc-manual {
             font-size: 0.58rem;
-            color: #666;
-            border: 1px solid #333;
+            color: var(--st-text-faint);
+            border: 1px solid var(--st-border);
             padding: 0 4px;
             border-radius: 3px;
             text-transform: uppercase;
@@ -141,13 +141,13 @@
         }
 
         .tc-del {
-            color: #a33;
+            color: var(--st-danger);
             margin-left: auto;
             filter: none;
         }
 
         .tc-doc {
-            color: #666;
+            color: var(--st-text-faint);
             font-size: 0.7rem;
         }
 
@@ -157,8 +157,8 @@
 
         .tc-status {
             width: 100%;
-            background: #060606;
-            border: 1px solid #2a2a2a;
+            background: var(--st-surface-2);
+            border: 1px solid var(--st-border);
             font-size: 0.68rem;
             padding: 3px;
             border-radius: 3px;
@@ -168,9 +168,9 @@
         .tc-note {
             width: 100%;
             margin-top: 5px;
-            background: #060606;
-            border: 1px solid #2a2a2a;
-            color: #ccc;
+            background: var(--st-surface-2);
+            border: 1px solid var(--st-border);
+            color: var(--st-text-secondary);
             font-size: 0.7rem;
             padding: 4px;
             border-radius: 3px;
@@ -180,17 +180,17 @@
             display: none;
             position: fixed;
             inset: 0;
-            background: rgba(5, 10, 15, 0.8);
+            background: var(--st-overlay);
             z-index: 10001;
             justify-content: center;
             align-items: flex-start;
             padding-top: 8vh;
-            backdrop-filter: blur(4px);
+            
         }
 
         .tp-box {
-            background: #0a0d12;
-            border: 1px solid var(--accent-primary, #3ba7ff);
+            background: var(--st-surface-2);
+            border: 1px solid var(--accent-primary, var(--st-info));
             width: 460px;
             max-width: 92%;
             padding: 16px;
@@ -201,21 +201,21 @@
             display: flex;
             justify-content: space-between;
             margin-bottom: 10px;
-            color: #e2e8f0;
+            color: var(--st-text);
         }
 
         .tp-head button {
             background: none;
             border: none;
-            color: #888;
+            color: var(--st-text-muted);
             cursor: pointer;
         }
 
         #tp-search {
             width: 100%;
-            background: #060606;
-            border: 1px solid #2a2a2a;
-            color: #ccc;
+            background: var(--st-surface-2);
+            border: 1px solid var(--st-border);
+            color: var(--st-text-secondary);
             padding: 7px;
             border-radius: 4px;
             margin-bottom: 8px;
@@ -229,46 +229,50 @@
         .tp-item {
             padding: 6px 8px;
             font-size: 0.78rem;
-            color: #bbb;
+            color: var(--st-text-secondary);
             cursor: pointer;
-            border-bottom: 1px solid #161616;
+            border-bottom: 1px solid var(--st-border);
             display: flex;
             justify-content: space-between;
         }
 
         .tp-item:hover {
-            background: #12181f;
-            color: #fff;
+            background: var(--st-surface);
+            color: var(--st-text);
         }
 
         .tp-item span {
-            color: #666;
+            color: var(--st-text-faint);
             font-size: 0.68rem;
         }
 
         .tp-manual {
             margin-top: 10px;
             font-size: 0.72rem;
-            color: #888;
+            color: var(--st-text-muted);
         }
 
         .tp-manual input {
-            background: #060606;
-            border: 1px solid #2a2a2a;
-            color: #ccc;
+            background: var(--st-surface-2);
+            border: 1px solid var(--st-border);
+            color: var(--st-text-secondary);
             padding: 4px;
             border-radius: 3px;
         }
 
         .tp-manual button {
-            background: var(--accent-primary, #3ba7ff);
+            background: var(--accent-primary, var(--st-info));
             border: none;
-            color: #001;
+            color: var(--st-on-solid);
             padding: 4px 8px;
             border-radius: 3px;
             cursor: pointer;
         }
     </style>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600;700&amp;display=swap">
+    <link rel="stylesheet" href="css/tokens.css">
+    <script src="js/theme.js"></script>
 </head>
 
 <body>
@@ -291,7 +295,7 @@
             50% {
                 opacity: 1;
                 transform: scale(1.02) translateZ(0);
-                text-shadow: 0 0 10px var(--accent-primary);
+                
             }
 
             100% {
@@ -308,30 +312,30 @@
 
     <!-- Custom Modal -->
     <div id="custom-modal"
-        style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(5, 10, 15, 0.85); z-index:10000; justify-content:center; align-items:center; backdrop-filter:blur(5px);">
+        style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:var(--st-overlay); z-index:10000; justify-content:center; align-items:center; ">
         <div class="soc-card"
-            style="width: 400px; max-width: 90%; border-color: var(--accent-primary); box-shadow: 0 0 20px rgba(0, 0, 0, 0.5); position: relative; overflow: hidden;">
+            style="width: 400px; max-width: 90%; border-color: var(--accent-primary);  position: relative; overflow: hidden;">
 
             <div class="soc-card-header"
-                style="border-bottom: 1px solid #334155; padding-bottom: 10px; margin-bottom: 15px; position:relative;">
+                style="border-bottom: 1px solid var(--st-border); padding-bottom: 10px; margin-bottom: 15px; position:relative;">
                 <span id="modal-title" class="card-title text-yellow"><i class="fas fa-exclamation-triangle"></i>
                     AUTHORIZATION REQUIRED</span>
             </div>
 
             <div id="modal-message"
-                style="color: #e2e8f0; font-family: 'JetBrains Mono', monospace; font-size: 0.9rem; margin-bottom: 15px; line-height: 1.5; position:relative;">
+                style="color: var(--st-text); font-family: var(--st-font-mono); font-size: 0.9rem; margin-bottom: 15px; line-height: 1.5; position:relative;">
                 Please confirm action.
             </div>
 
             <!-- Progress Bar Container -->
             <div id="modal-progress-container"
-                style="display:none; width: 100%; height: 6px; background: #1e293b; margin-bottom: 25px; border-radius: 3px; overflow: hidden; position:relative;">
+                style="display:none; width: 100%; height: 6px; background: var(--st-surface-hover); margin-bottom: 25px; border-radius: 3px; overflow: hidden; position:relative;">
                 <div id="modal-progress-bar" class="export-progress-bar"></div>
             </div>
 
             <div id="modal-buttons" style="display: flex; justify-content: flex-end; gap: 10px; position:relative;">
                 <button id="modal-btn-cancel" class="soc-btn"
-                    style="background: transparent; border: 1px solid #334155; color: #94a3b8;">CANCEL</button>
+                    style="background: transparent; border: 1px solid var(--st-border); color: var(--st-text-secondary);">CANCEL</button>
                 <button id="modal-btn-confirm" class="soc-btn soc-btn-primary">PROCEED</button>
             </div>
         </div>
@@ -393,9 +397,9 @@
 
             <!-- EXTERNAL VIEW -->
             <div id="externalView" style="display: none; height: calc(100vh - 180px);">
-                <div class="soc-card" style="height: 100%; padding: 0; overflow: hidden; background: #050507;">
+                <div class="soc-card" style="height: 100%; padding: 0; overflow: hidden; background: var(--st-surface-2);">
                     <iframe src="https://attack.mitre.org/"
-                        style="width: 100%; height: 100%; border: none; filter: invert(0.92) hue-rotate(180deg) contrast(1.1) brightness(0.95);"></iframe>
+                        style="width: 100%; height: 100%; border: none; filter: var(--st-embed-filter);"></iframe>
                 </div>
             </div>
         </main>
@@ -414,9 +418,10 @@
         let annotations = {};          // { techId: {status,note,pinned,order,tactic,manual,name} }
         let liveMatrix = {};           // { tactic: [ {id,technique,severity,timestamp} ] }
         let saveTimer = null, dirty = false;
+        const sortables = [];         // active Sortable instances, destroyed+recreated each render
 
         const STATUS = ["observed","investigating","mitigated","false-positive"];
-        const statusColor = { observed:"#8b949e", investigating:"#d29922", mitigated:"#3fb950", "false-positive":"#6e7681" };
+        const statusColor = { observed:"var(--st-text-muted)", investigating:"var(--st-warning)", mitigated:"var(--st-success)", "false-positive":"var(--st-text-muted)" };
 
         function saveSoon() {
             dirty = true;
@@ -427,7 +432,14 @@
             if (!dirty) return;
             dirty = false;
             try { await apiService.put('/mitre/annotations', { annotations }); }
-            catch (e) { console.warn('mitre save failed', e); dirty = true; }
+            catch (e) {
+                console.warn('mitre save failed', e);
+                dirty = true;
+                const badge = document.querySelector('.badge-green');
+                if (badge) badge.innerText = 'SAVE FAILED — RETRYING';
+                clearTimeout(saveTimer);
+                saveTimer = setTimeout(saveAnnotations, 5000);
+            }
         }
 
         async function loadMatrix() {
@@ -521,7 +533,7 @@
         function cardHtml(c) {
             const a = annotations[c.id] || {};
             const st = a.status || 'observed';
-            return `<div class="technique-card ${c.count ? 'active' : 'manual'}" data-id="${c.id}" data-tactic="${c.tactic}">
+            return `<div class="technique-card ${c.count ? 'active' : 'manual'}" data-id="${c.id}" data-tactic="${c.tactic}" style="border-left-color:${statusColor[st]}">
                 <div class="tc-top">
                     <span class="tc-id">${c.id}</span>
                     ${c.count ? `<span class="count-badge">${c.count}</span>` : '<span class="tc-manual">manual</span>'}
@@ -544,11 +556,11 @@
             const t = analyticsById[id];
             if (!t) return '';
             const inc = (t.incident_ids || []).length;
-            return `<div class="tc-analytics" style="margin-top:6px;font-size:0.62rem;color:#8b949e;line-height:1.4;border-top:1px solid #1c1c1c;padding-top:4px;">
-                <b style="color:#adbac7">${t.event_count}</b> events · <b style="color:#adbac7">${t.detection_count}</b> detections
-                · conf <b style="color:${t.confidence === 'High' ? '#3fb950' : t.confidence === 'Medium' ? '#d29922' : '#8b949e'}">${t.confidence}</b>
+            return `<div class="tc-analytics" style="margin-top:6px;font-size:0.62rem;color:var(--st-text-muted);line-height:1.4;border-top:1px solid var(--st-border);padding-top:4px;">
+                <b style="color:var(--st-text-secondary)">${t.event_count}</b> events · <b style="color:var(--st-text-secondary)">${t.detection_count}</b> detections
+                · conf <b style="color:${t.confidence === 'High' ? 'var(--st-success)' : t.confidence === 'Medium' ? 'var(--st-warning)' : 'var(--st-text-muted)'}">${t.confidence}</b>
                 ${(t.sensors || []).length ? '<br>sensors: ' + t.sensors.join(', ') : ''}
-                ${inc ? `<br><a href="incidents.html" style="color:#58a6ff">${inc} incident${inc > 1 ? 's' : ''}</a>` : ''}
+                ${inc ? `<br><a href="incidents.html" style="color:var(--st-info)">${inc} incident${inc > 1 ? 's' : ''}</a>` : ''}
                 ${t.last_seen ? '<br>last: ' + t.last_seen.replace('T', ' ').slice(0, 16) : ''}
             </div>`;
         }
@@ -561,7 +573,7 @@
         function wireCards() {
             document.querySelectorAll('.technique-card').forEach(card => {
                 const id = card.dataset.id;
-                card.querySelector('.tc-status').onchange = e => { ensureAnn(id, { tactic: card.dataset.tactic }).status = e.target.value; e.target.style.color = statusColor[e.target.value]; saveSoon(); };
+                card.querySelector('.tc-status').onchange = e => { ensureAnn(id, { tactic: card.dataset.tactic }).status = e.target.value; e.target.style.color = statusColor[e.target.value]; card.style.borderLeftColor = statusColor[e.target.value]; saveSoon(); };
                 card.querySelector('.tc-note').oninput = e => { ensureAnn(id, { tactic: card.dataset.tactic }).note = e.target.value; saveSoon(); };
                 card.querySelector('.tc-pin').onclick = e => { const A = ensureAnn(id, { tactic: card.dataset.tactic }); A.pinned = !A.pinned; e.target.classList.toggle('on', A.pinned); saveSoon(); render(); };
                 const doc = card.querySelector('.tc-doc'); if (doc) doc.onclick = e => { e.preventDefault(); openTechnique(doc.dataset.doc); };
@@ -569,9 +581,11 @@
             });
             document.querySelectorAll('.tcol-add').forEach(b => b.onclick = () => openPicker(b.dataset.tactic));
             // drag & drop
+            sortables.forEach(s => s.destroy());
+            sortables.length = 0;
             if (window.Sortable) {
                 document.querySelectorAll('.tcol-list').forEach(el => {
-                    Sortable.create(el, {
+                    sortables.push(Sortable.create(el, {
                         group: 'mitre', animation: 120, ghostClass: 'tc-ghost',
                         onEnd: evt => {
                             const id = evt.item.dataset.id;
@@ -582,7 +596,7 @@
                             [...evt.to.children].forEach((ch, i) => { if (ch.dataset.id) ensureAnn(ch.dataset.id).order = i; });
                             saveSoon(); render();
                         }
-                    });
+                    }));
                 });
             }
         }

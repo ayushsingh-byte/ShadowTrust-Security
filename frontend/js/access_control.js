@@ -13,9 +13,9 @@ const LEVEL_LABELS = {
 };
 
 const LEVEL_BADGE_COLORS = {
-    1: '#3b82f6',
-    2: '#f59e0b',
-    3: '#ef4444'
+    1: 'var(--st-info)',
+    2: 'var(--st-warning)',
+    3: 'var(--st-danger)'
 };
 
 // ─── TOAST NOTIFICATION SYSTEM ───────────────────────────────────────────────
@@ -25,9 +25,9 @@ function showToast(message, type = 'success') {
     if (existing) existing.remove();
 
     const colors = {
-        success: { bg: 'rgba(16,185,129,0.12)', border: '#10b981', text: '#10b981', icon: 'fa-check-circle' },
-        error: { bg: 'rgba(239,68,68,0.12)', border: '#ef4444', text: '#ef4444', icon: 'fa-exclamation-triangle' },
-        warning: { bg: 'rgba(245,158,11,0.12)', border: '#f59e0b', text: '#f59e0b', icon: 'fa-exclamation-circle' }
+        success: { bg: 'color-mix(in srgb, var(--st-success) 12%, transparent)', border: 'var(--st-success)', text: 'var(--st-success)', icon: 'fa-check-circle' },
+        error: { bg: 'color-mix(in srgb, var(--st-danger) 12%, transparent)', border: 'var(--st-danger)', text: 'var(--st-danger)', icon: 'fa-exclamation-triangle' },
+        warning: { bg: 'color-mix(in srgb, var(--st-warning) 12%, transparent)', border: 'var(--st-warning)', text: 'var(--st-warning)', icon: 'fa-exclamation-circle' }
     };
     const c = colors[type] || colors.success;
 
@@ -37,7 +37,7 @@ function showToast(message, type = 'success') {
     toast.style.cssText = `
         position:fixed; top:24px; right:24px; z-index:9999;
         padding:14px 22px; border-radius:8px; font-size:0.9rem;
-        font-family:'Outfit',sans-serif; display:flex; align-items:center; gap:10px;
+        font-family:var(--st-font-main); display:flex; align-items:center; gap:10px;
         background:${c.bg}; border:1px solid ${c.border}; color:${c.text};
         box-shadow:0 4px 24px rgba(0,0,0,0.4);
         animation:toastSlide 0.3s ease;
@@ -92,7 +92,7 @@ function renderPendingUsers() {
     tbody.innerHTML = pendingUsers.map(user => {
         const reqLevel = user.requested_clearance_level || user.clearance_level || '—';
         const levelLabel = LEVEL_LABELS[reqLevel] || `Level ${reqLevel}`;
-        const levelColor = LEVEL_BADGE_COLORS[reqLevel] || '#888';
+        const levelColor = LEVEL_BADGE_COLORS[reqLevel] || 'var(--st-text-muted)';
 
         return `
         <tr>
@@ -104,8 +104,8 @@ function renderPendingUsers() {
             <td><span class="badge" style="background:${levelColor}20; color:${levelColor}; border:1px solid ${levelColor}40; padding:3px 8px; border-radius:4px; font-size:0.75rem;">${levelLabel}</span></td>
             <td><span class="badge badge-yellow">PENDING</span></td>
             <td>
-                <button class="soc-btn" style="padding:4px 8px; border-color:#00ff41; color:#00ff41;" onclick="openApproveModal('${user.id}', ${reqLevel})"><i class="fas fa-check"></i> APPROVE</button>
-                <button class="soc-btn" style="padding:4px 8px; border-color:#ff0055; color:#ff0055;" onclick="openDenyModal('${user.id}')"><i class="fas fa-times"></i> DENY</button>
+                <button class="soc-btn" style="padding:4px 8px; border-color:var(--st-success); color:var(--st-success);" onclick="openApproveModal('${user.id}', ${reqLevel})"><i class="fas fa-check"></i> APPROVE</button>
+                <button class="soc-btn" style="padding:4px 8px; border-color:var(--st-danger); color:var(--st-danger);" onclick="openDenyModal('${user.id}')"><i class="fas fa-times"></i> DENY</button>
             </td>
         </tr>
     `}).join('');

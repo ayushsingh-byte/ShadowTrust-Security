@@ -9,7 +9,7 @@ from app.db.database import get_db
 from app.models.all_models import User, Node, Event, SystemSettings, AccessLog
 from app.api.v1.dependencies import require_role
 
-router = APIRouter()
+router = APIRouter(dependencies=[Depends(require_role(["SUPER_ADMIN", "ADMIN", "OVERSEER", "AUDITOR"]))])
 
 @router.get("/backup")
 async def system_backup(

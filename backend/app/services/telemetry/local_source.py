@@ -54,6 +54,9 @@ class FileCursor:
     inode: str = ""
     size_bytes: int = 0
     byte_offset: int = 0
+    # Last-modified time seen when the file was read; not persisted. The
+    # collector uses it to measure write-to-publish latency.
+    mtime: float = 0.0
 
 
 class LocalDirectorySource(TelemetrySource):
@@ -191,6 +194,7 @@ class LocalDirectorySource(TelemetrySource):
                     inode=str(stat.st_ino),
                     size_bytes=stat.st_size,
                     byte_offset=start + consumed,
+                    mtime=stat.st_mtime,
                 )
                 continue
 
@@ -216,6 +220,7 @@ class LocalDirectorySource(TelemetrySource):
                 inode=str(stat.st_ino),
                 size_bytes=stat.st_size,
                 byte_offset=start + consumed,
+                mtime=stat.st_mtime,
             )
 
         return parsed_events, updated

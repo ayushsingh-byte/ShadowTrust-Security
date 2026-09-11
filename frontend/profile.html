@@ -8,123 +8,496 @@
     <link rel="stylesheet" href="css/dashboard.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        .profile-header-card {
-            background: linear-gradient(90deg, #111 0%, #0a0a0f 100%);
-            border: 1px solid #333;
-            padding: 30px;
+        /* ============ PROFILE PAGE ============ */
+        .profile-wrap {
+            max-width: 1180px;
+        }
+
+        /* --- Identity hero --- */
+        .identity-hero {
+            display: grid;
+            grid-template-columns: auto 1fr auto;
+            gap: 28px;
+            align-items: center;
+            background: var(--st-surface);
+            border: 1px solid var(--st-border);
+            border-radius: var(--st-radius-lg);
+            box-shadow: var(--st-shadow-sm);
+            padding: 26px 28px;
+            margin-bottom: 22px;
+        }
+
+        .hero-avatar-wrap {
+            position: relative;
+            width: 104px;
+            height: 104px;
+            flex-shrink: 0;
+        }
+
+        .hero-avatar {
+            width: 104px;
+            height: 104px;
+            border-radius: 50%;
             display: flex;
             align-items: center;
-            gap: 30px;
-            position: relative;
-            overflow: hidden;
-            margin-bottom: 2rem;
+            justify-content: center;
+            font-size: 2.4rem;
+            font-weight: 700;
+            letter-spacing: 0.02em;
+            color: var(--st-on-solid);
+            background: var(--st-accent);
+            font-family: var(--st-font-main);
+            user-select: none;
         }
 
-        .profile-header-card::before {
-            content: '';
+        .hero-rank {
             position: absolute;
-            top: 0;
-            left: 0;
-            width: 5px;
-            height: 100%;
-            background: var(--neon-cyan);
-            box-shadow: 0 0 10px var(--neon-cyan);
+            bottom: -4px;
+            right: -4px;
+            background: var(--st-surface);
+            border: 1px solid var(--st-border-strong);
+            color: var(--st-text-secondary);
+            padding: 2px 9px;
+            font-size: 0.62rem;
+            font-weight: 700;
+            letter-spacing: 0.06em;
+            border-radius: 999px;
+            font-family: var(--st-font-mono);
+            white-space: nowrap;
         }
 
-        .avatar-container {
-            position: relative;
-            width: 120px;
-            height: 120px;
+        .hero-name {
+            font-size: 1.7rem;
+            line-height: 1.15;
+            margin: 0 0 4px 0;
+            color: var(--st-text);
         }
 
-        .avatar-img {
-            width: 100%;
-            height: 100%;
-            border-radius: 50%;
-            border: 2px solid var(--neon-cyan);
-            object-fit: cover;
-            filter: grayscale(0.5);
+        .hero-role {
+            font-size: 0.78rem;
+            font-weight: 600;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            color: var(--st-accent);
+            margin-bottom: 12px;
         }
 
-        .rank-badge {
-            position: absolute;
-            bottom: 0;
-            right: 0;
-            background: #000;
-            border: 1px solid var(--neon-purple);
-            color: var(--neon-purple);
-            padding: 2px 8px;
-            font-size: 0.7rem;
-            border-radius: 10px;
-            font-weight: bold;
-        }
-
-        .user-details h1 {
-            color: #fff;
-            margin: 0 0 5px 0;
-            font-size: 2rem;
-            letter-spacing: 1px;
-        }
-
-        .user-meta {
-            color: #888;
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 0.9rem;
+        .hero-meta {
             display: flex;
-            gap: 20px;
-        }
-
-        .meta-item i {
-            color: var(--neon-cyan);
-            margin-right: 5px;
-        }
-
-        .clearance-level {
-            margin-left: auto;
-            text-align: right;
-        }
-
-        .clearance-tag {
-            background: rgba(0, 255, 65, 0.1);
-            border: 1px solid var(--neon-green);
-            color: var(--neon-green);
-            padding: 5px 15px;
-            font-family: 'JetBrains Mono', monospace;
-            letter-spacing: 2px;
+            flex-wrap: wrap;
+            gap: 8px 22px;
+            font-family: var(--st-font-mono);
             font-size: 0.8rem;
-            display: inline-block;
-            margin-bottom: 5px;
+            color: var(--st-text-muted);
         }
 
-        /* Stats Grid */
-        .stat-box {
-            background: rgba(255, 255, 255, 0.02);
-            border: 1px solid #222;
-            padding: 20px;
+        .hero-meta-item {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+        }
+
+        .hero-meta-item i {
+            color: var(--st-text-faint);
+            width: 13px;
             text-align: center;
+        }
+
+        .hero-side {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 8px;
+            align-self: flex-start;
+        }
+
+        .status-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            padding: 5px 12px;
+            border-radius: 999px;
+            font-size: 0.72rem;
+            font-weight: 600;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            font-family: var(--st-font-main);
+            background: var(--st-success-bg);
+            color: var(--st-success);
+            border: 1px solid color-mix(in srgb, var(--st-success) 28%, transparent);
+        }
+
+        .status-pill::before {
+            content: '';
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: currentColor;
+        }
+
+        .status-pill.is-inactive {
+            background: var(--st-neutral-bg);
+            color: var(--st-neutral);
+            border-color: color-mix(in srgb, var(--st-neutral) 28%, transparent);
+        }
+
+        .status-pill.is-warn {
+            background: var(--st-warning-bg);
+            color: var(--st-warning);
+            border-color: color-mix(in srgb, var(--st-warning) 28%, transparent);
+        }
+
+        .hero-id {
+            font-family: var(--st-font-mono);
+            font-size: 0.68rem;
+            color: var(--st-text-faint);
+            cursor: default;
+        }
+
+        /* --- Stat cards --- */
+        .stat-row {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-bottom: 22px;
+        }
+
+        .stat-card {
+            background: var(--st-surface);
+            border: 1px solid var(--st-border);
+            border-radius: var(--st-radius-md);
+            box-shadow: var(--st-shadow-sm);
+            padding: 18px 20px;
+            transition: border-color 0.15s ease;
+        }
+
+        .stat-card:hover {
+            border-color: var(--st-border-strong);
         }
 
         .stat-num {
             font-size: 2rem;
-            color: #fff;
             font-weight: 700;
+            line-height: 1;
+            color: var(--st-text);
+            font-variant-numeric: tabular-nums;
         }
 
         .stat-label {
-            color: #666;
-            font-size: 0.75rem;
+            margin-top: 8px;
+            font-size: 0.74rem;
+            font-weight: 600;
             text-transform: uppercase;
-            letter-spacing: 1px;
+            letter-spacing: 0.05em;
+            color: var(--st-text-secondary);
+        }
+
+        .stat-caption {
+            margin-top: 3px;
+            font-size: 0.72rem;
+            color: var(--st-text-faint);
+            font-family: var(--st-font-mono);
+        }
+
+        /* --- Two-column layout --- */
+        .profile-cols {
+            display: grid;
+            grid-template-columns: 1.7fr 1fr;
+            gap: 20px;
+            align-items: start;
+        }
+
+        .panel {
+            background: var(--st-surface);
+            border: 1px solid var(--st-border);
+            border-radius: var(--st-radius-md);
+            box-shadow: var(--st-shadow-sm);
+            overflow: hidden;
+        }
+
+        .panel-head {
+            padding: 15px 20px;
+            border-bottom: 1px solid var(--st-border);
+            font-size: 0.78rem;
+            font-weight: 700;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            color: var(--st-text-secondary);
+        }
+
+        .panel-body {
+            padding: 20px;
+        }
+
+        /* --- Vertical timeline --- */
+        .timeline {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+            position: relative;
+        }
+
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 5px;
+            top: 4px;
+            bottom: 4px;
+            width: 2px;
+            background: var(--st-border);
+        }
+
+        .tl-item {
+            position: relative;
+            padding: 0 0 20px 26px;
+        }
+
+        .tl-item:last-child {
+            padding-bottom: 0;
+        }
+
+        .tl-item::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 3px;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--st-surface);
+            border: 2px solid var(--st-accent);
+        }
+
+        .tl-item.is-fail::before {
+            border-color: var(--st-danger);
+        }
+
+        .tl-item.is-muted::before {
+            border-color: var(--st-border-strong);
+        }
+
+        .tl-top {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            align-items: baseline;
+        }
+
+        .tl-action {
+            font-size: 0.88rem;
+            font-weight: 600;
+            color: var(--st-text);
+        }
+
+        .tl-time {
+            font-family: var(--st-font-mono);
+            font-size: 0.72rem;
+            color: var(--st-text-faint);
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
+        .tl-detail {
+            margin-top: 3px;
+            font-size: 0.8rem;
+            color: var(--st-text-muted);
+            font-family: var(--st-font-mono);
+        }
+
+        .tl-target {
+            color: var(--st-text-secondary);
+        }
+
+        .tl-result {
+            display: inline-block;
+            margin-left: 6px;
+            font-size: 0.68rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            color: var(--st-text-faint);
+        }
+
+        .tl-result.ok {
+            color: var(--st-success);
+        }
+
+        .tl-result.fail {
+            color: var(--st-danger);
+        }
+
+        /* --- Account definition list --- */
+        .facts {
+            margin: 0;
+        }
+
+        .fact {
+            display: flex;
+            justify-content: space-between;
+            gap: 16px;
+            padding: 11px 0;
+            border-bottom: 1px solid var(--st-border);
+            font-size: 0.84rem;
+        }
+
+        .fact:first-child {
+            padding-top: 0;
+        }
+
+        .fact:last-child {
+            border-bottom: none;
+            padding-bottom: 0;
+        }
+
+        .fact dt {
+            color: var(--st-text-muted);
+            font-weight: 500;
+        }
+
+        .fact dd {
+            margin: 0;
+            color: var(--st-text);
+            text-align: right;
+            font-family: var(--st-font-mono);
+            font-size: 0.8rem;
+        }
+
+        .empty-note,
+        .error-note {
+            font-size: 0.83rem;
+            color: var(--st-text-muted);
+            font-family: var(--st-font-mono);
+        }
+
+        .error-note {
+            color: var(--st-danger);
+        }
+
+        /* --- Skeleton loaders --- */
+        .skel {
+            display: inline-block;
+            background: linear-gradient(90deg,
+                    var(--st-surface-2) 25%,
+                    var(--st-surface-hover) 37%,
+                    var(--st-surface-2) 63%);
+            background-size: 400% 100%;
+            animation: st-skel 1.4s ease infinite;
+            border-radius: 5px;
+            vertical-align: middle;
+        }
+
+        .skel-line {
+            height: 12px;
+            width: 100%;
+        }
+
+        .skel-circle {
+            border-radius: 50%;
+        }
+
+        @keyframes st-skel {
+            0% {
+                background-position: 100% 50%;
+            }
+
+            100% {
+                background-position: 0 50%;
+            }
+        }
+
+        /* --- Entrance motion (content visible at rest) --- */
+        .st-enter {
+            opacity: 1;
+            animation: st-rise 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+        }
+
+        .st-enter-1 {
+            animation-delay: 0.04s;
+        }
+
+        .st-enter-2 {
+            animation-delay: 0.1s;
+        }
+
+        .st-enter-3 {
+            animation-delay: 0.16s;
+        }
+
+        .st-enter-4 {
+            animation-delay: 0.22s;
+        }
+
+        .st-enter-5 {
+            animation-delay: 0.28s;
+        }
+
+        .st-enter-6 {
+            animation-delay: 0.34s;
+        }
+
+        @keyframes st-rise {
+            from {
+                opacity: 0;
+                transform: translateY(9px);
+            }
+
+            to {
+                opacity: 1;
+                transform: none;
+            }
+        }
+
+        .tl-reveal {
+            animation: st-rise 0.4s ease both;
+        }
+
+        @media (max-width: 960px) {
+            .profile-cols {
+                grid-template-columns: 1fr;
+            }
+
+            .stat-row {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .identity-hero {
+                grid-template-columns: auto 1fr;
+            }
+
+            .hero-side {
+                grid-column: 1 / -1;
+                align-items: flex-start;
+                flex-direction: row;
+                justify-content: space-between;
+                width: 100%;
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+
+            .skel,
+            .st-enter,
+            .tl-reveal {
+                animation: none !important;
+            }
+
+            .st-enter,
+            .tl-reveal {
+                opacity: 1 !important;
+                transform: none !important;
+            }
         }
     </style>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600;700&amp;display=swap">
+    <link rel="stylesheet" href="css/tokens.css">
+    <script src="js/theme.js"></script>
 </head>
 
 <body>
 
     <div class="app-container">
 
-        <!-- SIDEBAR -->
-        <!-- VOID NEON SIDEBAR (FROM GEO INTEL) -->
         <aside class="sidebar" id="sidebar"></aside>
 
         <main class="main-content">
@@ -135,109 +508,83 @@
                     <p>PERSONNEL FILE // <span class="text-green">AUTHORIZED USE ONLY</span></p>
                 </div>
                 <div class="filters-bar">
-                    <a href="admin_login.html" class="soc-btn"
-                        style="color:var(--neon-red); border-color:var(--neon-red);"><i class="fas fa-user-shield"></i>
-                        ADMIN PANEL</a>
-                    <button class="soc-btn soc-btn-primary"><i class="fas fa-edit"></i> Edit Profile</button>
-                    <button class="soc-btn" style="color:var(--neon-pink); border-color:var(--neon-pink);"><i
-                            class="fas fa-sign-out-alt"></i> LOGOUT</button>
+                    <a href="admin.html" class="soc-btn" data-admin-only><i class="fas fa-user-shield"></i> Admin Panel</a>
+                    <button class="soc-btn" disabled title="Profile details are managed by an administrator"><i class="fas fa-edit"></i> Edit Profile</button>
+                    <button id="logoutBtn" class="soc-btn soc-btn-danger"><i class="fas fa-sign-out-alt"></i> Logout</button>
                 </div>
             </div>
 
-            <!-- IDENTITY HEADER -->
-            <div class="profile-header-card">
-                <div class="avatar-container">
-                    <img src="https://ui-avatars.com/api/?name=Ayush&background=0D8ABC&color=fff&size=200"
-                        class="avatar-img">
-                    <div class="rank-badge">LVL 4</div>
-                </div>
-                <div class="user-details">
-                    <h1>AYUSH</h1>
-                    <div class="user-meta">
-                        <div class="meta-item"><i class="fas fa-id-badge"></i> LVL 4 CLEARANCE</div>
-                        <div class="meta-item"><i class="fas fa-envelope"></i> Ayush@shadowtrust.net</div>
+            <div class="profile-wrap">
+
+                <!-- IDENTITY HERO -->
+                <section class="identity-hero st-enter st-enter-1">
+                    <div class="hero-avatar-wrap">
+                        <div id="profileAvatar" class="hero-avatar"><span class="skel skel-circle" style="width:104px;height:104px"></span></div>
+                        <div id="profileRank" class="hero-rank">—</div>
+                    </div>
+                    <div class="hero-main">
+                        <h1 id="profileName" class="hero-name"><span class="skel skel-line" style="width:230px;height:26px"></span></h1>
+                        <div id="profileRole" class="hero-role">—</div>
+                        <div class="hero-meta">
+                            <span class="hero-meta-item"><i class="fas fa-id-badge"></i> <span id="profileClearance">—</span></span>
+                            <span class="hero-meta-item"><i class="fas fa-envelope"></i> <span id="profileEmail">—</span></span>
+                            <span class="hero-meta-item"><i class="fas fa-calendar-day"></i> Member since <span id="profileMemberSince">—</span></span>
+                        </div>
+                    </div>
+                    <div class="hero-side">
+                        <div id="profileStatus" class="status-pill">—</div>
+                        <div id="profileId" class="hero-id">—</div>
+                    </div>
+                </section>
+
+                <!-- STATS -->
+                <div class="stat-row">
+                    <div class="stat-card st-enter st-enter-2">
+                        <div id="statResolved" class="stat-num">—</div>
+                        <div id="statResolvedLabel" class="stat-label">Incidents Resolved</div>
+                        <div class="stat-caption">closed by this analyst</div>
+                    </div>
+                    <div class="stat-card st-enter st-enter-3">
+                        <div id="statActions" class="stat-num">—</div>
+                        <div class="stat-label">Investigation Actions</div>
+                        <div class="stat-caption">timeline &amp; evidence edits</div>
+                    </div>
+                    <div class="stat-card st-enter st-enter-4">
+                        <div id="statReports" class="stat-num">—</div>
+                        <div class="stat-label">Reports Generated</div>
+                        <div class="stat-caption">PDF / assessment exports</div>
+                    </div>
+                    <div class="stat-card st-enter st-enter-5">
+                        <div id="statAdmin" class="stat-num">—</div>
+                        <div class="stat-label">Admin Actions Logged</div>
+                        <div class="stat-caption">audited privileged events</div>
                     </div>
                 </div>
-                <div class="clearance-level">
-                    <div class="clearance-tag">ACTIVE DUTY</div>
-                    <div style="font-size:0.7rem; color:#555; margin-top:5px;">ID: #992-811-XC</div>
-                </div>
-            </div>
 
-            <!-- STATS ROW -->
-            <div class="dashboard-grid grid-4" style="margin-bottom:2rem;">
-                <div class="stat-box">
-                    <div class="stat-num text-cyan">1,204</div>
-                    <div class="stat-label">Incidents Resolved</div>
-                </div>
-                <div class="stat-box">
-                    <div class="stat-num text-purple">98.5%</div>
-                    <div class="stat-label">Accuracy Rating</div>
-                </div>
-                <div class="stat-box">
-                    <div class="stat-num text-green">342h</div>
-                    <div class="stat-label">Active Duty Hours</div>
-                </div>
-                <div class="stat-box">
-                    <div class="stat-num text-pink">12</div>
-                    <div class="stat-label">Confirmed APTs</div>
-                </div>
-            </div>
-
-            <div class="dashboard-grid grid-2-1">
-                <!-- ACTIVITY LOG -->
-                <div class="soc-card">
-                    <div class="soc-card-header"><span class="card-title">RECENT OPERATIONAL ACTIVITY</span></div>
-                    <table class="terminal-table">
-                        <thead>
-                            <tr>
-                                <th>TIMESTAMP</th>
-                                <th>ACTION</th>
-                                <th>TARGET</th>
-                                <th>RESULT</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td colspan="4" class="text-muted">No activity yet</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-
-                <!-- BADGES / SKILLS -->
-                <div class="soc-card">
-                    <div class="soc-card-header"><span class="card-title">CERTIFICATIONS</span></div>
-                    <div style="display:flex; flex-wrap:wrap; gap:10px; margin-top:15px;">
-                    
-                        <span
-                            style="background:#222; padding:5px 10px; border-radius:4px; font-size:0.8rem; border:1px solid #444;"><i
-                                class="fab fa-aws text-yellow"></i> AWS SEC</span>
-                        <span
-                            style="background:#222; padding:5px 10px; border-radius:4px; font-size:0.8rem; border:1px solid #444;"><i
-                                class="fas fa-bug text-green"></i> CREST</span>
-                        <span
-                            style="background:#222; padding:5px 10px; border-radius:4px; font-size:0.8rem; border:1px solid #444;"><i
-                                class="fas fa-shield-alt text-cyan"></i> CISSP</span>
-                        <span
-                            style="background:#222; padding:5px 10px; border-radius:4px; font-size:0.8rem; border:1px solid #444;"><i
-                                class="fab fa-python text-blue"></i> PYTHON EXP</span>
+                <!-- ACTIVITY + ACCOUNT -->
+                <div class="profile-cols">
+                    <div class="panel st-enter st-enter-5">
+                        <div class="panel-head">Recent Operational Activity</div>
+                        <div class="panel-body">
+                            <ol id="activityBody" class="timeline">
+                                <li class="tl-item"><div class="tl-top"><span class="tl-action"><span class="skel skel-line" style="width:180px"></span></span></div><div class="tl-detail"><span class="skel skel-line" style="width:120px"></span></div></li>
+                                <li class="tl-item"><div class="tl-top"><span class="tl-action"><span class="skel skel-line" style="width:150px"></span></span></div><div class="tl-detail"><span class="skel skel-line" style="width:140px"></span></div></li>
+                                <li class="tl-item"><div class="tl-top"><span class="tl-action"><span class="skel skel-line" style="width:200px"></span></span></div><div class="tl-detail"><span class="skel skel-line" style="width:100px"></span></div></li>
+                            </ol>
+                        </div>
                     </div>
 
-                    <div style="margin-top:20px;">
-                        <div style="margin-bottom:8px; font-size:0.75rem; color:#888;">FORENSICS SKILL</div>
-                        <div class="resource-bar-bg">
-                            <div class="resource-bar-fill" style="width:90%; background:var(--neon-purple);"></div>
-                        </div>
-
-                        <div style="margin-bottom:8px; font-size:0.75rem; color:#888;">REVERSE ENGINEERING</div>
-                        <div class="resource-bar-bg">
-                            <div class="resource-bar-fill" style="width:75%; background:var(--neon-cyan);"></div>
-                        </div>
-
-                        <div style="margin-bottom:8px; font-size:0.75rem; color:#888;">NETWORK DEFENSE</div>
-                        <div class="resource-bar-bg">
-                            <div class="resource-bar-fill" style="width:95%; background:var(--neon-green);"></div>
+                    <div class="panel st-enter st-enter-6">
+                        <div class="panel-head">Account</div>
+                        <div class="panel-body">
+                            <dl id="accountFacts" class="facts">
+                                <div class="fact"><dt>Role</dt><dd><span class="skel skel-line" style="width:90px"></span></dd></div>
+                                <div class="fact"><dt>Clearance</dt><dd><span class="skel skel-line" style="width:70px"></span></dd></div>
+                                <div class="fact"><dt>Department</dt><dd><span class="skel skel-line" style="width:110px"></span></dd></div>
+                                <div class="fact"><dt>Status</dt><dd><span class="skel skel-line" style="width:70px"></span></dd></div>
+                                <div class="fact"><dt>Member since</dt><dd><span class="skel skel-line" style="width:120px"></span></dd></div>
+                                <div class="fact"><dt>Last login</dt><dd><span class="skel skel-line" style="width:120px"></span></dd></div>
+                            </dl>
                         </div>
                     </div>
                 </div>
@@ -247,6 +594,138 @@
         </main>
     </div>
 
+    <script type="module">
+        import { apiService } from './js/api.js';
+
+        const $ = (id) => document.getElementById(id);
+        const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+        const asDate = (iso) => {
+            if (!iso) return null;
+            const d = new Date(/[zZ]|[+-]\d\d:?\d\d$/.test(iso) ? iso : `${iso}Z`);
+            return Number.isNaN(d.getTime()) ? null : d;
+        };
+        const fmtDate = (iso) => { const d = asDate(iso); return d ? d.toLocaleString() : '—'; };
+        const fmtDay = (iso) => { const d = asDate(iso); return d ? d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }) : '—'; };
+        const relTime = (iso) => {
+            const d = asDate(iso);
+            if (!d) return '—';
+            const secs = Math.round((Date.now() - d.getTime()) / 1000);
+            if (secs < 45) return 'just now';
+            const units = [['y', 31536000], ['mo', 2592000], ['d', 86400], ['h', 3600], ['m', 60]];
+            for (const [label, size] of units) {
+                const v = Math.floor(secs / size);
+                if (v >= 1) return `${v}${label} ago`;
+            }
+            return `${secs}s ago`;
+        };
+
+        const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+        function countUp(el, target) {
+            const end = Number(target) || 0;
+            if (reduceMotion || end <= 0) { el.textContent = end.toLocaleString(); return; }
+            const dur = 750;
+            const t0 = performance.now();
+            const step = (now) => {
+                const p = Math.min(1, (now - t0) / dur);
+                const eased = 1 - Math.pow(1 - p, 3);
+                el.textContent = Math.round(end * eased).toLocaleString();
+                if (p < 1) requestAnimationFrame(step);
+                else el.textContent = end.toLocaleString();
+            };
+            requestAnimationFrame(step);
+        }
+
+        if (!localStorage.getItem('access_token') && !localStorage.getItem('authToken')) {
+            window.location.href = 'login.html';
+        }
+
+        $('logoutBtn').addEventListener('click', () => {
+            ['access_token', 'authToken', 'isAdmin', 'userRole', 'clearanceLevel', 'userEmail', 'userName']
+                .forEach((key) => localStorage.removeItem(key));
+            window.location.href = 'login.html';
+        });
+
+        function renderError(msg) {
+            $('activityBody').innerHTML = `<li class="tl-item is-fail"><div class="tl-top"><span class="tl-action error-note">Could not load profile: ${esc(msg)}</span></div></li>`;
+            $('accountFacts').innerHTML = '<div class="fact"><dt>Status</dt><dd class="error-note">Unavailable</dd></div>';
+        }
+
+        (async () => {
+            try {
+                const [me, activity] = await Promise.all([
+                    apiService.get('/users/me'),
+                    apiService.get('/users/me/activity'),
+                ]);
+
+                const name = [me.first_name, me.last_name].filter(Boolean).join(' ') || me.username || me.email;
+                const initials = name.split(/[\s@._-]+/).filter(Boolean).slice(0, 2).map((w) => w[0].toUpperCase()).join('') || '?';
+                const clearance = me.clearance_level != null ? `LVL ${me.clearance_level}` : null;
+                const status = (me.status || '').toString();
+
+                $('profileAvatar').textContent = initials;
+                $('profileRank').textContent = clearance || 'NO LVL';
+                $('profileName').textContent = name;
+                $('profileRole').textContent = (me.role || 'Analyst').replace(/_/g, ' ');
+                $('profileClearance').textContent = clearance ? `${clearance} CLEARANCE` : 'NO CLEARANCE ASSIGNED';
+                $('profileEmail').textContent = me.email;
+                $('profileMemberSince').textContent = fmtDay(activity.member_since);
+
+                const statusEl = $('profileStatus');
+                statusEl.textContent = status || '—';
+                statusEl.classList.remove('is-inactive', 'is-warn');
+                const su = status.toUpperCase();
+                if (su && su !== 'ACTIVE') statusEl.classList.add(su === 'PENDING' || su === 'SUSPENDED' ? 'is-warn' : 'is-inactive');
+
+                $('profileId').textContent = `ID: ${String(me.id).slice(0, 8)}`;
+                $('profileId').title = me.id;
+
+                const c = activity.counts || {};
+                countUp($('statResolved'), c.incidents_resolved ?? 0);
+                $('statResolvedLabel').textContent = `Incidents Resolved (of ${(c.incidents_assigned ?? 0).toLocaleString()} assigned)`;
+                countUp($('statActions'), c.investigation_actions ?? 0);
+                countUp($('statReports'), c.reports_generated ?? 0);
+                countUp($('statAdmin'), c.admin_actions ?? 0);
+
+                const rows = activity.timeline || [];
+                if (rows.length) {
+                    $('activityBody').innerHTML = rows.map((r, i) => {
+                        const result = (r.result || '').toString();
+                        const rl = result.toLowerCase();
+                        const isFail = /(fail|error|deny|denied|reject)/.test(rl);
+                        const isOk = /(success|ready|ok|complete|done|resolved)/.test(rl);
+                        const cls = isFail ? 'is-fail' : (isOk ? '' : 'is-muted');
+                        const resultCls = isFail ? 'fail' : (isOk ? 'ok' : '');
+                        const delay = reduceMotion ? 0 : Math.min(i * 0.045, 0.4);
+                        return `<li class="tl-item ${cls} tl-reveal" style="animation-delay:${delay}s">
+                            <div class="tl-top">
+                                <span class="tl-action">${esc((r.action || 'activity').replace(/_/g, ' '))}</span>
+                                <span class="tl-time" title="${esc(fmtDate(r.at))}">${esc(relTime(r.at))}</span>
+                            </div>
+                            <div class="tl-detail">
+                                <span class="tl-target">${esc(r.target || '—')}</span>
+                                ${result ? `<span class="tl-result ${resultCls}">${esc(result)}</span>` : ''}
+                            </div>
+                        </li>`;
+                    }).join('');
+                } else {
+                    $('activityBody').innerHTML = '<li class="tl-item is-muted"><div class="tl-top"><span class="tl-action empty-note">No activity recorded for this account yet</span></div></li>';
+                }
+
+                const facts = [
+                    ['Role', (me.role || '—').replace(/_/g, ' ')],
+                    ['Clearance', clearance || 'Not assigned'],
+                    ['Department', me.department || 'Not set'],
+                    ['Status', status || '—'],
+                    ['Member since', fmtDate(activity.member_since)],
+                    ['Last login', fmtDate(activity.last_login || me.last_login)],
+                ];
+                $('accountFacts').innerHTML = facts.map(([k, v]) => `<div class="fact"><dt>${esc(k)}</dt><dd>${esc(v)}</dd></div>`).join('');
+            } catch (err) {
+                renderError(err.message);
+            }
+        })();
+    </script>
     <script src="js/sidebar.js"></script>
 </body>
 

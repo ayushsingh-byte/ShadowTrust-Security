@@ -1,0 +1,218 @@
+/* ── Use Cases page ────────────────────────────────────────── */
+
+/* Hero — side-by-side */
+.usecases-hero {
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: center;
+    gap: 60px;
+    padding: 80px 0 70px;
+}
+
+.usecases-hero-text {
+    flex: 1;
+    min-width: 0;
+}
+
+.usecases-hero-text h1 {
+    font-size: 46px;
+    font-weight: 800;
+    line-height: 1.15;
+    margin-bottom: 18px;
+}
+
+.usecases-hero-text h1 span { color: #00c6ff; }
+
+.usecases-hero-text p {
+    color: #8892a4;
+    font-size: 16px;
+    line-height: 1.75;
+}
+
+/* ── Use Cases Hero Widget ──────────────────────────────────── */
+.uc-hero-widget {
+    flex: 0 0 380px;
+    width: 380px;
+    background: rgba(2,12,27,0.97);
+    border: 1px solid rgba(0,198,255,0.22);
+    border-radius: 18px;
+    overflow: hidden;
+    box-shadow: 0 24px 60px rgba(0,0,0,0.55), 0 0 40px rgba(0,198,255,0.09);
+    padding: 20px;
+}
+
+.uc-widget-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 18px;
+}
+
+.uc-widget-title {
+    font-size: 11px;
+    font-weight: 700;
+    color: #fff;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+}
+
+.uc-widget-count {
+    font-size: 10px;
+    padding: 2px 9px;
+    background: rgba(0,198,255,0.1);
+    color: #00c6ff;
+    border-radius: 8px;
+    border: 1px solid rgba(0,198,255,0.25);
+    font-weight: 700;
+}
+
+.uc-hex-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin-bottom: 16px;
+}
+
+.uc-hex-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    padding: 14px 8px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 12px;
+    transition: all 0.3s;
+    cursor: default;
+}
+
+.uc-hex-item:hover,
+.uc-hex-item.highlight {
+    background: rgba(0,198,255,0.07);
+    border-color: rgba(0,198,255,0.22);
+}
+
+.uc-hex-icon  { font-size: 24px; }
+.uc-hex-label { font-size: 10px; color: #8892a4; font-weight: 600; text-align: center; }
+
+.uc-stat-strip {
+    display: flex;
+    border-top: 1px solid rgba(255,255,255,0.06);
+    padding-top: 14px;
+    gap: 0;
+}
+
+.uc-stat {
+    flex: 1;
+    text-align: center;
+    font-size: 10px;
+    color: #8892a4;
+    position: relative;
+}
+
+.uc-stat + .uc-stat::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 10%; height: 80%;
+    width: 1px;
+    background: rgba(255,255,255,0.07);
+}
+
+.uc-stat span {
+    display: block;
+    font-size: 20px;
+    font-weight: 800;
+    color: #00c6ff;
+    line-height: 1;
+    margin-bottom: 4px;
+}
+
+/* Industry Grid — 2 columns, 3 rows = 6 cards */
+.industry-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+    gap: 24px;
+    margin-top: 48px;
+}
+
+.industry-card {
+    display: flex;
+    gap: 20px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 16px;
+    padding: 28px 24px;
+    transition: all 0.35s;
+    align-items: flex-start;
+}
+
+.industry-card:hover {
+    transform: translateY(-6px);
+    background: rgba(0,198,255,0.05);
+    border-color: rgba(0,198,255,0.28);
+    box-shadow: 0 12px 32px rgba(0,0,0,0.35);
+}
+
+.industry-icon {
+    font-size: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 56px;
+    height: 56px;
+    background: rgba(0,198,255,0.08);
+    border-radius: 12px;
+    border: 1px solid rgba(0,198,255,0.18);
+    flex-shrink: 0;
+}
+
+.industry-content { text-align: left; }
+
+.industry-content h3 {
+    font-size: 17px;
+    font-weight: 700;
+    margin-bottom: 8px;
+    color: #fff;
+}
+
+.industry-content p {
+    color: #8892a4;
+    line-height: 1.7;
+    margin-bottom: 14px;
+    font-size: 13px;
+}
+
+.benefit-list {
+    list-style: none;
+    padding: 0;
+}
+
+.benefit-list li {
+    position: relative;
+    padding-left: 18px;
+    margin-bottom: 6px;
+    color: #8892a4;
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.benefit-list li::before {
+    content: '›';
+    position: absolute;
+    left: 0;
+    color: #00c6ff;
+    font-weight: 700;
+}
+
+@media (max-width: 780px) {
+    .usecases-hero {
+        flex-direction: column;
+        text-align: center;
+        gap: 36px;
+        padding: 60px 0 50px;
+    }
+    .uc-hero-widget { flex: none; width: 100%; max-width: 440px; }
+    .usecases-hero-text p { margin: 0 auto; }
+    .industry-grid { grid-template-columns: 1fr; }
+    .industry-card { flex-direction: column; }
+}

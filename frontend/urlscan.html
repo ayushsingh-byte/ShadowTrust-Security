@@ -11,8 +11,8 @@
     <style>
         /* Scanline sweep */
         .url-hero {
-            background: rgba(0, 0, 0, .45);
-            border: 1px solid #222;
+            background: color-mix(in srgb, var(--st-bg) 90%, transparent);
+            border: 1px solid var(--st-border);
             padding: 26px 30px 20px;
             margin-bottom: 1.2rem;
             position: relative;
@@ -26,7 +26,7 @@
             left: -100%;
             width: 100%;
             height: 2px;
-            background: linear-gradient(90deg, transparent, #00f3ff, transparent);
+            background: linear-gradient(90deg, transparent, var(--st-info), transparent);
             animation: sweep 3s infinite linear;
         }
 
@@ -38,10 +38,10 @@
 
         .big-input {
             flex: 1;
-            background: rgba(0, 0, 0, .7);
-            border: 1px solid #2a2a2a;
+            background: var(--st-surface);
+            border: 1px solid var(--st-border);
             padding: 13px 18px;
-            color: #fff;
+            color: var(--st-text);
             font-family: var(--font-mono);
             font-size: 1rem;
             outline: none;
@@ -50,15 +50,15 @@
         }
 
         .big-input:focus {
-            border-color: #00f3ff;
-            box-shadow: 0 0 12px rgba(0, 243, 255, .12);
+            border-color: var(--st-info);
+            
         }
 
         .scan-btn-large {
             padding: 13px 32px;
-            background: rgba(0, 255, 65, .08);
-            border: 1px solid #00ff41;
-            color: #00ff41;
+            background: color-mix(in srgb, var(--st-success) 8%, transparent);
+            border: 1px solid var(--st-success);
+            color: var(--st-success);
             font-family: var(--font-mono);
             font-weight: 700;
             cursor: pointer;
@@ -70,9 +70,9 @@
         }
 
         .scan-btn-large:hover {
-            background: #00ff41;
-            color: #000;
-            box-shadow: 0 0 18px #00ff41;
+            background: var(--st-success);
+            color: var(--st-on-solid);
+            
         }
 
         .scan-btn-large:disabled {
@@ -86,17 +86,17 @@
             gap: 5px;
             font-size: .62rem;
             padding: 3px 9px;
-            border: 1px solid #1a1a1a;
-            color: #444;
+            border: 1px solid var(--st-border);
+            color: var(--st-text-faint);
             font-family: var(--font-mono);
             margin: 2px;
             transition: all .3s;
         }
 
         .engine-tag.active {
-            border-color: #00f3ff;
-            color: #00f3ff;
-            background: rgba(0, 243, 255, .05);
+            border-color: var(--st-info);
+            color: var(--st-info);
+            background: color-mix(in srgb, var(--st-info) 5%, transparent);
         }
 
         /* Main layout */
@@ -118,7 +118,7 @@
             width: 110px;
             height: 110px;
             border-radius: 50%;
-            border: 5px solid #1a1a1a;
+            border: 5px solid var(--st-border);
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -128,30 +128,30 @@
         }
 
         .score-ring.safe {
-            border-color: #00ff41;
-            box-shadow: 0 0 24px rgba(0, 255, 65, .35);
+            border-color: var(--st-success);
+            
         }
 
         .score-ring.suspicious {
-            border-color: #bc13fe;
-            box-shadow: 0 0 24px rgba(188, 19, 254, .35);
+            border-color: var(--st-info);
+            
         }
 
         .score-ring.malicious {
-            border-color: #ff0055;
-            box-shadow: 0 0 24px rgba(255, 0, 85, .45);
+            border-color: var(--st-danger);
+            
         }
 
         .score-ring .s-number {
             font-size: 2rem;
             font-weight: 800;
-            color: #fff;
+            color: var(--st-text);
             line-height: 1;
         }
 
         .score-ring .s-label {
             font-size: .55rem;
-            color: #555;
+            color: var(--st-text-faint);
             text-transform: uppercase;
             letter-spacing: 1px;
             margin-top: 2px;
@@ -159,16 +159,16 @@
 
         /* Preview iframe */
         .preview-browser {
-            background: #000;
-            border: 1px solid #111;
+            background: var(--st-surface-2);
+            border: 1px solid var(--st-border);
             display: flex;
             flex-direction: column;
             overflow: hidden;
         }
 
         .browser-bar {
-            background: #060810;
-            border-bottom: 1px solid #111;
+            background: var(--st-surface-2);
+            border-bottom: 1px solid var(--st-border);
             padding: 7px 10px;
             display: flex;
             align-items: center;
@@ -185,22 +185,22 @@
         }
 
         .b-red {
-            background: #ff5f57;
+            background: var(--st-danger);
         }
 
         .b-yellow {
-            background: #febc2e;
+            background: var(--st-warning);
         }
 
         .b-green {
-            background: #28c840;
+            background: var(--st-success);
         }
 
         .browser-addr {
             flex: 1;
-            background: #0a0a0f;
-            border: 1px solid #1a1a1a;
-            color: #555;
+            background: var(--st-surface-2);
+            border: 1px solid var(--st-border);
+            color: var(--st-text-faint);
             font-size: .65rem;
             font-family: var(--font-mono);
             padding: 4px 8px;
@@ -214,7 +214,7 @@
             width: 100%;
             border: none;
             min-height: 330px;
-            background: #050508;
+            background: var(--st-surface-2);
         }
 
         .preview-placeholder {
@@ -223,7 +223,7 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            color: #222;
+            color: var(--st-text-faint);
             font-family: var(--font-mono);
             font-size: .75rem;
             min-height: 330px;
@@ -236,23 +236,23 @@
             align-items: center;
             gap: 8px;
             padding: 5px 0;
-            border-bottom: 1px solid #0a0a0a;
+            border-bottom: 1px solid var(--st-border);
             font-family: var(--font-mono);
             font-size: .66rem;
         }
 
         .vt-engine .e-name {
             flex: 1;
-            color: #666;
+            color: var(--st-text-faint);
         }
 
         .vt-engine .e-clean {
-            color: #00ff41;
+            color: var(--st-success);
             font-size: .6rem;
         }
 
         .vt-engine .e-detect {
-            color: #ff0055;
+            color: var(--st-danger);
             font-size: .6rem;
         }
 
@@ -262,20 +262,20 @@
             align-items: flex-start;
             gap: 8px;
             padding: 5px 0;
-            border-bottom: 1px solid #0a0a0a;
+            border-bottom: 1px solid var(--st-border);
             font-family: var(--font-mono);
             font-size: .67rem;
         }
 
         .finding-row i {
-            color: #ff9900;
+            color: var(--st-caution);
             flex-shrink: 0;
             margin-top: 2px;
             font-size: .7rem;
         }
 
         .finding-text {
-            color: #aaa;
+            color: var(--st-text-secondary);
             line-height: 1.4;
         }
 
@@ -287,14 +287,14 @@
         }
 
         .intel-item {
-            background: #050810;
-            border: 1px solid #111;
+            background: var(--st-surface-2);
+            border: 1px solid var(--st-border);
             padding: 8px 10px;
         }
 
         .intel-lbl {
             font-size: .58rem;
-            color: #333;
+            color: var(--st-text-faint);
             text-transform: uppercase;
             letter-spacing: 1px;
             margin-bottom: 3px;
@@ -303,7 +303,7 @@
 
         .intel-val {
             font-size: .75rem;
-            color: #fff;
+            color: var(--st-text);
             font-family: var(--font-mono);
             overflow: hidden;
             text-overflow: ellipsis;
@@ -312,18 +312,18 @@
 
         /* SSL badge */
         .ssl-valid {
-            color: #00ff41;
-            border: 1px solid rgba(0, 255, 65, .3);
-            background: rgba(0, 255, 65, .05);
+            color: var(--st-success);
+            border: 1px solid color-mix(in srgb, var(--st-success) 30%, transparent);
+            background: color-mix(in srgb, var(--st-success) 5%, transparent);
             padding: 2px 8px;
             font-size: .62rem;
             font-family: var(--font-mono);
         }
 
         .ssl-invalid {
-            color: #ff0055;
-            border: 1px solid rgba(255, 0, 85, .3);
-            background: rgba(255, 0, 85, .05);
+            color: var(--st-danger);
+            border: 1px solid color-mix(in srgb, var(--st-danger) 30%, transparent);
+            background: color-mix(in srgb, var(--st-danger) 5%, transparent);
             padding: 2px 8px;
             font-size: .62rem;
             font-family: var(--font-mono);
@@ -336,15 +336,15 @@
         }
 
         .url-tr:hover td {
-            background: rgba(0, 243, 255, .03);
+            background: color-mix(in srgb, var(--st-info) 3%, transparent);
         }
 
         .url-tr td {
             padding: 9px 12px;
-            border-bottom: 1px solid #0f0f0f;
+            border-bottom: 1px solid var(--st-border);
             font-family: var(--font-mono);
             font-size: .68rem;
-            color: #888;
+            color: var(--st-text-muted);
         }
 
         /* Score bar inline */
@@ -357,7 +357,7 @@
         .sb-track {
             width: 40px;
             height: 3px;
-            background: #111;
+            background: var(--st-surface);
         }
 
         .sb-fill {
@@ -371,27 +371,27 @@
             padding: 2px 8px;
             font-size: .6rem;
             font-family: var(--font-mono);
-            border: 1px solid #333;
-            color: #666;
+            border: 1px solid var(--st-border);
+            color: var(--st-text-faint);
             margin: 2px;
         }
 
         .cat-badge.red {
-            border-color: rgba(255, 0, 85, .4);
-            color: #ff4466;
-            background: rgba(255, 0, 85, .05);
+            border-color: color-mix(in srgb, var(--st-danger) 40%, transparent);
+            color: var(--st-danger);
+            background: color-mix(in srgb, var(--st-danger) 5%, transparent);
         }
 
         .cat-badge.amber {
-            border-color: rgba(255, 153, 0, .4);
-            color: #ff9900;
-            background: rgba(255, 153, 0, .05);
+            border-color: color-mix(in srgb, var(--st-caution) 40%, transparent);
+            color: var(--st-caution);
+            background: color-mix(in srgb, var(--st-caution) 5%, transparent);
         }
 
         .cat-badge.cyan {
-            border-color: rgba(0, 243, 255, .3);
-            color: #00f3ff;
-            background: rgba(0, 243, 255, .04);
+            border-color: color-mix(in srgb, var(--st-info) 30%, transparent);
+            color: var(--st-info);
+            background: color-mix(in srgb, var(--st-info) 4%, transparent);
         }
 
         /* Scanning animation */
@@ -424,21 +424,21 @@
         }
 
         .threat-banner.malicious {
-            background: rgba(255, 0, 85, .06);
-            border-color: #ff0055;
-            color: #ff4466;
+            background: color-mix(in srgb, var(--st-danger) 6%, transparent);
+            border-color: var(--st-danger);
+            color: var(--st-danger);
         }
 
         .threat-banner.suspicious {
-            background: rgba(188, 19, 254, .06);
-            border-color: #bc13fe;
-            color: #bc13fe;
+            background: color-mix(in srgb, var(--st-info) 6%, transparent);
+            border-color: var(--st-info);
+            color: var(--st-info);
         }
 
         .threat-banner.safe {
-            background: rgba(0, 255, 65, .06);
-            border-color: #00ff41;
-            color: #00ff41;
+            background: color-mix(in srgb, var(--st-success) 6%, transparent);
+            border-color: var(--st-success);
+            color: var(--st-success);
         }
 
         /* Redirect chain */
@@ -452,7 +452,7 @@
         }
 
         .redirect-step .r-url {
-            color: #555;
+            color: var(--st-text-faint);
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
@@ -460,10 +460,14 @@
         }
 
         .redirect-step .r-arrow {
-            color: #222;
+            color: var(--st-text-faint);
             flex-shrink: 0;
         }
     </style>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600;700&amp;display=swap">
+    <link rel="stylesheet" href="css/tokens.css">
+    <script src="js/theme.js"></script>
 </head>
 
 <body>
@@ -478,11 +482,11 @@
                 </div>
                 <div class="filters-bar">
                     <div style="text-align:right;">
-                        <div style="font-size:.65rem;color:#555;">SCANS TODAY</div>
-                        <div id="scansToday" class="text-mono" style="color:#fff;font-size:1.3rem;">0</div>
+                        <div style="font-size:.65rem;color:var(--st-text-faint);">SCANS TODAY</div>
+                        <div id="scansToday" class="text-mono" style="color:var(--st-text);font-size:1.3rem;">0</div>
                     </div>
                     <div style="margin-left:20px;text-align:right;">
-                        <div style="font-size:.65rem;color:#555;">MALICIOUS</div>
+                        <div style="font-size:.65rem;color:var(--st-text-faint);">MALICIOUS</div>
                         <div id="totalMalicious" class="text-mono text-red" style="font-size:1.3rem;">0</div>
                     </div>
                 </div>
@@ -491,14 +495,14 @@
             <!-- SEARCH HERO -->
             <div class="url-hero">
                 <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
-                    <i class="fas fa-crosshairs" style="color:#00f3ff;font-size:1.3rem;flex-shrink:0;"></i>
+                    <i class="fas fa-crosshairs" style="color:var(--st-info);font-size:1.3rem;flex-shrink:0;"></i>
                     <input type="text" id="urlInput" class="big-input"
                         placeholder="ENTER URL (e.g. https://suspicious-login.net)…">
                     <button id="scanBtn" class="scan-btn-large"><i class="fas fa-satellite-dish"></i> INITIATE
                         SCAN</button>
                 </div>
                 <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-                    <span style="font-size:.6rem;color:#333;font-family:var(--font-mono);">ENGINES:</span>
+                    <span style="font-size:.6rem;color:var(--st-text-faint);font-family:var(--font-mono);">ENGINES:</span>
                     <span class="engine-tag" id="eng-heuristic"><i class="fas fa-brain"></i> HEURISTICS</span>
                     <span class="engine-tag" id="eng-dns"><i class="fas fa-server"></i> DNS RESOLVE</span>
                     <span class="engine-tag" id="eng-ssl"><i class="fas fa-lock"></i> SSL/TLS</span>
@@ -507,7 +511,7 @@
                     <span class="engine-tag" id="eng-preview"><i class="fas fa-eye"></i> LIVE PREVIEW</span>
                 </div>
                 <div id="inlineError"
-                    style="display:none;font-family:var(--font-mono);font-size:.8rem;color:#ff0055;margin-top:10px;text-align:center;">
+                    style="display:none;font-family:var(--font-mono);font-size:.8rem;color:var(--st-danger);margin-top:10px;text-align:center;">
                 </div>
             </div>
 
@@ -527,7 +531,7 @@
                     <div class="soc-card" style="padding:0;">
                         <div class="soc-card-header" style="padding:10px 14px;">
                             <span class="card-title"><i class="fas fa-crosshairs"
-                                    style="color:#00f3ff;margin-right:6px;"></i>THREAT ASSESSMENT</span>
+                                    style="color:var(--st-info);margin-right:6px;"></i>THREAT ASSESSMENT</span>
                             <span id="riskBadge" class="badge badge-green">AWAITING</span>
                         </div>
                         <div style="padding:14px;display:flex;align-items:center;gap:16px;">
@@ -537,10 +541,10 @@
                             </div>
                             <div style="flex:1;min-width:0;">
                                 <div id="domainDisplay"
-                                    style="font-size:.9rem;font-weight:700;color:#fff;font-family:var(--font-mono);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-bottom:6px;">
+                                    style="font-size:.9rem;font-weight:700;color:var(--st-text);font-family:var(--font-mono);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-bottom:6px;">
                                     No target</div>
                                 <div id="categoryBadges" style="margin-bottom:8px;"></div>
-                                <div id="ipCountry" style="font-size:.65rem;color:#444;font-family:var(--font-mono);">
+                                <div id="ipCountry" style="font-size:.65rem;color:var(--st-text-faint);font-family:var(--font-mono);">
                                 </div>
                             </div>
                         </div>
@@ -549,7 +553,7 @@
                     <!-- Intel Grid -->
                     <div class="soc-card" style="padding:12px;">
                         <div
-                            style="font-size:.62rem;color:#00f3ff;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;">
+                            style="font-size:.62rem;color:var(--st-info);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;">
                             NETWORK INTELLIGENCE</div>
                         <div class="intel-grid">
                             <div class="intel-item">
@@ -590,10 +594,10 @@
                     <!-- Findings -->
                     <div class="soc-card" style="padding:12px;max-height:260px;overflow-y:auto;">
                         <div
-                            style="font-size:.62rem;color:#00f3ff;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;">
+                            style="font-size:.62rem;color:var(--st-info);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;">
                             THREAT FINDINGS</div>
                         <div id="findingsList">
-                            <div style="color:#333;font-size:.72rem;font-family:var(--font-mono);">No scan yet. Enter a
+                            <div style="color:var(--st-text-faint);font-size:.72rem;font-family:var(--font-mono);">No scan yet. Enter a
                                 URL above.</div>
                         </div>
                     </div>
@@ -610,16 +614,16 @@
                                     class="b-green"></span></div>
                             <div id="browserAddr" class="browser-addr">about:blank</div>
                             <button id="refreshPreview"
-                                style="background:none;border:none;color:#333;cursor:pointer;font-size:.75rem;flex-shrink:0;"
+                                style="background:none;border:none;color:var(--st-text-faint);cursor:pointer;font-size:.75rem;flex-shrink:0;"
                                 title="Reload preview"><i class="fas fa-redo"></i></button>
                             <button id="openExternal"
-                                style="background:none;border:none;color:#333;cursor:pointer;font-size:.75rem;flex-shrink:0;"
+                                style="background:none;border:none;color:var(--st-text-faint);cursor:pointer;font-size:.75rem;flex-shrink:0;"
                                 title="Open in new tab"><i class="fas fa-external-link-alt"></i></button>
                         </div>
                         <div id="previewPlaceholder" class="preview-placeholder">
-                            <i class="fas fa-eye" style="font-size:2.5rem;color:#1a1a1a;"></i>
+                            <i class="fas fa-eye" style="font-size:2.5rem;color:var(--st-on-solid);"></i>
                             <span>LIVE SITE PREVIEW</span>
-                            <span style="font-size:.62rem;color:#1a1a1a;">Enter a URL and run scan to load
+                            <span style="font-size:.62rem;color:var(--st-on-solid);">Enter a URL and run scan to load
                                 preview</span>
                         </div>
                         <iframe id="siteFrame" class="preview-frame" style="display:none;"
@@ -630,11 +634,11 @@
                     <div class="soc-card" style="padding:0;">
                         <div class="soc-card-header" style="padding:10px 14px;">
                             <span class="card-title"><i class="fas fa-id-card"
-                                    style="color:#bc13fe;margin-right:5px;"></i>DOMAIN REGISTRATION (WHOIS)</span>
+                                    style="color:var(--st-info);margin-right:5px;"></i>DOMAIN REGISTRATION (WHOIS)</span>
                             <span id="whoisBadge" class="badge badge-green">—</span>
                         </div>
-                        <div style="padding:14px;font-size:.75rem;font-family:var(--font-mono);color:#c9d1d9;">
-                            <div id="whoisBody" style="color:#444;">Run a scan to see WHOIS registration data.</div>
+                        <div style="padding:14px;font-size:.75rem;font-family:var(--font-mono);color:var(--st-text-secondary);">
+                            <div id="whoisBody" style="color:var(--st-text-faint);">Run a scan to see WHOIS registration data.</div>
                         </div>
                     </div>
                 </div>
@@ -644,37 +648,37 @@
             <div class="soc-card" style="padding:0;margin-bottom:1rem;">
                 <div class="soc-card-header" style="padding:10px 14px;">
                     <span class="card-title"><i class="fas fa-history"
-                            style="color:#00f3ff;margin-right:5px;"></i>RECENT SCAN HISTORY</span>
+                            style="color:var(--st-info);margin-right:5px;"></i>RECENT SCAN HISTORY</span>
                     <span class="badge badge-purple">LIVE FEED</span>
                 </div>
                 <div style="overflow-x:auto;">
                     <table style="width:100%;border-collapse:collapse;min-width:800px;">
                         <thead>
-                            <tr style="background:#050810;">
+                            <tr style="background:var(--st-surface-2);">
                                 <th
-                                    style="padding:9px 12px;font-size:.62rem;color:#444;text-align:left;font-family:var(--font-mono);border-bottom:1px solid #111;">
+                                    style="padding:9px 12px;font-size:.62rem;color:var(--st-text-faint);text-align:left;font-family:var(--font-mono);border-bottom:1px solid var(--st-border);">
                                     TIME</th>
                                 <th
-                                    style="padding:9px 12px;font-size:.62rem;color:#444;text-align:left;font-family:var(--font-mono);border-bottom:1px solid #111;">
+                                    style="padding:9px 12px;font-size:.62rem;color:var(--st-text-faint);text-align:left;font-family:var(--font-mono);border-bottom:1px solid var(--st-border);">
                                     URL</th>
                                 <th
-                                    style="padding:9px 12px;font-size:.62rem;color:#444;text-align:left;font-family:var(--font-mono);border-bottom:1px solid #111;">
+                                    style="padding:9px 12px;font-size:.62rem;color:var(--st-text-faint);text-align:left;font-family:var(--font-mono);border-bottom:1px solid var(--st-border);">
                                     IP</th>
                                 <th
-                                    style="padding:9px 12px;font-size:.62rem;color:#444;text-align:left;font-family:var(--font-mono);border-bottom:1px solid #111;">
+                                    style="padding:9px 12px;font-size:.62rem;color:var(--st-text-faint);text-align:left;font-family:var(--font-mono);border-bottom:1px solid var(--st-border);">
                                     COUNTRY</th>
                                 <th
-                                    style="padding:9px 12px;font-size:.62rem;color:#444;text-align:left;font-family:var(--font-mono);border-bottom:1px solid #111;">
+                                    style="padding:9px 12px;font-size:.62rem;color:var(--st-text-faint);text-align:left;font-family:var(--font-mono);border-bottom:1px solid var(--st-border);">
                                     SCORE</th>
                                 <th
-                                    style="padding:9px 12px;font-size:.62rem;color:#444;text-align:left;font-family:var(--font-mono);border-bottom:1px solid #111;">
+                                    style="padding:9px 12px;font-size:.62rem;color:var(--st-text-faint);text-align:left;font-family:var(--font-mono);border-bottom:1px solid var(--st-border);">
                                     VERDICT</th>
                             </tr>
                         </thead>
                         <tbody id="historyBody">
                             <tr>
                                 <td colspan="6"
-                                    style="padding:16px 12px;color:#222;font-family:var(--font-mono);font-size:.7rem;">
+                                    style="padding:16px 12px;color:var(--st-text-faint);font-family:var(--font-mono);font-size:.7rem;">
                                     No scans yet</td>
                             </tr>
                         </tbody>
@@ -740,9 +744,9 @@
             // Banner
             const banner = $('threatBanner');
             const bColors = {
-                MALICIOUS: ['malicious', '#ff0055', 'fa-biohazard', 'THREAT CONFIRMED — '],
-                SUSPICIOUS: ['suspicious', '#bc13fe', 'fa-exclamation-triangle', 'SUSPICIOUS TARGET — '],
-                SAFE: ['safe', '#00ff41', 'fa-check-circle', 'CLEAN TARGET — ']
+                MALICIOUS: ['malicious', 'var(--st-danger)', 'fa-biohazard', 'THREAT CONFIRMED — '],
+                SUSPICIOUS: ['suspicious', 'var(--st-info)', 'fa-exclamation-triangle', 'SUSPICIOUS TARGET — '],
+                SAFE: ['safe', 'var(--st-success)', 'fa-check-circle', 'CLEAN TARGET — ']
             };
             const [cls, col, icon, prefix] = bColors[r.risk_level] || bColors['SAFE'];
             banner.className = `threat-banner ${cls}`;
@@ -775,11 +779,11 @@
             setII('ii-ip', r.ip_address);
             setII('ii-country', r.country);
             setII('ii-isp', r.isp);
-            setII('ii-age', r.domain_age, (r.domain_age_days != null && r.domain_age_days < 30) ? '#ff0055' : (r.domain_age_days != null && r.domain_age_days < 180) ? '#ff9900' : '#00ff41');
+            setII('ii-age', r.domain_age, (r.domain_age_days != null && r.domain_age_days < 30) ? 'var(--st-danger)' : (r.domain_age_days != null && r.domain_age_days < 180) ? 'var(--st-caution)' : 'var(--st-success)');
             setII('ii-server', r.http?.server || 'Unknown');
             setII('ii-status', r.http?.status_code ? String(r.http.status_code) : (r.http?.error || '—'));
             const entEl = $('ii-entropy');
-            if (entEl) { entEl.textContent = r.entropy?.toFixed(3) || '—'; entEl.style.color = r.entropy > 3.8 ? '#ff9900' : '#00f3ff'; }
+            if (entEl) { entEl.textContent = r.entropy?.toFixed(3) || '—'; entEl.style.color = r.entropy > 3.8 ? 'var(--st-caution)' : 'var(--st-info)'; }
             const sslEl = $('ii-ssl');
             if (sslEl) sslEl.innerHTML = r.ssl?.valid
                 ? `<span class="ssl-valid"><i class="fas fa-lock"></i> VALID · ${esc(r.ssl.issuer || '')}</span>`
@@ -788,11 +792,11 @@
             // Findings
             const fl = $('findingsList');
             fl.innerHTML = (r.findings || []).length === 0
-                ? '<div style="color:#00ff41;font-size:.72rem;font-family:var(--font-mono);">No threats detected</div>'
+                ? '<div style="color:var(--st-success);font-size:.72rem;font-family:var(--font-mono);">No threats detected</div>'
                 : (r.findings || []).map(f => {
                     const isGood = f.startsWith('SSL issued');
                     return `<div class="finding-row">
-          <i class="fas ${isGood ? 'fa-info-circle' : 'fa-exclamation-circle'}" style="color:${isGood ? '#00f3ff' : '#ff9900'};"></i>
+          <i class="fas ${isGood ? 'fa-info-circle' : 'fa-exclamation-circle'}" style="color:${isGood ? 'var(--st-info)' : 'var(--st-caution)'};"></i>
           <span class="finding-text">${esc(f)}</span>
         </div>`;
                 }).join('');
@@ -802,17 +806,17 @@
             if (w.available) {
                 $('whoisBadge').textContent = (w.age_days != null ? w.age_days + ' days old' : 'registered');
                 $('whoisBadge').className = 'badge ' + (w.age_days != null && w.age_days < 30 ? 'badge-red' : 'badge-green');
-                $('whoisBody').style.color = '#c9d1d9';
+                $('whoisBody').style.color = 'var(--st-text-secondary)';
                 $('whoisBody').innerHTML = [
                     ['Registrar', w.registrar || '—'],
                     ['Created', (w.created || '—').slice(0, 10)],
                     ['Expires', (w.expires || '—').slice(0, 10)],
                     ['Age', w.age_days != null ? w.age_days + ' days' : '—'],
-                ].map(([k, v]) => `<div style="display:grid;grid-template-columns:90px 1fr;gap:4px;"><span style="color:#666;">${k}</span><span>${esc(v)}</span></div>`).join('');
+                ].map(([k, v]) => `<div style="display:grid;grid-template-columns:90px 1fr;gap:4px;"><span style="color:var(--st-text-faint);">${k}</span><span>${esc(v)}</span></div>`).join('');
             } else {
                 $('whoisBadge').textContent = 'unavailable';
                 $('whoisBadge').className = 'badge badge-purple';
-                $('whoisBody').style.color = '#666';
+                $('whoisBody').style.color = 'var(--st-text-faint)';
                 $('whoisBody').textContent = 'WHOIS lookup unavailable: ' + (w.reason || 'no data');
             }
 
@@ -824,7 +828,7 @@
             $('previewPlaceholder').style.display = 'none';
             $('siteFrame').style.display = 'block';
             $('browserAddr').textContent = url;
-            $('browserAddr').style.color = '#00f3ff';
+            $('browserAddr').style.color = 'var(--st-info)';
             // Load in iframe — many sites block framing; we still attempt it
             $('siteFrame').src = url;
             $('siteFrame').onerror = () => { showPreviewBlocked(url); };
@@ -841,10 +845,10 @@
             $('siteFrame').style.display = 'none';
             $('previewPlaceholder').style.display = 'flex';
             $('previewPlaceholder').innerHTML = `
-    <i class="fas fa-ban" style="font-size:2rem;color:#ff0055;"></i>
-    <span style="color:#ff4466;font-size:.75rem;font-family:var(--font-mono);">PREVIEW BLOCKED</span>
-    <span style="font-size:.62rem;color:#333;font-family:var(--font-mono);">Site uses X-Frame-Options: DENY</span>
-    <a href="${url}" target="_blank" rel="noopener noreferrer" style="font-size:.65rem;color:#00f3ff;font-family:var(--font-mono);margin-top:6px;">→ OPEN IN NEW TAB</a>`;
+    <i class="fas fa-ban" style="font-size:2rem;color:var(--st-danger);"></i>
+    <span style="color:var(--st-danger);font-size:.75rem;font-family:var(--font-mono);">PREVIEW BLOCKED</span>
+    <span style="font-size:.62rem;color:var(--st-text-faint);font-family:var(--font-mono);">Site uses X-Frame-Options: DENY</span>
+    <a href="${url}" target="_blank" rel="noopener noreferrer" style="font-size:.65rem;color:var(--st-info);font-family:var(--font-mono);margin-top:6px;">→ OPEN IN NEW TAB</a>`;
         }
 
         function addHistory(r) {
@@ -854,14 +858,14 @@
             const row = document.createElement('tr');
             row.className = 'url-tr';
             row.innerHTML = `
-    <td style="color:#444;white-space:nowrap;">${new Date().toLocaleTimeString()}</td>
-    <td style="max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#888;" title="${esc(r.url)}">${esc(r.url)}</td>
+    <td style="color:var(--st-text-faint);white-space:nowrap;">${new Date().toLocaleTimeString()}</td>
+    <td style="max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--st-text-muted);" title="${esc(r.url)}">${esc(r.url)}</td>
     <td>${esc(r.ip_address || '—')}</td>
     <td>${esc(r.country || '—')}</td>
     <td>
       <div class="score-bar-inline">
-        <div class="sb-track"><div class="sb-fill" style="width:${r.risk_score}%;background:${r.risk_score > 65 ? '#ff0055' : r.risk_score > 30 ? '#bc13fe' : '#00ff41'};"></div></div>
-        <span style="color:#fff;">${r.risk_score}</span>
+        <div class="sb-track"><div class="sb-fill" style="width:${r.risk_score}%;background:${r.risk_score > 65 ? 'var(--st-danger)' : r.risk_score > 30 ? 'var(--st-info)' : 'var(--st-success)'};"></div></div>
+        <span style="color:var(--st-text);">${r.risk_score}</span>
       </div>
     </td>
     <td><span class="badge ${rc}">${r.risk_level}</span></td>`;

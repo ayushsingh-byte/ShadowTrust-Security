@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ShadowTrust - Architecture</title>
+
+    <!-- Google Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <!-- AOS CSS for Animations -->
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+
+    <!-- Global Styles (from landing page) -->
+    <link rel="stylesheet" href="CSS/landingpage.css">
+    <!-- Specific Architecture Styles -->
+    <link rel="stylesheet" href="CSS/architecture.css">
+</head>
+
+<body>
+
+    <div class="container">
+
+        <!-- NAVBAR -->
+        <nav>
+            <div class="logo">Shadow<span>Trust</span></div>
+            <ul>
+                <li><a href="landingpage.html">Home</a></li>
+                <li><a href="features.html">Features</a></li>
+                <li><a href="architecture.html" class="active-link">Architecture</a></li>
+                <li><a href="docs.html">Docs</a></li>
+                <li><a href="status.html">Status</a></li>
+                <li><a href="usecases.html">Use Cases</a></li>
+            </ul>
+            <a href="contact.html" class="btn">Contact Us</a>
+        </nav>
+
+        <!-- ARCHITECTURE HERO -->
+        <section class="arch-hero" data-aos="fade-up">
+            <div class="arch-hero-text">
+                <h1>Shadow Trust <span>Backend Architecture</span></h1>
+                <p>Shadow Trust is a cloud-orchestrated cyber range and honeypot platform for cybersecurity research, malware analysis, and threat intelligence. The backend is designed for modular orchestration, secure VM lifecycle management, and real-time telemetry ingestion, enabling scalable and ephemeral analysis environments.</p>
+            </div>
+            <img src="./architecture_hero.png" alt="Cloud Cybersecurity Architecture Diagram">
+        </section>
+
+        <!-- ARCHITECTURE DETAILS -->
+        <section class="section" data-aos="fade-up">
+            <h2>Core <span>Platform Components</span></h2>
+
+            <div class="arch-timeline">
+
+                <!-- Step 1 -->
+                <div class="timeline-step" data-aos="fade-right">
+                    <div class="step-icon">1</div>
+                    <div class="step-content">
+                        <h3>Event Ingestion Layer</h3>
+                        <p>Honeypot VMs and telemetry agents send structured attack events to the backend. Events are normalized, written to a local SQLite store, and streamed to Supabase for dashboard visualization. High-frequency logging is supported for noisy environments.</p>
+                    </div>
+                </div>
+
+                <!-- Step 2 -->
+                <div class="timeline-step" data-aos="fade-left">
+                    <div class="step-icon">2</div>
+                    <div class="step-content">
+                        <h3>VM Orchestration Service</h3>
+                        <p>Analysis and honeypot VMs are launched from Golden AMIs using AWS EC2 APIs. The backend manages VM lifecycle, tags instances with session IDs, and ensures cost-safe ephemeral compute. No state is stored inside VMs; all persistent data is externalized.</p>
+                    </div>
+                </div>
+
+                <!-- Step 3 -->
+                <div class="timeline-step" data-aos="fade-right">
+                    <div class="step-icon">3</div>
+                    <div class="step-content">
+                        <h3>Session Engine</h3>
+                        <p>Links multiple attack events into sessions, reconstructs timelines, and manages session lifecycle. Enables analysts to trace attacker behavior across VM instances and honeypot logs.</p>
+                    </div>
+                </div>
+
+                <!-- Step 4 -->
+                <div class="timeline-step" data-aos="fade-left">
+                    <div class="step-icon">4</div>
+                    <div class="step-content">
+                        <h3>Malware Collection Pipeline</h3>
+                        <p>When file events are detected, samples are uploaded to S3, hashes are computed, and metadata is stored in Supabase. Samples are linked to attacker sessions for further analysis.</p>
+                    </div>
+                </div>
+
+                <!-- Step 5 -->
+                <div class="timeline-step" data-aos="fade-right">
+                    <div class="step-icon">5</div>
+                    <div class="step-content">
+                        <h3>Analysis Orchestrator & API Layer</h3>
+                        <p>Supports launching analysis VMs, registering jobs, tracking job lifecycle, and auto-terminating instances. Exposes async FastAPI endpoints for VM orchestration, session management, event ingestion, and analysis workflows. Real-time updates are streamed to the dashboard via Supabase or Redis pub/sub.</p>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- TECH STACK -->
+        <section class="tech-stack-section" data-aos="fade-up">
+            <h2>Backend <span>Tech Stack</span></h2>
+            <div class="stack-grid">
+                <div class="stack-item"><span>AWS EC2 & VPC</span></div>
+                <div class="stack-item"><span>FastAPI (Python)</span></div>
+                <div class="stack-item"><span>Boto3</span></div>
+                <div class="stack-item"><span>Supabase (Postgres)</span></div>
+                <div class="stack-item"><span>SQLite</span></div>
+                <div class="stack-item"><span>MobSF</span></div>
+                <div class="stack-item"><span>Redis Pub/Sub</span></div>
+                <div class="stack-item"><span>HTML/CSS/JS Dashboard</span></div>
+            </div>
+        </section>
+
+    </div>
+
+    <footer>
+        © 2026 Shadow Trust Project. All Rights Reserved.
+    </footer>
+
+    <!-- AOS Animation Script Iteration -->
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script>
+        AOS.init({
+            duration: 800,
+            once: true,
+            offset: 100
+        });
+    </script>
+</body>
+
+</html>

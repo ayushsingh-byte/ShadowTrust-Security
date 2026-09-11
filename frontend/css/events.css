@@ -198,11 +198,17 @@
 
 .hn-feed-row {
     display: grid;
-    grid-template-columns: 78px 74px 84px 1fr;
+    grid-template-columns: 72px 116px 78px minmax(0, 1fr);
+    align-items: center;
     gap: 0.6rem;
     padding: 0.3rem 1rem;
-    border-bottom: 1px solid rgba(255,255,255,0.04);
+    border-bottom: 1px solid color-mix(in srgb, var(--st-text) 4%, transparent);
     white-space: nowrap;
+}
+
+.hn-feed-row .sensor {
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .hn-feed-row:last-child { border-bottom: none; }
@@ -212,7 +218,7 @@
 }
 
 @keyframes hn-flash {
-    0% { background: rgba(0, 198, 255, 0.16); }
+    0% { background: color-mix(in srgb, var(--st-accent) 16%, transparent); }
     100% { background: transparent; }
 }
 
@@ -259,7 +265,7 @@
     justify-content: space-between;
     align-items: center;
     padding: 0.75rem 1rem;
-    border-bottom: 1px solid rgba(255,255,255,0.04);
+    border-bottom: 1px solid color-mix(in srgb, var(--st-text) 4%, transparent);
     font-size: 0.8rem;
 }
 
@@ -311,7 +317,7 @@ table.hn-table th {
 
 table.hn-table td {
     padding: 0.5rem 0.9rem;
-    border-bottom: 1px solid rgba(255,255,255,0.04);
+    border-bottom: 1px solid color-mix(in srgb, var(--st-text) 4%, transparent);
     vertical-align: top;
 }
 
@@ -336,7 +342,7 @@ table.hn-table tbody tr.hn-selected {
 }
 
 .hn-tag {
-    background: rgba(255,255,255,0.06);
+    background: color-mix(in srgb, var(--st-text) 6%, transparent);
     color: var(--text-secondary);
     font-size: 0.68rem;
     padding: 0.1rem 0.4rem;

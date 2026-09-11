@@ -1,0 +1,146 @@
+/* ShadowTrust design tokens: the single source of color, type, radius and shadow.
+   Light values sit on :root; dark applies from the OS setting or an explicit data-theme.
+   Add class="st-theme-dark" to keep one block dark in both themes (e.g. text over a photo). */
+
+:root {
+    color-scheme: light;
+
+    --st-bg: #f6f7f8;
+    --st-surface: #ffffff;
+    --st-surface-2: #f8f9fa;
+    --st-surface-hover: #f1f3f5;
+    --st-sidebar: #fbfbfc;
+    --st-border: #e3e6ea;
+    --st-border-strong: #cfd4da;
+
+    --st-text: #14181c;
+    --st-text-secondary: #3d454d;
+    --st-text-muted: #5b636c;
+    --st-text-faint: #7a828b;
+
+    --st-accent: #146b64;
+    --st-accent-hover: #0f5551;
+    --st-on-solid: #ffffff;
+
+    --st-success: #157a45;
+    --st-warning: #9a6103;
+    --st-caution: #b4520e;
+    --st-danger: #b3261e;
+    --st-info: #33658f;
+    --st-neutral: #5b636c;
+
+    --st-overlay: rgba(20, 24, 28, 0.45);
+    --st-shadow-sm: 0 1px 2px rgba(20, 24, 28, 0.06);
+    --st-shadow-md: 0 6px 16px rgba(20, 24, 28, 0.08);
+
+    /* Map tiles and embedded third-party pages are light; dark theme inverts them. */
+    --st-map-filter: saturate(0.7) contrast(0.97);
+    --st-embed-filter: none;
+
+    --st-radius-sm: 6px;
+    --st-radius-md: 8px;
+    --st-radius-lg: 12px;
+
+    --st-font-main: 'Public Sans', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    --st-font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+/* Derived values and legacy names. Declared on every theme scope so they
+   recompute against that scope's palette instead of inheriting root values. */
+:root,
+.st-theme-dark {
+    --st-accent-tint: color-mix(in srgb, var(--st-accent) 12%, var(--st-surface));
+    --st-success-bg: color-mix(in srgb, var(--st-success) 12%, var(--st-surface));
+    --st-warning-bg: color-mix(in srgb, var(--st-warning) 12%, var(--st-surface));
+    --st-caution-bg: color-mix(in srgb, var(--st-caution) 12%, var(--st-surface));
+    --st-danger-bg: color-mix(in srgb, var(--st-danger) 12%, var(--st-surface));
+    --st-info-bg: color-mix(in srgb, var(--st-info) 12%, var(--st-surface));
+    --st-neutral-bg: color-mix(in srgb, var(--st-neutral) 12%, var(--st-surface));
+    --st-focus-ring: 0 0 0 3px color-mix(in srgb, var(--st-accent) 28%, transparent);
+
+    --bg-body: var(--st-bg);
+    --bg-sidebar: var(--st-sidebar);
+    --bg-card: var(--st-surface);
+    --bg-card-hover: var(--st-surface-hover);
+    --accent-primary: var(--st-accent);
+    --accent-secondary: var(--st-warning);
+    --accent-critical: var(--st-danger);
+    --accent-info: var(--st-info);
+    --neon-green: var(--st-success);
+    --neon-yellow: var(--st-warning);
+    --neon-red: var(--st-danger);
+    --neon-cyan: var(--st-info);
+    --neon-purple: var(--st-warning);
+    --neon-pink: var(--st-danger);
+    --border-dim: 1px solid var(--st-border);
+    --border-bright: 1px solid var(--st-border-strong);
+    --border-critical: 1px solid var(--st-danger);
+    --text-primary: var(--st-text);
+    --text-secondary: var(--st-text-secondary);
+    --text-muted: var(--st-text-muted);
+    --text-accent: var(--st-accent);
+    --font-heading: var(--st-font-main);
+    --font-main: var(--st-font-main);
+    --font-mono: var(--st-font-mono);
+}
+
+@media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+        color-scheme: dark;
+        --st-bg: #0b0d0f;
+        --st-surface: #14171a;
+        --st-surface-2: #0f1214;
+        --st-surface-hover: #1b1f23;
+        --st-sidebar: #101315;
+        --st-border: #262b30;
+        --st-border-strong: #353b41;
+        --st-text: #e8eaec;
+        --st-text-secondary: #b4bac1;
+        --st-text-muted: #8b929a;
+        --st-text-faint: #676e76;
+        --st-accent: #4fc7ba;
+        --st-accent-hover: #6fd5ca;
+        --st-on-solid: #0b0d0f;
+        --st-success: #4bbf82;
+        --st-warning: #e0a83f;
+        --st-caution: #e8894c;
+        --st-danger: #eb6f66;
+        --st-info: #8fb3d9;
+        --st-neutral: #8b929a;
+        --st-overlay: rgba(0, 0, 0, 0.6);
+        --st-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+        --st-shadow-md: 0 6px 18px rgba(0, 0, 0, 0.45);
+        --st-map-filter: invert(1) hue-rotate(180deg) brightness(0.85) contrast(1.05) saturate(0.6);
+        --st-embed-filter: invert(0.92) hue-rotate(180deg) contrast(1.1) brightness(0.95);
+    }
+}
+
+:root[data-theme="dark"],
+.st-theme-dark {
+    color-scheme: dark;
+    --st-bg: #0b0d0f;
+    --st-surface: #14171a;
+    --st-surface-2: #0f1214;
+    --st-surface-hover: #1b1f23;
+    --st-sidebar: #101315;
+    --st-border: #262b30;
+    --st-border-strong: #353b41;
+    --st-text: #e8eaec;
+    --st-text-secondary: #b4bac1;
+    --st-text-muted: #8b929a;
+    --st-text-faint: #676e76;
+    --st-accent: #4fc7ba;
+    --st-accent-hover: #6fd5ca;
+    --st-on-solid: #0b0d0f;
+    --st-success: #4bbf82;
+    --st-warning: #e0a83f;
+    --st-caution: #e8894c;
+    --st-danger: #eb6f66;
+    --st-info: #8fb3d9;
+    --st-neutral: #8b929a;
+    --st-overlay: rgba(0, 0, 0, 0.6);
+    --st-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+    --st-shadow-md: 0 6px 18px rgba(0, 0, 0, 0.45);
+    --st-map-filter: invert(1) hue-rotate(180deg) brightness(0.85) contrast(1.05) saturate(0.6);
+    --st-embed-filter: invert(0.92) hue-rotate(180deg) contrast(1.1) brightness(0.95);
+}

@@ -18,13 +18,13 @@
             grid-template-columns: repeat(7, 1fr);
             /* Added Impact Column */
             gap: 2px;
-            background: #111;
+            background: var(--st-surface);
             padding: 2px;
             overflow-x: auto;
         }
 
         .tactic-col {
-            background: #050507;
+            background: var(--st-surface-2);
             padding: 5px;
             display: flex;
             flex-direction: column;
@@ -32,52 +32,52 @@
         }
 
         .tactic-header {
-            color: #888;
+            color: var(--st-text-muted);
             font-size: 0.65rem;
             text-transform: uppercase;
             letter-spacing: 1px;
             font-weight: 800;
             padding: 8px 5px;
-            border-bottom: 2px solid #222;
+            border-bottom: 2px solid var(--st-border);
             margin-bottom: 5px;
             text-align: center;
         }
 
         .tech-card {
-            background: rgba(255, 255, 255, 0.02);
+            background: color-mix(in srgb, var(--st-text) 2%, transparent);
             padding: 8px;
             font-size: 0.65rem;
-            border-left: 2px solid #333;
-            color: #888;
+            border-left: 2px solid var(--st-border);
+            color: var(--st-text-muted);
             cursor: pointer;
             transition: all 0.2s;
             position: relative;
         }
 
         .tech-card:hover {
-            background: #1a1a20;
-            color: #fff;
+            background: var(--st-surface-hover);
+            color: var(--st-text);
             transform: translateX(2px);
         }
 
         /* Status colors for matrix */
         .tech-card.active-critical {
             border-left-color: var(--neon-pink);
-            background: rgba(255, 0, 85, 0.1);
-            color: #fff;
-            box-shadow: inset 0 0 10px rgba(255, 0, 85, 0.05);
+            background: color-mix(in srgb, var(--st-danger) 10%, transparent);
+            color: var(--st-text);
+            
         }
 
         .tech-card.active-high {
             border-left-color: var(--neon-purple);
-            background: rgba(188, 19, 254, 0.1);
-            color: #fff;
+            background: color-mix(in srgb, var(--st-info) 10%, transparent);
+            color: var(--st-text);
         }
 
         .tech-card.active-med {
             border-left-color: var(--neon-cyan);
-            background: rgba(0, 243, 255, 0.05);
-            color: #ccc;
+            background: color-mix(in srgb, var(--st-info) 5%, transparent);
+            color: var(--st-text-secondary);
         }
 
         /* New Graph Container - FIXED ABSOLUTE POSITIONING */
@@ -87,8 +87,8 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: #000;
-            border: 1px solid #222;
+            background: var(--st-surface-2);
+            border: 1px solid var(--st-border);
         }
 
         /* Timeline / Killchain */
@@ -98,7 +98,7 @@
             height: 6px;
             width: 100%;
             margin: 10px 0;
-            background: #111;
+            background: var(--st-surface);
         }
 
         .kc-seg {
@@ -111,8 +111,8 @@
             position: absolute;
             top: -20px;
             left: 0;
-            background: #333;
-            color: #fff;
+            background: var(--st-border);
+            color: var(--st-text);
             padding: 2px 5px;
             font-size: 0.6rem;
         }
@@ -123,7 +123,7 @@
             justify-content: space-between;
             margin-bottom: 4px;
             font-size: 0.7rem;
-            color: #aaa;
+            color: var(--st-text-secondary);
         }
 
         /* Cyberpunk Modal Specific Animations for Behavior Profiling */
@@ -155,9 +155,9 @@
             pointer-events: none;
             opacity: 0.2;
             z-index: -1;
-            font-family: 'JetBrains Mono', monospace;
+            font-family: var(--st-font-mono);
             font-size: 0.6rem;
-            color: #ff9900;
+            color: var(--st-caution);
             /* Amber */
             overflow: hidden;
             animation: scroll-hex 10s linear infinite;
@@ -170,17 +170,17 @@
         @keyframes scan-fingerprint {
             0% {
                 top: 0%;
-                box-shadow: 0 5px 15px rgba(0, 243, 255, 0.5);
+                box-shadow: var(--st-shadow-md);
             }
 
             50% {
                 top: 100%;
-                box-shadow: 0 -5px 15px rgba(0, 243, 255, 0.5);
+                box-shadow: var(--st-shadow-md);
             }
 
             100% {
                 top: 0%;
-                box-shadow: 0 5px 15px rgba(0, 243, 255, 0.5);
+                box-shadow: var(--st-shadow-md);
             }
         }
 
@@ -193,7 +193,7 @@
             pointer-events: none;
             z-index: -1;
             display: none;
-            background-image: radial-gradient(circle at center, rgba(0, 243, 255, 0.1) 0%, transparent 70%);
+            background-image: radial-gradient(circle at center, color-mix(in srgb, var(--st-info) 10%, transparent) 0%, transparent 70%);
             border: 1px solid var(--neon-cyan);
             overflow: hidden;
         }
@@ -208,15 +208,20 @@
             animation: scan-fingerprint 1.5s ease-in-out infinite;
         }
     </style>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600;700&amp;display=swap">
+    <link rel="stylesheet" href="css/tokens.css">
+    <script src="js/theme.js"></script>
+    <script src="js/live.js"></script>
 </head>
 
 <body>
 
     <!-- Custom Modal -->
     <div id="custom-modal"
-        style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(5, 10, 15, 0.85); z-index:10000; justify-content:center; align-items:center; backdrop-filter:blur(5px);">
+        style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:var(--st-overlay); z-index:10000; justify-content:center; align-items:center; ">
         <div class="soc-card"
-            style="width: 450px; max-width: 90%; border-color: var(--accent-primary); box-shadow: 0 0 20px rgba(0, 0, 0, 0.5); position: relative; overflow: hidden;">
+            style="width: 450px; max-width: 90%; border-color: var(--accent-primary);  position: relative; overflow: hidden;">
 
             <!-- Animation Background Layers -->
             <div id="modal-hex-dump" class="hex-dump-bg"></div>
@@ -228,25 +233,25 @@
             </div>
 
             <div class="soc-card-header"
-                style="border-bottom: 1px solid #334155; padding-bottom: 10px; margin-bottom: 15px; position:relative;">
+                style="border-bottom: 1px solid var(--st-border); padding-bottom: 10px; margin-bottom: 15px; position:relative;">
                 <span id="modal-title" class="card-title text-yellow"><i class="fas fa-exclamation-triangle"></i>
                     AUTHORIZATION REQUIRED</span>
             </div>
 
             <div id="modal-message"
-                style="color: #e2e8f0; font-family: 'JetBrains Mono', monospace; font-size: 0.9rem; margin-bottom: 15px; line-height: 1.5; position:relative;">
+                style="color: var(--st-text); font-family: var(--st-font-mono); font-size: 0.9rem; margin-bottom: 15px; line-height: 1.5; position:relative;">
                 Please confirm action.
             </div>
 
             <!-- Progress Bar Container -->
             <div id="modal-progress-container"
-                style="display:none; width: 100%; height: 6px; background: #1e293b; margin-bottom: 25px; border-radius: 3px; overflow: hidden; position:relative;">
+                style="display:none; width: 100%; height: 6px; background: var(--st-surface-hover); margin-bottom: 25px; border-radius: 3px; overflow: hidden; position:relative;">
                 <div id="modal-progress-bar" class="export-progress-bar"></div>
             </div>
 
             <div id="modal-buttons" style="display: flex; justify-content: flex-end; gap: 10px; position:relative;">
                 <button id="modal-btn-cancel" class="soc-btn"
-                    style="background: transparent; border: 1px solid #334155; color: #94a3b8;">CANCEL</button>
+                    style="background: transparent; border: 1px solid var(--st-border); color: var(--st-text-secondary);">CANCEL</button>
                 <button id="modal-btn-confirm" class="soc-btn soc-btn-primary">PROCEED</button>
             </div>
         </div>
@@ -263,13 +268,13 @@
             <div class="top-bar">
                 <div class="page-header">
                     <h2>ADVERSARY BEHAVIOR PROFILING</h2>
-                    <p>REAL-TIME FINGERPRINTING // <span class="text-purple">AI MODEL v9.2 ACTIVE</span></p>
+                    <p>REAL-TIME FINGERPRINTING // <span id="profilerSummary" class="text-muted">RULE-BASED PROFILER · WAITING FOR DATA</span></p>
                 </div>
                 <div class="filters-bar">
-                    <button id="btn-export-stix" class="soc-btn" style="border-color: #ff9900; color: #ff9900;"><i
+                    <button id="btn-export-stix" class="soc-btn" style="border-color: var(--st-caution); color: var(--st-caution);"><i
                             class="fas fa-share-alt"></i> Export STIX 2.1</button>
                     <button id="btn-forensics" class="soc-btn soc-btn-primary"
-                        style="background: rgba(0,243,255,0.1); border-color: var(--neon-cyan); color: var(--neon-cyan);"><i
+                        style="background: color-mix(in srgb, var(--st-info) 10%, transparent); border-color: var(--neon-cyan); color: var(--neon-cyan);"><i
                             class="fas fa-search"></i> Generate Forensics Report</button>
                 </div>
             </div>
@@ -282,27 +287,17 @@
                 <div class="soc-card" style="display:flex; flex-direction:column;">
                     <div class="soc-card-header">
                         <span class="card-title">DOMINANT THREAT ACTOR</span>
-                        <span class="badge badge-red">ATP-28 MATCH</span>
+                        <span id="actor-confidence-band" class="badge badge-gray">NO DATA</span>
                     </div>
-                    <div style="text-align:center; padding: 20px 0; border-bottom:1px solid #222;">
+                    <div style="text-align:center; padding: 20px 0; border-bottom:1px solid var(--st-border);">
                         <i class="fas fa-user-hooded text-purple" style="font-size: 3rem; margin-bottom: 10px;"></i>
-                        <h3 id="actor-name" class="text-white">FANCY BEAR</h3>
+                        <h3 id="actor-name" class="text-white">—</h3>
                         <div class="text-xs text-muted">CONFIDENCE: <span id="actor-confidence"
-                                class="text-green">99.4%</span></div>
+                                class="text-green">—</span></div>
                     </div>
                     <div style="padding: 15px; flex:1;">
                         <h4 class="text-xs text-cyan" style="margin-bottom:10px;">BEHAVIORAL TRAITS</h4>
-                        <div class="psy-trait"><span>PERSISTENCE</span><span id="trait-persistence"
-                                class="text-white">AGGRESSIVE</span></div>
-                        <div class="psy-trait"><span>LATERAL MOVEMENT</span><span id="trait-lateral"
-                                class="text-white">SMB / WMI</span>
-                        </div>
-                        <div class="psy-trait"><span>OBFUSCATION</span><span id="trait-obfuscation"
-                                class="text-white">HIGH (XOR/BASE64)</span>
-                        </div>
-                        <div class="psy-trait"><span>TARGETING</span><span id="trait-targeting" class="text-white">GOV /
-                                MILITARY</span>
-                        </div>
+                        <div id="actor-traits"><div class="psy-trait"><span>TRAITS</span><span class="text-white">—</span></div></div>
 
                         <div style="margin-top:15px;">
                             <h4 class="text-xs text-muted">KILL CHAIN PROGRESS</h4>
@@ -316,7 +311,7 @@
                                 <div class="kc-seg"
                                     style="width:25%; background:var(--neon-pink); animation:pulse 1s infinite;"
                                     data-label="Exploit (ACTIVE)"></div>
-                                <div class="kc-seg" style="width:30%; background:#222;" data-label="Pending..."></div>
+                                <div class="kc-seg" style="width:30%; background:var(--st-surface-hover);" data-label="Pending..."></div>
                             </div>
                         </div>
                     </div>
@@ -327,13 +322,13 @@
                     style="grid-column: span 2; padding:0; display:flex; flex-direction:column; overflow: hidden;">
                     <div class="soc-card-header" style="padding:15px;">
                         <span class="card-title">BEHAVIORAL RELATIONSHIP GRAPH</span>
-                        <a href="analysis_lab.html" class="badge" style="text-decoration:none;color:#3fb950;border:1px solid #238636;">
+                        <a href="analysis_lab.html" class="badge" style="text-decoration:none;color:var(--st-success);border:1px solid var(--st-success);">
                             <i class="fas fa-terminal"></i> OPEN ANALYSIS LAB</a>
                     </div>
                     <div style="flex:1; position:relative;">
                         <div id="behaviorGraph"></div>
                         <div
-                            style="position:absolute; bottom:10px; right:10px; background:rgba(0,0,0,0.8); padding:5px 10px; border:1px solid #333; font-size:0.7rem; color:#aaa; pointer-events: none; z-index: 10;">
+                            style="position:absolute; bottom:10px; right:10px; background:color-mix(in srgb, var(--st-surface) 94%, transparent); border:1px solid var(--st-border); border-radius:var(--st-radius-sm); padding:5px 10px; border:1px solid var(--st-border); font-size:0.7rem; color:var(--st-text-secondary); pointer-events: none; z-index: 10;">
                             <i class="fas fa-circle text-pink"></i> PROCESS
                             <i class="fas fa-circle text-cyan" style="margin-left:5px;"></i> NETWORK
                             <i class="fas fa-circle text-purple" style="margin-left:5px;"></i> FILE
@@ -416,13 +411,13 @@
 
             <!-- ROW 3: RECENT COMMANDS (Terminal Style) -->
             <div class="soc-card" style="padding:0; display:flex; flex-direction:column; height: 300px;">
-                <div class="soc-card-header" style="padding:15px; border-bottom:1px solid #111;">
+                <div class="soc-card-header" style="padding:15px; border-bottom:1px solid var(--st-border);">
                     <span class="card-title">CAPTURED PAYLOAD STREAM</span>
                     <span class="badge">TTY-S0</span>
                 </div>
                 <div id="terminal-stream"
-                    style="background:#050505; flex:1; padding:15px; overflow-y:auto; font-family:'JetBrains Mono'; font-size:0.8rem;">
-                    <div style="color:#444; margin-bottom:10px;">// Monitoring inject vectors dynamically...</div>
+                    style="background:var(--st-surface-2); flex:1; padding:15px; overflow-y:auto; font-family:var(--st-font-mono); font-size:0.8rem;">
+                    <div style="color:var(--st-text-faint); margin-bottom:10px;">// Monitoring inject vectors dynamically...</div>
                 </div>
             </div>
 
@@ -437,6 +432,20 @@
         // Vis.js Network Graph - Dynamics
         window.addEventListener('load', function () {
 
+            // vis-network paints on canvas, which can't read CSS variables: resolve tokens to real colors.
+            const R = (v) => (window.stTheme ? window.stTheme.resolve(v) : v);
+            const NODE_TOKENS = { '#ef4444': '--st-danger', '#00f3ff': '--st-info', '#bc13fe': '--st-accent', '#ffee00': '--st-warning', '#22c55e': '--st-success' };
+            const themedNodes = (nodes) => nodes.map((n) => {
+                const token = NODE_TOKENS[String(n.color || '').toLowerCase()];
+                return token ? { ...n, color: R(`var(${token})`) } : n;
+            });
+            const graphOptions = () => ({
+                nodes: { font: { color: R('var(--st-text)'), face: 'JetBrains Mono' }, borderWidth: 1, shadow: false },
+                edges: { color: R('var(--st-text-faint)'), font: { color: R('var(--st-text-muted)'), strokeWidth: 0, face: 'Public Sans' }, smooth: { type: 'continuous' } },
+                physics: { stabilization: true, barnesHut: { gravitationalConstant: -3000, springLength: 100, springConstant: 0.04 } },
+                interaction: { hover: true, zoomView: true }
+            });
+
             async function fetchAndRenderBehavior() {
                 try {
                     const profileData = await apiService.get('/behavior/profile');
@@ -445,19 +454,17 @@
                     const container = document.getElementById('behaviorGraph');
 
                     const data = {
-                        nodes: new vis.DataSet(profileData.graph.nodes),
+                        nodes: new vis.DataSet(themedNodes(profileData.graph.nodes)),
                         edges: new vis.DataSet(profileData.graph.edges)
                     };
 
                     if (!network) {
-                        const options = {
-                            nodes: { font: { color: '#ffffff', face: 'JetBrains Mono' }, borderWidth: 1, shadow: { color: 'rgba(0,0,0,0.8)' } },
-                            edges: { color: '#444', smooth: { type: 'continuous' } },
-                            physics: { stabilization: true, barnesHut: { gravitationalConstant: -3000, springLength: 100, springConstant: 0.04 } },
-                            interaction: { hover: true, zoomView: true }
-                        };
-                        network = new vis.Network(container, data, options);
+                        network = new vis.Network(container, data, graphOptions());
                         setTimeout(() => network.fit(), 300);
+                        document.addEventListener('st-themechange', () => {
+                            network.setOptions(graphOptions());
+                            fetchAndRenderBehavior();
+                        });
                     } else {
                         network.setData(data); // In-place update
                     }
@@ -465,10 +472,17 @@
                     // Update UI: Threat Actor Panel
                     document.getElementById('actor-name').innerText = profileData.actor.name;
                     document.getElementById('actor-confidence').innerText = `${profileData.actor.confidence}%`;
-                    document.getElementById('trait-persistence').innerText = profileData.actor.traits.Persistence;
-                    document.getElementById('trait-lateral').innerText = profileData.actor.traits["Lateral Movement"];
-                    document.getElementById('trait-obfuscation').innerText = profileData.actor.traits.Obfuscation;
-                    document.getElementById('trait-targeting').innerText = profileData.actor.traits.Targeting;
+                    const escTrait = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+                    const traitRows = Object.entries(profileData.actor.traits || {})
+                        .map(([key, value]) => `<div class="psy-trait"><span>${escTrait(key.toUpperCase())}</span><span class="text-white">${escTrait(value)}</span></div>`);
+                    document.getElementById('actor-traits').innerHTML = traitRows.join('')
+                        || '<div class="psy-trait"><span>TRAITS</span><span class="text-white">No activity</span></div>';
+                    const confidence = Number(profileData.actor.confidence) || 0;
+                    const band = document.getElementById('actor-confidence-band');
+                    band.textContent = !confidence ? 'NO DATA' : confidence >= 80 ? 'HIGH CONFIDENCE' : confidence >= 55 ? 'MEDIUM CONFIDENCE' : 'LOW CONFIDENCE';
+                    band.className = 'badge ' + (!confidence ? 'badge-gray' : confidence >= 80 ? 'badge-red' : confidence >= 55 ? 'badge-yellow' : 'badge-gray');
+                    const gm = profileData.graph_metrics || {};
+                    document.getElementById('profilerSummary').textContent = `RULE-BASED PROFILER · ${gm.nodes || 0} NODES · ${gm.edges || 0} EDGES`;
 
                     // Update Kill Chain Bar
                     const kcBar = document.getElementById('killchain-bar');
@@ -487,7 +501,7 @@
                             seg.style.background = 'var(--neon-pink)';
                             seg.style.animation = 'pulse 1s infinite';
                         } else {
-                            seg.style.background = '#222';
+                            seg.style.background = 'var(--st-surface-hover)';
                             seg.style.animation = 'none';
                         }
                     });
@@ -514,11 +528,11 @@
 
                     // Update Terminal Payload Stream
                     const termStream = document.getElementById('terminal-stream');
-                    termStream.innerHTML = '<div style="color:#444; margin-bottom:10px;">// Extracted Temporal Payloads</div>';
+                    termStream.innerHTML = '<div style="color:var(--st-text-faint); margin-bottom:10px;">// Extracted Temporal Payloads</div>';
 
                     profileData.logs.forEach(log => {
                         const div = document.createElement('div');
-                        div.style.cssText = 'display:flex; gap:10px; border-bottom:1px solid #111; padding:4px 0;';
+                        div.style.cssText = 'display:flex; gap:10px; border-bottom:1px solid var(--st-border); padding:4px 0;';
                         div.innerHTML = `
                             <span class="text-muted">${log.time}</span>
                             <span style="color:${log.userColor}">${log.user}</span>
@@ -538,6 +552,7 @@
             // Execute on load and poll
             fetchAndRenderBehavior();
             setInterval(fetchAndRenderBehavior, 15000);
+            if (window.STLive) window.STLive.on('event', window.STLive.debounce(fetchAndRenderBehavior, 2000));
 
             // --- CUSTOM MODAL LOGIC FOR BEHAVIOR PROFILING ---
             const topModal = document.getElementById('custom-modal');
@@ -572,7 +587,7 @@
                 modalButtons.style.display = 'flex';
 
                 modalTitle.style.color = themeColor;
-                btnConfirm.style.background = `rgba(${themeColor === '#ff9900' ? '255,153,0' : '0,243,255'}, 0.2)`;
+                btnConfirm.style.background = `color-mix(in srgb, ${themeColor} 15%, transparent)`;
                 btnConfirm.style.borderColor = themeColor;
                 btnConfirm.style.color = themeColor;
                 btnConfirm.innerText = isAlert ? 'ACKNOWLEDGE' : 'PROCEED';

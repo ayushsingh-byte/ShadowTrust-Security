@@ -13,7 +13,7 @@ from app.services.providers import PROFILES, get_provider_name
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter()
+router = APIRouter(dependencies=[Depends(get_current_active_user)])
 
 
 def _aws_credentials(request) -> Optional[dict]:
@@ -34,7 +34,7 @@ def _aws_credentials(request) -> Optional[dict]:
 
 class LabStartRequest(BaseModel):
     environment_type: str                      # 'kali', 'windows', ...
-    user_id: str
+    user_id: Optional[str] = None               # ignored — the lab owner is the signed-in user
     profile: Optional[str] = "standard"        # 'light' | 'standard' | 'heavy'
     protocol: Optional[str] = "rdp"
     # AWS-only fields — ignored unless INFRA_PROVIDER=aws.
@@ -83,7 +83,7 @@ async def start_lab(
 
     try:
         result = await manager.start_lab_provisioning(
-            user_id=request.user_id,
+            user_id=current_user.email,
             environment_type=request.environment_type,
             profile=request.profile or "standard",
             protocol=request.protocol or "rdp",

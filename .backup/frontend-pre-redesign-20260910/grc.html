@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GRC &amp; SOC 2 | Shadow Trust</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/dashboard.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .grc-top { display: grid; grid-template-columns: 260px 1fr; gap: 16px; margin-bottom: 18px; }
+        .gauge { background: #0a0a0f; border: 1px solid #222; border-radius: 10px; padding: 18px; text-align: center; }
+        .gauge .big { font-size: 3rem; font-weight: 800; font-family: var(--font-mono, monospace); }
+        .gauge .lbl { font-size: .62rem; letter-spacing: 1.5px; color: #7d8590; text-transform: uppercase; margin-top: 4px; }
+        .counts { display: flex; gap: 8px; flex-wrap: wrap; }
+        .cbox { flex: 1 1 90px; background: #0a0a0f; border: 1px solid #222; border-left: 3px solid #333; border-radius: 8px; padding: 12px; }
+        .cbox .v { font-size: 1.6rem; font-weight: 700; font-family: var(--font-mono, monospace); }
+        .cbox .l { font-size: .6rem; letter-spacing: 1px; color: #888; text-transform: uppercase; }
+        .cbox.met { border-left-color: #2ea043; } .cbox.partial { border-left-color: #d29922; }
+        .cbox.gap { border-left-color: #f85149; } .cbox.manual { border-left-color: #6e7681; }
+        .disc { border-left: 3px solid #d29922; background: #1c1808; color: #e3c26a; padding: 10px 14px; font-size: .78rem; border-radius: 4px; margin-bottom: 18px; }
+        .tabs { display: flex; gap: 6px; margin-bottom: 12px; }
+        .tabs button { background: #161b22; border: 1px solid #30363d; color: #7d8590; padding: 8px 16px; border-radius: 6px; cursor: pointer; font: inherit; font-size: .8rem; }
+        .tabs button.on { border-color: #58a6ff; color: #58a6ff; }
+        .wrap { border: 1px solid #1c2128; border-radius: 8px; overflow: auto; max-height: calc(100vh - 340px); }
+        table.g { border-collapse: collapse; width: 100%; font-size: .78rem; font-family: var(--font-mono, monospace); }
+        table.g th { position: sticky; top: 0; background: #161b22; color: #7d8590; text-align: left; padding: 8px 11px; }
+        table.g td { padding: 7px 11px; border-top: 1px solid #14181e; color: #c9d1d9; vertical-align: top; }
+        table.g tr:hover td { background: #11161d; }
+        .pill { display: inline-block; padding: 1px 7px; border-radius: 4px; font-size: .66rem; font-weight: 700; }
+        .p-met { background: rgba(46,160,67,.16); color: #3fb950; }
+        .p-partial { background: rgba(210,153,34,.16); color: #d29922; }
+        .p-gap { background: rgba(248,81,73,.16); color: #f85149; }
+        .p-manual { background: rgba(139,148,158,.16); color: #8b949e; }
+        .p-Critical { background: rgba(248,81,73,.2); color: #ff6b6b; }
+        .p-High { background: rgba(219,109,40,.18); color: #db6d28; }
+        .p-Medium { background: rgba(210,153,34,.16); color: #d29922; }
+        .p-Low { background: rgba(139,148,158,.16); color: #8b949e; }
+        .ev { color: #7d8590; font-size: .72rem; }
+        .ev b { color: #a9b6c2; }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <aside class="sidebar" id="sidebar"></aside>
+        <main class="main-content">
+            <div class="top-bar">
+                <div class="page-header">
+                    <h2>GRC &amp; SOC 2 READINESS</h2>
+                    <p>LIVE CONTROL ASSESSMENT // <span id="g-framework" class="ev"></span></p>
+                </div>
+                <div class="filters-bar">
+                    <button class="soc-btn soc-btn-primary" id="g-report"><i class="fas fa-file-pdf"></i> READINESS REPORT (PDF)</button>
+                    <button class="soc-btn" id="g-risk-csv"><i class="fas fa-download"></i> RISK REGISTER CSV</button>
+                    <button class="soc-btn" id="g-refresh"><i class="fas fa-rotate"></i> REFRESH</button>
+                </div>
+            </div>
+
+            <div class="disc" id="g-disc"></div>
+
+            <div class="grc-top">
+                <div class="gauge">
+                    <div class="big" id="g-score" style="color:#58a6ff;">—</div>
+                    <div class="lbl">Readiness (automatable controls)</div>
+                </div>
+                <div class="counts" id="g-counts"></div>
+            </div>
+
+            <div class="tabs">
+                <button class="on" data-view="controls">Control Matrix</button>
+                <button data-view="risks">Risk Register</button>
+            </div>
+
+            <div class="wrap" id="g-controls-wrap">
+                <table class="g">
+                    <thead><tr><th>Control</th><th>Category</th><th>Title</th><th>Status</th><th>Evidence</th></tr></thead>
+                    <tbody id="g-controls"><tr><td colspan="5" style="padding:16px;color:#7d8590;">loading…</td></tr></tbody>
+                </table>
+            </div>
+
+            <div class="wrap" id="g-risks-wrap" style="display:none;">
+                <table class="g">
+                    <thead><tr><th>ID</th><th>Risk</th><th>Category</th><th>Source</th><th>L</th><th>I</th><th>Score</th><th>Rating</th><th>Treatment</th></tr></thead>
+                    <tbody id="g-risks"><tr><td colspan="9" style="padding:16px;color:#7d8590;">loading…</td></tr></tbody>
+                </table>
+            </div>
+        </main>
+    </div>
+
+    <script src="js/sidebar.js"></script>
+    <script src="js/report-download.js"></script>
+    <script>
+        const B = STReports.apiBase();
+        const H = () => ({ 'Authorization': `Bearer ${STReports.token()}` });
+        const $ = s => document.querySelector(s);
+        const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+        async function loadAssessment() {
+            try {
+                const d = await (await fetch(`${B}/compliance/assessment`, { headers: H() })).json();
+                $('#g-framework').textContent = d.framework;
+                $('#g-disc').textContent = d.assessment_type;
+                $('#g-score').textContent = d.readiness_pct + '%';
+                const c = d.counts;
+                $('#g-counts').innerHTML = ['met', 'partial', 'gap', 'manual'].map(k =>
+                    `<div class="cbox ${k}"><div class="v">${c[k]}</div><div class="l">${k}</div></div>`).join('')
+                    + `<div class="cbox"><div class="v">${c.total}</div><div class="l">criteria</div></div>`;
+                $('#g-controls').innerHTML = d.controls.map(x => {
+                    const ev = x.evidence.length
+                        ? x.evidence.map(e => `<b>${esc(e.label)}:</b> ${esc(e.value)} <span style="opacity:.6">(${esc(e.source)})</span>`).join('<br>')
+                        : `<i>${esc(x.note || 'manual attestation required')}</i>`;
+                    return `<tr>
+                        <td>${esc(x.id)}</td><td>${esc(x.category)}</td><td>${esc(x.title)}</td>
+                        <td><span class="pill p-${x.status}">${x.status.toUpperCase()}</span></td>
+                        <td class="ev">${ev}</td></tr>`;
+                }).join('');
+            } catch (e) {
+                $('#g-controls').innerHTML = `<tr><td colspan="5" style="color:#f85149;padding:16px;">${esc(e.message)}</td></tr>`;
+            }
+        }
+
+        async function loadRisks() {
+            try {
+                const d = await (await fetch(`${B}/compliance/risk-register`, { headers: H() })).json();
+                $('#g-risks').innerHTML = (d.risks || []).map(r => `<tr>
+                    <td>${esc(r.id)}</td><td>${esc(r.title)}</td><td>${esc(r.category)}</td><td class="ev">${esc(r.source)}</td>
+                    <td>${r.likelihood}</td><td>${r.impact}</td><td><b>${r.score}</b></td>
+                    <td><span class="pill p-${r.rating}">${r.rating}</span></td>
+                    <td class="ev">${esc(r.treatment)}</td></tr>`).join('');
+            } catch (e) {
+                $('#g-risks').innerHTML = `<tr><td colspan="9" style="color:#f85149;padding:16px;">${esc(e.message)}</td></tr>`;
+            }
+        }
+
+        document.querySelectorAll('.tabs button').forEach(b => b.onclick = () => {
+            document.querySelectorAll('.tabs button').forEach(x => x.classList.toggle('on', x === b));
+            const risks = b.dataset.view === 'risks';
+            $('#g-risks-wrap').style.display = risks ? '' : 'none';
+            $('#g-controls-wrap').style.display = risks ? 'none' : '';
+        });
+
+        $('#g-report').onclick = () => STReports.generateAndDownload('soc2_readiness', {}, { button: $('#g-report'), title: 'SOC 2 readiness' });
+        $('#g-risk-csv').onclick = async () => {
+            const r = await fetch(`${B}/compliance/risk-register/export?fmt=csv`, { headers: H() });
+            const blob = await r.blob();
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob); a.download = 'ShadowTrust-RiskRegister.csv';
+            document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(a.href);
+        };
+        $('#g-refresh').onclick = () => { loadAssessment(); loadRisks(); };
+
+        loadAssessment();
+        loadRisks();
+    </script>
+</body>
+</html>

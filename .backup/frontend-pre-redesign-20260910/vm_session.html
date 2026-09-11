@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live OS Session | Shadow Trust</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            background-color: #07090f;
+            color: #00ff41;
+            font-family: 'JetBrains Mono', monospace;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Real Loading Screen */
+        #loadingScreen {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(180deg, #07090f 0%, #0d111a 100%);
+            z-index: 1000;
+        }
+
+        .progress-container {
+            width: 300px;
+            height: 10px;
+            background: rgba(0, 255, 65, 0.1);
+            border-radius: 5px;
+            margin-bottom: 30px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .progress-bar {
+            height: 100%;
+            width: 0%;
+            background: #00ff41;
+            box-shadow: 0 0 10px #00ff41;
+            transition: width 1s ease-in-out;
+        }
+
+        .loading-text {
+            font-size: 20px;
+            margin-bottom: 10px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        .loading-subtext {
+            color: #888;
+            font-size: 14px;
+            max-width: 500px;
+            text-align: center;
+            line-height: 1.5;
+        }
+
+        .live-status {
+            margin-top: 20px;
+            padding: 10px 20px;
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid #333;
+            border-radius: 4px;
+            color: #fff;
+            font-weight: bold;
+        }
+
+        /* Top Control Bar */
+        #controlBar {
+            height: 60px;
+            background-color: #0a0d14;
+            border-bottom: 1px solid rgba(0, 255, 65, 0.3);
+            display: none;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 30px;
+            z-index: 500;
+            flex-shrink: 0;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+        }
+
+        .bar-left {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        .status-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background-color: #00ff41;
+            box-shadow: 0 0 12px #00ff41;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.4;
+            }
+
+            100% {
+                opacity: 1;
+            }
+        }
+
+        .btn-terminate {
+            background-color: rgba(255, 0, 85, 0.1);
+            color: #ff0055;
+            border: 1px solid #ff0055;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 14px;
+            font-weight: bold;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .btn-terminate:hover {
+            background-color: #ff0055;
+            color: #000;
+            box-shadow: 0 0 20px rgba(255, 0, 85, 0.4);
+        }
+
+        .btn-external {
+            background-color: rgba(0, 255, 255, 0.1);
+            color: #00ffff;
+            border: 1px solid #00ffff;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 14px;
+            font-weight: bold;
+            transition: all 0.2s;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .btn-external:hover {
+            background-color: #00ffff;
+            color: #000;
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.4);
+        }
+
+        /* OS Frame Container */
+        #osContainer {
+            flex-grow: 1;
+            display: none;
+            position: relative;
+            background-color: #1a1a1a;
+        }
+
+        #osFrame {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: none;
+            z-index: 20;
+            background-color: #1a1a1a;
+        }
+
+        .aws-warning {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.8);
+            border: 1px solid #ff9900;
+            padding: 30px;
+            text-align: center;
+            border-radius: 8px;
+            color: #fff;
+            max-width: 600px;
+            z-index: 10;
+            pointer-events: none;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Real Boot Polling Screen -->
+    <div id="loadingScreen">
+        <div class="progress-container">
+            <div class="progress-bar" id="progressBar"></div>
+        </div>
+        <div class="loading-text">Booting Virtual Machine</div>
+        <div class="loading-subtext" id="targetIdDisp">Target: Fetching...</div>
+        <div class="loading-subtext" style="margin-top:10px;">Waiting for EC2 infrastructure to fully power on and
+            initialize network interfaces. This actively polls the AWS backend.</div>
+
+        <div class="live-status" id="liveStatusBox">
+            <i class="fas fa-satellite-dish" style="margin-right: 10px;"></i> STATUS: <span id="vmStateText"
+                style="color: #ff9900;">PENDING</span>
+        </div>
+    </div>
+
+    <!-- UI Control Bar -->
+    <div id="controlBar">
+        <div class="bar-left">
+            <div class="status-dot"></div>
+            <div>SHADOW TRUST OS GATEWAY</div>
+            <div style="color: #444;">|</div>
+            <div id="activeIdDisp" style="color: var(--neon-cyan);">VDI Connected</div>
+        </div>
+        <div style="display: flex; gap: 15px;">
+            <a href="#" id="externalBtn" class="btn-external" target="_blank"><i class="fas fa-external-link-alt"></i>
+                LAUNCH IN NEW WINDOW</a>
+            <button id="terminateBtn" class="btn-terminate"><i class="fas fa-power-off"></i> TERMINATE INSTANCE</button>
+        </div>
+    </div>
+
+    <!-- Embedded OS -->
+    <div id="osContainer">
+        <!-- Message underlying the iframe in case it's blocked -->
+        <div class="aws-warning">
+            <i class="fas fa-shield-alt" style="font-size: 3rem; color: #ff9900; margin-bottom: 15px;"></i>
+            <h3>Iframe Security Blocked</h3>
+            <p style="color: #ccc; margin-bottom: 20px;">If the screen above is grey, it means AWS X-Frame-Options is
+                blocking the browser embed. You must click <b>"LAUNCH IN NEW WINDOW"</b> in the top bar to securely open
+                the OS UI.</p>
+        </div>
+        <iframe id="osFrame" src=""></iframe>
+    </div>
+
+    <script type="module">
+        import { apiService } from './js/api.js';
+
+        const loadingScreen = document.getElementById('loadingScreen');
+        const controlBar = document.getElementById('controlBar');
+        const osContainer = document.getElementById('osContainer');
+        const osFrame = document.getElementById('osFrame');
+
+        const terminateBtn = document.getElementById('terminateBtn');
+        const externalBtn = document.getElementById('externalBtn');
+
+        const targetIdDisp = document.getElementById('targetIdDisp');
+        const activeIdDisp = document.getElementById('activeIdDisp');
+        const vmStateText = document.getElementById('vmStateText');
+
+        let urlInstanceId = null;
+        let pollInterval = null;
+
+        let guacConnectionId = null;
+        let loadingProgress = 10;
+        const progressBar = document.getElementById('progressBar');
+
+        async function pollStatus() {
+            try {
+                const res = await apiService.get(`/labs/status/${urlInstanceId}`);
+                const state = res.state ? res.state.toLowerCase() : 'unknown';
+
+                if (res.guacamole_connection_id) {
+                    guacConnectionId = res.guacamole_connection_id;
+                }
+
+                vmStateText.innerText = state.toUpperCase();
+
+                if (state === 'pending' || state === 'provisioning') {
+                    vmStateText.style.color = '#ff9900';
+                    loadingProgress = Math.min(loadingProgress + 15, 95);
+                    progressBar.style.width = loadingProgress + '%';
+                } else if (state === 'ready' || state === 'running') {
+                    vmStateText.style.color = '#00ff41';
+                    progressBar.style.width = '100%';
+                    clearInterval(pollInterval);
+                    setTimeout(() => initiateHandshake(), 800);
+                } else if (state === 'terminated' || state === 'error') {
+                    vmStateText.style.color = '#ff0055';
+                    clearInterval(pollInterval);
+                    alert("Instance was terminated or died unexpectedly.");
+                }
+            } catch (err) {
+                console.error("Status Poll Error:", err);
+            }
+        }
+
+        async function initiateHandshake() {
+            vmStateText.innerText = "MOUNTING APACHE GUACAMOLE VDI...";
+            vmStateText.style.color = '#00ffff';
+
+            try {
+                if (!guacConnectionId) throw new Error("Missing Guacamole Connection ID from orchestrator");
+
+                // Construct Guacamole Client URL format: /guacamole/#/client/[base64(id\0c\0postgresql)]
+                const guacIdString = `${guacConnectionId}\0c\0postgresql`;
+                const b64Id = btoa(guacIdString);
+
+                // Assuming Docker Tomcat Guacamole is proxied on localhost:8080
+                const sessionUrl = `http://localhost:8080/guacamole/#/client/${b64Id}`;
+
+                loadingScreen.style.display = 'none';
+                controlBar.style.display = 'flex';
+                osContainer.style.display = 'block';
+
+                externalBtn.href = sessionUrl;
+                osFrame.src = sessionUrl;
+
+            } catch (error) {
+                vmStateText.innerText = `ERROR: ${error.message}`;
+                vmStateText.style.color = '#ff0055';
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const params = new URLSearchParams(window.location.search);
+            urlInstanceId = params.get('id');
+
+            if (!urlInstanceId) {
+                targetIdDisp.innerHTML = "<span style='color:#ff0055'>ERROR: NO INSTANCE ID PROVIDED</span>";
+                return;
+            }
+
+            targetIdDisp.innerText = `Target AMI: ${urlInstanceId}`;
+            activeIdDisp.innerText = `Target: ${urlInstanceId}`;
+
+            // Begin polling AWS EC2
+            pollStatus(); // fire immediately
+            pollInterval = setInterval(pollStatus, 4000); // 4 second intervals
+        });
+
+        terminateBtn.onclick = async () => {
+            if (!urlInstanceId) return;
+            const confirmTerm = confirm(`Are you sure you want to terminate instance ${urlInstanceId}? This action cannot be undone.`);
+            if (!confirmTerm) return;
+
+            terminateBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> TERMINATING...';
+            terminateBtn.style.pointerEvents = 'none';
+            terminateBtn.style.opacity = '0.7';
+
+            try {
+                const response = await apiService.post(`/vm/${urlInstanceId}/terminate`, {
+                    aws_access_key: localStorage.getItem('_st_aws_ak') || undefined,
+                    aws_secret_key: localStorage.getItem('_st_aws_sk') || undefined,
+                    aws_region: localStorage.getItem('_st_aws_region') || undefined
+                });
+
+                if (response.status === 'success') {
+                    alert('VM Terminated successfully. Redirecting to Lab...');
+                    window.location.href = 'vm_lab.html';
+                } else {
+                    alert(`Termination failed: ${response.message}`);
+                    terminateBtn.innerHTML = '<i class="fas fa-power-off"></i> TERMINATE INSTANCE';
+                    terminateBtn.style.pointerEvents = 'auto';
+                    terminateBtn.style.opacity = '1';
+                }
+            } catch (e) {
+                alert(`API Error: ${e.message}`);
+                terminateBtn.innerHTML = '<i class="fas fa-power-off"></i> TERMINATE INSTANCE';
+                terminateBtn.style.pointerEvents = 'auto';
+                terminateBtn.style.opacity = '1';
+            }
+        };
+    </script>
+</body>
+
+</html>

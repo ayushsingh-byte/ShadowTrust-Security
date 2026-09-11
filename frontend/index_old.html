@@ -15,7 +15,7 @@
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            background: radial-gradient(circle at top, #111830 0%, #020408 100%);
+            background: radial-gradient(circle at top, var(--st-surface) 0%, var(--st-surface-2) 100%);
             padding: 2rem;
             text-align: center;
         }
@@ -25,7 +25,7 @@
             height: 100px;
             background: url('https://upload.wikimedia.org/wikipedia/commons/thumb/6/6f/Octicons-shield.svg/1200px-Octicons-shield.svg.png');
             background-size: cover;
-            filter: drop-shadow(0 0 20px rgba(37, 99, 235, 0.4)) invert(1);
+            
             margin-bottom: 2rem;
             animation: pulse 3s infinite ease-in-out;
         }
@@ -59,6 +59,10 @@
             }
         }
     </style>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600;700&amp;display=swap">
+    <link rel="stylesheet" href="css/tokens.css">
+    <script src="js/theme.js"></script>
 </head>
 
 <body>

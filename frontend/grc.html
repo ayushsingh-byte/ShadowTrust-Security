@@ -8,82 +8,356 @@
     <link rel="stylesheet" href="css/dashboard.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        .grc-top { display: grid; grid-template-columns: 260px 1fr; gap: 16px; margin-bottom: 18px; }
-        .gauge { background: #0a0a0f; border: 1px solid #222; border-radius: 10px; padding: 18px; text-align: center; }
-        .gauge .big { font-size: 3rem; font-weight: 800; font-family: var(--font-mono, monospace); }
-        .gauge .lbl { font-size: .62rem; letter-spacing: 1.5px; color: #7d8590; text-transform: uppercase; margin-top: 4px; }
-        .counts { display: flex; gap: 8px; flex-wrap: wrap; }
-        .cbox { flex: 1 1 90px; background: #0a0a0f; border: 1px solid #222; border-left: 3px solid #333; border-radius: 8px; padding: 12px; }
-        .cbox .v { font-size: 1.6rem; font-weight: 700; font-family: var(--font-mono, monospace); }
-        .cbox .l { font-size: .6rem; letter-spacing: 1px; color: #888; text-transform: uppercase; }
-        .cbox.met { border-left-color: #2ea043; } .cbox.partial { border-left-color: #d29922; }
-        .cbox.gap { border-left-color: #f85149; } .cbox.manual { border-left-color: #6e7681; }
-        .disc { border-left: 3px solid #d29922; background: #1c1808; color: #e3c26a; padding: 10px 14px; font-size: .78rem; border-radius: 4px; margin-bottom: 18px; }
-        .tabs { display: flex; gap: 6px; margin-bottom: 12px; }
-        .tabs button { background: #161b22; border: 1px solid #30363d; color: #7d8590; padding: 8px 16px; border-radius: 6px; cursor: pointer; font: inherit; font-size: .8rem; }
-        .tabs button.on { border-color: #58a6ff; color: #58a6ff; }
-        .wrap { border: 1px solid #1c2128; border-radius: 8px; overflow: auto; max-height: calc(100vh - 340px); }
-        table.g { border-collapse: collapse; width: 100%; font-size: .78rem; font-family: var(--font-mono, monospace); }
-        table.g th { position: sticky; top: 0; background: #161b22; color: #7d8590; text-align: left; padding: 8px 11px; }
-        table.g td { padding: 7px 11px; border-top: 1px solid #14181e; color: #c9d1d9; vertical-align: top; }
-        table.g tr:hover td { background: #11161d; }
-        .pill { display: inline-block; padding: 1px 7px; border-radius: 4px; font-size: .66rem; font-weight: 700; }
-        .p-met { background: rgba(46,160,67,.16); color: #3fb950; }
-        .p-partial { background: rgba(210,153,34,.16); color: #d29922; }
-        .p-gap { background: rgba(248,81,73,.16); color: #f85149; }
-        .p-manual { background: rgba(139,148,158,.16); color: #8b949e; }
-        .p-Critical { background: rgba(248,81,73,.2); color: #ff6b6b; }
-        .p-High { background: rgba(219,109,40,.18); color: #db6d28; }
-        .p-Medium { background: rgba(210,153,34,.16); color: #d29922; }
-        .p-Low { background: rgba(139,148,158,.16); color: #8b949e; }
-        .ev { color: #7d8590; font-size: .72rem; }
-        .ev b { color: #a9b6c2; }
+        /* =========================================================
+           GRC & SOC 2 READINESS  — control-assessment workspace
+           Neutral greys + single teal accent; semantic colour only
+           for control / risk status. All motion respects
+           prefers-reduced-motion (see block at end).
+           ========================================================= */
+        .grc-main .top-bar { margin-bottom: 1.1rem; }
+        .grc-main .page-header h2 { animation: fadeUp .4s both; }
+        .grc-main .page-header p { animation: fadeUp .4s .05s both; }
+        .grc-main .filters-bar { display: flex; gap: 8px; flex-wrap: wrap; animation: fadeUp .4s .1s both; }
+
+        .card {
+            background: var(--st-surface);
+            border: 1px solid var(--st-border);
+            border-radius: var(--st-radius-md);
+            box-shadow: var(--st-shadow-sm);
+        }
+
+        /* ---------- disclaimer ---------- */
+        .disc {
+            display: flex; align-items: flex-start; gap: 10px;
+            border: 1px solid color-mix(in srgb, var(--st-warning) 32%, var(--st-border));
+            border-left: 3px solid var(--st-warning);
+            background: var(--st-warning-bg);
+            color: var(--st-text-secondary);
+            padding: 10px 14px; border-radius: var(--st-radius-sm);
+            font-size: .8rem; line-height: 1.45; margin-bottom: 16px;
+            animation: fadeUp .4s .12s both;
+        }
+        .disc i { color: var(--st-warning); margin-top: 2px; flex: none; }
+        .disc b { color: var(--st-text); }
+
+        /* ---------- overview ---------- */
+        .ov { display: grid; grid-template-columns: 236px 1fr; gap: 14px; margin-bottom: 14px; }
+        @media (max-width: 940px) { .ov { grid-template-columns: 1fr; } }
+
+        .gauge-card {
+            padding: 18px 14px; display: flex; flex-direction: column;
+            align-items: center; justify-content: center; gap: 8px; text-align: center;
+        }
+        .gauge-wrap { position: relative; width: 150px; height: 150px; }
+        .gauge-svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+        .gauge-svg circle { fill: none; stroke-width: 12; stroke-linecap: round; }
+        .g-track { stroke: var(--st-surface-hover); }
+        .g-val {
+            stroke: var(--gauge-c, var(--st-accent));
+            stroke-dasharray: var(--circ, 339);
+            stroke-dashoffset: var(--circ, 339);
+            transition: stroke-dashoffset .9s cubic-bezier(.4, 0, .2, 1), stroke .3s;
+        }
+        .gauge-num { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; }
+        .gauge-num .n { font-family: var(--st-font-mono); font-size: 1.85rem; font-weight: 700; color: var(--st-text); line-height: 1; }
+        .gauge-num .u { font-size: .56rem; letter-spacing: .1em; color: var(--st-text-muted); text-transform: uppercase; }
+        .gauge-card .cap { font-size: .72rem; color: var(--st-text-muted); max-width: 200px; line-height: 1.4; }
+        .gauge-card .cap b { color: var(--st-text-secondary); font-weight: 600; }
+
+        .ov-right { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+        .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(104px, 1fr)); gap: 10px; }
+        .tile {
+            background: var(--st-surface); border: 1px solid var(--st-border);
+            border-radius: var(--st-radius-md); padding: 12px 14px;
+            display: flex; flex-direction: column; gap: 3px; position: relative; overflow: hidden;
+            animation: fadeUp .4s both; animation-delay: calc(var(--i, 0) * 45ms + .12s);
+        }
+        .tile::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--tc, var(--st-border-strong)); }
+        .tile .v { font-family: var(--st-font-mono); font-size: 1.5rem; font-weight: 700; color: var(--st-text); line-height: 1; }
+        .tile .l { font-size: .58rem; letter-spacing: .09em; text-transform: uppercase; color: var(--st-text-muted); }
+        .tile.met { --tc: var(--st-success); }
+        .tile.partial { --tc: var(--st-warning); }
+        .tile.gap { --tc: var(--st-danger); }
+        .tile.manual { --tc: var(--st-neutral); }
+        .tile.total { --tc: var(--st-accent); }
+
+        .catbars { padding: 12px 14px; animation: fadeUp .4s .3s both; }
+        .catbars h3 { font-size: .62rem; letter-spacing: .1em; text-transform: uppercase; color: var(--st-text-muted); margin: 0 0 10px; font-weight: 600; }
+        .catrow { display: grid; grid-template-columns: 128px 1fr 64px; gap: 10px; align-items: center; margin-bottom: 7px; font-size: .74rem; }
+        .catrow:last-child { margin-bottom: 0; }
+        .catrow .cn { color: var(--st-text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .catrow .ct { text-align: right; font-family: var(--st-font-mono); font-size: .68rem; color: var(--st-text-muted); }
+        .cbar { display: flex; height: 8px; border-radius: 999px; overflow: hidden; background: var(--st-surface-hover); }
+        .cbar span { display: block; height: 100%; transition: width .6s cubic-bezier(.4, 0, .2, 1); }
+        .cbar .s-met { background: var(--st-success); }
+        .cbar .s-partial { background: var(--st-warning); }
+        .cbar .s-gap { background: var(--st-danger); }
+        .cbar .s-manual { background: color-mix(in srgb, var(--st-neutral) 45%, transparent); }
+
+        /* ---------- tabs ---------- */
+        .tabs {
+            display: inline-flex; gap: 3px; margin-bottom: 12px;
+            background: var(--st-surface-2); border: 1px solid var(--st-border);
+            border-radius: var(--st-radius-md); padding: 3px;
+        }
+        .tabs button {
+            border: 0; background: transparent; color: var(--st-text-muted);
+            padding: 7px 18px; border-radius: var(--st-radius-sm); cursor: pointer;
+            font: inherit; font-size: .8rem; font-weight: 600; transition: background .15s, color .15s;
+        }
+        .tabs button:hover { color: var(--st-text-secondary); }
+        .tabs button.on { background: var(--st-surface); color: var(--st-text); box-shadow: var(--st-shadow-sm); }
+
+        /* ---------- shared pills ---------- */
+        .pill {
+            display: inline-flex; align-items: center; gap: 5px; padding: 2px 9px;
+            border-radius: 999px; font-size: .64rem; font-weight: 700; letter-spacing: .04em;
+            text-transform: uppercase; border: 1px solid transparent; white-space: nowrap;
+        }
+        .pill::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: currentColor; flex: none; }
+        .pill.met, .pill.Low { background: var(--st-success-bg); color: var(--st-success); border-color: color-mix(in srgb, var(--st-success) 28%, transparent); }
+        .pill.partial, .pill.Medium { background: var(--st-warning-bg); color: var(--st-warning); border-color: color-mix(in srgb, var(--st-warning) 28%, transparent); }
+        .pill.High { background: var(--st-caution-bg); color: var(--st-caution); border-color: color-mix(in srgb, var(--st-caution) 28%, transparent); }
+        .pill.gap, .pill.Critical { background: var(--st-danger-bg); color: var(--st-danger); border-color: color-mix(in srgb, var(--st-danger) 28%, transparent); }
+        .pill.manual { background: var(--st-neutral-bg); color: var(--st-neutral); border-color: color-mix(in srgb, var(--st-neutral) 28%, transparent); }
+
+        /* ---------- matrix filters ---------- */
+        .mfilter { display: flex; gap: 7px; flex-wrap: wrap; align-items: center; margin-bottom: 10px; }
+        .chip {
+            border: 1px solid var(--st-border-strong); background: var(--st-surface);
+            color: var(--st-text-secondary); padding: 5px 11px; border-radius: 999px;
+            font: inherit; font-size: .72rem; cursor: pointer; transition: background .15s, border-color .15s, color .15s;
+        }
+        .chip:hover { border-color: var(--st-text-faint); }
+        .chip.on { background: var(--st-accent-tint); border-color: color-mix(in srgb, var(--st-accent) 45%, transparent); color: var(--st-accent); font-weight: 600; }
+        .mfilter .search {
+            margin-left: auto; background: var(--st-surface); border: 1px solid var(--st-border-strong);
+            color: var(--st-text); padding: 6px 10px; border-radius: var(--st-radius-sm);
+            font: inherit; font-size: .78rem; min-width: 190px;
+        }
+        .mfilter .search:focus { outline: none; border-color: var(--st-accent); box-shadow: var(--st-focus-ring); }
+        .mcount { font-size: .7rem; color: var(--st-text-muted); font-family: var(--st-font-mono); width: 100%; }
+
+        /* ---------- control cards ---------- */
+        .matrix { display: flex; flex-direction: column; gap: 6px; }
+        .ctl {
+            border: 1px solid var(--st-border); border-radius: var(--st-radius-md);
+            background: var(--st-surface); overflow: hidden;
+            animation: fadeUp .38s both; animation-delay: calc(var(--i, 0) * 18ms);
+        }
+        .ctl-head {
+            display: grid; grid-template-columns: 62px 1fr auto 18px; gap: 12px;
+            align-items: center; padding: 10px 13px; cursor: pointer; transition: background .15s;
+        }
+        .ctl-head:hover { background: var(--st-surface-hover); }
+        .ctl-id { font-family: var(--st-font-mono); font-size: .74rem; font-weight: 600; color: var(--st-text-secondary); }
+        .ctl-main { min-width: 0; }
+        .ctl-t { display: block; font-size: .85rem; color: var(--st-text); line-height: 1.3; }
+        .ctl-cat { display: block; font-size: .62rem; color: var(--st-text-muted); text-transform: uppercase; letter-spacing: .06em; margin-top: 3px; }
+        .ctl-chev { color: var(--st-text-faint); transition: transform .2s; font-size: .75rem; text-align: center; }
+        .ctl.open .ctl-chev { transform: rotate(90deg); }
+        .ctl-body { display: grid; grid-template-rows: 0fr; transition: grid-template-rows .28s ease; }
+        .ctl.open .ctl-body { grid-template-rows: 1fr; }
+        .ctl-body > div { overflow: hidden; min-height: 0; }
+        .ctl-inner { padding: 12px 13px 14px; border-top: 1px solid var(--st-border); background: var(--st-surface-2); }
+        .intent { font-size: .78rem; color: var(--st-text-secondary); line-height: 1.5; }
+        .intent b { color: var(--st-text-muted); font-weight: 600; text-transform: uppercase; font-size: .62rem; letter-spacing: .06em; display: block; margin-bottom: 3px; }
+        .ev-head { font-size: .62rem; letter-spacing: .06em; text-transform: uppercase; color: var(--st-text-muted); font-weight: 600; margin: 12px 0 6px; }
+        .ev-list { display: flex; flex-direction: column; gap: 0; }
+        .ev-row { display: grid; grid-template-columns: 1fr auto; gap: 12px; align-items: baseline; font-size: .76rem; padding: 6px 0; border-bottom: 1px dashed var(--st-border); }
+        .ev-row:last-child { border-bottom: 0; }
+        .ev-row .el { color: var(--st-text-secondary); }
+        .ev-row .es { display: block; font-size: .64rem; color: var(--st-text-faint); font-family: var(--st-font-mono); margin-top: 2px; }
+        .ev-row .ev { font-family: var(--st-font-mono); font-size: .78rem; color: var(--st-text); font-weight: 600; text-align: right; }
+        .ev-manual { display: flex; gap: 8px; align-items: flex-start; font-size: .78rem; color: var(--st-text-muted); font-style: italic; line-height: 1.45; }
+        .ev-manual i { color: var(--st-neutral); margin-top: 2px; flex: none; font-style: normal; }
+        .attest-tag {
+            display: inline-block; margin-top: 10px; font-size: .6rem; letter-spacing: .05em;
+            text-transform: uppercase; color: var(--st-text-muted); border: 1px solid var(--st-border);
+            border-radius: 999px; padding: 2px 8px; font-style: normal;
+        }
+
+        /* ---------- risk register ---------- */
+        .risk-top { display: flex; gap: 14px; flex-wrap: wrap; margin-bottom: 12px; align-items: flex-start; }
+        .rating-sum { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; align-content: flex-start; width: 208px; }
+        .rsum {
+            border: 1px solid var(--st-border); border-radius: var(--st-radius-md);
+            padding: 10px 14px; background: var(--st-surface);
+            animation: fadeUp .38s both; animation-delay: calc(var(--i, 0) * 45ms);
+        }
+        .rsum .v { font-family: var(--st-font-mono); font-size: 1.35rem; font-weight: 700; color: var(--st-text); line-height: 1; }
+        .rsum .l { font-size: .58rem; text-transform: uppercase; letter-spacing: .07em; color: var(--st-text-muted); margin-top: 3px; }
+        .rsum.Critical { border-left: 3px solid var(--st-danger); }
+        .rsum.High { border-left: 3px solid var(--st-caution); }
+        .rsum.Medium { border-left: 3px solid var(--st-warning); }
+        .rsum.Low { border-left: 3px solid var(--st-success); }
+
+        .heat-card { padding: 12px 14px; animation: fadeUp .38s .1s both; }
+        .heat-card h3 { font-size: .62rem; letter-spacing: .1em; text-transform: uppercase; color: var(--st-text-muted); margin: 0 0 10px; font-weight: 600; }
+        .heat-body { display: grid; grid-template-columns: 14px auto; gap: 4px; align-items: center; }
+        .heat-impact-l { writing-mode: vertical-rl; transform: rotate(180deg); font-size: .58rem; letter-spacing: .08em; text-transform: uppercase; color: var(--st-text-muted); text-align: center; }
+        .heat-grid { display: inline-grid; grid-template-columns: 14px repeat(5, 32px); grid-auto-rows: 32px; gap: 3px; align-items: center; }
+        .heat-grid .hc { display: flex; align-items: center; justify-content: center; font-size: .72rem; font-family: var(--st-font-mono); border-radius: 4px; color: var(--st-text); }
+        .heat-grid .ax { color: var(--st-text-faint); font-size: .62rem; background: none !important; }
+        .heat-grid .hc.lvl1 { background: color-mix(in srgb, var(--st-neutral) 20%, var(--st-surface)); }
+        .heat-grid .hc.lvl2 { background: color-mix(in srgb, var(--st-info) 24%, var(--st-surface)); }
+        .heat-grid .hc.lvl3 { background: color-mix(in srgb, var(--st-warning) 30%, var(--st-surface)); }
+        .heat-grid .hc.lvl4 { background: color-mix(in srgb, var(--st-caution) 34%, var(--st-surface)); }
+        .heat-grid .hc.lvl5 { background: color-mix(in srgb, var(--st-danger) 40%, var(--st-surface)); }
+        .heat-grid .hc.zero { color: var(--st-text-faint); opacity: .8; }
+        .heat-grid .hc.has { font-weight: 700; box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--st-text) 30%, transparent); cursor: pointer; }
+        .heat-grid .hc.has:hover { box-shadow: inset 0 0 0 2px var(--st-accent); }
+        .heat-grid .hc.act { box-shadow: inset 0 0 0 2px var(--st-accent); }
+        .heat-axis-l { font-size: .58rem; letter-spacing: .08em; text-transform: uppercase; color: var(--st-text-muted); margin: 6px 0 0 18px; }
+        .heat-legend { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 10px; font-size: .64rem; color: var(--st-text-muted); }
+        .heat-legend span { display: inline-flex; align-items: center; gap: 5px; }
+        .heat-legend i { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
+
+        .rt-wrap { border: 1px solid var(--st-border); border-radius: var(--st-radius-md); overflow-x: auto; }
+        table.rt { width: 100%; border-collapse: collapse; font-size: .77rem; }
+        table.rt th {
+            text-align: left; padding: 9px 11px; background: var(--st-surface-2); color: var(--st-text-muted);
+            font-size: .62rem; text-transform: uppercase; letter-spacing: .06em; font-weight: 600;
+            border-bottom: 1px solid var(--st-border); cursor: pointer; white-space: nowrap; user-select: none; position: sticky; top: 0;
+        }
+        table.rt th:hover { color: var(--st-text-secondary); }
+        table.rt th.sortable::after { content: ' \2195'; opacity: .35; }
+        table.rt th.sorted.asc::after { content: ' \25B2'; opacity: 1; }
+        table.rt th.sorted.desc::after { content: ' \25BC'; opacity: 1; }
+        table.rt td { padding: 8px 11px; border-bottom: 1px solid var(--st-border); color: var(--st-text-secondary); vertical-align: top; }
+        table.rt tbody tr:last-child td { border-bottom: 0; }
+        table.rt tbody tr { animation: fadeUp .3s both; animation-delay: calc(var(--i, 0) * 14ms); }
+        table.rt tbody tr:hover td { background: var(--st-surface-hover); }
+        table.rt .mono { font-family: var(--st-font-mono); }
+        table.rt .risk-title { color: var(--st-text); }
+        table.rt .src { font-family: var(--st-font-mono); font-size: .68rem; color: var(--st-text-faint); }
+        .score-cell { font-family: var(--st-font-mono); font-weight: 700; color: var(--st-text); }
+
+        /* ---------- skeleton ---------- */
+        .sk { border-radius: var(--st-radius-md); background: linear-gradient(90deg, var(--st-surface-hover) 25%, var(--st-border) 37%, var(--st-surface-hover) 63%); background-size: 400% 100%; animation: shimmer 1.4s ease-in-out infinite; }
+        .sk-tile { height: 62px; }
+        .sk-gauge { width: 150px; height: 150px; border-radius: 50%; }
+        .sk-row { height: 44px; margin-bottom: 6px; border: 1px solid var(--st-border); }
+        @keyframes shimmer { 0% { background-position: 100% 50%; } 100% { background-position: 0 50%; } }
+
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(8px); } }
+
+        .err { color: var(--st-danger); padding: 14px; font-size: .8rem; }
+        .hidden { display: none !important; }
+
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: .001ms !important;
+                animation-delay: 0 !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: .001ms !important;
+            }
+        }
     </style>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600;700&amp;display=swap">
+    <link rel="stylesheet" href="css/tokens.css">
+    <script src="js/theme.js"></script>
 </head>
 <body>
     <div class="app-container">
         <aside class="sidebar" id="sidebar"></aside>
-        <main class="main-content">
+        <main class="main-content grc-main">
             <div class="top-bar">
                 <div class="page-header">
                     <h2>GRC &amp; SOC 2 READINESS</h2>
-                    <p>LIVE CONTROL ASSESSMENT // <span id="g-framework" class="ev"></span></p>
+                    <p>Live control assessment &nbsp;&middot;&nbsp; <span id="g-framework" class="text-muted">&hellip;</span></p>
                 </div>
                 <div class="filters-bar">
-                    <button class="soc-btn soc-btn-primary" id="g-report"><i class="fas fa-file-pdf"></i> READINESS REPORT (PDF)</button>
-                    <button class="soc-btn" id="g-risk-csv"><i class="fas fa-download"></i> RISK REGISTER CSV</button>
-                    <button class="soc-btn" id="g-refresh"><i class="fas fa-rotate"></i> REFRESH</button>
+                    <button class="soc-btn soc-btn-primary" id="g-report"><i class="fas fa-file-pdf"></i> Readiness Report</button>
+                    <button class="soc-btn" id="g-risk-csv"><i class="fas fa-download"></i> Risk CSV</button>
+                    <button class="soc-btn" id="g-refresh"><i class="fas fa-rotate"></i> Refresh</button>
                 </div>
             </div>
 
-            <div class="disc" id="g-disc"></div>
+            <div class="disc">
+                <i class="fas fa-triangle-exclamation"></i>
+                <span id="g-disc"><b>Internal readiness self-assessment</b> &mdash; NOT an independent CPA attestation.</span>
+            </div>
 
-            <div class="grc-top">
-                <div class="gauge">
-                    <div class="big" id="g-score" style="color:#58a6ff;">—</div>
-                    <div class="lbl">Readiness (automatable controls)</div>
+            <div class="ov">
+                <div class="card gauge-card">
+                    <div class="gauge-wrap">
+                        <div class="sk sk-gauge" id="g-gauge-sk"></div>
+                        <svg class="gauge-svg hidden" id="g-gauge" viewBox="0 0 132 132" aria-hidden="true">
+                            <circle class="g-track" cx="66" cy="66" r="54"></circle>
+                            <circle class="g-val" id="g-arc" cx="66" cy="66" r="54"></circle>
+                        </svg>
+                        <div class="gauge-num hidden" id="g-gauge-num">
+                            <span class="n" id="g-score">0%</span>
+                            <span class="u">Readiness</span>
+                        </div>
+                    </div>
+                    <div class="cap" id="g-cap">Automatable controls, <b>partial = half credit</b></div>
                 </div>
-                <div class="counts" id="g-counts"></div>
+
+                <div class="ov-right">
+                    <div class="tiles" id="g-counts">
+                        <div class="sk sk-tile"></div><div class="sk sk-tile"></div><div class="sk sk-tile"></div>
+                        <div class="sk sk-tile"></div><div class="sk sk-tile"></div>
+                    </div>
+                    <div class="card catbars hidden" id="g-catbars">
+                        <h3>Coverage by trust category</h3>
+                        <div id="g-catrows"></div>
+                    </div>
+                </div>
             </div>
 
-            <div class="tabs">
-                <button class="on" data-view="controls">Control Matrix</button>
-                <button data-view="risks">Risk Register</button>
+            <div class="tabs" role="tablist">
+                <button class="on" data-view="controls" role="tab">Control Matrix</button>
+                <button data-view="risks" role="tab">Risk Register</button>
             </div>
 
-            <div class="wrap" id="g-controls-wrap">
-                <table class="g">
-                    <thead><tr><th>Control</th><th>Category</th><th>Title</th><th>Status</th><th>Evidence</th></tr></thead>
-                    <tbody id="g-controls"><tr><td colspan="5" style="padding:16px;color:#7d8590;">loading…</td></tr></tbody>
-                </table>
-            </div>
+            <section id="v-controls">
+                <div class="mfilter" id="g-mfilter">
+                    <button class="chip on" data-f="cat" data-v="">All categories</button>
+                    <span id="g-catchips"></span>
+                    <input class="search" id="g-search" type="search" placeholder="Filter by id, title, evidence&hellip;">
+                    <span class="mcount" id="g-mcount"></span>
+                </div>
+                <div class="mfilter" id="g-sfilter">
+                    <button class="chip on" data-f="status" data-v="">Any status</button>
+                    <button class="chip" data-f="status" data-v="met">Met</button>
+                    <button class="chip" data-f="status" data-v="partial">Partial</button>
+                    <button class="chip" data-f="status" data-v="gap">Gap</button>
+                    <button class="chip" data-f="status" data-v="manual">Manual</button>
+                </div>
+                <div class="matrix" id="g-controls">
+                    <div class="sk sk-row"></div><div class="sk sk-row"></div><div class="sk sk-row"></div>
+                    <div class="sk sk-row"></div><div class="sk sk-row"></div><div class="sk sk-row"></div>
+                </div>
+            </section>
 
-            <div class="wrap" id="g-risks-wrap" style="display:none;">
-                <table class="g">
-                    <thead><tr><th>ID</th><th>Risk</th><th>Category</th><th>Source</th><th>L</th><th>I</th><th>Score</th><th>Rating</th><th>Treatment</th></tr></thead>
-                    <tbody id="g-risks"><tr><td colspan="9" style="padding:16px;color:#7d8590;">loading…</td></tr></tbody>
-                </table>
-            </div>
+            <section id="v-risks" class="hidden">
+                <div class="risk-top">
+                    <div class="rating-sum" id="g-rating-sum"></div>
+                    <div class="card heat-card" id="g-heat-card">
+                        <h3>Likelihood &times; Impact &mdash; inherent risk</h3>
+                        <div class="heat-body">
+                            <div class="heat-impact-l">Impact</div>
+                            <div class="heat-grid" id="g-heat"></div>
+                        </div>
+                        <div class="heat-axis-l">Likelihood &rarr;</div>
+                        <div class="heat-legend">
+                            <span><i style="background:color-mix(in srgb,var(--st-danger) 40%,var(--st-surface))"></i>Critical</span>
+                            <span><i style="background:color-mix(in srgb,var(--st-caution) 34%,var(--st-surface))"></i>High</span>
+                            <span><i style="background:color-mix(in srgb,var(--st-warning) 30%,var(--st-surface))"></i>Medium</span>
+                            <span><i style="background:color-mix(in srgb,var(--st-info) 24%,var(--st-surface))"></i>Low</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="rt-wrap">
+                    <table class="rt">
+                        <thead><tr id="g-risk-head"></tr></thead>
+                        <tbody id="g-risks"><tr><td colspan="8" style="padding:16px;color:var(--st-text-muted);">loading&hellip;</td></tr></tbody>
+                    </table>
+                </div>
+            </section>
         </main>
     </div>
 
@@ -94,58 +368,231 @@
         const H = () => ({ 'Authorization': `Bearer ${STReports.token()}` });
         const $ = s => document.querySelector(s);
         const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+        const REDUCE = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+        function countUp(el, target, { decimals = 0, suffix = '', dur = 850 } = {}) {
+            target = Number(target) || 0;
+            if (REDUCE) { el.textContent = target.toFixed(decimals) + suffix; return; }
+            const start = performance.now();
+            (function tick(now) {
+                const p = Math.min(1, (now - start) / dur);
+                const e = 1 - Math.pow(1 - p, 3);
+                el.textContent = (target * e).toFixed(decimals) + suffix;
+                if (p < 1) requestAnimationFrame(tick);
+                else el.textContent = target.toFixed(decimals) + suffix;
+            })(performance.now());
+        }
+
+        /* ---------------- assessment ---------------- */
+        let CONTROLS = [];
+        const FILT = { cat: '', status: '', q: '' };
 
         async function loadAssessment() {
             try {
                 const d = await (await fetch(`${B}/compliance/assessment`, { headers: H() })).json();
-                $('#g-framework').textContent = d.framework;
-                $('#g-disc').textContent = d.assessment_type;
-                $('#g-score').textContent = d.readiness_pct + '%';
-                const c = d.counts;
-                $('#g-counts').innerHTML = ['met', 'partial', 'gap', 'manual'].map(k =>
-                    `<div class="cbox ${k}"><div class="v">${c[k]}</div><div class="l">${k}</div></div>`).join('')
-                    + `<div class="cbox"><div class="v">${c.total}</div><div class="l">criteria</div></div>`;
-                $('#g-controls').innerHTML = d.controls.map(x => {
-                    const ev = x.evidence.length
-                        ? x.evidence.map(e => `<b>${esc(e.label)}:</b> ${esc(e.value)} <span style="opacity:.6">(${esc(e.source)})</span>`).join('<br>')
-                        : `<i>${esc(x.note || 'manual attestation required')}</i>`;
-                    return `<tr>
-                        <td>${esc(x.id)}</td><td>${esc(x.category)}</td><td>${esc(x.title)}</td>
-                        <td><span class="pill p-${x.status}">${x.status.toUpperCase()}</span></td>
-                        <td class="ev">${ev}</td></tr>`;
+                $('#g-framework').textContent = d.framework || '';
+                if (d.assessment_type) $('#g-disc').innerHTML = `<b>${esc(d.assessment_type.split('—')[0].trim())}</b> &mdash; ${esc((d.assessment_type.split('—')[1] || 'NOT an independent CPA attestation').trim())}`;
+
+                // gauge
+                const pct = Number(d.readiness_pct) || 0;
+                const band = pct >= 80 ? 'var(--st-success)' : pct >= 55 ? 'var(--st-warning)' : 'var(--st-danger)';
+                const arc = $('#g-arc');
+                const C = 2 * Math.PI * 54;
+                arc.style.setProperty('--circ', C.toFixed(1));
+                arc.style.stroke = band;
+                $('#g-gauge-sk').classList.add('hidden');
+                $('#g-gauge').classList.remove('hidden');
+                $('#g-gauge-num').classList.remove('hidden');
+                requestAnimationFrame(() => {
+                    arc.style.strokeDashoffset = (C * (1 - pct / 100)).toFixed(1);
+                });
+                countUp($('#g-score'), pct, { decimals: 1, suffix: '%' });
+
+                const c = d.counts || {};
+                const automatable = (c.total || 0) - (c.manual || 0);
+                $('#g-cap').innerHTML = `<b>${c.met || 0} met</b> &middot; ${c.partial || 0} partial of ${automatable} automatable controls`;
+
+                // tiles
+                const tiles = [
+                    ['met', c.met, 'Met'], ['partial', c.partial, 'Partial'],
+                    ['gap', c.gap, 'Gap'], ['manual', c.manual, 'Manual'], ['total', c.total, 'Criteria'],
+                ];
+                $('#g-counts').innerHTML = tiles.map(([k, v, l], i) =>
+                    `<div class="tile ${k}" style="--i:${i}"><span class="v" data-n="${v || 0}">0</span><span class="l">${l}</span></div>`).join('');
+                $('#g-counts').querySelectorAll('.v').forEach(el => countUp(el, el.dataset.n));
+
+                // category bars
+                const cats = d.by_category || {};
+                $('#g-catrows').innerHTML = Object.entries(cats).map(([name, s]) => {
+                    const t = s.total || 1;
+                    const seg = k => `<span class="s-${k}" style="width:${(s[k] || 0) / t * 100}%"></span>`;
+                    return `<div class="catrow">
+                        <span class="cn" title="${esc(name)}">${esc(name)}</span>
+                        <span class="cbar">${seg('met')}${seg('partial')}${seg('gap')}${seg('manual')}</span>
+                        <span class="ct">${s.met || 0}/${t}</span></div>`;
                 }).join('');
+                $('#g-catbars').classList.remove('hidden');
+
+                // category filter chips
+                $('#g-catchips').innerHTML = Object.keys(cats).map(name =>
+                    `<button class="chip" data-f="cat" data-v="${esc(name)}">${esc(name)}</button>`).join('');
+                bindChips();
+
+                CONTROLS = d.controls || [];
+                renderMatrix();
             } catch (e) {
-                $('#g-controls').innerHTML = `<tr><td colspan="5" style="color:#f85149;padding:16px;">${esc(e.message)}</td></tr>`;
+                $('#g-controls').innerHTML = `<div class="err">${esc(e.message)}</div>`;
             }
         }
+
+        function bindChips() {
+            document.querySelectorAll('.chip').forEach(ch => ch.onclick = () => {
+                const f = ch.dataset.f;
+                document.querySelectorAll(`.chip[data-f="${f}"]`).forEach(x => x.classList.toggle('on', x === ch));
+                FILT[f] = ch.dataset.v;
+                renderMatrix();
+            });
+        }
+        $('#g-search').addEventListener('input', () => { FILT.q = $('#g-search').value.toLowerCase().trim(); renderMatrix(); });
+
+        function renderMatrix() {
+            const rows = CONTROLS.filter(x => {
+                if (FILT.cat && x.category !== FILT.cat) return false;
+                if (FILT.status && x.status !== FILT.status) return false;
+                if (FILT.q) {
+                    const hay = (x.id + ' ' + x.title + ' ' + x.category + ' ' + (x.intent || '') + ' ' +
+                        (x.evidence || []).map(e => e.label + ' ' + e.value).join(' ') + ' ' + (x.note || '')).toLowerCase();
+                    if (!hay.includes(FILT.q)) return false;
+                }
+                return true;
+            });
+            $('#g-mcount').textContent = `${rows.length} of ${CONTROLS.length} criteria`;
+            if (!rows.length) { $('#g-controls').innerHTML = `<div class="err" style="color:var(--st-text-muted)">No controls match the current filters.</div>`; return; }
+            $('#g-controls').innerHTML = rows.map((x, i) => {
+                const evBlock = (x.evidence && x.evidence.length)
+                    ? `<div class="ev-head">System-derived evidence</div><div class="ev-list">${x.evidence.map(e =>
+                        `<div class="ev-row"><span class="el">${esc(e.label)}<span class="es">${esc(e.source)}</span></span><span class="ev">${esc(e.value)}</span></div>`).join('')}</div>`
+                    : `<div class="ev-manual"><i class="fas fa-user-pen"></i><span>${esc(x.note || 'No system-derived evidence; requires manual attestation.')}</span></div>
+                       <span class="attest-tag">Requires manual attestation</span>`;
+                return `<div class="ctl" style="--i:${i}">
+                    <div class="ctl-head">
+                        <span class="ctl-id">${esc(x.id)}</span>
+                        <span class="ctl-main"><span class="ctl-t">${esc(x.title)}</span><span class="ctl-cat">${esc(x.category)}</span></span>
+                        <span class="pill ${x.status}">${esc(x.status)}</span>
+                        <span class="ctl-chev"><i class="fas fa-chevron-right"></i></span>
+                    </div>
+                    <div class="ctl-body"><div><div class="ctl-inner">
+                        <div class="intent"><b>Intent</b>${esc(x.intent || '')}</div>
+                        ${evBlock}
+                    </div></div></div>
+                </div>`;
+            }).join('');
+            $('#g-controls').querySelectorAll('.ctl-head').forEach(h => h.onclick = () => h.parentElement.classList.toggle('open'));
+        }
+
+        /* ---------------- risk register ---------------- */
+        let RISKS = [];
+        const RCOLS = [
+            ['id', 'ID', 1], ['title', 'Risk', 1], ['category', 'Category', 1], ['source', 'Source', 1],
+            ['likelihood', 'L', 1], ['impact', 'I', 1], ['score', 'Score', 1], ['rating', 'Rating', 1], ['treatment', 'Treatment', 0],
+        ];
+        const RATING_ORD = { Critical: 4, High: 3, Medium: 2, Low: 1 };
+        let SORT = { key: 'score', dir: -1 };
+        let HEATSEL = null;
+
+        function lvl(score) { return score >= 20 ? 5 : score >= 12 ? 4 : score >= 6 ? 3 : score >= 3 ? 2 : 1; }
 
         async function loadRisks() {
             try {
                 const d = await (await fetch(`${B}/compliance/risk-register`, { headers: H() })).json();
-                $('#g-risks').innerHTML = (d.risks || []).map(r => `<tr>
-                    <td>${esc(r.id)}</td><td>${esc(r.title)}</td><td>${esc(r.category)}</td><td class="ev">${esc(r.source)}</td>
-                    <td>${r.likelihood}</td><td>${r.impact}</td><td><b>${r.score}</b></td>
-                    <td><span class="pill p-${r.rating}">${r.rating}</span></td>
-                    <td class="ev">${esc(r.treatment)}</td></tr>`).join('');
+                RISKS = d.risks || [];
+
+                const by = d.by_rating || {};
+                $('#g-rating-sum').innerHTML = ['Critical', 'High', 'Medium', 'Low'].map((k, i) =>
+                    `<div class="rsum ${k}" style="--i:${i}"><div class="v" data-n="${by[k] || 0}">0</div><div class="l">${k}</div></div>`).join('');
+                $('#g-rating-sum').querySelectorAll('.v').forEach(el => countUp(el, el.dataset.n));
+
+                // heatmap
+                const cell = {};
+                RISKS.forEach(r => { const key = r.likelihood + ',' + r.impact; (cell[key] = cell[key] || []).push(r); });
+                let html = '';
+                for (let imp = 5; imp >= 1; imp--) {
+                    html += `<div class="hc ax">${imp}</div>`;
+                    for (let like = 1; like <= 5; like++) {
+                        const list = cell[like + ',' + imp] || [];
+                        const s = like * imp;
+                        html += `<div class="hc lvl${lvl(s)} ${list.length ? 'has' : 'zero'}" data-key="${like},${imp}" title="L${like} × I${imp} — ${list.length} risk(s)">${list.length || ''}</div>`;
+                    }
+                }
+                html += `<div class="hc ax"></div>`;
+                for (let like = 1; like <= 5; like++) html += `<div class="hc ax">${like}</div>`;
+                $('#g-heat').innerHTML = html;
+                $('#g-heat').querySelectorAll('.hc.has').forEach(c => c.onclick = () => {
+                    const k = c.dataset.key;
+                    HEATSEL = (HEATSEL === k) ? null : k;
+                    $('#g-heat').querySelectorAll('.hc').forEach(x => x.classList.toggle('act', x.dataset.key === HEATSEL));
+                    renderRisks();
+                });
+
+                $('#g-risk-head').innerHTML = RCOLS.map(([k, l, sortable]) =>
+                    `<th class="${sortable ? 'sortable' : ''} ${SORT.key === k ? 'sorted ' + (SORT.dir === 1 ? 'asc' : 'desc') : ''}" data-k="${k}" data-s="${sortable}">${l}</th>`).join('');
+                $('#g-risk-head').querySelectorAll('th[data-s="1"]').forEach(th => th.onclick = () => {
+                    const k = th.dataset.k;
+                    SORT = { key: k, dir: SORT.key === k ? -SORT.dir : (k === 'score' || k === 'likelihood' || k === 'impact' ? -1 : 1) };
+                    loadRisksHead();
+                    renderRisks();
+                });
+                renderRisks();
             } catch (e) {
-                $('#g-risks').innerHTML = `<tr><td colspan="9" style="color:#f85149;padding:16px;">${esc(e.message)}</td></tr>`;
+                $('#g-risks').innerHTML = `<tr><td colspan="8" class="err">${esc(e.message)}</td></tr>`;
             }
         }
+        function loadRisksHead() {
+            $('#g-risk-head').querySelectorAll('th').forEach(th => {
+                th.classList.toggle('sorted', th.dataset.k === SORT.key);
+                th.classList.toggle('asc', th.dataset.k === SORT.key && SORT.dir === 1);
+                th.classList.toggle('desc', th.dataset.k === SORT.key && SORT.dir === -1);
+            });
+        }
+        function renderRisks() {
+            let rows = RISKS.slice();
+            if (HEATSEL) { const [l, i] = HEATSEL.split(',').map(Number); rows = rows.filter(r => r.likelihood === l && r.impact === i); }
+            rows.sort((a, b) => {
+                let va = a[SORT.key], vb = b[SORT.key];
+                if (SORT.key === 'rating') { va = RATING_ORD[va] || 0; vb = RATING_ORD[vb] || 0; }
+                if (typeof va === 'string') { va = va.toLowerCase(); vb = String(vb).toLowerCase(); }
+                return (va < vb ? -1 : va > vb ? 1 : 0) * SORT.dir;
+            });
+            if (!rows.length) { $('#g-risks').innerHTML = `<tr><td colspan="8" style="padding:14px;color:var(--st-text-muted)">No risks in this selection.</td></tr>`; return; }
+            $('#g-risks').innerHTML = rows.map((r, i) => `<tr style="--i:${i}">
+                <td class="mono">${esc(r.id)}</td>
+                <td class="risk-title">${esc(r.title)}</td>
+                <td>${esc(r.category)}</td>
+                <td class="src">${esc(r.source)}</td>
+                <td class="mono">${r.likelihood}</td>
+                <td class="mono">${r.impact}</td>
+                <td class="score-cell">${r.score}</td>
+                <td><span class="pill ${esc(r.rating)}">${esc(r.rating)}</span></td>
+                <td>${esc(r.treatment)}</td></tr>`).join('');
+        }
 
+        /* ---------------- tabs + actions ---------------- */
         document.querySelectorAll('.tabs button').forEach(b => b.onclick = () => {
             document.querySelectorAll('.tabs button').forEach(x => x.classList.toggle('on', x === b));
             const risks = b.dataset.view === 'risks';
-            $('#g-risks-wrap').style.display = risks ? '' : 'none';
-            $('#g-controls-wrap').style.display = risks ? 'none' : '';
+            $('#v-risks').classList.toggle('hidden', !risks);
+            $('#v-controls').classList.toggle('hidden', risks);
         });
 
         $('#g-report').onclick = () => STReports.generateAndDownload('soc2_readiness', {}, { button: $('#g-report'), title: 'SOC 2 readiness' });
         $('#g-risk-csv').onclick = async () => {
-            const r = await fetch(`${B}/compliance/risk-register/export?fmt=csv`, { headers: H() });
-            const blob = await r.blob();
-            const a = document.createElement('a');
-            a.href = URL.createObjectURL(blob); a.download = 'ShadowTrust-RiskRegister.csv';
-            document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(a.href);
+            try {
+                const r = await fetch(`${B}/compliance/risk-register/export?fmt=csv`, { headers: H() });
+                const blob = await r.blob();
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(blob); a.download = 'ShadowTrust-RiskRegister.csv';
+                document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(a.href);
+            } catch (e) { STReports.toast('Risk CSV export failed: ' + e.message, 'err'); }
         };
         $('#g-refresh').onclick = () => { loadAssessment(); loadRisks(); };
 

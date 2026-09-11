@@ -15,17 +15,17 @@
             /* Tactical cursor */
             height: 480px;
             width: 100%;
-            background: #050a0f;
+            background: var(--st-surface-2);
             z-index: 1;
         }
 
         .leaflet-container {
-            background: #050a0f !important;
+            background: var(--st-surface-2) !important;
         }
 
         /* Darken the keyless OSM tiles to match the tactical theme */
         .leaflet-tile-pane {
-            filter: invert(1) hue-rotate(180deg) brightness(0.85) contrast(1.05) saturate(0.7);
+            filter: var(--st-map-filter);
         }
 
         /* Radar Sweep Animation */
@@ -35,7 +35,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: conic-gradient(from 0deg, transparent 0deg, rgba(0, 198, 255, 0.1) 60deg, transparent 60deg);
+            background: conic-gradient(from 0deg, transparent 0deg, color-mix(in srgb, var(--st-accent) 10%, transparent) 60deg, transparent 60deg);
             border-radius: 50%;
             animation: radar-spin 4s linear infinite;
             pointer-events: none;
@@ -64,14 +64,15 @@
             position: absolute;
             top: 20px;
             right: 20px;
-            background: rgba(11, 16, 21, 0.9);
-            border: 1px solid var(--accent-primary);
+            background: color-mix(in srgb, var(--st-surface) 94%, transparent);
+            border: 1px solid var(--st-border);
+            box-shadow: var(--st-shadow-md);
             padding: 15px;
             z-index: 500;
             width: 280px;
-            backdrop-filter: blur(5px);
-            font-family: 'JetBrains Mono', monospace;
-            clip-path: polygon(0 0, 100% 0, 100% calc(100% - 15px), calc(100% - 15px) 100%, 0 100%);
+            
+            font-family: var(--st-font-mono);
+            border-radius: var(--st-radius-md);
         }
 
         .overlay-row {
@@ -91,59 +92,64 @@
 
         .blink-red {
             background: var(--accent-critical);
-            box-shadow: 0 0 5px var(--accent-critical);
+            
             animation: pulse-red 1s infinite;
         }
 
         @keyframes pulse-red {
             0% {
                 opacity: 1;
-                box-shadow: 0 0 5px var(--accent-critical);
+                
             }
 
             50% {
                 opacity: 0.5;
-                box-shadow: 0 0 15px var(--accent-critical);
+                
             }
 
             100% {
                 opacity: 1;
-                box-shadow: 0 0 5px var(--accent-critical);
+                
             }
         }
     </style>
     <!-- Leaflet for Map -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600;700&amp;display=swap">
+    <link rel="stylesheet" href="css/tokens.css">
+    <script src="js/theme.js"></script>
+    <script src="js/live.js"></script>
 </head>
 
 <body class="dashboard-page">
 
     <!-- Loading Overlay -->
     <div id="full-page-loading"
-        style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(5, 10, 15, 0.8); z-index:9999; justify-content:center; align-items:center; flex-direction:column; backdrop-filter:blur(5px);">
-        <i class="fas fa-circle-notch fa-spin" style="font-size:3rem; color:#00c6ff; margin-bottom:15px;"></i>
-        <div style="color:#ffffff; font-family:'JetBrains Mono', monospace; font-size:1.2rem;" class="animate-pulse">
+        style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:var(--st-overlay); z-index:9999; justify-content:center; align-items:center; flex-direction:column; ">
+        <i class="fas fa-circle-notch fa-spin" style="font-size:3rem; color:var(--st-accent); margin-bottom:15px;"></i>
+        <div style="color:var(--st-text); font-family:var(--st-font-mono); font-size:1.2rem;" class="animate-pulse">
             REFRESHING INTELLIGENCE GRID...</div>
     </div>
 
     <!-- Custom Modal -->
     <div id="custom-modal"
-        style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(5, 10, 15, 0.85); z-index:10002; justify-content:center; align-items:center; backdrop-filter:blur(5px);">
+        style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:var(--st-overlay); z-index:10002; justify-content:center; align-items:center; ">
         <div class="soc-card"
-            style="width: 400px; max-width: 90%; border-color: var(--accent-primary); box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);">
+            style="width: 400px; max-width: 90%; border-color: var(--accent-primary); ">
             <div class="soc-card-header"
-                style="border-bottom: 1px solid #334155; padding-bottom: 10px; margin-bottom: 15px;">
+                style="border-bottom: 1px solid var(--st-border); padding-bottom: 10px; margin-bottom: 15px;">
                 <span id="modal-title" class="card-title text-yellow"><i class="fas fa-exclamation-triangle"></i>
                     AUTHORIZATION REQUIRED</span>
             </div>
             <div id="modal-message"
-                style="color: #e2e8f0; font-family: 'JetBrains Mono', monospace; font-size: 0.9rem; margin-bottom: 25px; line-height: 1.5;">
+                style="color: var(--st-text); font-family: var(--st-font-mono); font-size: 0.9rem; margin-bottom: 25px; line-height: 1.5;">
                 Please confirm action.
             </div>
             <div style="display: flex; justify-content: flex-end; gap: 10px;">
                 <button id="modal-btn-cancel" class="soc-btn"
-                    style="background: transparent; border: 1px solid #334155; color: #94a3b8;">CANCEL</button>
+                    style="background: transparent; border: 1px solid var(--st-border); color: var(--st-text-secondary);">CANCEL</button>
                 <button id="modal-btn-confirm" class="soc-btn soc-btn-primary">PROCEED</button>
             </div>
         </div>
@@ -178,25 +184,25 @@
         }
     </style>
     <div id="shutter-top"
-        style="position:fixed; top:0; left:0; width:100%; height:50vh; background:#050a0f; z-index:9998; border-bottom:4px solid var(--accent-critical); transform:translateY(-100%); transition:transform 0.5s ease-in-out; display:flex; justify-content:center; align-items:flex-end; overflow:hidden;">
-        <div style="font-family:'JetBrains Mono', monospace; color:var(--accent-critical); font-size:2rem; padding-bottom:20px; opacity:0; transition:opacity 0.2s 0.5s;"
+        style="position:fixed; top:0; left:0; width:100%; height:50vh; background:var(--st-surface-2); z-index:9998; border-bottom:4px solid var(--accent-critical); transform:translateY(-100%); transition:transform 0.5s ease-in-out; display:flex; justify-content:center; align-items:flex-end; overflow:hidden;">
+        <div style="font-family:var(--st-font-mono); color:var(--accent-critical); font-size:2rem; padding-bottom:20px; opacity:0; transition:opacity 0.2s 0.5s;"
             class="shutter-text">LOCKDOWN SEQUENCE INITIATED</div>
     </div>
     <div id="shutter-bottom"
-        style="position:fixed; bottom:0; left:0; width:100%; height:50vh; background:#050a0f; z-index:9998; border-top:4px solid var(--accent-critical); transform:translateY(100%); transition:transform 0.5s ease-in-out; display:flex; justify-content:center; align-items:flex-start; overflow:hidden;">
-        <div style="font-family:'JetBrains Mono', monospace; color:var(--accent-critical); font-size:2rem; padding-top:20px; opacity:0; transition:opacity 0.2s 0.5s;"
+        style="position:fixed; bottom:0; left:0; width:100%; height:50vh; background:var(--st-surface-2); z-index:9998; border-top:4px solid var(--accent-critical); transform:translateY(100%); transition:transform 0.5s ease-in-out; display:flex; justify-content:center; align-items:flex-start; overflow:hidden;">
+        <div style="font-family:var(--st-font-mono); color:var(--accent-critical); font-size:2rem; padding-top:20px; opacity:0; transition:opacity 0.2s 0.5s;"
             class="shutter-text">ACCESS RESTRICTED</div>
     </div>
 
     <div id="lockdown-overlay"
-        style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(40, 0, 0, 0.5); backdrop-filter:blur(10px); z-index:9997; justify-content:center; align-items:center; flex-direction:column;">
+        style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:var(--st-overlay);  z-index:9997; justify-content:center; align-items:center; flex-direction:column;">
         <i class="fas fa-biohazard heartbeat"
             style="font-size:6rem; color:var(--accent-critical); margin-bottom:20px;"></i>
         <h1
-            style="color:var(--accent-critical); font-family:'JetBrains Mono', monospace; font-size:3rem; letter-spacing:5px; text-shadow:0 0 20px rgba(255, 51, 51, 0.7); margin-bottom: 5px;">
+            style="color:var(--accent-critical); font-family:var(--st-font-mono); font-size:3rem; letter-spacing:5px;  margin-bottom: 5px;">
             CONSOLE LOCKED</h1>
         <div
-            style="color:#ffffff; font-family:'JetBrains Mono', monospace; font-size:1.2rem; margin-top: 10px; background:rgba(0,0,0,0.7); padding:15px 30px; border:1px solid var(--accent-critical); box-shadow: 0 0 15px rgba(255,51,51,0.3);">
+            style="color:var(--st-text); font-family:var(--st-font-mono); font-size:1.2rem; margin-top: 10px; background:var(--st-overlay); padding:15px 30px; border:1px solid var(--accent-critical); ">
             Local screen guard — press NORMAL MODE to restore</div>
     </div>
 
@@ -216,21 +222,21 @@
                 </div>
                 <div class="filters-bar" style="display:flex; flex-direction:column; align-items:flex-end; gap:10px;">
                     <div style="text-align:right;">
-                        <div class="text-mono" style="font-size:0.7rem; color:#64748b; letter-spacing:1px; margin-bottom:2px;">ZULU TIME</div>
-                        <div class="text-mono" id="clock" style="font-size:1.2rem; color:#fff; font-weight:700; letter-spacing:1px;">
+                        <div class="text-mono" style="font-size:0.7rem; color:var(--st-text-muted); letter-spacing:1px; margin-bottom:2px;">ZULU TIME</div>
+                        <div class="text-mono" id="clock" style="font-size:1.2rem; color:var(--st-text); font-weight:700; letter-spacing:1px;">
                             00:00:00</div>
                     </div>
                     <div style="display:flex; gap:15px;">
                         <button id="btn-exec-report" class="soc-btn"
-                            style="background: rgba(88,166,255,0.1); border-color: #58a6ff; color: #58a6ff; padding: 6px 15px; font-size: 0.8rem;">
+                            style="background: color-mix(in srgb, var(--st-info) 10%, transparent); border-color: var(--st-info); color: var(--st-info); padding: 6px 15px; font-size: 0.8rem;">
                             <i class="fas fa-file-pdf"></i> EXEC SUMMARY
                         </button>
                         <button id="btn-refresh-intel" class="soc-btn"
-                            style="background: rgba(0, 198, 255, 0.1); border-color: #00c6ff; color: #00c6ff; padding: 6px 15px; font-size: 0.8rem;">
+                            style="background: color-mix(in srgb, var(--st-accent) 10%, transparent); border-color: var(--st-accent); color: var(--st-accent); padding: 6px 15px; font-size: 0.8rem;">
                             <i class="fas fa-sync-alt" id="refresh-icon"></i> REFRESH DATA
                         </button>
                         <button id="btn-lockdown" class="soc-btn"
-                            style="background: rgba(255, 51, 51, 0.1); border-color: #ff3333; color: #ff3333; padding: 6px 15px; font-size: 0.8rem;">
+                            style="background: color-mix(in srgb, var(--st-danger) 10%, transparent); border-color: var(--st-danger); color: var(--st-danger); padding: 6px 15px; font-size: 0.8rem;">
                             <i class="fas fa-lock"></i> LOCKDOWN
                         </button>
                     </div>
@@ -309,7 +315,7 @@
                         <span>ACTIVE SENSORS</span>
                         <i class="fas fa-satellite-dish text-yellow"></i>
                     </div>
-                    <div id="activeNodes" class="metric-value" style="color:#d97706;">- / -</div>
+                    <div id="activeNodes" class="metric-value" style="color:var(--st-warning);">- / -</div>
                     <div class="metric-sub">Sensor Grid Status</div>
                 </div>
 
@@ -320,14 +326,14 @@
                 <div class="micro-metric">
                     <div class="label">ANALYSIS ENGINE</div>
                     <div id="analysisEngineValue" class="value text-muted">—</div>
-                    <div style="height:2px; background:#334155; margin-top:5px;">
+                    <div style="height:2px; background:var(--st-border); margin-top:5px;">
                         <div id="analysisEngineBar" style="width:0%; height:100%; background:var(--accent-info); transition:width .5s;"></div>
                     </div>
                 </div>
                 <div class="micro-metric">
                     <div class="label">THREAT LEVEL</div>
                     <div id="threatLevelValue" class="value text-green">LOW</div>
-                    <div style="height:2px; background:#334155; margin-top:5px;">
+                    <div style="height:2px; background:var(--st-border); margin-top:5px;">
                         <div id="threatLevelBar"
                             style="width:10%; height:100%; background:var(--accent-primary); transition: width 0.5s, background 0.5s;">
                         </div>
@@ -336,14 +342,14 @@
                 <div class="micro-metric">
                     <div class="label">DECEPTION</div>
                     <div id="deceptionValue" class="value text-muted">—</div>
-                    <div style="height:2px; background:#334155; margin-top:5px;">
+                    <div style="height:2px; background:var(--st-border); margin-top:5px;">
                         <div id="deceptionBar" style="width:0%; height:100%; background:var(--accent-secondary); transition:width .5s;"></div>
                     </div>
                 </div>
                 <div class="micro-metric">
                     <div class="label">LURES TRIPPED</div>
                     <div id="luresTrippedValue" class="value text-yellow">0</div>
-                    <div style="height:2px; background:#334155; margin-top:5px;">
+                    <div style="height:2px; background:var(--st-border); margin-top:5px;">
                         <div id="luresTrippedBar"
                             style="width:0%; height:100%; background:var(--accent-secondary); transition: width 0.5s;">
                         </div>
@@ -352,14 +358,14 @@
                 <div class="micro-metric">
                     <div class="label">NOVEL PATTERNS</div>
                     <div id="zeroDaysValue" class="value text-muted">—</div>
-                    <div style="height:2px; background:#334155; margin-top:5px;">
+                    <div style="height:2px; background:var(--st-border); margin-top:5px;">
                         <div id="zeroDaysBar" style="width:0%; height:100%; background:var(--accent-critical); transition:width .5s;"></div>
                     </div>
                 </div>
                 <div class="micro-metric">
                     <div class="label">DEFENSE MATRIX</div>
                     <div id="defenseMatrixValue" class="value text-green">OPTIMIZED</div>
-                    <div style="height:2px; background:#334155; margin-top:5px;">
+                    <div style="height:2px; background:var(--st-border); margin-top:5px;">
                         <div id="defenseMatrixBar"
                             style="width:100%; height:100%; background:var(--accent-primary); transition: width 0.5s, background 0.5s;">
                         </div>
@@ -369,16 +375,16 @@
 
             <!-- ROW 1.8: GEO MAP (FULL WIDTH) -->
             <div class="soc-card"
-                style="padding: 0; overflow: hidden; margin-bottom: 2rem; position: relative; border-color: var(--accent-secondary);">
+                style="padding: 0; overflow: hidden; margin-bottom: 2rem; position: relative;">
                 <div class="soc-card-header"
-                    style="position:absolute; top:10px; left:10px; z-index:400; background:rgba(11, 16, 21, 0.9); padding:8px 15px; border: 1px solid var(--accent-secondary);">
+                    style="position:absolute; top:10px; left:10px; z-index:400; background:color-mix(in srgb, var(--st-surface) 94%, transparent); padding:8px 15px; border: 1px solid var(--st-border); border-radius: var(--st-radius-sm); box-shadow: var(--st-shadow-sm);">
                     <span class="card-title text-yellow"><i class="fas fa-globe-americas"></i> GLOBAL THREAT MAP</span>
                 </div>
                 <div id="geoMap"></div>
 
                 <!-- LIVE STATS OVERLAY -->
                 <div class="map-overlay" onclick="window.location.href='geo.html'" style="cursor: pointer;">
-                    <div style="border-bottom:1px solid #334155; margin-bottom:10px; padding-bottom:5px;">
+                    <div style="border-bottom:1px solid var(--st-border); margin-bottom:10px; padding-bottom:5px;">
                         <span class="text-cyan">LIVE INTERCEPTIONS</span>
                     </div>
                     <div class="overlay-row">
@@ -419,7 +425,7 @@
                         <span class="badge badge-blue animate-pulse">LIVE</span>
                     </div>
                     <div id="liveFeed"
-                        style="flex:1; overflow-y:auto; overflow-x:hidden; background:rgba(0,0,0,0.2); padding:10px; font-family:'JetBrains Mono', monospace; font-size:0.75rem;">
+                        style="flex:1; overflow-y:auto; overflow-x:hidden; background:color-mix(in srgb, var(--st-bg) 40%, transparent); padding:10px; font-family:var(--st-font-mono); font-size:0.75rem;">
                         <!-- JS Feed -->
                     </div>
                 </div>
@@ -440,7 +446,7 @@
                 }
 
                 .scrollable-tbody::-webkit-scrollbar-thumb {
-                    background: #334155;
+                    background: var(--st-border);
                 }
 
                 .terminal-table thead,
@@ -462,10 +468,10 @@
                 <!-- TOP ASNs -->
                 <div class="soc-card" style="padding:0; display:flex; flex-direction:column;">
                     <div
-                        style="padding:10px 15px; border-bottom:1px solid #334155; display:flex; justify-content:space-between; align-items:center;">
+                        style="padding:10px 15px; border-bottom:1px solid var(--st-border); display:flex; justify-content:space-between; align-items:center;">
                         <span class="card-title">TOP ATTACKER NETWORKS (ASN)</span>
                         <a href="graphs.html"
-                            style="color:#64748b; font-size: 0.9em; transform: scale(0.9); transition: color 0.2s;"><i
+                            style="color:var(--st-text-muted); font-size: 0.9em; transform: scale(0.9); transition: color 0.2s;"><i
                                 class="fas fa-external-link-alt hover-cyan"></i></a>
                     </div>
                     <table class="terminal-table" style="flex:1; margin:0;">
@@ -489,10 +495,10 @@
                 <!-- RECENT MALWARE -->
                 <div class="soc-card" style="padding:0; display:flex; flex-direction:column;">
                     <div
-                        style="padding:10px 15px; border-bottom:1px solid #334155; display:flex; justify-content:space-between; align-items:center;">
+                        style="padding:10px 15px; border-bottom:1px solid var(--st-border); display:flex; justify-content:space-between; align-items:center;">
                         <span class="card-title">RECENT UNIQUE PAYLOADS</span>
                         <a href="events.html"
-                            style="color:#64748b; font-size: 0.9em; transform: scale(0.9); transition: color 0.2s;"><i
+                            style="color:var(--st-text-muted); font-size: 0.9em; transform: scale(0.9); transition: color 0.2s;"><i
                                 class="fas fa-external-link-alt hover-cyan"></i></a>
                     </div>
                     <table class="terminal-table" style="flex:1; margin:0;">
@@ -515,10 +521,10 @@
                 <!-- ATTACK VECTORS -->
                 <div class="soc-card" style="padding:0; display:flex; flex-direction:column;">
                     <div
-                        style="padding:10px 15px; border-bottom:1px solid #334155; display:flex; justify-content:space-between; align-items:center;">
+                        style="padding:10px 15px; border-bottom:1px solid var(--st-border); display:flex; justify-content:space-between; align-items:center;">
                         <span class="card-title">EXPLOIT VECTORS BY PORT</span>
                         <a href="mitre.html"
-                            style="color:#64748b; font-size: 0.9em; transform: scale(0.9); transition: color 0.2s;"><i
+                            style="color:var(--st-text-muted); font-size: 0.9em; transform: scale(0.9); transition: color 0.2s;"><i
                                 class="fas fa-external-link-alt hover-cyan"></i></a>
                     </div>
                     <table class="terminal-table" style="flex:1; margin:0;">
@@ -572,7 +578,7 @@
 
             <!-- FOOTER SYSTEM STATUS -->
             <div
-                style="margin-top:20px; border-top:1px solid #334155; padding-top:10px; display:flex; justify-content:space-between; color:#64748b; font-size:0.7rem; font-family:'JetBrains Mono';">
+                style="margin-top:20px; border-top:1px solid var(--st-border); padding-top:10px; display:flex; justify-content:space-between; color:var(--st-text-muted); font-size:0.7rem; font-family:var(--st-font-mono);">
                 <div id="footerBuild">SHADOW TRUST DEFENSE GRID</div>
                 <div>
                     <span style="margin-right:15px;"><i id="footerApiDot" class="fas fa-circle text-muted" style="font-size:0.5rem;"></i>
@@ -599,7 +605,7 @@
         // Live Feed
         const feed = document.getElementById('liveFeed');
         if (feed) {
-            feed.innerHTML = `<div style="color:#64748b; padding:8px;">Analyzing sensor matrix...</div>`;
+            feed.innerHTML = `<div style="color:var(--st-text-muted); padding:8px;">Analyzing sensor matrix...</div>`;
         }
 
         // Global Chart instances so we can update them dynamically
@@ -615,17 +621,17 @@
                 datasets: [{
                     label: 'SSH',
                     data: Array.from({ length: 60 }, () => 0),
-                    backgroundColor: '#00c6ff',
+                    backgroundColor: 'var(--st-accent)',
                     borderWidth: 0, barPercentage: 0.9, categoryPercentage: 1.0, stack: 's'
                 }, {
                     label: 'HTTP',
                     data: Array.from({ length: 60 }, () => 0),
-                    backgroundColor: '#22c55e',
+                    backgroundColor: 'var(--st-success)',
                     borderWidth: 0, barPercentage: 0.9, categoryPercentage: 1.0, stack: 's'
                 }, {
                     label: 'MALWARE / OTHER',
                     data: Array.from({ length: 60 }, () => 0),
-                    backgroundColor: '#ff3333',
+                    backgroundColor: 'var(--st-danger)',
                     borderWidth: 0, barPercentage: 0.9, categoryPercentage: 1.0, stack: 's'
                 }]
             },
@@ -637,8 +643,8 @@
                     x: { display: false, stacked: true },
                     y: {
                         display: true, stacked: true,
-                        grid: { color: '#1e293b' },
-                        ticks: { color: '#64748b', font: { family: 'JetBrains Mono' }, precision: 0 }
+                        grid: { color: 'var(--st-text-faint)' },
+                        ticks: { color: 'var(--st-text-muted)', font: { family: 'JetBrains Mono' }, precision: 0 }
                     }
                 },
                 animation: false
@@ -890,7 +896,7 @@
                     recentLogs.forEach(item => {
                         const div = document.createElement('div');
                         div.style.marginBottom = '6px';
-                        div.style.borderLeft = '2px solid #334155';
+                        div.style.borderLeft = '2px solid var(--st-border)';
                         div.style.paddingLeft = '8px';
 
                         const timeStr = item.timestamp ? new Date(item.timestamp).toLocaleTimeString() : '--:--:--';
@@ -898,7 +904,7 @@
                         const port = item.target_port || '0';
                         const honeypot_type = item.honeypot_type || 'SYSTEM';
 
-                        div.innerHTML = `<span style="color:#00c6ff;"> [${timeStr}]</span> <span style="color:#ffcc00;">[${honeypot_type}]</span> <span style="color:#ff3333">${ip}:${port}</span>`;
+                        div.innerHTML = `<span style="color:var(--st-accent);"> [${timeStr}]</span> <span style="color:var(--st-warning);">[${honeypot_type}]</span> <span style="color:var(--st-danger)">${ip}:${port}</span>`;
                         feed.appendChild(div);
                     });
 
@@ -995,7 +1001,7 @@
                 // Show a non-blocking indicator so users know data failed to load
                 const feedEl = document.getElementById('liveFeed');
                 if (feedEl && feedEl.children.length === 0) {
-                    feedEl.innerHTML = '<div style="color:#ff3333; font-size:0.8rem; padding:8px; font-family:\'JetBrains Mono\',monospace;"><i class="fas fa-exclamation-triangle"></i> Data load failed — backend may be starting. Auto-retrying...</div>';
+                    feedEl.innerHTML = '<div style="color:var(--st-danger); font-size:0.8rem; padding:8px; font-family:var(--st-font-mono);"><i class="fas fa-exclamation-triangle"></i> Data load failed — backend may be starting. Auto-retrying...</div>';
                 }
             }
         }
@@ -1047,7 +1053,7 @@
 
             } catch (error) {
                 console.error("Failed to fetch nodes/stats:", error);
-                document.getElementById('nodeGrid').innerHTML = `<div style="text-align:center; padding:20px; color:#ff3333;">GRID OFFLINE</div>`;
+                document.getElementById('nodeGrid').innerHTML = `<div style="text-align:center; padding:20px; color:var(--st-danger);">GRID OFFLINE</div>`;
             }
         }
 
@@ -1063,18 +1069,18 @@
                 // Color Logic
                 let statusColor = 'text-green';
                 let dotClass = 'status-dot';
-                let cpuColor = '#00c6ff'; // Green
+                let cpuColor = 'var(--st-accent)'; // Green
                 let iconClass = 'fa-server';
 
                 if (node.status === 'OFFLINE' || node.status === 'STOPPED') {
                     statusColor = 'text-muted';
                     dotClass = 'status-dot';
-                    cpuColor = '#334155';
+                    cpuColor = 'var(--st-text-faint)';
                     iconClass = 'fa-power-off';
                 } else if (node.risk_level === 'HIGH' || node.status === 'UNDER ATTACK') {
                     statusColor = 'text-red';
                     dotClass = 'status-dot blink-red';
-                    cpuColor = '#ff3333'; // Red
+                    cpuColor = 'var(--st-danger)'; // Red
                     iconClass = 'fa-shield-alt';
                 }
 
@@ -1092,13 +1098,13 @@
                                 <span>LOAD</span>
                                 <span class="${statusColor}">${cpu}%</span>
                             </div>
-                            <div style="width:100%; height:4px; background:#334155;">
+                            <div style="width:100%; height:4px; background:var(--st-border);">
                                 <div style="width:${cpu}%; height:100%; background:${cpuColor};"></div>
                             </div>
                         </div>
                         <div style="text-align:right; margin-top:5px;">
                             ${node.status === 'OFFLINE' ?
-                        `<span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:#444;"></span>` :
+                        `<span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:var(--st-border);"></span>` :
                         `<span class="${dotClass}"></span>`
                     } 
                             <span class="text-xs ${statusColor}">${node.status}</span>
@@ -1115,9 +1121,9 @@
             if (activeNodesTile) {
                 activeNodesTile.innerText = `${onlineCount} / ${nodes.length}`;
                 if (onlineCount < nodes.length) {
-                    activeNodesTile.style.color = '#ffaa00'; // Amber warning
+                    activeNodesTile.style.color = 'var(--st-warning)'; // Amber warning
                 } else {
-                    activeNodesTile.style.color = '#00c6ff'; // Green
+                    activeNodesTile.style.color = 'var(--st-accent)'; // Green
                 }
             }
         }
@@ -1131,6 +1137,13 @@
         fetchHoneypotStats();
         setInterval(fetchHoneypotStats, 20000);
 
+        // Push updates: tiles refresh as soon as new telemetry or detections are published.
+        if (window.STLive) {
+            const refreshFromStream = window.STLive.debounce(() => { fetchHoneypotStats(); fetchNodes(); }, 1200);
+            window.STLive.on('event', refreshFromStream);
+            window.STLive.on('detection', refreshFromStream);
+        }
+
         // Protocol Radar Chart (Tactical)
         const radarCtx = document.getElementById('protocolRadar').getContext('2d');
         radarChartInstance = new Chart(radarCtx, {
@@ -1140,10 +1153,10 @@
                 datasets: [{
                     label: 'PROTOCOL MIX (LIVE)',
                     data: [0, 0, 0, 0, 0, 0],
-                    backgroundColor: 'rgba(0, 198, 255, 0.2)',
-                    borderColor: '#00c6ff',
+                    backgroundColor: 'color-mix(in srgb, var(--st-accent) 20%, transparent)',
+                    borderColor: 'var(--st-accent)',
                     borderWidth: 2,
-                    pointBackgroundColor: '#00c6ff'
+                    pointBackgroundColor: 'var(--st-accent)'
                 }]
             },
             options: {
@@ -1151,15 +1164,15 @@
                 maintainAspectRatio: false,
                 scales: {
                     r: {
-                        angleLines: { color: '#334155' },
-                        grid: { color: '#1e293b' },
-                        pointLabels: { color: '#94a3b8', font: { family: 'JetBrains Mono' } },
+                        angleLines: { color: 'var(--st-text-faint)' },
+                        grid: { color: 'var(--st-text-faint)' },
+                        pointLabels: { color: 'var(--st-text-secondary)', font: { family: 'JetBrains Mono' } },
                         ticks: { display: false, backdropColor: 'transparent' }
                     }
                 },
                 plugins: {
                     legend: {
-                        labels: { color: '#e2e8f0', font: { family: 'JetBrains Mono', size: 10 } }
+                        labels: { color: 'var(--st-text)', font: { family: 'JetBrains Mono', size: 10 } }
                     }
                 },
                 animation: {

@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Geo Intelligence | Shadow Trust</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/dashboard.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Leaflet for Map -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <style>
+        /* Custom Map Styles */
+        #geoMap {
+            height: 60vh;
+            width: 100%;
+            background: #000;
+            z-index: 1;
+        }
+
+        .leaflet-container {
+            background: #050507 !important;
+        }
+
+        .leaflet-tile-pane {
+            filter: invert(1) hue-rotate(180deg) brightness(0.85) contrast(1.05) saturate(0.7);
+        }
+
+        /* Blinking Marker Animation */
+        .blinking-marker {
+            animation: pulse-ring 2s infinite;
+        }
+
+        @keyframes pulse-ring {
+            0% {
+                transform: scale(0.5);
+                opacity: 1;
+                box-shadow: 0 0 0 0 rgba(255, 0, 85, 0.7);
+            }
+
+            70% {
+                transform: scale(2);
+                opacity: 0;
+                box-shadow: 0 0 0 20px rgba(255, 0, 85, 0);
+            }
+
+            100% {
+                transform: scale(0.5);
+                opacity: 0;
+            }
+        }
+
+        /* Cyberpunk Map Overlay */
+        .map-overlay {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            border: 1px solid var(--neon-cyan);
+            padding: 15px;
+            z-index: 500;
+            width: 250px;
+            backdrop-filter: blur(5px);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .overlay-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+            font-size: 0.75rem;
+        }
+
+        /* Custom Modal styles & container */
+        .export-progress-bar {
+            width: 0%;
+            height: 100%;
+            background: var(--accent-primary);
+            transition: width 2.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        @keyframes scanline {
+            0% {
+                transform: translateY(-100%);
+            }
+
+            100% {
+                transform: translateY(200%);
+            }
+        }
+
+        .radar-scan-bg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            background: linear-gradient(to bottom, transparent, rgba(0, 198, 255, 0.2) 50%, transparent);
+            animation: scanline 3s linear infinite;
+            z-index: -1;
+            display: none;
+        }
+
+        .data-stream-bg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 200%;
+            pointer-events: none;
+            opacity: 0.15;
+            z-index: -2;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.5rem;
+            line-height: 1;
+            color: var(--accent-primary);
+            word-wrap: break-word;
+            overflow: hidden;
+            animation: scanline 15s linear infinite;
+            display: none;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Custom Modal -->
+    <div id="custom-modal"
+        style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(5, 10, 15, 0.85); z-index:10000; justify-content:center; align-items:center; backdrop-filter:blur(5px);">
+        <div class="soc-card"
+            style="width: 400px; max-width: 90%; border-color: var(--accent-primary); box-shadow: 0 0 20px rgba(0, 0, 0, 0.5); position: relative; overflow: hidden;">
+
+            <div id="modal-radar-scan" class="radar-scan-bg"></div>
+            <div id="modal-data-stream" class="data-stream-bg"></div>
+
+            <div class="soc-card-header"
+                style="border-bottom: 1px solid #334155; padding-bottom: 10px; margin-bottom: 15px; position:relative;">
+                <span id="modal-title" class="card-title text-yellow"><i class="fas fa-exclamation-triangle"></i>
+                    AUTHORIZATION REQUIRED</span>
+            </div>
+
+            <div id="modal-message"
+                style="color: #e2e8f0; font-family: 'JetBrains Mono', monospace; font-size: 0.9rem; margin-bottom: 15px; line-height: 1.5; position:relative;">
+                Please confirm action.
+            </div>
+
+            <!-- Progress Bar Container -->
+            <div id="modal-progress-container"
+                style="display:none; width: 100%; height: 6px; background: #1e293b; margin-bottom: 25px; border-radius: 3px; overflow: hidden; position:relative;">
+                <div id="modal-progress-bar" class="export-progress-bar"></div>
+            </div>
+
+            <div id="modal-buttons" style="display: flex; justify-content: flex-end; gap: 10px; position:relative;">
+                <button id="modal-btn-cancel" class="soc-btn"
+                    style="background: transparent; border: 1px solid #334155; color: #94a3b8;">CANCEL</button>
+                <button id="modal-btn-confirm" class="soc-btn soc-btn-primary">PROCEED</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="app-container">
+
+        <!-- VOID NEON SIDEBAR -->
+        <!-- VOID NEON SIDEBAR (FROM GEO INTEL) -->
+        <!-- VOID NEON SIDEBAR (FROM GEO INTEL) -->
+        <aside class="sidebar" id="sidebar"></aside>
+
+
+        <main class="main-content">
+            <div class="top-bar">
+                <div class="page-header">
+                    <h2>Geo Intelligence · Global Footprint</h2>
+                    <p>Country and ASN level breakdown of attacker origins.</p>
+                </div>
+                <div class="filters-bar">
+                    <span class="text-xs text-muted">Range:</span>
+                    <select class="soc-select">
+                        <option>Last 24 hours</option>
+                    </select>
+                    <button id="btn-generate-report" class="soc-btn soc-btn-primary">Generate SOC Report</button>
+                </div>
+            </div>
+
+            <!-- MAP CONTAINER -->
+            <div class="soc-card" style="padding: 0; overflow: hidden; margin-bottom: 2rem; position: relative;">
+                <div id="geoMap"></div>
+
+                <!-- LIVE STATS OVERLAY -->
+                <div class="map-overlay">
+                    <div style="border-bottom:1px solid #333; margin-bottom:10px; padding-bottom:5px;">
+                        <span class="text-cyan">LIVE ATTACK FEEDS</span>
+                    </div>
+                    <div class="overlay-row">
+                        <span class="text-muted">ACTIVE SOURCES</span>
+                        <span class="text-green" id="activeSrc">0</span>
+                    </div>
+                    <div class="overlay-row">
+                        <span class="text-muted">TARGETED ZONES</span>
+                        <span class="text-pink" id="targetedZones">0</span>
+                    </div>
+                    <div class="overlay-row" style="margin-top:10px;">
+                        <span class="text-xs text-purple">LAST DETECTED:</span>
+                    </div>
+                    <div id="lastDetect" class="text-mono text-xs text-white">—</div>
+                </div>
+            </div>
+
+            <div class="dashboard-grid grid-2-1">
+
+                <div class="soc-card">
+                    <div class="soc-card-header">
+                        <span class="card-title">Top Source Countries</span>
+                        <span class="badge">GEOGRAPHIC ATTRIBUTION</span>
+                    </div>
+                    <table class="soc-table">
+                        <thead>
+                            <tr>
+                                <th>FLAG</th>
+                                <th>COUNTRY</th>
+                                <th>CODE</th>
+                                <th>EVENTS</th>
+                                <th>TRAFFIC</th>
+                            </tr>
+                        </thead>
+                        <tbody id="topCountriesTbody">
+                            <tr>
+                                <td colspan="5" class="text-muted">No data yet</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="soc-card">
+                    <div class="soc-card-header">
+                        <span class="card-title">ASN Intelligence</span>
+                        <span class="badge badge-red">CRITICAL</span>
+                    </div>
+
+                    <div
+                        style="background:rgba(255,255,255,0.02); padding:1rem; border-radius:4px; margin-bottom:15px; border:1px solid #222;">
+                        <span class="text-xs text-muted">TOP OFFENDING ISP</span>
+                        <div class="text-xl text-white" id="topOffendingIspName">—</div>
+                        <div class="text-xs text-pink" id="topOffendingIspCount">—</div>
+                    </div>
+
+                    <table class="soc-table">
+                        <thead>
+                            <tr>
+                                <th>ASN</th>
+                                <th>IPs</th>
+                                <th>ISP Name</th>
+                                <th>Count</th>
+                            </tr>
+                        </thead>
+                        <tbody id="asnIntelligenceTbody">
+                            <tr>
+                                <td colspan="3" class="text-muted">No data yet</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+            </div>
+
+        </main>
+    </div>
+
+    <script>
+        // Initialize Map with Dark Tiles
+        const map = L.map('geoMap', {
+            zoomControl: false,
+            attributionControl: false,
+            // Center roughly on Atlantic to show US/Europe/Asia
+            center: [25, -10],
+            zoom: 2.5
+        });
+
+        // Keyless OSM tiles, darkened via CSS (CARTO dark basemap needs a key now).
+        L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            crossOrigin: true
+        }).addTo(map);
+
+        // Live geo events are loaded from the backend
+
+
+        // --- CUSTOM MODAL & BUTTON LOGIC ---
+        const topModal = document.getElementById('custom-modal');
+        const modalTitle = document.getElementById('modal-title');
+        const modalMessage = document.getElementById('modal-message');
+        const btnConfirm = document.getElementById('modal-btn-confirm');
+        const btnCancel = document.getElementById('modal-btn-cancel');
+        const modalButtons = document.getElementById('modal-buttons');
+        const progressContainer = document.getElementById('modal-progress-container');
+        const progressBar = document.getElementById('modal-progress-bar');
+        const radarScan = document.getElementById('modal-radar-scan');
+        const dataStream = document.getElementById('modal-data-stream');
+
+        let modalConfirmCallback = null;
+        window.lastGeoStatsSnapshot = null;
+
+        function showModal(title, message, isDanger, callback, isAlert = false) {
+            modalTitle.innerHTML = title;
+            modalMessage.innerHTML = message;
+
+            // Reset modal states
+            progressContainer.style.display = 'none';
+            progressBar.style.width = '0%';
+            radarScan.style.display = 'none';
+            dataStream.style.display = 'none';
+            modalButtons.style.display = 'flex';
+
+            if (isDanger) {
+                modalTitle.className = 'card-title text-red';
+                btnConfirm.className = 'soc-btn soc-btn-danger';
+                btnConfirm.innerText = isAlert ? 'ACKNOWLEDGE' : 'INITIATE';
+                topModal.querySelector('.soc-card').style.borderColor = 'var(--accent-critical)';
+            } else {
+                modalTitle.className = 'card-title text-cyan';
+                btnConfirm.className = 'soc-btn soc-btn-primary';
+                btnConfirm.innerText = isAlert ? 'ACKNOWLEDGE' : 'PROCEED';
+                topModal.querySelector('.soc-card').style.borderColor = 'var(--accent-primary)';
+            }
+
+            btnCancel.style.display = isAlert ? 'none' : 'block';
+            modalConfirmCallback = callback;
+            topModal.style.display = 'flex';
+        }
+
+        function hideModal() {
+            topModal.style.display = 'none';
+            modalConfirmCallback = null;
+        }
+
+        function formatNumber(value) {
+            const num = Number(value || 0);
+            return Number.isFinite(num) ? num.toLocaleString() : '0';
+        }
+
+        btnCancel.addEventListener('click', hideModal);
+        btnConfirm.addEventListener('click', () => {
+            if (modalConfirmCallback) modalConfirmCallback();
+            else hideModal();
+        });
+
+        document.getElementById('btn-generate-report').addEventListener('click', function () {
+            STReports.generateAndDownload('geo_intel', {}, { button: this, title: 'geo intelligence' });
+        });
+
+    </script>
+    <script type="module">
+        import { apiService } from './js/api.js';
+
+        window.fetchGeoStats = async function () {
+            try {
+                const data = await apiService.get('/dashboard/geo');
+                if (!data) return null;
+
+                window.lastGeoStatsSnapshot = data;
+
+                // Update Overlays
+                document.getElementById('activeSrc').textContent = data.active_sources || 0;
+                document.getElementById('targetedZones').textContent = data.targeted_zones || 0;
+                document.getElementById('lastDetect').textContent = data.last_detected || "—";
+
+                // Update Map Markers
+                if (typeof map !== 'undefined' && data.markers && data.markers.length > 0) {
+                    if (!window.geoAttackMarkersLayer) {
+                        window.geoAttackMarkersLayer = L.layerGroup().addTo(map);
+                    }
+                    window.geoAttackMarkersLayer.clearLayers();
+
+                    const markerHtmlStyles = `
+                        background-color: var(--accent-critical);
+                        width: 12px;
+                        height: 12px;
+                        display: block;
+                        left: -6px;
+                        top: -6px;
+                        position: relative;
+                        border-radius: 50%;
+                        box-shadow: 0 0 15px var(--accent-critical);
+                        animation: pulse-ring 2s infinite;
+                    `;
+
+                    data.markers.slice(0, 30).forEach(m => {
+                        if (m.lat !== undefined && m.lon !== undefined) {
+                            const icon = L.divIcon({
+                                className: "", // Clear the class so Leaflet uses its clean default positioning class
+                                html: `<span style="${markerHtmlStyles}"></span>`
+                            });
+                            L.marker([m.lat, m.lon], { icon }).addTo(window.geoAttackMarkersLayer);
+                        }
+                    });
+                }
+
+                // Update Top Countries Table
+                const countriesTbody = document.getElementById('topCountriesTbody');
+                if (countriesTbody && data.top_countries) {
+                    countriesTbody.innerHTML = '';
+                    if (data.top_countries.length === 0) {
+                        countriesTbody.innerHTML = '<tr><td colspan="5" class="text-muted">No data yet</td></tr>';
+                    } else {
+                        data.top_countries.forEach(c => {
+                            const tr = document.createElement('tr');
+                            tr.innerHTML = `
+                                <td>${c.flag || '🏳️'}</td>
+                                <td>${c.country || 'Unknown'}</td>
+                                <td>${c.code || '--'}</td>
+                                <td>${c.events || 0}</td>
+                                <td class="text-mono text-xs">${c.traffic || '0 MB'}</td>
+                            `;
+                            countriesTbody.appendChild(tr);
+                        });
+                    }
+                }
+
+                // Update ASN Intelligence
+                const asnTbody = document.getElementById('asnIntelligenceTbody');
+                if (asnTbody && data.asn_intelligence) {
+                    asnTbody.innerHTML = '';
+                    if (data.asn_intelligence.length === 0) {
+                        asnTbody.innerHTML = '<tr><td colspan="3" class="text-muted">No data yet</td></tr>';
+                    } else {
+                        data.asn_intelligence.forEach(a => {
+                            const tr = document.createElement('tr');
+                            tr.innerHTML = `
+                                <td class="text-mono text-cyan">${a.asn || '--'}</td>
+                                <td class="text-mono text-muted" style="font-size:0.75rem;">${a.ips || '--'}</td>
+                                <td>${a.isp_name || 'Unknown'}</td>
+                                <td>${a.count || 0}</td>
+                            `;
+                            asnTbody.appendChild(tr);
+                        });
+                    }
+                }
+
+                if (data.top_isp) {
+                    document.getElementById('topOffendingIspName').textContent = data.top_isp.isp_name || "—";
+                    document.getElementById('topOffendingIspCount').textContent = `${data.top_isp.count || 0} EVENTS LOGGED`;
+                }
+
+            } catch (err) {
+                console.error("Error fetching geo stats:", err);
+                return null;
+            }
+
+            return window.lastGeoStatsSnapshot;
+        }
+
+        // Modules are deferred by default, initialization can happen immediately
+        window.fetchGeoStats();
+        setInterval(window.fetchGeoStats, 5000);
+    </script>
+    <script src="js/report-download.js"></script>
+    <script src="js/sidebar.js"></script>
+</body>
+
+</html>
