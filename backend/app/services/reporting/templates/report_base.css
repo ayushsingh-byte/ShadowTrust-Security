@@ -2,8 +2,13 @@
    ShadowTrust report engine — shared print stylesheet
    Light background / dark text only (reports are printed). Each report TYPE
    overrides the --accent* / --cover* tokens and may append its own rules via
-   the template's {% block accent %}, so the cover + running header/footer stay
+   the template's "accent" block, so the cover + running header/footer stay
    consistent while every body looks distinct.
+
+   NOTE: this file is pulled into report_base.html via a Jinja include, so it
+   is parsed as a Jinja template, not raw CSS. Never write a curly-brace
+   percent tag delimiter anywhere below, including inside comments — Jinja
+   will try to parse it and fail (this is exactly what broke this file once).
    ========================================================================== */
 
 :root {
@@ -81,10 +86,14 @@ section.block.loose { page-break-inside: auto; }
 .h-ticket h2   { border: 1pt solid var(--accent); border-left: 6pt solid var(--accent); padding: 4pt 10pt; background: var(--accent-soft); color: var(--accent-ink); }
 
 /* ---- tables ---- */
-table.data { width: 100%; border-collapse: collapse; margin: 6pt 0 10pt; font-size: 8.4pt; }
+/* table-layout:fixed so a long unbroken value (a UUID, a raw dict repr) wraps
+   inside its own column instead of stretching the table past the page edge. */
+table.data { width: 100%; table-layout: fixed; border-collapse: collapse; margin: 6pt 0 10pt; font-size: 8.4pt; }
 table.data caption { text-align: left; font-size: 8pt; color: var(--ink-soft); padding-bottom: 3pt; }
-table.data th { background: var(--accent); color: #fff; text-align: left; padding: 4pt 6pt; letter-spacing: .4pt; font-size: 8pt; }
-table.data td { padding: 3.5pt 6pt; border-bottom: .5pt solid var(--rule); vertical-align: top; }
+table.data th { background: var(--accent); color: #fff; text-align: left; padding: 4pt 6pt; letter-spacing: .4pt; font-size: 8pt;
+                overflow-wrap: anywhere; }
+table.data td { padding: 3.5pt 6pt; border-bottom: .5pt solid var(--rule); vertical-align: top;
+                overflow-wrap: anywhere; }
 table.data tr:nth-child(even) td { background: #f5f7fa; }
 table.data.compact td, table.data.compact th { padding: 2.5pt 5pt; font-size: 7.8pt; }
 table.data.ledger th { background: #24303f; }
@@ -146,6 +155,10 @@ dl.kv dd { margin: 0; flex: 1; font-size: 8.4pt; }
 .gauge .track { background: #e9eef3; height: 20pt; border-radius: 3pt; overflow: hidden; position: relative; }
 .gauge .fill { background: var(--accent); height: 100%; }
 .gauge .pct { position: absolute; top: 3pt; left: 8pt; color: #fff; font-weight: 700; font-size: 11pt; }
+
+/* ---- two-column layout (used by several report types) ---- */
+.split { display: flex; gap: 14pt; }
+.split > div { flex: 1; min-width: 0; }
 
 .trend { display: flex; gap: 6pt; flex-wrap: wrap; margin: 6pt 0 10pt; }
 .trend .t { flex: 1 1 22%; border: .75pt solid var(--rule); padding: 6pt 8pt; }

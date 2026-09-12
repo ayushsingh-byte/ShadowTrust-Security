@@ -684,11 +684,10 @@
         // --- DYNAMIC NODE FETCHING ---
         // API calls go through apiService (imported above) which auto-resolves the base URL
 
-        function formatCompactNumber(value) {
-            const num = Number(value || 0);
-            if (num >= 1_000_000) return `${(num / 1_000_000).toFixed(1)}M`;
-            if (num >= 1_000) return `${(num / 1_000).toFixed(1)}k`;
-            return `${num}`;
+        function formatExactNumber(value) {
+            // Real counts, not abbreviated — an operator needs the actual number
+            // (87,678), not a rounded "88k" that hides what's really happening.
+            return Number(value || 0).toLocaleString('en-US');
         }
 
         function applyThreatLevel(levelRaw) {
@@ -796,14 +795,14 @@
                 const sysIntegrityIcon = document.getElementById('sysIntegrityIcon');
 
                 if (honeypotEventsValueEl) {
-                    honeypotEventsValueEl.textContent = formatCompactNumber(summary.total_attacks || 0);
+                    honeypotEventsValueEl.textContent = formatExactNumber(summary.total_attacks || 0);
                 }
                 if (uniqueAttackersValueEl) {
-                    uniqueAttackersValueEl.textContent = formatCompactNumber(summary.unique_attackers || 0);
+                    uniqueAttackersValueEl.textContent = formatExactNumber(summary.unique_attackers || 0);
                 }
-                if (malwareCapturedEl) malwareCapturedEl.textContent = formatCompactNumber(summary.unique_payloads || 0);
-                if (highRiskAlertsEl) highRiskAlertsEl.textContent = formatCompactNumber(summary.high_risk_alerts || 0);
-                if (luresTrippedEl) luresTrippedEl.textContent = formatCompactNumber(summary.lures_tripped || 0);
+                if (malwareCapturedEl) malwareCapturedEl.textContent = formatExactNumber(summary.unique_payloads || 0);
+                if (highRiskAlertsEl) highRiskAlertsEl.textContent = formatExactNumber(summary.high_risk_alerts || 0);
+                if (luresTrippedEl) luresTrippedEl.textContent = formatExactNumber(summary.lures_tripped || 0);
                 if (hostileSrcEl) hostileSrcEl.textContent = summary.hostile_sources || 0;
                 if (targetedSectorsEl) targetedSectorsEl.textContent = summary.targeted_sectors || 0;
 

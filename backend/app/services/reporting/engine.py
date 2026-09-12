@@ -3,7 +3,7 @@ PDF report engine
 =================
 Renders Jinja2 HTML templates (templates/) to PDF with WeasyPrint.
 
-Every report shares templates/base.html, which stamps a provenance block on the
+Every report shares templates/report_base.html, which stamps a provenance block on the
 cover — who generated it, when (UTC + operator TZ), the data window, the source
 systems queried, row counts and the document SHA-256. Nothing in a report is
 invented here: providers/ assemble the context purely from live DB / service

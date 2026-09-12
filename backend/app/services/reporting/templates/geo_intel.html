@@ -1,0 +1,53 @@
+{% extends "report_base.html" %}
+{% from "_macros.html" import data_table, kpi_band as kpi_band_macro, bars %}
+
+{% block cover_kicker %}Threat Intelligence{% endblock %}
+
+{% block accent %}
+:root { --accent:#0f6e63; --accent-soft:#e5f3f0; --accent-ink:#0a4842;
+        --cover-a:#08201c; --cover-b:#0d3a32; --cover-c:#0f6e63; }
+{% endblock %}
+
+{% block body %}
+<p class="lead">Where honeypot traffic is coming from — resolved by country and network operator — for the
+window on the cover. Geolocation is queried live from ip-api.com per unique source address.</p>
+
+{{ kpi_band_macro(kpi_band) }}
+
+{% if not geo_resolved %}
+<div class="note">Geolocation lookups did not resolve for this window (offline, rate-limited, or no external
+sources present) — country / ASN breakdowns below may be empty even though raw source rows are listed.</div>
+{% endif %}
+
+<div class="h-bar"><section class="block">
+  <h2><span class="section-num">01</span>Top countries by events</h2>
+  {{ bars(country_bars) }}
+  {{ data_table(["", "Country", "Code", "Events", "IPs", "Data transferred"], country_rows,
+       numcols=[3,4], empty="No external source resolved to a country in this window.") }}
+</section></div>
+
+<div class="h-bar"><section class="block">
+  <h2><span class="section-num">02</span>Networks / ISPs</h2>
+  {{ data_table(["ASN", "ISP / Organisation", "Events", "IPs", "Source IPs"], asn_rows,
+       numcols=[2,3], empty="No ASN/ISP data resolved for this window.") }}
+</section></div>
+
+<div class="h-bar"><section class="block loose">
+  <h2><span class="section-num">03</span>External source IPs</h2>
+  {{ data_table(["IP", "Country", "ISP", "Events", "Sessions", "Ports", "First seen", "Last seen"], ip_rows,
+       numcols=[3,4,5], empty="No external source activity in this window.",
+       note="Source: raw_events grouped by attacker_ip; geolocation via ip-api.com.") }}
+</section></div>
+
+<div class="h-bar"><section class="block">
+  <h2><span class="section-num">04</span>Internal / private source addresses</h2>
+  {{ data_table(["IP (internal)", "Events", "Sessions", "Ports", "Sensors", "First seen", "Last seen"], internal_rows,
+       numcols=[1,2,3,4], empty="No internal-range source addresses observed in this window.") }}
+</section></div>
+
+<div class="h-bar"><section class="block">
+  <h2><span class="section-num">05</span>Non-IP identifiers</h2>
+  {{ data_table(["Identifier", "Events", "Sessions", "Ports", "First seen", "Last seen"], other_rows,
+       numcols=[1,2,3], empty="No non-IP source identifiers in this window.") }}
+</section></div>
+{% endblock %}

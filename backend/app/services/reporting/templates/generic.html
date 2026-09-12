@@ -1,8 +1,8 @@
-{% extends "base.html" %}
+{% extends "report_base.html" %}
 {% from "_macros.html" import sev_pill, status_pill %}
-{% block content %}
+{% block body %}
 {% for sec in sections %}
-<div class="section">
+<div class="h-bar"><section class="block{{ ' loose' if sec.kind == 'table' else '' }}">
   {% if sec.heading %}<h2>{{ sec.heading }}</h2>{% endif %}
 
   {% if sec.kind == "kpis" %}
@@ -38,6 +38,6 @@
     {% if sec.note %}<p class="evidence-src">{{ sec.note }}</p>{% endif %}
 
   {% endif %}
-</div>
+</section></div>
 {% endfor %}
 {% endblock %}

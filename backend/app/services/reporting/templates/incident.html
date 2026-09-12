@@ -1,0 +1,73 @@
+{% extends "report_base.html" %}
+{% from "_macros.html" import data_table, kpi_band as kpi_band_macro, kv %}
+
+{% block cover_kicker %}Incident Case File{% endblock %}
+
+{% block accent %}
+:root { --accent:#a3281e; --accent-soft:#fbe9e7; --accent-ink:#6e150e;
+        --cover-a:#210706; --cover-b:#4a100c; --cover-c:#a3281e; }
+{% endblock %}
+
+{% block body %}
+{% if auto_selected %}
+<div class="note">No specific incident was requested — this report covers the current highest-risk open
+incident on record.</div>
+{% endif %}
+
+{{ kpi_band_macro(kpi_band) }}
+
+<div class="h-bar"><section class="block loose">
+  <h2><span class="section-num">01</span>Case narrative</h2>
+  {% for p in narrative %}<p>{{ p }}</p>{% endfor %}
+</section></div>
+
+<div class="h-bar"><section class="block">
+  <h2><span class="section-num">02</span>Case details</h2>
+  <div class="split">
+    <div>{{ kv(meta_kv) }}</div>
+    <div>{{ kv(related_kv) }}</div>
+  </div>
+</section></div>
+
+<div class="h-bar"><section class="block">
+  <h2><span class="section-num">03</span>MITRE ATT&amp;CK techniques</h2>
+  {{ data_table(["Technique", "Tactic", "Name"], tech_rows,
+       empty="No ATT&CK techniques recorded for this incident.") }}
+</section></div>
+
+<div class="h-bar"><section class="block loose">
+  <h2><span class="section-num">04</span>Detections in this incident</h2>
+  {{ data_table(["Rule", "Technique", "Severity", "First event", "Confidence", "Reason"], det_rows,
+       empty="No detections are linked to this incident.") }}
+</section></div>
+
+<div class="h-bar"><section class="block">
+  <h2><span class="section-num">05</span>Event-type breakdown</h2>
+  {{ data_table(["Event type", "Count"], etype_rows, numcols=[1],
+       empty="No telemetry breakdown available for this incident's window.") }}
+</section></div>
+
+<div class="h-bar"><section class="block loose">
+  <h2><span class="section-num">06</span>Reconstructed timeline</h2>
+  {{ data_table(["Time", "Source", "Event type", "Severity", "Reason"], timeline_rows,
+       empty="No timeline could be reconstructed for this incident.") }}
+</section></div>
+
+<div class="h-bar"><section class="block">
+  <h2><span class="section-num">07</span>Evidence &amp; chain of custody</h2>
+  {{ data_table(["Type", "SHA-256", "Source", "Acquired", "Reference"], ev_rows,
+       empty="No evidence items are attached to this incident.") }}
+</section></div>
+
+<div class="h-bar"><section class="block">
+  <h2><span class="section-num">08</span>Analyst activity</h2>
+  {{ data_table(["Time", "Actor", "Action", "Detail"], act_rows,
+       empty="No analyst activity recorded on this incident yet.") }}
+</section></div>
+
+<div class="h-bar"><section class="block">
+  <h2><span class="section-num">09</span>Indicators of compromise</h2>
+  {{ data_table(["Type", "Value", "First seen"], ioc_rows,
+       empty="No IOCs extracted from this incident.") }}
+</section></div>
+{% endblock %}

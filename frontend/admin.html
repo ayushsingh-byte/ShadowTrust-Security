@@ -638,6 +638,31 @@
                             <span class="text-muted">Click "RUN DIAGNOSTICS" to start.</span>
                         </div>
                     </div>
+
+                    <div class="soc-card">
+                        <div class="soc-card-header">
+                            <span class="card-title">FULL DIAGNOSTICS <span class="admin-badge">ADMIN</span></span>
+                            <button class="soc-btn" onclick="window.loadFullDiagnostics()"><i class="fas fa-sync"></i>
+                                REFRESH</button>
+                        </div>
+                        <p class="text-muted">Services, containers, DB row counts and lab credentials — pulled live
+                            from <code>/api/v1/admin/diagnostics</code>.</p>
+                        <div id="fullDiagResult" class="text-xs" style="margin-top:12px;">
+                            <span class="text-muted">Loading...</span>
+                        </div>
+                    </div>
+
+                    <div class="soc-card">
+                        <div class="soc-card-header">
+                            <span class="card-title">HONEYPOT TRIGGER COMMANDS <span class="admin-badge">LIVE</span></span>
+                        </div>
+                        <p class="text-muted">Copy-paste these from your own shell, or hit EXECUTE to have the
+                            backend fire the same action at your lab right now — real traffic, real telemetry,
+                            same as running the command yourself.</p>
+                        <div id="diagGenerators" style="margin-top:12px;">
+                            <span class="text-muted">Loading...</span>
+                        </div>
+                    </div>
                 </div>
             </div>
 

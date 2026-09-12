@@ -414,6 +414,125 @@ window.checkHealth = async () => {
     }
 };
 
+function escHtml(s) {
+    return String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+}
+
+function renderFullDiagnostics(d) {
+    const svc = (d.services || []).map(s => `
+        <div style="display:flex;justify-content:space-between;border-bottom:1px solid var(--st-border);padding:4px 0;">
+            <span>${escHtml(s.name)}</span>
+            <span style="display:flex;gap:10px;align-items:center;">
+                ${s.note ? `<span class="text-muted">${escHtml(s.note)}</span>` : ''}
+                <a href="${escHtml(s.link)}" target="_blank" rel="noopener" class="text-mono">${escHtml(s.link)}</a>
+                <span class="${s.status === 'up' ? 'text-green' : (s.status === 'down' ? 'text-red' : 'text-yellow')}">${escHtml(s.status)}</span>
+            </span>
+        </div>`).join('');
+
+    const containers = d.containers && d.containers.available
+        ? (d.containers.containers || []).map(c => `
+            <div style="display:flex;justify-content:space-between;border-bottom:1px solid var(--st-border);padding:4px 0;">
+                <span>${escHtml(c.name)}</span>
+                <span class="${c.status === 'running' ? 'text-green' : 'text-red'}">${escHtml(c.health || c.status)}</span>
+            </div>`).join('')
+        : `<span class="text-muted">${escHtml((d.containers || {}).reason || 'docker socket unavailable')}</span>`;
+
+    const db = d.database || {};
+    const rowCounts = Object.entries(db.row_counts || {})
+        .map(([k, v]) => `<div>${escHtml(k)}</div><div>${escHtml(v)}</div>`).join('');
+
+    const creds = d.credentials || {};
+    const credRows = Object.entries(creds).map(([section, kv]) => `
+        <div style="margin-top:8px;">
+            <div class="text-muted" style="text-transform:uppercase;font-size:11px;">${escHtml(section.replace(/_/g, ' '))}</div>
+            <div class="text-mono text-xs">${Object.entries(kv || {}).map(([k, v]) => `${escHtml(k)}: <span class="text-yellow">${escHtml(v)}</span>`).join(' &nbsp;·&nbsp; ')}</div>
+        </div>`).join('');
+
+    setHtml('fullDiagResult', `
+        <div style="margin-bottom:14px;">
+            <div class="text-muted" style="text-transform:uppercase;font-size:11px;margin-bottom:4px;">Services</div>
+            ${svc || '<span class="text-muted">none</span>'}
+        </div>
+        <div style="margin-bottom:14px;">
+            <div class="text-muted" style="text-transform:uppercase;font-size:11px;margin-bottom:4px;">Containers</div>
+            ${containers}
+        </div>
+        <div style="margin-bottom:14px;">
+            <div class="text-muted" style="text-transform:uppercase;font-size:11px;margin-bottom:4px;">Database — ${escHtml(db.status)} · ${escHtml(db.server_version || '?')}</div>
+            <div class="grid text-mono text-xs" style="display:grid;grid-template-columns:180px 1fr;gap:2px 12px;">${rowCounts}</div>
+        </div>
+        <div>
+            <div class="text-muted" style="text-transform:uppercase;font-size:11px;margin-bottom:4px;">Credentials</div>
+            ${credRows}
+        </div>
+    `);
+
+    renderGenerators(d.generators || []);
+}
+
+window.loadFullDiagnostics = async () => {
+    try {
+        const d = await apiService.get('/admin/diagnostics');
+        renderFullDiagnostics(d);
+    } catch (e) {
+        setHtml('fullDiagResult', `<span class="text-red">Failed to load: ${escHtml(e.message)}</span>`);
+        setHtml('diagGenerators', `<span class="text-red">Failed to load: ${escHtml(e.message)}</span>`);
+    }
+};
+
+function renderGenerators(list) {
+    const el = document.getElementById('diagGenerators');
+    if (!el) return;
+
+    el.innerHTML = (list || []).map((g, i) => `
+        <div class="soc-card" style="margin-bottom:10px;padding:12px;">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap;">
+                <div class="text-xs text-muted" style="flex:1;min-width:200px;">${escHtml(g.target)}</div>
+                <div style="display:flex;gap:6px;flex-shrink:0;">
+                    <button class="soc-btn" data-copy-i="${i}">COPY</button>
+                    ${g.trigger ? `<button class="soc-btn soc-btn-danger" data-trigger="${escHtml(g.trigger)}" data-slot="${i}">EXECUTE</button>` : ''}
+                </div>
+            </div>
+            <pre id="genCmd${i}" class="text-mono text-xs" style="white-space:pre-wrap;word-break:break-word;background:var(--st-surface);padding:8px;border-radius:4px;margin:8px 0 0;">${escHtml(g.cmd)}</pre>
+            <div id="genResult${i}" class="text-xs" style="margin-top:6px;"></div>
+        </div>`).join('');
+
+    el.querySelectorAll('[data-copy-i]').forEach(btn => {
+        btn.onclick = async () => {
+            const txt = document.getElementById('genCmd' + btn.dataset.copyI).textContent;
+            try {
+                await navigator.clipboard.writeText(txt);
+                btn.textContent = 'COPIED';
+                setTimeout(() => { btn.textContent = 'COPY'; }, 1500);
+            } catch (e) { /* clipboard unavailable — command is still visible to select manually */ }
+        };
+    });
+
+    el.querySelectorAll('[data-trigger]').forEach(btn => {
+        btn.onclick = async () => {
+            if (!confirm('Fire this at your own honeypot lab right now? This generates real, live traffic.')) return;
+            const slot = btn.dataset.slot;
+            const resultEl = document.getElementById('genResult' + slot);
+            const original = btn.textContent;
+            btn.disabled = true;
+            btn.textContent = 'RUNNING...';
+            resultEl.innerHTML = '';
+            try {
+                const res = await apiService.post(`/admin/diagnostics/trigger/${btn.dataset.trigger}`, {});
+                const ok = res && res.ok;
+                resultEl.innerHTML = `<span class="${ok ? 'text-green' : 'text-red'}">${ok ? 'done' : 'failed'}</span> ` +
+                    `<span class="text-muted">host: ${escHtml(res.host || '?')}</span>` +
+                    `<pre class="text-mono" style="white-space:pre-wrap;word-break:break-word;margin-top:4px;">${escHtml(JSON.stringify(res.result ?? res.error, null, 2))}</pre>`;
+            } catch (e) {
+                resultEl.innerHTML = `<span class="text-red">Failed: ${escHtml(e.message)}</span>`;
+            } finally {
+                btn.disabled = false;
+                btn.textContent = original;
+            }
+        };
+    });
+}
+
 window.loadSettings = async () => {
     try {
         const settings = await apiService.get('/admin/settings');
@@ -516,7 +635,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         loadOverview(),
         loadUsers(),
         loadNodes(),
-        window.loadSettings()
+        window.loadSettings(),
+        window.loadFullDiagnostics()
     ]);
 
     setInterval(loadOverview, 30000);

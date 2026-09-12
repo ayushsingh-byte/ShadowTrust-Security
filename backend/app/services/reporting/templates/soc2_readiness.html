@@ -1,0 +1,64 @@
+{% extends "report_base.html" %}
+{% from "_macros.html" import data_table, kpi_band as kpi_band_macro, bars %}
+
+{% block cover_kicker %}Compliance &amp; Governance{% endblock %}
+
+{% block accent %}
+:root { --accent:#312e81; --accent-soft:#eceafb; --accent-ink:#201d5e;
+        --cover-a:#0c0b22; --cover-b:#201d5e; --cover-c:#312e81; }
+{% endblock %}
+
+{% block body %}
+<p class="lead">Self-assessed readiness against {{ framework }} ({{ assessment_type }}), generated from live
+system evidence — user roles, detection/incident activity, scenario test results, access logs and container
+configuration. This is a gap-finding tool, not an attestation.</p>
+
+<div class="gauge">
+  <div class="track"><div class="fill" style="width:{{ readiness_pct }}%"></div><div class="pct">{{ readiness_pct }}% READY</div></div>
+</div>
+
+{{ kpi_band_macro(kpi_band) }}
+
+<div class="h-bar"><section class="block loose">
+  <h2><span class="section-num">01</span>Readiness by category</h2>
+  {{ data_table(["Category", "Met", "Partial", "Gap", "Manual", "Total", "Readiness"], cat_rows,
+       numcols=[1,2,3,4,5,6], empty="No control categories evaluated.") }}
+</section></div>
+
+<div class="h-bar"><section class="block loose">
+  <h2><span class="section-num">02</span>Full control inventory</h2>
+  {{ data_table(["Control", "Category", "Title", "Status", "Evidence", "Collector", "Metrics"], control_rows,
+       empty="No controls evaluated.") }}
+</section></div>
+
+<div class="h-bar"><section class="block loose">
+  <h2><span class="section-num">03</span>Open gaps</h2>
+  {{ data_table(["Control", "Title", "Category", "Note"], gap_rows,
+       empty="No open gaps — every automatable control is met or partial.") }}
+</section></div>
+
+<div class="h-bar"><section class="block loose">
+  <h2><span class="section-num">04</span>Partial controls</h2>
+  {{ data_table(["Control", "Title", "Category", "Note"], partial_rows,
+       empty="No controls are in a partial state.") }}
+</section></div>
+
+<div class="h-bar"><section class="block loose">
+  <h2><span class="section-num">05</span>Controls requiring manual attestation</h2>
+  {{ data_table(["Control", "Category", "Title", "Intent"], manual_rows,
+       empty="No controls require manual attestation.") }}
+</section></div>
+
+<div class="h-bar"><section class="block loose">
+  <h2><span class="section-num">06</span>Risk register</h2>
+  {{ bars(rating_bars) }}
+  {{ data_table(["Risk", "Title", "Category", "Likelihood", "Impact", "Score", "Rating", "Status"], risk_rows,
+       numcols=[5], empty="No open risks on the register.") }}
+</section></div>
+
+<div class="h-bar"><section class="block">
+  <h2><span class="section-num">07</span>Evidence collector coverage</h2>
+  {{ data_table(["Collector", "Controls", "Met", "Met %"], collector_rows,
+       numcols=[1,2], empty="No collector coverage data available.") }}
+</section></div>
+{% endblock %}

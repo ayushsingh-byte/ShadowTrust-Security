@@ -11,6 +11,7 @@ from fastapi import APIRouter, Depends
 from app.api.v1.dependencies import require_role
 from app.health_page import build_admin_diagnostics
 from app.models.all_models import User
+from app.services import honeypot_triggers
 
 router = APIRouter()
 
@@ -19,3 +20,13 @@ router = APIRouter()
 async def admin_diagnostics(_: User = Depends(require_role(["ADMIN"]))):
     """Full status + credentials + telemetry-generation commands. ADMIN only."""
     return await build_admin_diagnostics()
+
+
+@router.post("/diagnostics/trigger/{trigger_id}")
+async def trigger_honeypot(trigger_id: str, _: User = Depends(require_role(["ADMIN"]))):
+    """
+    Fire one fixed, server-defined action at this operator's own honeypot lab
+    (see app.services.honeypot_triggers). trigger_id only selects which
+    predefined function runs — never raw client-supplied commands.
+    """
+    return await honeypot_triggers.run_trigger(trigger_id)

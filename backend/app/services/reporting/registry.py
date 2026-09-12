@@ -16,14 +16,14 @@ class ReportDef(NamedTuple):
 
 
 REGISTRY: Dict[str, ReportDef] = {
-    "executive_summary": ReportDef(soc_reports.executive_summary, "generic.html", "SOC Executive Summary"),
-    "geo_intel": ReportDef(soc_reports.geo_intel, "generic.html", "Geographic Threat Intelligence Report"),
-    "credentials": ReportDef(soc_reports.credentials_report, "generic.html", "Captured Credentials Report"),
-    "incident": ReportDef(soc_reports.incident_report, "generic.html", "Incident Report", admin_only=True),
-    "forensic_dfir": ReportDef(soc_reports.forensic_dfir, "generic.html", "DFIR Report", admin_only=True),
-    "detection_validation": ReportDef(soc_reports.detection_validation_report, "generic.html", "Detection Validation & Coverage Report"),
-    "malware": ReportDef(soc_reports.malware_report, "generic.html", "Malware Analysis Report"),
-    "soc2_readiness": ReportDef(compliance_report.soc2_readiness, "generic.html",
+    "executive_summary": ReportDef(soc_reports.executive_summary, "executive_summary.html", "SOC Executive Summary"),
+    "geo_intel": ReportDef(soc_reports.geo_intel, "geo_intel.html", "Geographic Threat Intelligence Report"),
+    "credentials": ReportDef(soc_reports.credentials_report, "credentials.html", "Captured Credentials Report"),
+    "incident": ReportDef(soc_reports.incident_report, "incident.html", "Incident Report", admin_only=True),
+    "forensic_dfir": ReportDef(soc_reports.forensic_dfir, "forensic_dfir.html", "DFIR Report", admin_only=True),
+    "detection_validation": ReportDef(soc_reports.detection_validation_report, "detection_validation.html", "Detection Validation & Coverage Report"),
+    "malware": ReportDef(soc_reports.malware_report, "malware.html", "Malware Analysis Report"),
+    "soc2_readiness": ReportDef(compliance_report.soc2_readiness, "soc2_readiness.html",
                                 "SOC 2 Readiness Self-Assessment", admin_only=True),
 }
 

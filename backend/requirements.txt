@@ -38,3 +38,5 @@ yara-python>=4.5.0
 weasyprint>=62.0
 python-whois>=0.9.4
 networkx>=3.2
+# SSH client for the admin-only honeypot trigger buttons (app.services.honeypot_triggers).
+paramiko>=3.4.0

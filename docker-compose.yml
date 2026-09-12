@@ -367,6 +367,12 @@ services:
       HONEYPOT_MSSQL_PORT: "${HONEYPOT_MSSQL_PORT:-1433}"
       HONEYPOT_HTTP_PORT: "${HONEYPOT_HTTP_PORT:-8022}"
       HONEYPOT_ALT_PORT: "${HONEYPOT_ALT_PORT:-8023}"
+      # Admin "execute" trigger buttons (app.services.honeypot_triggers) reach
+      # the honeypots the same way a human does: via their host-published
+      # ports, not the isolated honeynet_edge network. host.docker.internal
+      # is Docker Desktop's route back to the host; on Linux Docker Engine set
+      # this to the host's LAN/bridge IP instead.
+      HONEYPOT_TRIGGER_HOST: "${HONEYPOT_TRIGGER_HOST:-host.docker.internal}"
       # ── VM Lab (Guacamole + Docker lab provider) ──────────────────────────
       # Lab containers are created on this network; guacd shares it.
       LAB_DOCKER_NETWORK: "${LAB_DOCKER_NETWORK:-shadowtrust_labnet}"

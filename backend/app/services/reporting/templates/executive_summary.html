@@ -1,5 +1,5 @@
 {% extends "report_base.html" %}
-{% from "_macros.html" import data_table, kpi_band, bars, trend_row %}
+{% from "_macros.html" import data_table, kpi_band as kpi_band_macro, bars, trend_row %}
 
 {% block cover_kicker %}Leadership Briefing{% endblock %}
 
@@ -8,15 +8,13 @@
         --cover-a:#0a1a2e; --cover-b:#123259; --cover-c:#1f4e8c; }
 .rt-executive_summary .kpi-band { border-radius:0; }
 .rt-executive_summary section.block { margin-bottom:12pt; }
-.split { display:flex; gap:14pt; }
-.split > div { flex:1; }
 {% endblock %}
 
 {% block body %}
 <p class="lead">A window-scoped snapshot of honeypot activity, detection output and sensor health for
 platform leadership. Every figure is queried live from the SOC datastore for the period on the cover.</p>
 
-{{ kpi_band(kpi_band) }}
+{{ kpi_band_macro(kpi_band) }}
 
 <div class="h-bar"><section class="block loose">
   <h2><span class="section-num">01</span>Situation narrative</h2>

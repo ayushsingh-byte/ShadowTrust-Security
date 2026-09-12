@@ -1,0 +1,84 @@
+{% extends "report_base.html" %}
+{% from "_macros.html" import data_table, kpi_band as kpi_band_macro, kv %}
+
+{% block cover_kicker %}Digital Forensics{% endblock %}
+
+{% block accent %}
+:root { --accent:#5b21a6; --accent-soft:#f0eafb; --accent-ink:#3b1470;
+        --cover-a:#150a26; --cover-b:#2e1152; --cover-c:#5b21a6; }
+{% endblock %}
+
+{% block body %}
+{% if auto_selected %}
+<div class="note">No specific source IP was requested — this report profiles the highest-activity attacker
+session on record. Pass <code>source_ip</code> to target a specific subject.</div>
+{% endif %}
+
+{{ kpi_band_macro(kpi_band) }}
+
+<div class="h-bar"><section class="block loose">
+  <h2><span class="section-num">01</span>Behavioural assessment</h2>
+  {% for p in assessment %}<p>{{ p }}</p>{% endfor %}
+</section></div>
+
+<div class="h-bar"><section class="block">
+  <h2><span class="section-num">02</span>Subject profile</h2>
+  <div class="split">
+    <div>{{ kv(subj_kv) }}</div>
+    <div>{{ data_table(["Trait", "Value"], traits_rows, empty="No behavioural traits recorded.") }}</div>
+  </div>
+</section></div>
+
+<div class="h-bar"><section class="block loose">
+  <h2><span class="section-num">03</span>Attacker sessions</h2>
+  {{ data_table(["First seen", "Last seen", "Attacker IP", "Country", "Events", "Risk"], session_rows,
+       numcols=[4], empty="No recorded sessions for this subject.") }}
+</section></div>
+
+<div class="h-bar"><section class="block">
+  <h2><span class="section-num">04</span>Sensors &amp; ports touched</h2>
+  <div class="split">
+    <div>{{ data_table(["Sensor", "Events", "Last event"], sensor_rows, numcols=[1],
+         empty="No sensor breakdown for this subject.") }}</div>
+    <div>{{ data_table(["Port", "Service", "Events"], port_rows, numcols=[2],
+         empty="No port breakdown for this subject.") }}</div>
+  </div>
+  {{ data_table(["Event type", "Events"], etype_rows, numcols=[1],
+       empty="No event-type breakdown for this subject.") }}
+</section></div>
+
+<div class="h-bar"><section class="block loose">
+  <h2><span class="section-num">05</span>Authentication attempts</h2>
+  {{ data_table(["Time", "Username", "Password", "Result", "Port"], auth_rows,
+       empty="No authentication attempts recorded for this subject.") }}
+</section></div>
+
+<div class="h-bar"><section class="block loose">
+  <h2><span class="section-num">06</span>Commands executed</h2>
+  {{ data_table(["Time", "Attacker IP", "Sensor", "Command"], cmd_rows,
+       empty="No shell commands captured for this subject.",
+       note="Source: raw_events.commands (Cowrie session log).") }}
+</section></div>
+
+<div class="h-bar"><section class="block">
+  <h2><span class="section-num">07</span>File uploads &amp; port scans observed</h2>
+  {{ data_table(["Time", "Attacker IP", "Uploaded files"], file_rows,
+       empty="No file uploads captured for this subject.") }}
+  {{ data_table(["Time", "Attacker IP", "Ports scanned"], scan_rows,
+       empty="No port-scan activity captured for this subject.") }}
+</section></div>
+
+<div class="h-bar"><section class="block loose">
+  <h2><span class="section-num">08</span>Detections &amp; indicators</h2>
+  {{ data_table(["Rule", "Technique", "Severity", "First event", "Reason"], det_rows,
+       empty="No detections fired for this subject.") }}
+  {{ data_table(["Type", "Value", "Hits", "Source", "First seen", "Last seen"], ioc_rows,
+       empty="No IOCs observed for this subject.") }}
+</section></div>
+
+<div class="h-bar"><section class="block">
+  <h2><span class="section-num">09</span>MITRE ATT&amp;CK techniques observed</h2>
+  {{ data_table(["Technique", "Tactic", "Name"], mitre_rows,
+       empty="No ATT&CK techniques classified for this subject.") }}
+</section></div>
+{% endblock %}

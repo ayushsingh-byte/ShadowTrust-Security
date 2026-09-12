@@ -954,82 +954,149 @@
             transform: none;
         }
 
-        /* status workflow rail */
-        .flow {
+        /* status workflow rail — a real stepper: connecting line + dots,
+           not a row of same-looking boxes (the old --acc-tint fill was
+           ~10% opacity on a near-black panel, so "done" was invisible). */
+        .wf-row {
             display: flex;
-            gap: 4px;
-            margin-top: 16px;
-            flex-wrap: wrap;
+            align-items: flex-start;
+            gap: 14px;
+            margin-top: 18px;
         }
 
-        .flow-seg {
+        .wf {
             position: relative;
+            display: flex;
+            flex: 1 1 auto;
+            min-width: 0;
+        }
+
+        .wf-track,
+        .wf-fill {
+            position: absolute;
+            top: 13px;
+            height: 2px;
+            left: calc(100% / 10);
+            right: calc(100% / 10);
+        }
+
+        .wf-track {
+            background: var(--line);
+        }
+
+        .wf-fill {
+            right: auto;
+            background: var(--acc);
+            width: 0;
+            transition: width .6s var(--ease);
+        }
+
+        .dtl.no-anim .wf-fill {
+            transition: none !important;
+        }
+
+        .wf-step {
+            position: relative;
+            z-index: 1;
             flex: 1 1 0;
-            min-width: 88px;
-            border: 1px solid var(--line);
-            border-radius: var(--radius-sm);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 7px;
+            background: none;
+            border: 0;
+            padding: 0;
+            cursor: pointer;
+        }
+
+        .wf-dot {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid var(--st-border-strong);
             background: var(--panel);
             color: var(--st-text-faint);
             font-family: var(--st-font-mono);
-            font-size: .58rem;
-            letter-spacing: .08em;
-            text-transform: uppercase;
-            padding: 8px 6px;
-            cursor: pointer;
-            overflow: hidden;
-            transition: color .18s var(--ease), border-color .18s var(--ease), background .18s var(--ease);
-        }
-
-        .flow-seg span {
-            position: relative;
-            z-index: 1;
-        }
-
-        .flow-seg::before {
-            content: '';
-            position: absolute;
-            inset: 0;
-            background: var(--acc-tint);
-            transform: scaleX(0);
-            transform-origin: left;
-            transition: transform .5s var(--ease);
-            transition-delay: calc(var(--i) * 60ms);
-        }
-
-        .flow-seg.done::before,
-        .flow-seg.cur::before {
-            transform: scaleX(1);
-        }
-
-        .flow-seg.done {
-            color: var(--st-text-muted);
-            border-color: var(--st-border-strong);
-        }
-
-        .flow-seg.cur {
-            color: var(--st-text);
-            border-color: var(--acc);
+            font-size: .66rem;
             font-weight: 700;
-            box-shadow: inset 0 0 0 1px var(--acc-dim);
+            transition: all .18s var(--ease);
         }
 
-        .flow-seg:hover {
+        .wf-lbl {
+            font-family: var(--st-font-mono);
+            font-size: .6rem;
+            letter-spacing: .07em;
+            text-transform: uppercase;
+            color: var(--st-text-faint);
+            transition: color .18s var(--ease);
+        }
+
+        .wf-step:hover .wf-dot {
+            border-color: var(--acc-dim);
+            color: var(--acc);
+        }
+
+        .wf-step:hover .wf-lbl {
+            color: var(--st-text-secondary);
+        }
+
+        .wf-step.done .wf-dot {
+            background: var(--acc-tint);
+            border-color: var(--acc-dim);
+            color: var(--acc);
+        }
+
+        .wf-step.done .wf-lbl {
+            color: var(--st-text-secondary);
+        }
+
+        .wf-step.cur .wf-dot {
+            background: var(--acc);
+            border-color: var(--acc);
+            color: var(--st-on-solid);
+            box-shadow: 0 0 0 4px var(--acc-tint);
+            transform: scale(1.14);
+        }
+
+        .wf-step.cur .wf-lbl {
             color: var(--st-text);
-            border-color: var(--st-border-strong);
+            font-weight: 700;
         }
 
-        .flow-seg.fp {
-            flex: 0 0 auto;
-            min-width: 118px;
+        /* false positive is a branch off the pipeline, not a step in it */
+        .wf-fp {
+            flex: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            align-self: center;
+            border: 1px dashed var(--st-border-strong);
+            border-radius: var(--radius-sm);
+            background: none;
+            color: var(--st-text-faint);
+            font-family: var(--st-font-mono);
+            font-size: .62rem;
+            letter-spacing: .06em;
+            text-transform: uppercase;
+            padding: 7px 12px;
+            cursor: pointer;
+            transition: all .18s var(--ease);
         }
 
-        .flow-seg.fp::before {
-            background: var(--sunk-2);
-        }
-
-        .flow-seg.fp.cur {
+        .wf-fp:hover {
             border-color: var(--c-idle);
-            box-shadow: none;
+            color: var(--st-text-secondary);
+        }
+
+        .wf-fp.cur {
+            border-style: solid;
+            border-color: var(--c-idle);
+            background: var(--sunk-2);
+            color: var(--st-text);
+            font-weight: 700;
         }
 
         /* ---------------------------------------------------------
@@ -2171,8 +2238,7 @@
 
         .dtl.no-anim .gauge .val,
         .dtl.no-anim .rbk-bar span,
-        .dtl.no-anim .kc-seg::before,
-        .dtl.no-anim .flow-seg::before {
+        .dtl.no-anim .kc-seg::before {
             transition: none !important;
         }
 
@@ -2275,11 +2341,13 @@
                         <h3>CASE QUEUE</h3>
                         <span class="sub" id="inc-count">—</span>
                     </div>
-                    <div class="scroll" id="inc-list">
-                        <div class="sk"><i></i><i></i><i></i></div>
-                        <div class="sk"><i></i><i></i><i></i></div>
-                        <div class="sk"><i></i><i></i><i></i></div>
-                        <div class="sk"><i></i><i></i><i></i></div>
+                    <div class="scroll" id="inc-list-scroll">
+                        <div id="inc-list">
+                            <div class="sk"><i></i><i></i><i></i></div>
+                            <div class="sk"><i></i><i></i><i></i></div>
+                            <div class="sk"><i></i><i></i><i></i></div>
+                            <div class="sk"><i></i><i></i><i></i></div>
+                        </div>
                     </div>
                 </section>
 
@@ -2469,7 +2537,8 @@
             $('#inc-count').textContent = `${S.view.length} shown · ${S.incidents.length} loaded`;
 
             const list = $('#inc-list');
-            const keepScroll = list.scrollTop;
+            const scrollWrap = $('#inc-list-scroll');
+            const keepScroll = scrollWrap ? scrollWrap.scrollTop : 0;
             list.innerHTML = S.view.length ? S.view.map((i, idx) => `
                 <div class="inc-row ${S.selected === i.id ? 'sel' : ''} ${i.severity === 'CRITICAL' ? 'crit' : ''}"
                      style="--i:${Math.min(idx, 24)};--sv:${SEV_COLOR[i.severity] || 'var(--c-idle)'}" data-id="${esc(i.id)}">
@@ -2490,7 +2559,7 @@
                 : `<div class="empty"><i class="fas fa-inbox"></i><div>NO CASES MATCH THIS FILTER</div></div>`;
 
             list.querySelectorAll('.inc-row').forEach(r => r.onclick = () => select(r.dataset.id));
-            list.scrollTop = keepScroll;
+            if (scrollWrap) scrollWrap.scrollTop = keepScroll;
         }
 
         /* toggle the selected row without re-rendering (keeps animations calm) */
@@ -2609,11 +2678,23 @@
                         </div>
                     </div>
 
-                    <div class="flow">
-                        ${STATUSES.map((s, i) => `
-                            <button class="flow-seg ${d.status === s ? 'cur' : (curIdx > i && curIdx !== -1 ? 'done' : '')}"
-                                    style="--i:${i}" data-set="${s}"><span>${s.toLowerCase()}</span></button>`).join('')}
-                        <button class="flow-seg fp ${isFP ? 'cur' : ''}" style="--i:5" data-set="FALSE_POSITIVE"><span>false positive</span></button>
+                    <div class="wf-row">
+                        <div class="wf">
+                            <div class="wf-track"></div>
+                            <div class="wf-fill" style="width:${curIdx > 0 ? (curIdx / (STATUSES.length - 1) * 80) : 0}%"></div>
+                            ${STATUSES.map((s, i) => {
+                                const state = d.status === s ? 'cur' : (curIdx > i && curIdx !== -1 ? 'done' : '');
+                                const icon = state === 'done' ? '<i class="fas fa-check"></i>' : (i + 1);
+                                return `
+                            <button class="wf-step ${state}" data-set="${s}" title="${s.toLowerCase()}">
+                                <span class="wf-dot">${icon}</span>
+                                <span class="wf-lbl">${s.toLowerCase()}</span>
+                            </button>`;
+                            }).join('')}
+                        </div>
+                        <button class="wf-fp ${isFP ? 'cur' : ''}" data-set="FALSE_POSITIVE">
+                            <i class="fas fa-ban"></i> false positive
+                        </button>
                     </div>
 
                     <div class="hero-actions">
@@ -2903,7 +2984,7 @@
                 renderTab();
             });
 
-            $$('#inc-detail .flow-seg').forEach(b => b.onclick = () => patch({ status: b.dataset.set }, `status → ${b.dataset.set.toLowerCase()}`));
+            $$('#inc-detail .wf-step, #inc-detail .wf-fp').forEach(b => b.onclick = () => patch({ status: b.dataset.set }, `status → ${b.dataset.set.toLowerCase()}`));
 
             const sev = $('#act-sev');
             if (sev) sev.onchange = () => patch({ severity: sev.value }, `severity override → ${sev.value}`);

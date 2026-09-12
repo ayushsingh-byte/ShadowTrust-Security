@@ -1,0 +1,68 @@
+{% extends "report_base.html" %}
+{% from "_macros.html" import data_table, kpi_band as kpi_band_macro, bars %}
+
+{% block cover_kicker %}Control Testing{% endblock %}
+
+{% block accent %}
+:root { --accent:#0b6e8f; --accent-soft:#e6f3f7; --accent-ink:#08475c;
+        --cover-a:#051c24; --cover-b:#0a3a4b; --cover-c:#0b6e8f; }
+{% endblock %}
+
+{% block body %}
+<p class="lead">How well the detection engine catches the platform's own controlled attack scenarios, and the
+live inventory of detection rules actually firing in production.</p>
+
+{{ kpi_band_macro(kpi_band) }}
+
+<div class="h-bar"><section class="block loose">
+  <h2><span class="section-num">01</span>Scenario results</h2>
+  {{ data_table(["Scenario", "Result", "Detection rate", "ATT&CK coverage", "Expected sev.", "Actual sev.",
+       "Last run"], scen_rows, empty="No scenarios are defined.") }}
+</section></div>
+
+<div class="h-bar"><section class="block">
+  <h2><span class="section-num">02</span>Detection rate by scenario</h2>
+  {{ bars(detect_bars, unit="") }}
+</section></div>
+
+<div class="h-bar"><section class="block loose">
+  <h2><span class="section-num">03</span>Expected vs. actual detections</h2>
+  {{ data_table(["Scenario", "Expected detections", "Matched", "Missing"], exp_act_rows,
+       empty="No scenario runs to compare yet.") }}
+</section></div>
+
+<div class="h-bar"><section class="block loose">
+  <h2><span class="section-num">04</span>ATT&amp;CK technique coverage</h2>
+  {{ data_table(["Technique", "Exercised by scenarios", "Coverage", "Passing scenario count"], tech_rows,
+       numcols=[3], empty="No ATT&CK techniques are mapped to scenarios.") }}
+</section></div>
+
+<div class="h-bar"><section class="block loose">
+  <h2><span class="section-num">05</span>Live detection rule inventory</h2>
+  {{ data_table(["Rule ID", "Rule name", "Severity", "Technique", "Tactic", "Fires", "Last fired",
+       "Distinct IPs"], inv_rows, numcols=[5,7], empty="No detection rule has fired yet.",
+       note="Source: detections table, grouped by rule.") }}
+</section></div>
+
+<div class="h-bar"><section class="block loose">
+  <h2><span class="section-num">06</span>Recent scenario runs</h2>
+  {{ data_table(["Scenario", "Mode", "Status", "Result", "Started", "Duration", "Severity seen"], run_rows,
+       empty="No scenario has been run yet.") }}
+</section></div>
+
+<div class="h-bar"><section class="block">
+  <h2><span class="section-num">07</span>Gaps to close</h2>
+  <div class="split">
+    <div>
+      <h4>Failing / partial scenarios</h4>
+      {% if failed_scenarios %}<ul class="tight">{% for s in failed_scenarios %}<li>{{ s }}</li>{% endfor %}</ul>
+      {% else %}<div class="empty">No scenario is failing or partial.</div>{% endif %}
+    </div>
+    <div>
+      <h4>Never-run scenarios</h4>
+      {% if untested_scenarios %}<ul class="tight">{% for s in untested_scenarios %}<li>{{ s }}</li>{% endfor %}</ul>
+      {% else %}<div class="empty">Every defined scenario has been run at least once.</div>{% endif %}
+    </div>
+  </div>
+</section></div>
+{% endblock %}
