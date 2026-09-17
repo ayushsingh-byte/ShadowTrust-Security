@@ -95,7 +95,7 @@ python3 scripts/replay_telemetry.py --all-sensors --count 60 --rate 5
 | MobSF | http://localhost:5055 | APK engine |
 | Guacamole | http://localhost:8080/guacamole | Virtual Lab desktops (`guacadmin` / `guacadmin`) |
 
-Full walkthrough (Windows notes, ports, troubleshooting): [`SETUP.md`](SETUP.md).
+Full walkthrough (Windows notes, ports, troubleshooting): [`frontend/docs.html`](frontend/docs.html) (served at `/docs.html` once the stack is up).
 
 ---
 
@@ -158,7 +158,7 @@ Plus a public landing site (`index.html`, `architecture.html`, `docs.html`, `fea
 - Detection rules, YARA rules and scenario definitions are mounted **read‑only**.
 - The Docker socket is mounted into the backend only to power the Virtual Lab / Analysis Lab; keep port 8000 off untrusted networks.
 
-More detail: [`ARCHITECTURE.md`](ARCHITECTURE.md) · [`AWS_CLOUD_ARCHITECTURE.md`](AWS_CLOUD_ARCHITECTURE.md).
+More detail: [`frontend/architecture.html`](frontend/architecture.html).
 
 ---
 
@@ -293,10 +293,8 @@ make test                        # or: docker compose exec backend python -m pyt
 
 | Doc | Contents |
 |---|---|
-| [`SETUP.md`](SETUP.md) | full setup guide, Windows notes, troubleshooting |
-| [`ARCHITECTURE.md`](ARCHITECTURE.md) | system architecture |
-| [`AWS_CLOUD_ARCHITECTURE.md`](AWS_CLOUD_ARCHITECTURE.md) | AWS mode design |
-| [`PROJECT_DOCUMENTATION.md`](PROJECT_DOCUMENTATION.md) · [`STUDY.md`](STUDY.md) | deep technical reference |
+| [`frontend/docs.html`](frontend/docs.html) | full setup guide, Windows notes, troubleshooting |
+| [`frontend/architecture.html`](frontend/architecture.html) | system architecture |
 
 ---
 
