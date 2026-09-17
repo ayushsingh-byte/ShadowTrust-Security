@@ -4,7 +4,7 @@ description: >
   Encoded / hidden PowerShell. Requires an active Windows analysis lab with a
   forwarding agent; without one this scenario produces no telemetry and the
   validation harness reports telemetry_coverage = 0 rather than a false PASS.
-target: 127.0.0.1
+target: host.docker.internal
 requires: windows_lab
 expected_telemetry:
   - sensor: windows

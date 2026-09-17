@@ -8,6 +8,7 @@ from app.services.telemetry.collector import local_collector
 from datetime import datetime, timedelta
 import requests
 import asyncio
+import ipaddress
 import time
 
 from app.api.v1.dependencies import get_current_active_user
@@ -29,15 +30,24 @@ def get_flag_emoji(country_code):
     except:
         return '🏳️'
 
+def _is_internal(ip: str) -> bool:
+    """RFC1918 / loopback / link-local (incl. 172.16/12 lab containers) — never geolocated."""
+    try:
+        addr = ipaddress.ip_address(ip.split("%")[0])
+        return addr.is_private or addr.is_loopback or addr.is_link_local
+    except ValueError:
+        return False
+
+
 def fetch_geoip_batch_sync(ips):
     # filter out already cached and invalid
-    ips_to_fetch = [ip for ip in ips if ip and ip not in GEOIP_CACHE and not ip.startswith("192.168.") and not ip.startswith("10.") and ip != "127.0.0.1"]
+    ips_to_fetch = [ip for ip in ips if ip and ip not in GEOIP_CACHE and not _is_internal(ip)]
     
     if ips_to_fetch:
         try:
             # batch fetch up to 100 IPs
             url = "http://ip-api.com/batch"
-            params = {"fields": "status,country,countryCode,isp,org,as,lat,lon,query"}
+            params = {"fields": "status,country,countryCode,region,regionName,city,isp,org,as,lat,lon,query"}
             response = requests.post(url, json=ips_to_fetch[:100], params=params, timeout=5)
             if response.status_code == 200:
                 data = response.json()
@@ -49,25 +59,50 @@ def fetch_geoip_batch_sync(ips):
                         GEOIP_CACHE[req_ip] = {
                             "country": res.get("country", "Unknown"),
                             "code": res.get("countryCode", "UN"),
+                            "city": res.get("city") or None,
+                            "region": res.get("regionName") or None,
                             "isp": res.get("isp", "Unknown ISP"),
                             "asn": as_number,
                             "lat": res.get("lat", 0.0),
                             "lon": res.get("lon", 0.0)
                         }
                     elif req_ip:
-                         GEOIP_CACHE[req_ip] = {"country": "Unknown", "code": "UN", "isp": "Unknown ISP", "lat": 0.0, "lon": 0.0}
+                         GEOIP_CACHE[req_ip] = {"country": "Unknown", "code": "UN", "city": None, "region": None, "isp": "Unknown ISP", "lat": 0.0, "lon": 0.0}
         except Exception as e:
             print("GeoIP Fetch Error:", e)
             
     # RFC1918 / loopback addresses -> labelled Internal (no external lookup)
     for ip in ips:
-        if ip and (ip.startswith("192.168.") or ip.startswith("10.") or ip == "127.0.0.1"):
-            GEOIP_CACHE[ip] = {"country": "Internal", "code": "INT", "isp": "Local Network", "lat": 38.8951, "lon": -77.0364}
-            
+        if ip and _is_internal(ip):
+            GEOIP_CACHE[ip] = {"country": "Internal", "code": "INT", "city": None, "region": None,
+                                "isp": "Local Network", "lat": None, "lon": None}
+
     return GEOIP_CACHE
 
 async def fetch_geoip_batch(ips):
     return await asyncio.to_thread(fetch_geoip_batch_sync, ips)
+
+def most_specific_location(geo: dict) -> str | None:
+    """City if resolved, else region, else None — never a bare country name.
+
+    A country alone ("United States") tells an analyst almost nothing; if the
+    lookup couldn't resolve anything finer, the caller should omit the
+    location rather than print a country as if it were specific.
+    """
+    if not geo:
+        return None
+    city = geo.get("city")
+    region = geo.get("region")
+    country = geo.get("country")
+    if city and country:
+        return f"{city}, {country}"
+    if city:
+        return city
+    if region and country:
+        return f"{region}, {country}"
+    if region:
+        return region
+    return None
 
 
 @router.get("/stats")
@@ -435,59 +470,66 @@ async def get_geo_stats(db: AsyncSession = Depends(get_db)):
     last_event = recent_query.scalars().first()
     last_detected = f"{last_event.attacker_ip} // PT:{last_event.target_port}" if last_event else "—"
     
-    # Top IPs
+    # Top IPs — real captured-payload bytes per source, not a synthetic estimate
     top_ips_query = await db.execute(
-        select(RawEventModel.attacker_ip, func.count(RawEventModel.id).label("hits"))
+        select(
+            RawEventModel.attacker_ip,
+            func.count(RawEventModel.id).label("hits"),
+            func.coalesce(func.sum(func.length(RawEventModel.raw_payload)), 0).label("bytes"),
+        )
         .group_by(RawEventModel.attacker_ip)
         .order_by(desc("hits"))
         .limit(30)
     )
-    
+
     ip_hits = top_ips_query.all()
-    
-    all_ips_to_fetch = list(set([ip.split(':')[0] for ip, _ in ip_hits if ip]))
+
+    all_ips_to_fetch = list(set([row.attacker_ip.split(':')[0] for row in ip_hits if row.attacker_ip]))
     geo_map = await fetch_geoip_batch(all_ips_to_fetch)
-    
-    countries_data = {}
+
+    locations_data = {}
     asn_data = {}
-    
-    for ip, hits in ip_hits:
-        base_ip = (ip or '').split(':')[0]
+
+    for row in ip_hits:
+        base_ip = (row.attacker_ip or '').split(':')[0]
         geo = geo_map.get(base_ip, {'country': 'Unknown', 'code': 'UN', 'isp': 'Unknown ISP', 'asn': 'N/A'})
-        geo_flag = get_flag_emoji(geo.get('code', 'UN'))
-        
+
         # Skip Internal/Local networks from Global Intelligence
         if geo.get('code') == 'INT':
             continue
-        
-        # Aggregate countries
-        country_name = geo.get('country', 'Unknown')
-        if country_name not in countries_data:
-            countries_data[country_name] = {'flag': geo_flag, 'code': geo.get('code', 'UN'), 'events': 0, 'traffic': 0}
-        countries_data[country_name]['events'] += hits
-        
-        traffic_multiplier = 0.5 + ((sum(bytearray(base_ip.encode())) % 10) / 10.0)  # Pseudo-random but consistent traffic per IP
-        countries_data[country_name]['traffic'] += hits * traffic_multiplier
-        
+
+        # Aggregate by the most specific place we could resolve — never a
+        # bare country name. Sources that only resolved to a country are
+        # left out of this list entirely rather than mislabeled as precise.
+        loc_name = most_specific_location(geo)
+        if loc_name:
+            if loc_name not in locations_data:
+                locations_data[loc_name] = {
+                    'flag': get_flag_emoji(geo.get('code', 'UN')), 'code': geo.get('code', 'UN'),
+                    'events': 0, 'bytes': 0,
+                }
+            locations_data[loc_name]['events'] += row.hits
+            locations_data[loc_name]['bytes'] += int(row.bytes or 0)
+
         # Aggregate ASN
         asn_name = geo.get('isp', 'Unknown ISP')
         asn_id = geo.get('asn', 'N/A')
         if asn_name not in asn_data:
             asn_data[asn_name] = {'asn': asn_id, 'count': 0, 'ips': set()}
-        asn_data[asn_name]['count'] += hits
+        asn_data[asn_name]['count'] += row.hits
         asn_data[asn_name]['ips'].add(base_ip)
 
-    top_countries = []
-    for country, data in countries_data.items():
-        top_countries.append({
+    top_locations = []
+    for name, data in locations_data.items():
+        top_locations.append({
             'flag': data['flag'],
-            'country': country,
+            'location': name,
             'code': data['code'],
             'events': data['events'],
-            'traffic': f"{data['traffic']:.1f} MB"
+            'traffic': f"{data['bytes'] / (1024 * 1024):.2f} MB",
         })
-    top_countries.sort(key=lambda x: x['events'], reverse=True)
-    
+    top_locations.sort(key=lambda x: x['events'], reverse=True)
+
     asn_intelligence = []
     for isp, data in asn_data.items():
         asn_intelligence.append({
@@ -497,12 +539,12 @@ async def get_geo_stats(db: AsyncSession = Depends(get_db)):
             'ips': ", ".join(list(data['ips']))
         })
     asn_intelligence.sort(key=lambda x: x['count'], reverse=True)
-    
+
     top_isp = asn_intelligence[0] if asn_intelligence else None
-    
+
     markers = []
-    for ip, hits in ip_hits:
-        base_ip = (ip or '').split(':')[0]
+    for row in ip_hits:
+        base_ip = (row.attacker_ip or '').split(':')[0]
         geo = geo_map.get(base_ip)
 
         if not geo or geo.get('code') == 'INT':
@@ -511,13 +553,16 @@ async def get_geo_stats(db: AsyncSession = Depends(get_db)):
         lat = geo.get('lat')
         lon = geo.get('lon')
         if lat is not None and lon is not None and (lat != 0.0 or lon != 0.0):
-            markers.append({"ip": base_ip, "lat": lat, "lon": lon, "hits": hits})
+            markers.append({
+                "ip": base_ip, "lat": lat, "lon": lon, "hits": row.hits,
+                "location": most_specific_location(geo),
+            })
 
     return {
         "active_sources": active_sources,
         "targeted_zones": targeted_zones,
         "last_detected": last_detected,
-        "top_countries": top_countries[:5],
+        "top_locations": top_locations[:5],
         "asn_intelligence": asn_intelligence[:5],
         "top_isp": top_isp,
         "markers": markers

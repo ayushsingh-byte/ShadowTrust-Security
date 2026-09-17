@@ -370,15 +370,15 @@ async def get_credentials_vault(
                 ts_str = evt.timestamp.strftime("%Y-%m-%d %H:%M:%S") if evt.timestamp else now.strftime("%Y-%m-%d %H:%M:%S")
                 ip = evt.attacker_ip or payload.get("src_ip") or "Unknown"
                 protocol = evt.protocol or payload.get("protocol") or "tcp"
-                risk = getattr(evt, 'risk_score', 0) or 50.0
-                
+                risk = getattr(evt, 'risk_score', None)
+
                 credentials_list.append({
                     "timestamp": ts_str,
                     "target_protocol": protocol.upper(),
                     "username": username,
                     "password": password,
                     "source_ip": ip,
-                    "risk_score": round(risk, 1)
+                    "risk_score": round(risk, 1) if risk is not None else None,
                 })
                 
                 # KPIs math
@@ -397,6 +397,12 @@ async def get_credentials_vault(
         except json.JSONDecodeError:
             continue
             
+    geo = await fetch_geoip_batch(list({c["source_ip"] for c in credentials_list}))
+    for c in credentials_list:
+        g = geo.get(c["source_ip"]) or {}
+        c["origin_country"] = g.get("country")
+        c["origin_code"] = g.get("code")
+
     # Velocity: attacks per minute in the last hour
     velocity = events_last_hour / 60.0
     

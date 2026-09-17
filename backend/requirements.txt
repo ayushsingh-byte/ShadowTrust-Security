@@ -40,3 +40,8 @@ python-whois>=0.9.4
 networkx>=3.2
 # SSH client for the admin-only honeypot trigger buttons (app.services.honeypot_triggers).
 paramiko>=3.4.0
+# AES-256 zip support (stdlib zipfile can't decrypt these). Malware feeds
+# (MalwareBazaar, VX-Underground) ship samples in AES-encrypted zips with the
+# password "infected" — without this, AV/YARA/static analysis only ever see
+# the opaque encrypted container and every real sample reports clean.
+pyzipper>=0.3.6

@@ -6,8 +6,8 @@
     <title>Shadow Trust — Architecture</title>
     <link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
-    <link rel="stylesheet" href="css/landing/landingpage.css?v=3">
-    <link rel="stylesheet" href="css/landing/architecture.css?v=3">
+    <link rel="stylesheet" href="css/landing/landingpage.css?v=5">
+    <link rel="stylesheet" href="css/landing/architecture.css?v=4">
     <link rel="stylesheet" href="css/tokens.css">
     <script src="js/theme.js"></script>
 </head>
@@ -34,7 +34,7 @@
         <div class="arch-hero-text">
             <span class="section-label">System Design</span>
             <h1>Shadow Trust <span>Architecture</span></h1>
-            <p>A hybrid edge-to-cloud platform — honeypots ingest locally to SQLite for zero-dependency offline resilience, while enriched intelligence syncs to Supabase PostgreSQL in the cloud. AWS EC2 powers isolated analysis sandboxes. Five Docker services. One command to deploy.</p>
+            <p>A self-hosted pipeline: honeypot sensors write JSON logs, a local collector tails them into MariaDB, and a rule-based detection engine turns events into incidents streamed live to the dashboard. Malware, APK, Splunk and lab services run alongside. One Docker Compose command to deploy.</p>
         </div>
         <div class="arch-hero-widget">
             <div class="awg-header">
@@ -60,7 +60,7 @@
                     </div>
                     <span class="awg-badge green">OK</span>
                 </div>
-                <div class="awg-connector"><span>↓ AI classified</span></div>
+                <div class="awg-connector"><span>↓ detection rules</span></div>
                 <div class="awg-node">
                     <span class="awg-icon">🧠</span>
                     <div class="awg-info">
@@ -69,12 +69,12 @@
                     </div>
                     <span class="awg-badge cyan">ACTIVE</span>
                 </div>
-                <div class="awg-connector"><span>↓ synced to cloud</span></div>
+                <div class="awg-connector"><span>↓ SSE live stream</span></div>
                 <div class="awg-node">
                     <span class="awg-icon">📊</span>
                     <div class="awg-info">
-                        <b>Dashboard &amp; Cloud</b>
-                        <span>Supabase · Nginx · AWS EC2</span>
+                        <b>Dashboard</b>
+                        <span>MariaDB · Nginx · SSE</span>
                     </div>
                     <span class="awg-badge green">LIVE</span>
                 </div>
@@ -94,7 +94,7 @@
                 <div class="step-icon">1</div>
                 <div class="step-content">
                     <h3>🍯 Honeypot Capture</h3>
-                    <p>Attackers interact with Cowrie (SSH/Telnet brute force + shell), Dionaea (malware upload), or Honeytrap (multi-port probing). Every keystroke, credential attempt, and uploaded file is recorded. Data is written immediately to the local edge SQLite database — works completely offline.</p>
+                    <p>Attackers interact with Cowrie (SSH/Telnet brute force + shell), Dionaea (malware upload), or Honeytrap (multi-port probing). Every keystroke, credential attempt, and uploaded file is recorded. Each sensor appends newline-delimited JSON to its own log file — the only channel out of the isolated honeynet network.</p>
                 </div>
             </div>
 
@@ -102,7 +102,7 @@
                 <div class="step-icon">2</div>
                 <div class="step-content">
                     <h3>📡 Telemetry Ingestion</h3>
-                    <p>The FastAPI backend (Python 3.11, Uvicorn async) receives structured telemetry via <code>/api/v1/events</code>. Events are normalized, stored in SQLite for high-frequency edge logging, and queued for cloud sync. The background sync loop runs every 10 seconds — pushing derived analytics to Supabase PostgreSQL.</p>
+                    <p>The FastAPI backend (Python 3.11, Uvicorn async) watches the sensor logs with inotify and tails them from stored byte offsets, so each line is read exactly once. Events are normalized, written to MariaDB and published on an internal event bus that feeds the dashboard's Server-Sent Events stream.</p>
                 </div>
             </div>
 
@@ -110,7 +110,7 @@
                 <div class="step-icon">3</div>
                 <div class="step-content">
                     <h3>🧠 AI Classification & Enrichment</h3>
-                    <p>Each event passes through the AI classification engine — detecting SQLi, XSS, brute force, RCE, path traversal, and anomalous payloads. GeoIP enrichment adds country, ASN, and city data. Risk scoring (0–10) is computed. Events are tagged with MITRE ATT&CK techniques automatically.</p>
+                    <p>Each event passes through the AI classification engine — detecting SQLi, XSS, brute force, RCE, path traversal, and anomalous payloads. GeoIP enrichment adds country, ASN, and city data. Risk scoring (0–100) is computed. Events are tagged with MITRE ATT&CK techniques automatically.</p>
                 </div>
             </div>
 
@@ -142,7 +142,7 @@
                 <div class="step-icon">7</div>
                 <div class="step-content">
                     <h3>📊 Dashboard & Alerts</h3>
-                    <p>Nginx serves the 30+ page Vanilla JS dashboard on port 5500. The frontend calls the FastAPI backend directly on port 8000. Supabase Realtime pushes live updates to the threat map. Critical events trigger Gmail SMTP email alerts and WhatsApp messages via Twilio — before the analyst has even opened the dashboard.</p>
+                    <p>Nginx serves the 30+ page Vanilla JS dashboard on port 5500. The frontend calls the FastAPI backend on port 8000 and receives live events, detections and sensor metrics over Server-Sent Events. Incidents, evidence and PDF reports are generated from the same MariaDB data.</p>
                 </div>
             </div>
 
@@ -158,10 +158,10 @@
             <div class="stack-item"><span>FastAPI v2.0</span></div>
             <div class="stack-item"><span>Uvicorn (Async)</span></div>
             <div class="stack-item"><span>Flask (MobSF Proxy)</span></div>
-            <div class="stack-item"><span>Node.js 20</span></div>
-            <div class="stack-item"><span>Fastify (TypeScript)</span></div>
-            <div class="stack-item"><span>SQLite + aiosqlite</span></div>
-            <div class="stack-item"><span>Supabase PostgreSQL</span></div>
+            <div class="stack-item"><span>MariaDB 11</span></div>
+            <div class="stack-item"><span>SQLAlchemy (async)</span></div>
+            <div class="stack-item"><span>ClamAV + YARA</span></div>
+            <div class="stack-item"><span>Splunk</span></div>
             <div class="stack-item"><span>AWS EC2 / S3</span></div>
             <div class="stack-item"><span>AWS IAM / SSM</span></div>
             <div class="stack-item"><span>Boto3</span></div>
@@ -177,14 +177,14 @@
             <div class="stack-item"><span>SMTP (Gmail)</span></div>
             <div class="stack-item"><span>GeoIP</span></div>
             <div class="stack-item"><span>MITRE ATT&CK</span></div>
-            <div class="stack-item"><span>Supabase Auth</span></div>
+            <div class="stack-item"><span>Server-Sent Events</span></div>
         </div>
     </section>
 
     <!-- DOCKER SERVICES -->
     <section class="section" data-aos="fade-up">
         <span class="section-label">Deployment</span>
-        <h2>Five <span>Docker Services</span></h2>
+        <h2>Core <span>Docker Services</span></h2>
         <p class="section-sub">The entire platform ships as a production-ready Docker Compose stack. One command starts everything.</p>
         <div class="features" style="margin-top:40px;">
             <div class="card" data-aos="zoom-in" data-aos-delay="100">
@@ -199,13 +199,13 @@
             </div>
             <div class="card" data-aos="zoom-in" data-aos-delay="300">
                 <span class="card-icon">🔷</span>
-                <h3>Node.js API</h3>
-                <p>Fastify TypeScript edge-collector API. Handles node registry and rate-limited data ingestion from edge honeypot nodes. Port 3000.</p>
+                <h3>MariaDB</h3>
+                <p>Primary datastore for normalized events, detections, incidents, evidence and reports, with phpMyAdmin for inspection. Port 3307 on the host.</p>
             </div>
             <div class="card" data-aos="zoom-in" data-aos-delay="400">
                 <span class="card-icon">🔄</span>
-                <h3>Background Worker</h3>
-                <p>Node.js Supabase sync worker. Runs continuous background synchronization of enriched analytics from SQLite to the cloud database.</p>
+                <h3>Honeypot Sensors</h3>
+                <p>Cowrie, Dionaea and Honeytrap on an isolated edge network. Their only output is the log files the backend collector tails.</p>
             </div>
             <div class="card" data-aos="zoom-in" data-aos-delay="500">
                 <span class="card-icon">🌐</span>

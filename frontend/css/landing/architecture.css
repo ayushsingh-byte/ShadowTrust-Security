@@ -243,3 +243,6 @@
     .step-icon { min-width: 36px; width: 36px; height: 36px; line-height: 32px; font-size: 14px; }
     .step-content { margin-left: 16px; }
 }
+
+.step-content { min-width: 0; }
+.step-content code { overflow-wrap: anywhere; }

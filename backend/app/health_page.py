@@ -16,6 +16,7 @@ from __future__ import annotations
 import asyncio
 import os
 import time
+from pathlib import Path
 from datetime import datetime, timezone
 from typing import Any, Dict, List
 
@@ -693,3 +694,10 @@ setInterval(tick, 10000);
 </body>
 </html>
 """
+
+# Page test bench (buttons that drive every page's real backend path) lives in
+# its own file so the JS stays editable; spliced in just before </body>.
+_PAGE = _PAGE.replace(
+    "</body>",
+    (Path(__file__).with_name("health_testbench.html")).read_text(encoding="utf-8") + "\n</body>",
+)

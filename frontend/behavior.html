@@ -533,10 +533,11 @@
                     profileData.logs.forEach(log => {
                         const div = document.createElement('div');
                         div.style.cssText = 'display:flex; gap:10px; border-bottom:1px solid var(--st-border); padding:4px 0;';
+                        // msg carries the attacker's raw command — escape everything
                         div.innerHTML = `
-                            <span class="text-muted">${log.time}</span>
-                            <span style="color:${log.userColor}">${log.user}</span>
-                            <span>${log.msg}</span>
+                            <span class="text-muted">${escTrait(log.time)}</span>
+                            <span style="color:${escTrait(log.userColor)}">${escTrait(log.user)}</span>
+                            <span>${escTrait(log.msg)}</span>
                         `;
                         termStream.appendChild(div);
                     });

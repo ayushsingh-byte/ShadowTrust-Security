@@ -683,3 +683,14 @@ footer {
 
     .section h2 { font-size: 28px; }
 }
+
+/* Phone widths: flex children default to min-width:auto, so a wide image or
+   code line pushed the page past the viewport. */
+@media (max-width: 860px) {
+    .hero-img-wrap, .feature-segment > *, .why > * { min-width: 0; max-width: 100%; }
+    .hero-img-wrap img, .feature-segment img, .why img { max-width: 100%; height: auto; }
+}
+
+/* AOS fade-left/right start elements translated off-screen until they animate
+   in, which widened the page on phones. clip (not hidden) keeps sticky nav working. */
+html, body { overflow-x: clip; }

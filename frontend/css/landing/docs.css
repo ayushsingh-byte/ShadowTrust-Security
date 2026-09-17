@@ -352,3 +352,10 @@ nav ul li a.active-link {
         margin-bottom: 20px;
     }
 }
+/* Phone widths: long code lines scroll inside their block, never the page. */
+.docs-content { min-width: 0; max-width: 100%; }
+.content-header { flex-wrap: wrap; gap: 12px; }
+@media (max-width: 780px) {
+    .docs-content { padding: 20px 16px; }
+    .content-header h2 { overflow-wrap: anywhere; }
+}

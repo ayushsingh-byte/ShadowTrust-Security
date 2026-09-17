@@ -627,7 +627,7 @@
                                 preview</span>
                         </div>
                         <iframe id="siteFrame" class="preview-frame" style="display:none;"
-                            sandbox="allow-same-origin allow-scripts allow-forms" referrerpolicy="no-referrer"></iframe>
+                            sandbox="" referrerpolicy="no-referrer"></iframe>
                     </div>
 
                     <!-- Domain registration (WHOIS) -->
@@ -832,13 +832,9 @@
             // Load in iframe — many sites block framing; we still attempt it
             $('siteFrame').src = url;
             $('siteFrame').onerror = () => { showPreviewBlocked(url); };
-            // Check for X-Frame-Options: deny via timeout fallback
-            setTimeout(() => {
-                try {
-                    const doc = $('siteFrame').contentDocument || $('siteFrame').contentWindow?.document;
-                    if (!doc || !doc.body || doc.body.innerHTML === '') showPreviewBlocked(url);
-                } catch (e) { /* cross-origin — that's okay, iframe still shows */ }
-            }, 3000);
+            // Fully sandboxed (opaque origin, no scripts): contentDocument is never
+            // readable, so there is no reliable framing-blocked probe — the frame
+            // just shows the browser's own "refused to connect" page if blocked.
         }
 
         function showPreviewBlocked(url) {
@@ -848,7 +844,7 @@
     <i class="fas fa-ban" style="font-size:2rem;color:var(--st-danger);"></i>
     <span style="color:var(--st-danger);font-size:.75rem;font-family:var(--font-mono);">PREVIEW BLOCKED</span>
     <span style="font-size:.62rem;color:var(--st-text-faint);font-family:var(--font-mono);">Site uses X-Frame-Options: DENY</span>
-    <a href="${url}" target="_blank" rel="noopener noreferrer" style="font-size:.65rem;color:var(--st-info);font-family:var(--font-mono);margin-top:6px;">→ OPEN IN NEW TAB</a>`;
+    <a href="${esc(url).replace(/"/g, '&quot;')}" target="_blank" rel="noopener noreferrer" style="font-size:.65rem;color:var(--st-info);font-family:var(--font-mono);margin-top:6px;">→ OPEN IN NEW TAB</a>`;
         }
 
         function addHistory(r) {

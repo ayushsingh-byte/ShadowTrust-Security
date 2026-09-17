@@ -1,7 +1,7 @@
 id: web-attack
 script_scenario: web-attack
 description: SQLi / path-traversal / XSS shaped HTTP requests against Honeytrap.
-target: 127.0.0.1
+target: host.docker.internal
 expected_telemetry:
   - sensor: honeytrap
     min_events: 1

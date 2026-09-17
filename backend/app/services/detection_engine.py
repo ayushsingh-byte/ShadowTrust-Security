@@ -26,7 +26,7 @@ import re
 from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, Iterable, List, Optional, Tuple
 
-from sqlalchemy import func, select
+from sqlalchemy import func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.database import AsyncSessionLocal
@@ -533,6 +533,15 @@ async def run_cycle(db: Optional[AsyncSession] = None) -> Dict[str, Any]:
 
     for c in candidates:
         if c["dedupe_key"] in existing_keys:
+            # Same rule/source/bucket already raised: record that it fired again
+            # rather than dropping the repeat silently.
+            if c["last_event_at"] is not None:
+                await db.execute(
+                    update(Detection)
+                    .where(Detection.dedupe_key == c["dedupe_key"],
+                           (Detection.last_event_at.is_(None)) | (Detection.last_event_at < c["last_event_at"]))
+                    .values(last_event_at=c["last_event_at"])
+                )
             continue
         rule: DetectionRule = c["rule"]
         det = Detection(

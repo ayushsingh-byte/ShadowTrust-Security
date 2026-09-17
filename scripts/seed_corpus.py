@@ -6,7 +6,7 @@ for a demo.
 
 Same route as live traffic and as scripts/replay_telemetry.py:
 
-    seed_corpus  ->  telemetry/raw/<sensor>/<sensor>.json
+    seed_corpus  ->  telemetry/raw/<sensor>/seed-corpus.json
                  ->  collector (tail + cursor)  ->  normalizer  ->  DB  ->  UI
 
 Nothing is injected past the collector — the parsers, dedup and storage run
@@ -29,7 +29,11 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 TELEMETRY_DIR = Path(__file__).resolve().parents[1] / "telemetry" / "raw"
-LOGFILE = {"cowrie": "cowrie.json", "dionaea": "dionaea.json", "honeytrap": "honeytrap.json"}
+# Written to its own file, never the sensor's live log: Cowrie's Twisted log
+# writer keeps its own file offset (r+b + seek), so an external append to
+# cowrie.json gets overwritten by the sensor's next writes. The collector reads
+# every *.json in the sensor dir and detects the sensor from content.
+LOGFILE = {s: "seed-corpus.json" for s in ("cowrie", "dionaea", "honeytrap")}
 
 # A curated pool of real, geolocatable source IPs — the kind of hosts that
 # hammer SSH/telnet honeypots daily. Small on purpose: a handful of very busy
@@ -225,14 +229,14 @@ def main() -> int:
     buffers: dict[str, list[str]] = {s: [] for s in GEN}
     written = 0
 
-    # A band of events dated across every hour of the current date, so the
-    # "Hourly Anomalies" chart has all 24 hours represented.
-    day0 = now.replace(hour=0, minute=0, second=0, microsecond=0)
+    # A band spread across every hour of the last 24h, so the "Hourly Anomalies"
+    # chart has all 24 hours represented. Rolling window, never past `now`: a
+    # calendar-day band put events up to 24h in the future.
     hour_fill = max(0, min(args.events // 8, 4000))
     for _ in range(hour_fill):
         sensor = rng.choices([m[0] for m in MIX], [m[1] for m in MIX], k=1)[0]
-        stamp = day0 + timedelta(hours=rng.randint(0, 23), minutes=rng.randint(0, 59),
-                                 seconds=rng.randint(0, 59))
+        # >=10 min back leaves room for the session's own forward-dated events
+        stamp = now - timedelta(minutes=rng.randint(10, 24 * 60), seconds=rng.randint(0, 59))
         evs = GEN[sensor](rng, stamp, 1)
         buffers[sensor].extend(json.dumps(x) for x in evs)
         written += len(evs)

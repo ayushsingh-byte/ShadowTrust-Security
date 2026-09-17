@@ -186,13 +186,14 @@ function renderOverviewMetrics(stats, health, latencyMs, credentialsKpi) {
 }
 
 async function loadOverview() {
-    const start = performance.now();
+    let latencyMs = 0;
     const token = localStorage.getItem('access_token') || localStorage.getItem('authToken');
 
     // Run ALL fetches in parallel — credentials no longer blocks rendering
     const settled = await Promise.allSettled([
         apiService.get('/dashboard/stats'),
-        apiService.get('/admin/health'),
+        // "API latency" = round-trip of the lightweight health probe, not the heavy aggregate calls
+        (async () => { const t = performance.now(); const h = await apiService.get('/admin/health'); latencyMs = performance.now() - t; return h; })(),
         apiService.get('/attacks/timeline'),
         apiService.get('/attacks/categories'),
         token ? apiService.get('/analytics/credentials') : Promise.resolve(null),
@@ -221,7 +222,6 @@ async function loadOverview() {
     const categories = settled[3].status === 'fulfilled' ? settled[3].value : [];
     const credentialsKpi = settled[4].status === 'fulfilled' ? (settled[4].value?.kpi || {}) : {};
 
-    const latencyMs = performance.now() - start;
     renderOverviewMetrics(stats, health, latencyMs, credentialsKpi);
     renderOverviewTables(stats, categories);
     initOrUpdateCharts(Array.isArray(timeline) ? timeline : []);

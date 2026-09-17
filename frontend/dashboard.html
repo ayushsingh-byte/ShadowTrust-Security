@@ -775,6 +775,9 @@
             }
         }
 
+        // Attacker commands, IPs and GeoIP org names are untrusted — escape before any innerHTML.
+        const escH = (v) => String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
         async function fetchHoneypotStats() {
             try {
                 const payload = await apiService.get('/dashboard/stats');
@@ -859,8 +862,12 @@
                     }
                 }
 
-                // Global Threat Map Markers
-                if (typeof map !== 'undefined' && recentLogs.length > 0) {
+                // Global Threat Map Markers — the latest 15 events are usually one
+                // busy attacker, so plot distinct source locations: top geolocated
+                // sources from /dashboard/geo, plus anything in the recent feed.
+                const geo = await apiService.get('/dashboard/geo').catch(() => null);
+                const points = [...recentLogs, ...((geo && geo.markers) || [])];
+                if (typeof map !== 'undefined' && points.length > 0) {
                     if (!window.attackMarkersLayer) {
                         window.attackMarkersLayer = L.layerGroup().addTo(map);
                     }
@@ -879,8 +886,11 @@
                         animation: pulse-red 1s infinite;
                     `;
 
-                    recentLogs.slice(0, 15).forEach(log => {
-                        if (typeof log.lat === 'number' && typeof log.lon === 'number' && !(log.lat === 0 && log.lon === 0)) {
+                    const seen = new Set();
+                    points.forEach(log => {
+                        const key = `${log.lat},${log.lon}`;
+                        if (typeof log.lat === 'number' && typeof log.lon === 'number' && !(log.lat === 0 && log.lon === 0) && !seen.has(key)) {
+                            seen.add(key);
                             const icon = L.divIcon({
                                 className: "custom-pin",
                                 html: `<span style="${markerHtmlStyles}"></span>`
@@ -903,7 +913,7 @@
                         const port = item.target_port || '0';
                         const honeypot_type = item.honeypot_type || 'SYSTEM';
 
-                        div.innerHTML = `<span style="color:var(--st-accent);"> [${timeStr}]</span> <span style="color:var(--st-warning);">[${honeypot_type}]</span> <span style="color:var(--st-danger)">${ip}:${port}</span>`;
+                        div.innerHTML = `<span style="color:var(--st-accent);"> [${timeStr}]</span> <span style="color:var(--st-warning);">[${escH(honeypot_type)}]</span> <span style="color:var(--st-danger)">${escH(ip)}:${escH(port)}</span>`;
                         feed.appendChild(div);
                     });
 
@@ -941,11 +951,11 @@
                             const riskColor = a.risk === 'HIGH' ? 'text-red' : 'text-yellow';
                             attackTableBody.innerHTML += `
                                 <tr>
-                                    <td title="${a.asn}">${a.asn}</td>
-                                    <td class="text-mono text-muted" title="${a.ip}">${a.ip}</td>
-                                    <td title="${a.org}">${a.org}</td>
-                                    <td>${a.hits}</td>
-                                    <td class="${riskColor}">${a.risk}</td>
+                                    <td title="${escH(a.asn)}">${escH(a.asn)}</td>
+                                    <td class="text-mono text-muted" title="${escH(a.ip)}">${escH(a.ip)}</td>
+                                    <td title="${escH(a.org)}">${escH(a.org)}</td>
+                                    <td>${escH(a.hits)}</td>
+                                    <td class="${riskColor}">${escH(a.risk)}</td>
                                 </tr>
                             `;
                         });
@@ -963,10 +973,10 @@
                         payload.top_vectors.forEach(v => {
                             exploitTableBody.innerHTML += `
                                 <tr>
-                                    <td class="text-cyan">${v.port}</td>
-                                    <td>${v.service}</td>
-                                    <td class="${tC(v.threat)}">${v.threat}</td>
-                                    <td>${v.count}</td>
+                                    <td class="text-cyan">${escH(v.port)}</td>
+                                    <td>${escH(v.service)}</td>
+                                    <td class="${tC(v.threat)}">${escH(v.threat)}</td>
+                                    <td>${escH(v.count)}</td>
                                 </tr>
                             `;
                         });
@@ -984,10 +994,10 @@
                         payload.recent_artifacts.forEach(r => {
                             artifactsTableBody.innerHTML += `
                                 <tr>
-                                    <td class="text-muted text-xs">${r.hash}</td>
-                                    <td title="${r.type}">${r.type}</td>
-                                    <td class="text-yellow" title="${r.sensor}">${r.sensor}</td>
-                                    <td class="${dispColor(r.status)}">${r.status}</td>
+                                    <td class="text-muted text-xs">${escH(r.hash)}</td>
+                                    <td title="${escH(r.type)}">${escH(r.type)}</td>
+                                    <td class="text-yellow" title="${escH(r.sensor)}">${escH(r.sensor)}</td>
+                                    <td class="${dispColor(r.status)}">${escH(r.status)}</td>
                                 </tr>
                             `;
                         });
@@ -1088,10 +1098,10 @@
                 const html = `
                     <div class="node-item">
                         <div style="display:flex; justify-content:space-between; align-items:center;">
-                            <span class="text-mono ${statusColor}">${node.name || 'UNKNOWN'}</span>
+                            <span class="text-mono ${statusColor}">${escH(node.name || 'UNKNOWN')}</span>
                             <i class="fas ${iconClass} text-muted"></i>
                         </div>
-                        <div class="text-xs text-muted">${node.type || 'Generic Sensor'}</div>
+                        <div class="text-xs text-muted">${escH(node.type || 'Generic Sensor')}</div>
                         <div style="margin-top:10px;">
                             <div style="display:flex; justify-content:space-between; font-size:0.7rem; margin-bottom:3px;">
                                 <span>LOAD</span>

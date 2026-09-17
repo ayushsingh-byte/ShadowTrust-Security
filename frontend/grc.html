@@ -81,13 +81,30 @@
         .tile.manual { --tc: var(--st-neutral); }
         .tile.total { --tc: var(--st-accent); }
 
-        .catbars { padding: 12px 14px; animation: fadeUp .4s .3s both; }
-        .catbars h3 { font-size: .62rem; letter-spacing: .1em; text-transform: uppercase; color: var(--st-text-muted); margin: 0 0 10px; font-weight: 600; }
-        .catrow { display: grid; grid-template-columns: 128px 1fr 64px; gap: 10px; align-items: center; margin-bottom: 7px; font-size: .74rem; }
-        .catrow:last-child { margin-bottom: 0; }
-        .catrow .cn { color: var(--st-text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .catrow .ct { text-align: right; font-family: var(--st-font-mono); font-size: .68rem; color: var(--st-text-muted); }
-        .cbar { display: flex; height: 8px; border-radius: 999px; overflow: hidden; background: var(--st-surface-hover); }
+        /* ---------- trust framework badge ---------- */
+        .fw-badge {
+            display: inline-flex; align-items: center; gap: 7px; padding: 4px 12px 4px 10px;
+            border-radius: 999px; border: 1px solid color-mix(in srgb, var(--st-accent) 35%, var(--st-border));
+            background: var(--st-accent-tint); color: var(--st-accent); font-weight: 700;
+            font-size: .68rem; letter-spacing: .03em; vertical-align: middle;
+        }
+        .fw-badge i { font-size: .72rem; }
+
+        /* ---------- trust category cards (replaces the old thin-bar list) ---------- */
+        .cat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; animation: fadeUp .4s .3s both; }
+        .cat-card {
+            background: var(--st-surface); border: 1px solid var(--st-border); border-top: 3px solid var(--cc, var(--st-accent));
+            border-radius: var(--st-radius-md); padding: 12px 13px; display: flex; flex-direction: column; gap: 8px;
+            animation: fadeUp .4s both; animation-delay: calc(var(--i, 0) * 50ms + .15s);
+        }
+        .cat-card .ch { display: flex; align-items: center; gap: 8px; }
+        .cat-card .ci {
+            width: 26px; height: 26px; flex: none; border-radius: 7px; display: flex; align-items: center; justify-content: center;
+            background: color-mix(in srgb, var(--cc, var(--st-accent)) 16%, transparent); color: var(--cc, var(--st-accent)); font-size: .74rem;
+        }
+        .cat-card .cn { font-size: .74rem; font-weight: 600; color: var(--st-text); line-height: 1.25; }
+        .cat-card .cf { margin-left: auto; font-family: var(--st-font-mono); font-size: .84rem; font-weight: 700; color: var(--st-text); white-space: nowrap; }
+        .cbar { display: flex; height: 7px; border-radius: 999px; overflow: hidden; background: var(--st-surface-hover); }
         .cbar span { display: block; height: 100%; transition: width .6s cubic-bezier(.4, 0, .2, 1); }
         .cbar .s-met { background: var(--st-success); }
         .cbar .s-partial { background: var(--st-warning); }
@@ -141,10 +158,15 @@
         /* ---------- control cards ---------- */
         .matrix { display: flex; flex-direction: column; gap: 6px; }
         .ctl {
-            border: 1px solid var(--st-border); border-radius: var(--st-radius-md);
+            border: 1px solid var(--st-border); border-left: 3px solid var(--tc, var(--st-border-strong));
+            border-radius: var(--st-radius-md);
             background: var(--st-surface); overflow: hidden;
             animation: fadeUp .38s both; animation-delay: calc(var(--i, 0) * 18ms);
         }
+        .ctl.met { --tc: var(--st-success); }
+        .ctl.partial { --tc: var(--st-warning); }
+        .ctl.gap { --tc: var(--st-danger); }
+        .ctl.manual { --tc: var(--st-neutral); }
         .ctl-head {
             display: grid; grid-template-columns: 62px 1fr auto 18px; gap: 12px;
             align-items: center; padding: 10px 13px; cursor: pointer; transition: background .15s;
@@ -226,7 +248,11 @@
         table.rt th.sorted.desc::after { content: ' \25BC'; opacity: 1; }
         table.rt td { padding: 8px 11px; border-bottom: 1px solid var(--st-border); color: var(--st-text-secondary); vertical-align: top; }
         table.rt tbody tr:last-child td { border-bottom: 0; }
-        table.rt tbody tr { animation: fadeUp .3s both; animation-delay: calc(var(--i, 0) * 14ms); }
+        table.rt tbody tr { animation: fadeUp .3s both; animation-delay: calc(var(--i, 0) * 14ms); box-shadow: inset 3px 0 0 var(--rc, transparent); }
+        table.rt tbody tr.Critical { --rc: var(--st-danger); }
+        table.rt tbody tr.High { --rc: var(--st-caution); }
+        table.rt tbody tr.Medium { --rc: var(--st-warning); }
+        table.rt tbody tr.Low { --rc: var(--st-success); }
         table.rt tbody tr:hover td { background: var(--st-surface-hover); }
         table.rt .mono { font-family: var(--st-font-mono); }
         table.rt .risk-title { color: var(--st-text); }
@@ -266,7 +292,11 @@
             <div class="top-bar">
                 <div class="page-header">
                     <h2>GRC &amp; SOC 2 READINESS</h2>
-                    <p>Live control assessment &nbsp;&middot;&nbsp; <span id="g-framework" class="text-muted">&hellip;</span></p>
+                    <p>
+                        <span class="fw-badge"><i class="fas fa-shield-halved"></i><span id="g-framework">&hellip;</span></span>
+                        &nbsp;&middot;&nbsp; Live control assessment &nbsp;&middot;&nbsp;
+                        <span id="g-updated" class="text-muted"></span>
+                    </p>
                 </div>
                 <div class="filters-bar">
                     <button class="soc-btn soc-btn-primary" id="g-report"><i class="fas fa-file-pdf"></i> Readiness Report</button>
@@ -301,9 +331,9 @@
                         <div class="sk sk-tile"></div><div class="sk sk-tile"></div><div class="sk sk-tile"></div>
                         <div class="sk sk-tile"></div><div class="sk sk-tile"></div>
                     </div>
-                    <div class="card catbars hidden" id="g-catbars">
-                        <h3>Coverage by trust category</h3>
-                        <div id="g-catrows"></div>
+                    <div class="hidden" id="g-catbars">
+                        <h3 style="font-size:.62rem;letter-spacing:.1em;text-transform:uppercase;color:var(--st-text-muted);margin:0 0 10px;font-weight:600;">Coverage by trust category</h3>
+                        <div class="cat-grid" id="g-catrows"></div>
                     </div>
                 </div>
             </div>
@@ -391,6 +421,7 @@
             try {
                 const d = await (await fetch(`${B}/compliance/assessment`, { headers: H() })).json();
                 $('#g-framework').textContent = d.framework || '';
+                if (d.generated_at) $('#g-updated').textContent = `assessed ${String(d.generated_at).replace('T', ' ').slice(0, 16)} UTC`;
                 if (d.assessment_type) $('#g-disc').innerHTML = `<b>${esc(d.assessment_type.split('—')[0].trim())}</b> &mdash; ${esc((d.assessment_type.split('—')[1] || 'NOT an independent CPA attestation').trim())}`;
 
                 // gauge
@@ -421,15 +452,24 @@
                     `<div class="tile ${k}" style="--i:${i}"><span class="v" data-n="${v || 0}">0</span><span class="l">${l}</span></div>`).join('');
                 $('#g-counts').querySelectorAll('.v').forEach(el => countUp(el, el.dataset.n));
 
-                // category bars
+                // category cards — one accent (teal) throughout; colour stays
+                // reserved for met/partial/gap status, never for branding a category.
+                const CAT_ICON = {
+                    'Common Criteria': 'fa-shield-halved', 'Availability': 'fa-server',
+                    'Confidentiality': 'fa-lock', 'Processing Integrity': 'fa-gears', 'Privacy': 'fa-user-shield',
+                };
                 const cats = d.by_category || {};
-                $('#g-catrows').innerHTML = Object.entries(cats).map(([name, s]) => {
+                $('#g-catrows').innerHTML = Object.entries(cats).map(([name, s], i) => {
                     const t = s.total || 1;
                     const seg = k => `<span class="s-${k}" style="width:${(s[k] || 0) / t * 100}%"></span>`;
-                    return `<div class="catrow">
-                        <span class="cn" title="${esc(name)}">${esc(name)}</span>
+                    return `<div class="cat-card" style="--i:${i}">
+                        <div class="ch">
+                            <span class="ci"><i class="fas ${CAT_ICON[name] || 'fa-clipboard-check'}"></i></span>
+                            <span class="cn" title="${esc(name)}">${esc(name)}</span>
+                            <span class="cf">${s.met || 0}/${t}</span>
+                        </div>
                         <span class="cbar">${seg('met')}${seg('partial')}${seg('gap')}${seg('manual')}</span>
-                        <span class="ct">${s.met || 0}/${t}</span></div>`;
+                    </div>`;
                 }).join('');
                 $('#g-catbars').classList.remove('hidden');
 
@@ -474,7 +514,7 @@
                         `<div class="ev-row"><span class="el">${esc(e.label)}<span class="es">${esc(e.source)}</span></span><span class="ev">${esc(e.value)}</span></div>`).join('')}</div>`
                     : `<div class="ev-manual"><i class="fas fa-user-pen"></i><span>${esc(x.note || 'No system-derived evidence; requires manual attestation.')}</span></div>
                        <span class="attest-tag">Requires manual attestation</span>`;
-                return `<div class="ctl" style="--i:${i}">
+                return `<div class="ctl ${esc(x.status)}" style="--i:${i}">
                     <div class="ctl-head">
                         <span class="ctl-id">${esc(x.id)}</span>
                         <span class="ctl-main"><span class="ctl-t">${esc(x.title)}</span><span class="ctl-cat">${esc(x.category)}</span></span>
@@ -564,7 +604,7 @@
                 return (va < vb ? -1 : va > vb ? 1 : 0) * SORT.dir;
             });
             if (!rows.length) { $('#g-risks').innerHTML = `<tr><td colspan="8" style="padding:14px;color:var(--st-text-muted)">No risks in this selection.</td></tr>`; return; }
-            $('#g-risks').innerHTML = rows.map((r, i) => `<tr style="--i:${i}">
+            $('#g-risks').innerHTML = rows.map((r, i) => `<tr class="${esc(r.rating)}" style="--i:${i}">
                 <td class="mono">${esc(r.id)}</td>
                 <td class="risk-title">${esc(r.title)}</td>
                 <td>${esc(r.category)}</td>

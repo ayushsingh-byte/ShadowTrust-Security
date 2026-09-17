@@ -13,7 +13,6 @@ from __future__ import annotations
 
 import asyncio
 import os
-import subprocess
 from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional
 
@@ -31,7 +30,7 @@ from app.services.detection_rules import severity_rank
 
 SCENARIOS_DIR = os.getenv("SCENARIOS_DIR", os.path.join(os.getcwd(), "scenarios"))
 ATTACK_SCRIPT = os.getenv("ATTACK_SCENARIOS_SCRIPT", os.path.join(os.getcwd(), "scripts", "attack_scenarios.sh"))
-LOCAL_TARGET = "127.0.0.1"  # never analyst-supplied
+LOCAL_TARGET = "host.docker.internal"  # never analyst-supplied; resolved inside the attacker container
 
 
 def _now() -> datetime:
@@ -71,7 +70,8 @@ def _all_expected_rule_ids() -> set:
 async def _observe(db: AsyncSession, window_start: datetime, target_ip: str) -> Dict[str, Any]:
     """What the pipeline produced since ``window_start``."""
     dets = (await db.execute(
-        select(Detection).where(Detection.created_at >= window_start)
+        # created in the window, or an existing (deduped) detection that fired again in it
+        select(Detection).where((Detection.created_at >= window_start) | (Detection.last_event_at >= window_start))
     )).scalars().all()
     incs = (await db.execute(
         select(Incident).where(Incident.updated_at >= window_start)
@@ -148,22 +148,38 @@ def _grade(expected: Dict[str, Any], observed: Dict[str, Any]) -> Dict[str, Any]
 
 
 async def _run_attack_script(script_scenario: str) -> Dict[str, Any]:
+    """
+    Fire the scenario from a throwaway st-attacker container at the host's
+    published honeypot ports (host.docker.internal). The backend image has no
+    ssh/nmap/nc/curl and nothing listens on its own 127.0.0.1, so running the
+    script in-process produced no traffic at all. Target is still fixed here;
+    script_scenario comes from the server-side scenario YAML.
+    """
     if not os.path.exists(ATTACK_SCRIPT):
         return {"ran": False, "error": f"attack script not found at {ATTACK_SCRIPT}"}
+    from app.services import data_admin
 
     def _call():
-        return subprocess.run(
-            ["bash", ATTACK_SCRIPT, LOCAL_TARGET, script_scenario],  # target is fixed
-            capture_output=True, text=True, timeout=240,
+        data_admin._ensure_attacker_image()
+        scripts_src = data_admin._host_path(os.path.dirname(ATTACK_SCRIPT))
+        c = data_admin._docker().containers.run(
+            data_admin.ATTACKER_IMAGE,
+            [f'bash /s/{os.path.basename(ATTACK_SCRIPT)} '
+             f'"$(getent ahostsv4 host.docker.internal | awk \'NR==1{{print $1}}\')" {script_scenario}'],
+            volumes={scripts_src: {"bind": "/s", "mode": "ro"}},
+            detach=True, labels={"shadowtrust.data_admin": "validation"},
         )
+        try:
+            rc = c.wait(timeout=240).get("StatusCode", 1)
+            out = c.logs().decode("utf-8", "replace")
+            return rc, out
+        finally:
+            c.remove(force=True)
     try:
-        proc = await asyncio.to_thread(_call)
-        return {"ran": True, "returncode": proc.returncode,
-                "stdout_tail": proc.stdout[-2000:], "stderr_tail": proc.stderr[-1000:]}
-    except subprocess.TimeoutExpired:
-        return {"ran": True, "error": "attack script timed out"}
+        rc, out = await asyncio.to_thread(_call)
+        return {"ran": True, "returncode": rc, "stdout_tail": out[-2000:]}
     except Exception as exc:  # noqa: BLE001
-        return {"ran": False, "error": str(exc)}
+        return {"ran": False, "error": f"{exc.__class__.__name__}: {exc}"}
 
 
 async def run_scenario(
@@ -192,9 +208,13 @@ async def run_scenario(
         triggered_by=triggered_by,
     )
     db.add(run)
-    await db.flush()
+    # Commit now: under MariaDB REPEATABLE READ an open transaction keeps its
+    # first snapshot, so _observe would never see detections the engine commits
+    # while the attack runs.
+    await db.commit()
 
-    window_start = _now()
+    # event timestamps are stored to the second; floor so first-second hits count
+    window_start = _now().replace(microsecond=0) - timedelta(seconds=1)
     exec_info: Dict[str, Any] = {}
 
     if mode == "execute":

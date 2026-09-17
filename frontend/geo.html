@@ -33,23 +33,12 @@
             animation: pulse-ring 2s infinite;
         }
 
+        /* Halo pulses, the dot itself stays solid — fading the dot's opacity
+           made every marker invisible for most of the cycle. */
         @keyframes pulse-ring {
-            0% {
-                transform: scale(0.5);
-                opacity: 1;
-                box-shadow: 0 0 0 0 color-mix(in srgb, var(--st-danger) 70%, transparent);
-            }
-
-            70% {
-                transform: scale(2);
-                opacity: 0;
-                box-shadow: 0 0 0 20px color-mix(in srgb, var(--st-danger) 1%, transparent);
-            }
-
-            100% {
-                transform: scale(0.5);
-                opacity: 0;
-            }
+            0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--st-danger) 70%, transparent); }
+            70% { box-shadow: 0 0 0 14px color-mix(in srgb, var(--st-danger) 0%, transparent); }
+            100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--st-danger) 0%, transparent); }
         }
 
         /* Cyberpunk Map Overlay */
@@ -178,7 +167,7 @@
             <div class="top-bar">
                 <div class="page-header">
                     <h2>Geo Intelligence · Global Footprint</h2>
-                    <p>Country and ASN level breakdown of attacker origins.</p>
+                    <p>Most-specific resolvable location and ASN breakdown of attacker origins — a source is only listed once it resolves past country level.</p>
                 </div>
                 <div class="filters-bar">
                     <span class="text-xs text-muted">Range:</span>
@@ -217,14 +206,15 @@
 
                 <div class="soc-card">
                     <div class="soc-card-header">
-                        <span class="card-title">Top Source Countries</span>
+                        <span class="card-title">Top Source Locations</span>
                         <span class="badge">GEOGRAPHIC ATTRIBUTION</span>
                     </div>
+                    <p class="text-xs text-muted" style="margin:-4px 0 10px;">City- or region-level only — sources that resolved no finer than a bare country aren't shown here.</p>
                     <table class="soc-table">
                         <thead>
                             <tr>
                                 <th>FLAG</th>
-                                <th>COUNTRY</th>
+                                <th>LOCATION</th>
                                 <th>CODE</th>
                                 <th>EVENTS</th>
                                 <th>TRAFFIC</th>
@@ -397,23 +387,31 @@
                                 className: "", // Clear the class so Leaflet uses its clean default positioning class
                                 html: `<span style="${markerHtmlStyles}"></span>`
                             });
-                            L.marker([m.lat, m.lon], { icon }).addTo(window.geoAttackMarkersLayer);
+                            const marker = L.marker([m.lat, m.lon], { icon }).addTo(window.geoAttackMarkersLayer);
+                            // Only show a location line when it resolved past country level —
+                            // otherwise just IP + hits, never a bare country name.
+                            const locLine = m.location ? `<div>${m.location}</div>` : '';
+                            marker.bindPopup(
+                                `<div style="font-family:var(--st-font-mono);font-size:.75rem;">
+                                    <b>${m.ip}</b>${locLine}<div>${m.hits} event${m.hits === 1 ? '' : 's'}</div>
+                                </div>`
+                            );
                         }
                     });
                 }
 
-                // Update Top Countries Table
+                // Update Top Locations Table — city/region only, never a bare country
                 const countriesTbody = document.getElementById('topCountriesTbody');
-                if (countriesTbody && data.top_countries) {
+                if (countriesTbody && data.top_locations) {
                     countriesTbody.innerHTML = '';
-                    if (data.top_countries.length === 0) {
-                        countriesTbody.innerHTML = '<tr><td colspan="5" class="text-muted">No data yet</td></tr>';
+                    if (data.top_locations.length === 0) {
+                        countriesTbody.innerHTML = '<tr><td colspan="5" class="text-muted">No source resolved past country level yet</td></tr>';
                     } else {
-                        data.top_countries.forEach(c => {
+                        data.top_locations.forEach(c => {
                             const tr = document.createElement('tr');
                             tr.innerHTML = `
                                 <td>${c.flag || '🏳️'}</td>
-                                <td>${c.country || 'Unknown'}</td>
+                                <td>${c.location}</td>
                                 <td>${c.code || '--'}</td>
                                 <td>${c.events || 0}</td>
                                 <td class="text-mono text-xs">${c.traffic || '0 MB'}</td>

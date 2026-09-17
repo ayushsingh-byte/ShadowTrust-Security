@@ -6,8 +6,8 @@
     <title>Shadow Trust — Documentation</title>
     <link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
-    <link rel="stylesheet" href="css/landing/landingpage.css?v=3">
-    <link rel="stylesheet" href="css/landing/docs.css?v=3">
+    <link rel="stylesheet" href="css/landing/landingpage.css?v=5">
+    <link rel="stylesheet" href="css/landing/docs.css?v=4">
     <link rel="stylesheet" href="css/tokens.css">
     <script src="js/theme.js"></script>
 </head>
@@ -120,55 +120,57 @@ cd Shadow-Trust
 # The wizard will:
 #   - Detect your OS (macOS / Linux / Windows)
 #   - Create .env files from templates
-#   - Touch SQLite database files
-#   - Build all 5 Docker images
+#   - Build the Docker images (backend, frontend, sensors, labs)
 #   - Start all services in detached mode
 
 # Access the platform:
 # Dashboard  →  http://localhost:5500
 # API Docs   →  http://localhost:8000/docs
 # MobSF      →  http://localhost:5055
-# Node API   →  http://localhost:3000</code></pre>
+# phpMyAdmin →  http://localhost:8081
+# Status     →  http://localhost:8000/health  (HEALTH_PAGE=1)</code></pre>
             </div>
 
             <h3 id="env">Key Environment Variables</h3>
-            <p>All credentials live in <code>backend/.env</code>. Required fields:</p>
+            <p>Configuration lives in the repo-root <code>.env</code> (copy <code>.env.example</code>). Key fields:</p>
 
             <div class="code-block-wrapper">
                 <div class="code-header">
                     <span>env</span>
                     <button class="copy-btn" onclick="copyCode(this)">Copy</button>
                 </div>
-                <pre><code># Core (required)
-SECRET_KEY=your-jwt-secret-key
-SUPABASE_URL=https://YOUR_PROJECT.supabase.co
-SUPABASE_KEY=your-service-role-key
+                <pre><code># Database (required)
+MARIADB_ROOT_PASSWORD=change-me
+MARIADB_DATABASE=shadowtrust
+MARIADB_USER=shadowtrust
+MARIADB_PASSWORD=change-me
 
-# Email alerts (optional)
-SMTP_HOST=smtp.gmail.com
-SMTP_USER=your@gmail.com
-SMTP_PASS=your-app-password
+# Lab provider: local Docker (default) or aws
+INFRA_PROVIDER=local
 
-# WhatsApp alerts (optional)
-TWILIO_ACCOUNT_SID=ACxxxxxxxx
-TWILIO_AUTH_TOKEN=your-token
+# Splunk Blue Team page (optional)
+SPLUNK_API_URL=https://host.docker.internal:8089
+SPLUNK_USER=admin
+SPLUNK_PASSWORD=
 
-# AWS VM orchestration (optional)
-AWS_ACCESS_KEY_ID=
-AWS_SECRET_ACCESS_KEY=
-AWS_REGION=us-east-1</code></pre>
+# Malware engines (optional)
+VIRUSTOTAL_API_KEY=
+
+# Local-dev conveniences — keep 0 in anything shared
+HEALTH_PAGE=0
+DEV_BYPASS=0</code></pre>
             </div>
 
             <h3 id="rbac">RBAC — Roles & Access Levels</h3>
-            <p>Shadow Trust uses a 6-tier role model with clearance levels. Set the first Super Admin in Supabase:</p>
+            <p>Shadow Trust uses a 6-tier role model with clearance levels. Promote the first Super Admin directly in MariaDB (phpMyAdmin at :8081 works too):</p>
 
             <div class="code-block-wrapper">
                 <div class="code-header">
                     <span>sql</span>
                     <button class="copy-btn" onclick="copyCode(this)">Copy</button>
                 </div>
-                <pre><code>-- In Supabase SQL Editor: promote first user to super_admin
-UPDATE users SET role = 'super_admin', clearance_level = 3
+                <pre><code>-- MariaDB: promote first user to SUPER_ADMIN
+UPDATE users SET role = 'SUPER_ADMIN', clearance_level = 3
 WHERE email = 'your@email.com';</code></pre>
             </div>
 

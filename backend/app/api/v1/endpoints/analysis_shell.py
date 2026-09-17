@@ -21,6 +21,7 @@ from typing import Any, Dict, Optional
 import jwt
 from fastapi import APIRouter, Depends, HTTPException, WebSocket, WebSocketDisconnect
 from sqlalchemy import desc, select
+from sqlalchemy.exc import OperationalError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.v1.dependencies import get_current_active_user
@@ -74,7 +75,13 @@ async def session_detail(session_id: str, db: AsyncSession = Depends(get_db),
         raise HTTPException(status_code=404, detail="session not found")
     if not s.incident_id:
         await analysis_shell._link_incident(db, s)
-        await db.commit()
+        try:
+            await db.commit()
+        except OperationalError:
+            # PTY record_command commits the same row concurrently (MariaDB 1020);
+            # linking is best-effort and retried on the next poll/command.
+            await db.rollback()
+            await db.refresh(s)
     events = (await db.execute(
         select(NormalizedEventModel)
         .where(NormalizedEventModel.source_ip == s.source_tag,

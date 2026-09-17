@@ -1,7 +1,7 @@
 id: reconnaissance
 script_scenario: recon
 description: Wide TCP port sweep across all exposed honeypot ports.
-target: 127.0.0.1
+target: host.docker.internal
 expected_telemetry:
   - min_events: 8
 expected_detections:

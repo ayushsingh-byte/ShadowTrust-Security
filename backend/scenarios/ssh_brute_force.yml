@@ -2,7 +2,7 @@ id: ssh-brute-force
 script_scenario: brute-force
 description: >
   Repeated failed SSH logins from one source against the Cowrie honeypot.
-target: 127.0.0.1
+target: host.docker.internal
 expected_telemetry:
   - sensor: cowrie
     min_events: 5

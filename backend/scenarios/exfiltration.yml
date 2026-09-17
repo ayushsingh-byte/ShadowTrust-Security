@@ -1,7 +1,7 @@
 id: exfil-sim
 script_scenario: exfil-sim
 description: Archive-and-upload shaped commands (tar + curl -T + scp) in a Cowrie shell.
-target: 127.0.0.1
+target: host.docker.internal
 expected_telemetry:
   - sensor: cowrie
     min_events: 1

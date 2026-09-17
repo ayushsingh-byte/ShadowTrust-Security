@@ -5,7 +5,7 @@ Executes or evaluates a controlled attack scenario and grades the real
 detection pipeline output against the scenario's expectations.
 
 ``execute`` mode fires local attack traffic — ADMIN only, target hard-locked
-to 127.0.0.1.
+to the host-published honeypot ports (host.docker.internal).
 """
 
 from __future__ import annotations
@@ -38,7 +38,7 @@ async def list_scenarios(_: User = Depends(get_current_active_user)):
             {
                 "id": s["id"],
                 "description": (s.get("description") or "").strip(),
-                "target": s.get("target", "127.0.0.1"),
+                "target": s.get("target", "host.docker.internal"),
                 "script_scenario": s.get("script_scenario"),
                 "requires": s.get("requires"),
                 "expected_telemetry": s.get("expected_telemetry", []),

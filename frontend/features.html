@@ -6,8 +6,8 @@
     <title>Shadow Trust — Features</title>
     <link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
-    <link rel="stylesheet" href="css/landing/landingpage.css?v=3">
-    <link rel="stylesheet" href="css/landing/features.css?v=3">
+    <link rel="stylesheet" href="css/landing/landingpage.css?v=5">
+    <link rel="stylesheet" href="css/landing/features.css?v=4">
     <link rel="stylesheet" href="css/tokens.css">
     <script src="js/theme.js"></script>
 </head>
@@ -61,7 +61,7 @@
             <div class="feature-card" data-aos="zoom-in" data-aos-delay="200">
                 <div class="feature-icon">📡</div>
                 <h3>Real-Time Telemetry</h3>
-                <p>Edge SQLite captures every attacker keystroke, command, and file event locally — offline-resilient. Enriched events sync to Supabase for live dashboard streaming when connected.</p>
+                <p>Every attacker keystroke, command and file event is tailed from the sensor logs into MariaDB and pushed to the dashboard over Server-Sent Events — measured end-to-end latency, no polling.</p>
             </div>
 
             <div class="feature-card" data-aos="zoom-in" data-aos-delay="250">
@@ -114,8 +114,8 @@
 
             <div class="feature-card" data-aos="zoom-in" data-aos-delay="650">
                 <div class="feature-icon">🔔</div>
-                <h3>Multi-Channel Alerts</h3>
-                <p>Critical threat notifications delivered via Gmail SMTP (Jinja2 templated emails) and WhatsApp via Twilio. Configurable alert thresholds and role-based notification routing.</p>
+                <h3>Credential Delivery</h3>
+                <p>New analyst credentials are issued with one-time tokens and delivered by SMTP email or WhatsApp (Twilio) when those integrations are configured, with a full audit trail.</p>
             </div>
 
         </div>
@@ -166,14 +166,14 @@
                         <td><span class="highlight">Automatic per-event tagging</span></td>
                     </tr>
                     <tr>
-                        <td>Alert Channels</td>
-                        <td>Email only</td>
-                        <td><span class="highlight">Email + WhatsApp (Twilio)</span></td>
+                        <td>Incident Correlation</td>
+                        <td>Manual triage</td>
+                        <td><span class="highlight">Rule-based detections → incidents</span></td>
                     </tr>
                     <tr>
-                        <td>Offline Resilience</td>
+                        <td>Deployment</td>
                         <td>Cloud-dependent</td>
-                        <td><span class="highlight">SQLite edge — works offline</span></td>
+                        <td><span class="highlight">Self-hosted Docker Compose</span></td>
                     </tr>
                 </tbody>
             </table>

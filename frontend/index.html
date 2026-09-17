@@ -6,7 +6,7 @@
     <title>Shadow Trust — AI-Powered SOC & Threat Intelligence Platform</title>
     <link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
-    <link rel="stylesheet" href="css/landing/landingpage.css?v=3">
+    <link rel="stylesheet" href="css/landing/landingpage.css?v=5">
     <link rel="stylesheet" href="css/tokens.css">
     <script src="js/theme.js"></script>
 </head>
@@ -95,7 +95,7 @@
             <div class="card" data-aos="zoom-in" data-aos-delay="200">
                 <span class="card-icon">🍯</span>
                 <h3>Multi-Protocol Honeypots</h3>
-                <p>Deploy Cowrie (SSH/Telnet), Dionaea (malware capture), and Honeytrap (multi-port) nodes. Logs flow to edge SQLite for full offline resilience.</p>
+                <p>Deploy Cowrie (SSH/Telnet), Dionaea (malware capture), and Honeytrap (multi-port) nodes. Their logs are tailed into MariaDB within seconds — no cloud dependency.</p>
             </div>
             <div class="card" data-aos="zoom-in" data-aos-delay="300">
                 <span class="card-icon">🔬</span>
@@ -124,8 +124,8 @@
     <section class="why" data-aos="fade-right">
         <div>
             <span class="section-label">Architecture</span>
-            <h2>Hybrid <span>Edge-to-Cloud</span> Design</h2>
-            <p>Honeypot nodes write telemetry locally to SQLite — zero dependency on connectivity. When online, the backend syncs enriched analytics to Supabase PostgreSQL. AWS EC2 powers on-demand analysis sandboxes via async FastAPI endpoints. No public management ports. All admin access via AWS SSM.</p>
+            <h2>Self-Hosted <span>Detection Pipeline</span></h2>
+            <p>Cowrie, Dionaea and Honeytrap write JSON logs that a local collector tails byte-by-byte into MariaDB, then streams to the dashboard over Server-Sent Events. A rule-based detection engine correlates events into incidents mapped to MITRE ATT&amp;CK. Everything runs in one Docker Compose stack; AWS is an optional lab provider.</p>
             <a href="architecture.html" class="btn btn-outline">View Architecture →</a>
         </div>
         <img src="./architecture_hero.png" alt="Shadow Trust Architecture">

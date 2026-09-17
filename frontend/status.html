@@ -6,8 +6,8 @@
     <title>Shadow Trust — System Status</title>
     <link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
-    <link rel="stylesheet" href="css/landing/landingpage.css?v=3">
-    <link rel="stylesheet" href="css/landing/status.css?v=3">
+    <link rel="stylesheet" href="css/landing/landingpage.css?v=5">
+    <link rel="stylesheet" href="css/landing/status.css?v=4">
     <link rel="stylesheet" href="css/tokens.css">
     <script src="js/theme.js"></script>
 </head>
@@ -34,489 +34,51 @@
         <div class="status-hero-text">
             <span class="section-label">Live Monitoring</span>
             <h1>Shadow Trust <span>System Status</span></h1>
-            <p>Real-time health monitoring across all five Docker services, background AI engines, and external integrations. Updated continuously from backend health endpoints.</p>
-            <div class="overall-status operational">
+            <p>Live state of this deployment's services, honeypot sensors and telemetry pipeline, read from the backend every 30 seconds. No historical uptime is claimed — only what is measured right now.</p>
+            <div id="overall" class="overall-status">
                 <span class="pulse-dot"></span>
-                All Core Services Operational
+                <span id="overallText">Checking services…</span>
             </div>
         </div>
 
-        <!-- Live Monitor Widget -->
         <div class="status-hero-widget">
             <div class="shw-header">
-                <span class="shw-title">Service Monitor</span>
-                <span class="shw-badge">● All Operational</span>
+                <span class="shw-title">Sensors</span>
+                <span class="shw-badge" id="sensorBadge">—</span>
             </div>
-            <div class="shw-services">
-                <div class="shw-row">
-                    <span class="shw-dot green"></span>
-                    <span class="shw-name">FastAPI Backend</span>
-                    <div class="shw-bar"><div class="shw-bar-fill" style="width:99.9%"></div></div>
-                    <span class="shw-latency">12ms</span>
-                    <span class="shw-pct">99.9%</span>
-                </div>
-                <div class="shw-row">
-                    <span class="shw-dot green"></span>
-                    <span class="shw-name">MobSF Service</span>
-                    <div class="shw-bar"><div class="shw-bar-fill" style="width:99.7%"></div></div>
-                    <span class="shw-latency">45ms</span>
-                    <span class="shw-pct">99.7%</span>
-                </div>
-                <div class="shw-row">
-                    <span class="shw-dot green"></span>
-                    <span class="shw-name">Node.js API</span>
-                    <div class="shw-bar"><div class="shw-bar-fill" style="width:100%"></div></div>
-                    <span class="shw-latency">8ms</span>
-                    <span class="shw-pct">100%</span>
-                </div>
-                <div class="shw-row">
-                    <span class="shw-dot green"></span>
-                    <span class="shw-name">Sync Worker</span>
-                    <div class="shw-bar"><div class="shw-bar-fill" style="width:99.8%"></div></div>
-                    <span class="shw-latency">—</span>
-                    <span class="shw-pct">99.8%</span>
-                </div>
-                <div class="shw-row">
-                    <span class="shw-dot green"></span>
-                    <span class="shw-name">Nginx Frontend</span>
-                    <div class="shw-bar"><div class="shw-bar-fill" style="width:100%"></div></div>
-                    <span class="shw-latency">3ms</span>
-                    <span class="shw-pct">100%</span>
-                </div>
-            </div>
+            <div class="shw-services" id="sensorRows"></div>
             <div class="shw-footer">
-                <span>Last checked: just now</span>
+                <span>Last checked: <span id="checkedAt">—</span></span>
                 <span class="shw-live"><span class="shw-live-dot"></span> Live</span>
             </div>
         </div>
     </section>
 
-    <!-- METRICS STRIP -->
+    <!-- METRICS STRIP (all measured) -->
     <div class="metrics-strip" data-aos="fade-up">
         <div class="metric-item">
-            <div class="metric-value green">5/5</div>
+            <div class="metric-value green" id="mServices">—</div>
             <div class="metric-label">Services Up</div>
         </div>
         <div class="metric-item">
-            <div class="metric-value cyan">99.9%</div>
-            <div class="metric-label">Avg Uptime (30d)</div>
+            <div class="metric-value cyan" id="mEvents">—</div>
+            <div class="metric-label">Events Logged</div>
         </div>
         <div class="metric-item">
-            <div class="metric-value white">12ms</div>
-            <div class="metric-label">API Response</div>
+            <div class="metric-value white" id="mLatency">—</div>
+            <div class="metric-label">API Response (measured)</div>
         </div>
         <div class="metric-item">
-            <div class="metric-value white">0</div>
-            <div class="metric-label">Active Incidents</div>
+            <div class="metric-value white" id="mPipeline">—</div>
+            <div class="metric-label">Telemetry Pipeline</div>
         </div>
     </div>
 
-    <!-- DOCKER SERVICES -->
     <section class="section" data-aos="fade-up">
-        <span class="section-label">Docker Services</span>
-        <h2>Service <span>Health Overview</span></h2>
-        <p class="section-sub">All five Docker Compose services with 30-day uptime history and real-time status.</p>
-
-        <div class="status-grid">
-
-            <div class="status-card" data-aos="fade-up" data-aos-delay="100">
-                <div class="status-header">
-                    <div class="status-header-left">
-                        <div class="service-icon-box">⚡</div>
-                        <div class="service-info">
-                            <h3>FastAPI Backend</h3>
-                            <p class="service-meta">Python 3.11 · Uvicorn · Port 8000</p>
-                        </div>
-                    </div>
-                    <span class="status-badge success">Operational</span>
-                </div>
-                <div class="card-metrics">
-                    <div class="card-metric"><div class="card-metric-val">99.9%</div><div class="card-metric-lbl">30d Uptime</div></div>
-                    <div class="card-metric"><div class="card-metric-val cyan">12ms</div><div class="card-metric-lbl">Response</div></div>
-                    <div class="card-metric"><div class="card-metric-val white">8000</div><div class="card-metric-lbl">Port</div></div>
-                </div>
-                <div class="seg-labels"><span>30 days ago</span><span>Today</span></div>
-                <div class="segment-bar">
-                    <div class="seg green"></div><div class="seg green"></div><div class="seg green"></div><div class="seg green"></div><div class="seg green"></div>
-                    <div class="seg green"></div><div class="seg green"></div><div class="seg green"></div><div class="seg green"></div><div class="seg green"></div>
-                    <div class="seg green"></div><div class="seg green"></div><div class="seg green"></div><div class="seg green"></div><div class="seg green"></div>
-                    <div class="seg green"></div><div class="seg green"></div><div class="seg green"></div><div class="seg green"></div><div class="seg green"></div>
-                    <div class="seg green"></div><div class="seg green"></div><div class="seg green"></div><div class="seg green"></div><div class="seg green"></div>
-                    <div class="seg green"></div><div class="seg green"></div><div class="seg green"></div><div class="seg green"></div><div class="seg green"></div>
-                </div>
-                <p class="uptime-text"><span>30-day history</span><strong>99.9% uptime</strong></p>
-            </div>
-
-            <div class="status-card" data-aos="fade-up" data-aos-delay="150">
-                <div class="status-header">
-                    <div class="status-header-left">
-                        <div class="service-icon-box">📱</div>
-                        <div class="service-info">
-                            <h3>MobSF Analysis Service</h3>
-                            <p class="service-meta">Flask + Docker Socket · Port 5055</p>
-                        </div>
-                    </div>
-                    <span class="status-badge success">Operational</span>
-                </div>
-                <div class="card-metrics">
-                    <div class="card-metric"><div class="card-metric-val">99.7%</div><div class="card-metric-lbl">30d Uptime</div></div>
-                    <div class="card-metric"><div class="card-metric-val cyan">45ms</div><div class="card-metric-lbl">Response</div></div>
-                    <div class="card-metric"><div class="card-metric-val white">5055</div><div class="card-metric-lbl">Port</div></div>
-                </div>
-                <div class="seg-labels"><span>30 days ago</span><span>Today</span></div>
-                <div class="segment-bar">
-                    <div class="seg green"></div><div class="seg green"></div><div class="seg green"></div><div class="seg green"></div><div class="seg green"></div>
-                    <div class="seg green"></div><div class="seg green"></div><div class="seg green"></div><div class="seg green"></div><div class="seg green"></div>
-                    <div class="seg yellow"></div><div class="seg green"></div><div class="seg green"></div><div class="seg green"></div><div class="seg green"></div>
-                    <div class="seg green"></div><div class="seg green"></div><div class="seg green"></div><div class="seg green"></div><div class="seg green"></div>
-                    <div class="seg green"></div><div class="seg green"></div><div class="seg green"></div><div class="seg green"></div><div class="seg green"></div>
-                    <div class="seg green"></div><div class="seg green"></div><div class="seg green"></div><div class="seg green"></div><div class="seg green"></div>
-                </div>
-                <p class="uptime-text"><span>30-day history · 1 maintenance window</span><strong>99.7% uptime</strong></p>
-            </div>
-
-            <div class="status-card" data-aos="fade-up" data-aos-delay="200">
-                <div class="status-header">
-                    <div class="status-header-left">
-                        <div class="service-icon-box">🔷</div>
-                        <div class="service-info">
-                            <h3>Node.js Edge API</h3>
-                            <p class="service-meta">Fastify TypeScript · Port 3000</p>
-                        </div>
-                    </div>
-                    <span class="status-badge success">Operational</span>
-                </div>
-                <div class="card-metrics">
-                    <div class="card-metric"><div class="card-metric-val">100%</div><div class="card-metric-lbl">30d Uptime</div></div>
-                    <div class="card-metric"><div class="card-metric-val cyan">8ms</div><div class="card-metric-lbl">Response</div></div>
-                    <div class="card-metric"><div class="card-metric-val white">3000</div><div class="card-metric-lbl">Port</div></div>
-                </div>
-                <div class="seg-labels"><span>30 days ago</span><span>Today</span></div>
-                <div class="segment-bar">
-                    <div class="seg green"></div><div class="seg green"></div><div class="seg green"></div><div class="seg green"></div><div class="seg green"></div>
-                    <div class="seg green"></div><div class="seg green"></div><div class="seg green"></div><div class="seg green"></div><div class="seg green"></div>
-                    <div class="seg green"></div><div class="seg green"></div><div class="seg green"></div><div class="seg green"></div><div class="seg green"></div>
-                    <div class="seg green"></div><div class="seg green"></div><div class="seg green"></div><div class="seg green"></div><div class="seg green"></div>
-                    <div class="seg green"></div><div class="seg green"></div><div class="seg green"></div><div class="seg green"></div><div class="seg green"></div>
-                    <div class="seg green"></div><div class="seg green"></div><div class="seg green"></div><div class="seg green"></div><div class="seg green"></div>
-                </div>
-                <p class="uptime-text"><span>30-day history</span><strong>100% uptime</strong></p>
-            </div>
-
-            <div class="status-card" data-aos="fade-up" data-aos-delay="250">
-                <div class="status-header">
-                    <div class="status-header-left">
-                        <div class="service-icon-box">🔄</div>
-                        <div class="service-info">
-                            <h3>Supabase Sync Worker</h3>
-                            <p class="service-meta">Node.js · Background · soc_worker</p>
-                        </div>
-                    </div>
-                    <span class="status-badge success">Operational</span>
-                </div>
-                <div class="card-metrics">
-                    <div class="card-metric"><div class="card-metric-val">99.8%</div><div class="card-metric-lbl">30d Uptime</div></div>
-                    <div class="card-metric"><div class="card-metric-val cyan">10s</div><div class="card-metric-lbl">Sync Interval</div></div>
-                    <div class="card-metric"><div class="card-metric-val white">BG</div><div class="card-metric-lbl">Mode</div></div>
-                </div>
-                <div class="seg-labels"><span>30 days ago</span><span>Today</span></div>
-                <div class="segment-bar">
-                    <div class="seg green"></div><div class="seg green"></div><div class="seg green"></div><div class="seg green"></div><div class="seg green"></div>
-                    <div class="seg green"></div><div class="seg green"></div><div class="seg green"></div><div class="seg green"></div><div class="seg yellow"></div>
-                    <div class="seg green"></div><div class="seg green"></div><div class="seg green"></div><div class="seg green"></div><div class="seg green"></div>
-                    <div class="seg green"></div><div class="seg green"></div><div class="seg green"></div><div class="seg green"></div><div class="seg green"></div>
-                    <div class="seg green"></div><div class="seg green"></div><div class="seg green"></div><div class="seg green"></div><div class="seg green"></div>
-                    <div class="seg green"></div><div class="seg green"></div><div class="seg green"></div><div class="seg green"></div><div class="seg green"></div>
-                </div>
-                <p class="uptime-text"><span>30-day history · Feb 20 sync delay</span><strong>99.8% uptime</strong></p>
-            </div>
-
-            <div class="status-card" data-aos="fade-up" data-aos-delay="300">
-                <div class="status-header">
-                    <div class="status-header-left">
-                        <div class="service-icon-box">🌐</div>
-                        <div class="service-info">
-                            <h3>Nginx Frontend</h3>
-                            <p class="service-meta">Nginx 1.25 Alpine · Port 5500</p>
-                        </div>
-                    </div>
-                    <span class="status-badge success">Operational</span>
-                </div>
-                <div class="card-metrics">
-                    <div class="card-metric"><div class="card-metric-val">100%</div><div class="card-metric-lbl">30d Uptime</div></div>
-                    <div class="card-metric"><div class="card-metric-val cyan">3ms</div><div class="card-metric-lbl">Response</div></div>
-                    <div class="card-metric"><div class="card-metric-val white">5500</div><div class="card-metric-lbl">Port</div></div>
-                </div>
-                <div class="seg-labels"><span>30 days ago</span><span>Today</span></div>
-                <div class="segment-bar">
-                    <div class="seg green"></div><div class="seg green"></div><div class="seg green"></div><div class="seg green"></div><div class="seg green"></div>
-                    <div class="seg green"></div><div class="seg green"></div><div class="seg green"></div><div class="seg green"></div><div class="seg green"></div>
-                    <div class="seg green"></div><div class="seg green"></div><div class="seg green"></div><div class="seg green"></div><div class="seg green"></div>
-                    <div class="seg green"></div><div class="seg green"></div><div class="seg green"></div><div class="seg green"></div><div class="seg green"></div>
-                    <div class="seg green"></div><div class="seg green"></div><div class="seg green"></div><div class="seg green"></div><div class="seg green"></div>
-                    <div class="seg green"></div><div class="seg green"></div><div class="seg green"></div><div class="seg green"></div><div class="seg green"></div>
-                </div>
-                <p class="uptime-text"><span>30-day history</span><strong>100% uptime</strong></p>
-            </div>
-
-        </div>
-    </section>
-
-    <!-- BACKGROUND ENGINES -->
-    <section class="section" data-aos="fade-up">
-        <span class="section-label">Background Engines</span>
-        <h2>AI &amp; Processing <span>Subsystems</span></h2>
-        <p class="section-sub">Background tasks running inside FastAPI — continuous, no restarts required.</p>
-
-        <div class="status-grid">
-
-            <div class="status-card" data-aos="fade-up" data-aos-delay="100">
-                <div class="status-header">
-                    <div class="status-header-left">
-                        <div class="service-icon-box">🧠</div>
-                        <div class="service-info">
-                            <h3>AI Classification Engine</h3>
-                            <p class="service-meta">Per-event · SQLi / XSS / BruteForce / RCE</p>
-                        </div>
-                    </div>
-                    <span class="status-badge success">Active</span>
-                </div>
-                <div class="card-metrics">
-                    <div class="card-metric"><div class="card-metric-val">100%</div><div class="card-metric-lbl">Availability</div></div>
-                    <div class="card-metric"><div class="card-metric-val cyan">&lt;1ms</div><div class="card-metric-lbl">Classify Time</div></div>
-                    <div class="card-metric"><div class="card-metric-val white">6</div><div class="card-metric-lbl">Attack Types</div></div>
-                </div>
-                <div class="seg-labels"><span>30 days ago</span><span>Today</span></div>
-                <div class="segment-bar">
-                    <div class="seg green"></div><div class="seg green"></div><div class="seg green"></div><div class="seg green"></div><div class="seg green"></div>
-                    <div class="seg green"></div><div class="seg green"></div><div class="seg green"></div><div class="seg green"></div><div class="seg green"></div>
-                    <div class="seg green"></div><div class="seg green"></div><div class="seg green"></div><div class="seg green"></div><div class="seg green"></div>
-                    <div class="seg green"></div><div class="seg green"></div><div class="seg green"></div><div class="seg green"></div><div class="seg green"></div>
-                    <div class="seg green"></div><div class="seg green"></div><div class="seg green"></div><div class="seg green"></div><div class="seg green"></div>
-                    <div class="seg green"></div><div class="seg green"></div><div class="seg green"></div><div class="seg green"></div><div class="seg green"></div>
-                </div>
-                <p class="uptime-text"><span>Processing events continuously</span><strong>100% uptime</strong></p>
-            </div>
-
-            <div class="status-card" data-aos="fade-up" data-aos-delay="150">
-                <div class="status-header">
-                    <div class="status-header-left">
-                        <div class="service-icon-box">🔗</div>
-                        <div class="service-info">
-                            <h3>Session Correlation Engine</h3>
-                            <p class="service-meta">Every 60s · Attacker session grouping</p>
-                        </div>
-                    </div>
-                    <span class="status-badge success">Active</span>
-                </div>
-                <div class="card-metrics">
-                    <div class="card-metric"><div class="card-metric-val">100%</div><div class="card-metric-lbl">Availability</div></div>
-                    <div class="card-metric"><div class="card-metric-val cyan">60s</div><div class="card-metric-lbl">Interval</div></div>
-                    <div class="card-metric"><div class="card-metric-val white">&lt;60s</div><div class="card-metric-lbl">Last Run</div></div>
-                </div>
-                <div class="seg-labels"><span>30 days ago</span><span>Today</span></div>
-                <div class="segment-bar">
-                    <div class="seg green"></div><div class="seg green"></div><div class="seg green"></div><div class="seg green"></div><div class="seg green"></div>
-                    <div class="seg green"></div><div class="seg green"></div><div class="seg green"></div><div class="seg green"></div><div class="seg green"></div>
-                    <div class="seg green"></div><div class="seg green"></div><div class="seg green"></div><div class="seg green"></div><div class="seg green"></div>
-                    <div class="seg green"></div><div class="seg green"></div><div class="seg green"></div><div class="seg green"></div><div class="seg green"></div>
-                    <div class="seg green"></div><div class="seg green"></div><div class="seg green"></div><div class="seg green"></div><div class="seg green"></div>
-                    <div class="seg green"></div><div class="seg green"></div><div class="seg green"></div><div class="seg green"></div><div class="seg green"></div>
-                </div>
-                <p class="uptime-text"><span>Last run: &lt; 60 seconds ago</span><strong>100% uptime</strong></p>
-            </div>
-
-            <div class="status-card" data-aos="fade-up" data-aos-delay="200">
-                <div class="status-header">
-                    <div class="status-header-left">
-                        <div class="service-icon-box">☁️</div>
-                        <div class="service-info">
-                            <h3>Supabase Sync Loop</h3>
-                            <p class="service-meta">Every 10s · SQLite → Supabase PostgreSQL</p>
-                        </div>
-                    </div>
-                    <span class="status-badge success">Active</span>
-                </div>
-                <div class="card-metrics">
-                    <div class="card-metric"><div class="card-metric-val">99.9%</div><div class="card-metric-lbl">Availability</div></div>
-                    <div class="card-metric"><div class="card-metric-val cyan">10s</div><div class="card-metric-lbl">Interval</div></div>
-                    <div class="card-metric"><div class="card-metric-val white">&lt;10s</div><div class="card-metric-lbl">Last Sync</div></div>
-                </div>
-                <div class="seg-labels"><span>30 days ago</span><span>Today</span></div>
-                <div class="segment-bar">
-                    <div class="seg green"></div><div class="seg green"></div><div class="seg green"></div><div class="seg green"></div><div class="seg green"></div>
-                    <div class="seg green"></div><div class="seg green"></div><div class="seg green"></div><div class="seg green"></div><div class="seg green"></div>
-                    <div class="seg green"></div><div class="seg green"></div><div class="seg green"></div><div class="seg green"></div><div class="seg green"></div>
-                    <div class="seg green"></div><div class="seg green"></div><div class="seg green"></div><div class="seg green"></div><div class="seg green"></div>
-                    <div class="seg yellow"></div><div class="seg green"></div><div class="seg green"></div><div class="seg green"></div><div class="seg green"></div>
-                    <div class="seg green"></div><div class="seg green"></div><div class="seg green"></div><div class="seg green"></div><div class="seg green"></div>
-                </div>
-                <p class="uptime-text"><span>Feb 20 — 4min timeout, auto-recovered</span><strong>99.9% uptime</strong></p>
-            </div>
-
-            <div class="status-card" data-aos="fade-up" data-aos-delay="250">
-                <div class="status-header">
-                    <div class="status-header-left">
-                        <div class="service-icon-box">☣️</div>
-                        <div class="service-info">
-                            <h3>Malware Analysis Pipeline</h3>
-                            <p class="service-meta">On-demand · 4-stage · Static → Sandbox → APK → Secrets</p>
-                        </div>
-                    </div>
-                    <span class="status-badge success">Operational</span>
-                </div>
-                <div class="card-metrics">
-                    <div class="card-metric"><div class="card-metric-val">99.5%</div><div class="card-metric-lbl">Availability</div></div>
-                    <div class="card-metric"><div class="card-metric-val cyan">4</div><div class="card-metric-lbl">Stages</div></div>
-                    <div class="card-metric"><div class="card-metric-val white">On-Demand</div><div class="card-metric-lbl">Trigger</div></div>
-                </div>
-                <div class="seg-labels"><span>30 days ago</span><span>Today</span></div>
-                <div class="segment-bar">
-                    <div class="seg green"></div><div class="seg green"></div><div class="seg green"></div><div class="seg green"></div><div class="seg green"></div>
-                    <div class="seg green"></div><div class="seg green"></div><div class="seg green"></div><div class="seg green"></div><div class="seg green"></div>
-                    <div class="seg green"></div><div class="seg yellow"></div><div class="seg green"></div><div class="seg green"></div><div class="seg green"></div>
-                    <div class="seg green"></div><div class="seg green"></div><div class="seg green"></div><div class="seg green"></div><div class="seg green"></div>
-                    <div class="seg green"></div><div class="seg green"></div><div class="seg green"></div><div class="seg green"></div><div class="seg green"></div>
-                    <div class="seg green"></div><div class="seg green"></div><div class="seg green"></div><div class="seg green"></div><div class="seg green"></div>
-                </div>
-                <p class="uptime-text"><span>30-day history</span><strong>99.5% uptime</strong></p>
-            </div>
-
-        </div>
-    </section>
-
-    <!-- EXTERNAL INTEGRATIONS -->
-    <section class="section" data-aos="fade-up">
-        <span class="section-label">Integrations</span>
-        <h2>External <span>Service Status</span></h2>
-        <p class="section-sub">Third-party services connected to the Shadow Trust platform.</p>
-
-        <div class="status-grid">
-
-            <div class="status-card" data-aos="fade-up" data-aos-delay="100">
-                <div class="status-header">
-                    <div class="status-header-left">
-                        <div class="service-icon-box">🗄️</div>
-                        <div class="service-info">
-                            <h3>Supabase PostgreSQL</h3>
-                            <p class="service-meta">Cloud database + Realtime websocket sync</p>
-                        </div>
-                    </div>
-                    <span class="status-badge success">Connected</span>
-                </div>
-                <div class="card-metrics">
-                    <div class="card-metric"><div class="card-metric-val">100%</div><div class="card-metric-lbl">30d Uptime</div></div>
-                    <div class="card-metric"><div class="card-metric-val cyan">Realtime</div><div class="card-metric-lbl">Sync Mode</div></div>
-                </div>
-                <div class="seg-labels"><span>30 days ago</span><span>Today</span></div>
-                <div class="segment-bar">
-                    <div class="seg green"></div><div class="seg green"></div><div class="seg green"></div><div class="seg green"></div><div class="seg green"></div>
-                    <div class="seg green"></div><div class="seg green"></div><div class="seg green"></div><div class="seg green"></div><div class="seg green"></div>
-                    <div class="seg green"></div><div class="seg green"></div><div class="seg green"></div><div class="seg green"></div><div class="seg green"></div>
-                    <div class="seg green"></div><div class="seg green"></div><div class="seg green"></div><div class="seg green"></div><div class="seg green"></div>
-                    <div class="seg green"></div><div class="seg green"></div><div class="seg green"></div><div class="seg green"></div><div class="seg green"></div>
-                    <div class="seg green"></div><div class="seg green"></div><div class="seg green"></div><div class="seg green"></div><div class="seg green"></div>
-                </div>
-                <p class="uptime-text"><span>Supabase — All Systems Operational</span><strong>100% uptime</strong></p>
-            </div>
-
-            <div class="status-card" data-aos="fade-up" data-aos-delay="150">
-                <div class="status-header">
-                    <div class="status-header-left">
-                        <div class="service-icon-box">☁️</div>
-                        <div class="service-info">
-                            <h3>AWS (EC2 / S3 / SSM)</h3>
-                            <p class="service-meta">VM orchestration + log storage + credential injection</p>
-                        </div>
-                    </div>
-                    <span class="status-badge success">Connected</span>
-                </div>
-                <div class="card-metrics">
-                    <div class="card-metric"><div class="card-metric-val">99.99%</div><div class="card-metric-lbl">30d Uptime</div></div>
-                    <div class="card-metric"><div class="card-metric-val cyan">Boto3</div><div class="card-metric-lbl">SDK</div></div>
-                </div>
-                <div class="seg-labels"><span>30 days ago</span><span>Today</span></div>
-                <div class="segment-bar">
-                    <div class="seg green"></div><div class="seg green"></div><div class="seg green"></div><div class="seg green"></div><div class="seg green"></div>
-                    <div class="seg green"></div><div class="seg green"></div><div class="seg green"></div><div class="seg green"></div><div class="seg green"></div>
-                    <div class="seg green"></div><div class="seg green"></div><div class="seg green"></div><div class="seg green"></div><div class="seg green"></div>
-                    <div class="seg green"></div><div class="seg green"></div><div class="seg green"></div><div class="seg green"></div><div class="seg green"></div>
-                    <div class="seg green"></div><div class="seg green"></div><div class="seg green"></div><div class="seg green"></div><div class="seg green"></div>
-                    <div class="seg green"></div><div class="seg green"></div><div class="seg green"></div><div class="seg green"></div><div class="seg green"></div>
-                </div>
-                <p class="uptime-text"><span>AWS — All Services Operational</span><strong>99.99% uptime</strong></p>
-            </div>
-
-            <div class="status-card" data-aos="fade-up" data-aos-delay="200">
-                <div class="status-header">
-                    <div class="status-header-left">
-                        <div class="service-icon-box">💬</div>
-                        <div class="service-info">
-                            <h3>Twilio WhatsApp Alerts</h3>
-                            <p class="service-meta">Real-time threat notifications via WhatsApp</p>
-                        </div>
-                    </div>
-                    <span class="status-badge success">Connected</span>
-                </div>
-                <div class="card-metrics">
-                    <div class="card-metric"><div class="card-metric-val">99.9%</div><div class="card-metric-lbl">30d Uptime</div></div>
-                    <div class="card-metric"><div class="card-metric-val cyan">REST</div><div class="card-metric-lbl">API Mode</div></div>
-                </div>
-                <div class="seg-labels"><span>30 days ago</span><span>Today</span></div>
-                <div class="segment-bar">
-                    <div class="seg green"></div><div class="seg green"></div><div class="seg green"></div><div class="seg green"></div><div class="seg green"></div>
-                    <div class="seg green"></div><div class="seg green"></div><div class="seg green"></div><div class="seg green"></div><div class="seg green"></div>
-                    <div class="seg green"></div><div class="seg green"></div><div class="seg green"></div><div class="seg green"></div><div class="seg green"></div>
-                    <div class="seg green"></div><div class="seg green"></div><div class="seg green"></div><div class="seg green"></div><div class="seg green"></div>
-                    <div class="seg green"></div><div class="seg green"></div><div class="seg green"></div><div class="seg green"></div><div class="seg green"></div>
-                    <div class="seg green"></div><div class="seg green"></div><div class="seg green"></div><div class="seg green"></div><div class="seg green"></div>
-                </div>
-                <p class="uptime-text"><span>Twilio API — Operational</span><strong>99.9% uptime</strong></p>
-            </div>
-
-        </div>
-    </section>
-
-    <!-- INCIDENT HISTORY -->
-    <section class="incident-history" data-aos="fade-up">
-        <span class="section-label">History</span>
-        <h2>Incident <span>Log</span></h2>
-        <div class="incident-list">
-
-            <div class="incident-item">
-                <div class="incident-date-col">
-                    <div class="incident-date">Mar 15, 2026</div>
-                    <span class="incident-type resolved">Resolved</span>
-                </div>
-                <div class="incident-details">
-                    <h4>High-Volume Telemetry Spike — Cowrie Nodes (AP-South)</h4>
-                    <p>Coordinated SSH brute force campaign caused ingestion spike on edge SQLite nodes. Backend auto-throttled ingestion and restored normal sync cadence within <strong>8 minutes</strong>. Zero data loss — edge SQLite continued capturing locally throughout.</p>
-                </div>
-            </div>
-
-            <div class="incident-item">
-                <div class="incident-date-col">
-                    <div class="incident-date">Mar 02, 2026</div>
-                    <span class="incident-type maintenance">Maintenance</span>
-                </div>
-                <div class="incident-details">
-                    <h4>Scheduled Maintenance — MobSF Container Upgrade</h4>
-                    <p>MobSF analysis containers updated to latest image. APK analysis pipeline tested and verified post-upgrade. <strong>Zero downtime</strong> — rolling update via Docker socket with no service interruption.</p>
-                </div>
-            </div>
-
-            <div class="incident-item">
-                <div class="incident-date-col">
-                    <div class="incident-date">Feb 20, 2026</div>
-                    <span class="incident-type resolved">Resolved</span>
-                </div>
-                <div class="incident-details">
-                    <h4>Supabase Sync Delay — Brief Connection Timeout</h4>
-                    <p>Temporary Supabase connection timeout caused a <strong>4-minute sync delay</strong>. Edge SQLite continued capturing telemetry locally with zero data loss. Sync resumed automatically after connection restored.</p>
-                </div>
-            </div>
-
-        </div>
+        <span class="section-label">Services</span>
+        <h2>Service <span>Health</span></h2>
+        <p class="section-sub">Every service the backend probes, as of the last check.</p>
+        <div class="status-grid" id="serviceGrid"></div>
     </section>
 
 </div>
@@ -544,16 +106,78 @@
                 <li><a href="login.html">Sign In</a></li>
                 <li><a href="register.html">Register</a></li>
                 <li><a href="dashboard.html">Dashboard</a></li>
-                <li><a href="http://localhost:8000/docs" target="_blank">API Docs</a></li>
+                <li><a href="http://localhost:8000/docs" target="_blank" rel="noopener">API Docs</a></li>
             </ul>
         </div>
     </div>
     <div class="footer-bottom">
         <p>© 2026 Shadow Trust. All Rights Reserved.</p>
-        <div class="footer-status"><span class="dot"></span> All Systems Operational</div>
+        <div class="footer-status"><span class="dot"></span> <span id="footStatus">Checking…</span></div>
     </div>
 </footer>
 
+
+<script>
+(() => {
+    const local = ['127.0.0.1', 'localhost'].includes(location.hostname);
+    const API = local ? 'http://127.0.0.1:8000/api/v1' : '/api/v1';
+    const $ = (id) => document.getElementById(id);
+    const esc = (v) => String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    const ago = (ts) => {
+        if (!ts) return 'no events yet';
+        const s = Math.max(0, (Date.now() - Date.parse(String(ts).replace(' ', 'T') + (/[zZ]|[+-]\d\d:?\d\d$/.test(ts) ? '' : 'Z'))) / 1000);
+        return s < 60 ? `${Math.round(s)}s ago` : s < 3600 ? `${Math.round(s / 60)}m ago` : s < 86400 ? `${Math.round(s / 3600)}h ago` : `${Math.round(s / 86400)}d ago`;
+    };
+
+    async function refresh() {
+        try {
+            const t0 = performance.now();
+            const [st, sum] = await Promise.all([
+                fetch(`${API}/public/status`, { cache: 'no-store' }).then(r => r.json()),
+                fetch(`${API}/public/summary`, { cache: 'no-store' }).then(r => { const ms = performance.now() - t0; return r.json().then(d => ({ ...d, _ms: ms })); }),
+            ]);
+            const services = st.services || [];
+            const up = services.filter(s => s.status === 'up').length;
+            const allUp = up === services.length && st.database?.status === 'up' && st.collector?.running;
+
+            $('overall').className = 'overall-status' + (allUp ? ' operational' : '');
+            $('overallText').textContent = allUp ? 'All services operational' : `${services.length - up} service(s) degraded`;
+            $('footStatus').textContent = allUp ? 'All Systems Operational' : 'Partial degradation';
+            $('mServices').textContent = `${up}/${services.length}`;
+            $('mServices').className = 'metric-value ' + (allUp ? 'green' : 'white');
+            $('mEvents').textContent = Number(sum.events_logged || 0).toLocaleString();
+            $('mLatency').textContent = `${Math.round(sum._ms)}ms`;
+            $('mPipeline').textContent = sum.pipeline?.running ? 'Running' : 'Stopped';
+            $('checkedAt').textContent = new Date().toLocaleTimeString();
+
+            const sensors = st.sensors || [];
+            const active = sensors.filter(s => s.status === 'up').length;
+            $('sensorBadge').textContent = `● ${active}/${sensors.length} reporting`;
+            $('sensorRows').innerHTML = sensors.map(s => `
+                <div class="shw-row">
+                    <span class="shw-dot ${s.status === 'up' ? 'green' : 'yellow'}"></span>
+                    <span class="shw-name">${esc(s.name)}</span>
+                    <span class="shw-latency">${esc(ago(s.last_event))}</span>
+                    <span class="shw-pct">${esc(s.status)}</span>
+                </div>`).join('');
+
+            $('serviceGrid').innerHTML = services.map(s => `
+                <div class="status-card">
+                    <div class="status-header">
+                        <div class="status-header-left"><div class="service-info"><h3>${esc(s.name)}</h3></div></div>
+                        <span class="status-badge ${s.status === 'up' ? 'success' : 'warning'}">${s.status === 'up' ? 'Operational' : esc(s.status)}</span>
+                    </div>
+                </div>`).join('');
+        } catch (e) {
+            $('overallText').textContent = 'Backend unreachable';
+            $('overall').className = 'overall-status';
+            $('footStatus').textContent = 'Status unavailable';
+        }
+    }
+    refresh();
+    setInterval(refresh, 30000);
+})();
+</script>
 <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
 <script>AOS.init({ duration: 750, once: true, offset: 80 });</script>
 </body>
