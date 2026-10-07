@@ -30,8 +30,13 @@ coverage.xml
 htmlcov/
 
 # --- Environment / secrets ---
-# .env files ARE committed intentionally (private repo, shared team credentials).
-# ⚠  KEEP THIS REPO PRIVATE. Never make it public.
+# Real settings never go in the repo. Copy the .env.example next to each one
+# (setup.sh does this for the root file) and fill in your own values.
+.env
+.env.*
+!.env.example
+demo_keys.json
+nohup.out
 *.pem
 *.key
 *.p12
@@ -120,3 +125,6 @@ videos/*/.hyperframes/
 videos/*/.thumbnails/
 videos/*/.waveform-cache/
 videos/*/.media/
+
+# Legacy copy of the first landing page
+Honeynet 2/

@@ -27,7 +27,7 @@ wa_msg = build_whatsapp_message(
 print("EMAIL HTML LENGTH:", len(email_html))
 print("TESTING EMAIL...")
 try:
-    status = send_email_notification(["honeynet.verify@gmail.com"], "Test", email_html, "Plain")
+    status = send_email_notification([os.environ.get("TEST_MAIL_TO", "you@example.com")], "Test", email_html, "Plain")
     print("EMAIL STATUS:", status)
 except Exception as e:
     print("EMAIL ERROR:", e)
