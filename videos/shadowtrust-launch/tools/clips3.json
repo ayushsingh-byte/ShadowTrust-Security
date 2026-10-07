@@ -1,0 +1,74 @@
+[
+ {
+  "id": "02-live-attack",
+  "p": "f02",
+  "clip": "clip3-live.mp4",
+  "dur": 13.333,
+  "label": "Event log",
+  "desc": "A brute force arrives. A case opens."
+ },
+ {
+  "id": "03-investigations",
+  "p": "f03",
+  "clip": "clip3-investigate.mp4",
+  "dur": 15.567,
+  "label": "Investigations",
+  "desc": "Open the case. Read what happened."
+ },
+ {
+  "id": "04-attack-matrix",
+  "p": "f04",
+  "clip": "clip3-mitre.mp4",
+  "dur": 9.833,
+  "label": "MITRE ATT&amp;CK",
+  "desc": "Techniques seen, by tactic."
+ },
+ {
+  "id": "05-geo",
+  "p": "f05",
+  "clip": "clip3-geo.mp4",
+  "dur": 14.7,
+  "label": "Geo intelligence",
+  "desc": "Where it comes from."
+ },
+ {
+  "id": "06-credential-vault",
+  "p": "f06",
+  "clip": "clip3-creds.mp4",
+  "dur": 7.2,
+  "label": "Credential vault",
+  "desc": "Every password they tried."
+ },
+ {
+  "id": "07-url-scanner",
+  "p": "f07",
+  "clip": "clip3-urlscan.mp4",
+  "dur": 13.9,
+  "label": "URL scanner",
+  "desc": "A real scan, start to verdict."
+ },
+ {
+  "id": "08-analysis-lab",
+  "p": "f08",
+  "clip": "clip3-lab.mp4",
+  "dur": 14.4,
+  "label": "Analysis lab",
+  "desc": "Commands profiled as they run."
+ },
+ {
+  "id": "09-reports",
+  "p": "f09",
+  "clip": "clip3-reports.mp4",
+  "dur": 17.267,
+  "label": "Reports",
+  "desc": "Generate. Preview. Download."
+ },
+ {
+  "id": "10-wallboard",
+  "p": "f10",
+  "clip": "clip3-wall.mp4",
+  "dur": 8.033,
+  "label": "Wallboard",
+  "desc": "For the big screen."
+ }
+]

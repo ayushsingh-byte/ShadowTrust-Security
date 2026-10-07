@@ -1,0 +1,101 @@
+<template>
+  <style>
+    @font-face { font-family: 'Inter'; font-style: normal; font-weight: 300; src: url("assets/fonts/Inter-Light.woff2") format("woff2"); }
+    @font-face { font-family: 'Inter'; font-style: normal; font-weight: 400; src: url("assets/fonts/Inter-Regular.woff2") format("woff2"); }
+    @font-face { font-family: 'Inter'; font-style: normal; font-weight: 500; src: url("assets/fonts/Inter-Medium.woff2") format("woff2"); }
+    @font-face { font-family: 'Inter'; font-style: normal; font-weight: 600; src: url("assets/fonts/Inter-SemiBold.woff2") format("woff2"); }
+    @font-face { font-family: 'Source Code Pro'; font-style: normal; font-weight: 400; src: url("assets/fonts/SourceCodePro-400.woff2") format("woff2"); }
+    @font-face { font-family: 'Source Code Pro'; font-style: normal; font-weight: 500; src: url("assets/fonts/SourceCodePro-500.woff2") format("woff2"); }
+    #root { position: absolute; inset: 0; width: 1920px; height: 1080px; overflow: hidden; font-family: 'Inter', sans-serif; color: #061B31; }
+
+    .f11-ground { position: absolute; inset: 0; background: #FFFFFF; }
+    .f11-stage { position: absolute; inset: 0; }
+    .f11-ribbon { position: absolute; left: 240px; top: -60px; width: 1920px; height: 1080px; transform-origin: 100% 0%; }
+    .f11-lock { position: absolute; left: 0; top: 268px; width: 1920px; display: flex; align-items: center; justify-content: center; gap: 30px; font-size: 132px; font-weight: 600; letter-spacing: -0.03em; line-height: 1; }
+    .f11-lock svg { width: 150px; height: 150px; }
+    .f11-line { position: absolute; left: 0; top: 468px; width: 1920px; text-align: center; font-size: 44px; font-weight: 300; letter-spacing: -0.02em; color: #50617A; }
+    .f11-cmdrow { position: absolute; left: 0; top: 584px; width: 1920px; display: flex; justify-content: center; }
+    .f11-cmd { display: flex; align-items: baseline; gap: 16px; padding: 20px 44px; border-radius: 100px; background: rgba(83, 58, 253, 0.08); font-family: 'Source Code Pro', monospace; font-size: 40px; font-weight: 500; white-space: pre; }
+    .f11-prompt { color: #7D8BA4; }
+    .f11-wrap { display: inline-flex; align-items: baseline; min-width: 264px; white-space: pre; }
+    .f11-text { white-space: pre; color: #061B31; }
+    .f11-cursor { display: inline-block; width: 14px; height: 38px; margin-left: 4px; background: #7D8BA4; vertical-align: -6px; }
+    .f11-note { position: absolute; left: 0; top: 706px; width: 1920px; text-align: center; font-size: 30px; font-weight: 400; color: #50617A; }
+  </style>
+
+  <div id="root" data-composition-id="11-sign-off" data-width="1920" data-height="1080">
+    <div id="f11-ground" class="clip f11-ground" data-start="0" data-duration="6" data-track-index="0"></div>
+    <div id="f11-stage" class="clip f11-stage" data-start="0" data-duration="6" data-track-index="1">
+      <img class="f11-ribbon" src="assets/ribbon.png" alt="">
+      <div class="f11-lock"><svg viewBox="0 0 28 28" fill="none"><path d="M2.500 14c3-5.300 7-8 11.500-8s8.500 2.700 11.500 8c-3 5.300-7 8-11.500 8S5.500 19.300 2.500 14Z" stroke="#061B31" stroke-width="2.400" stroke-linejoin="round"></path><circle cx="14" cy="14" r="4.200" fill="#533AFD"></circle></svg><span>ShadowTrust</span></div>
+      <div class="f11-line">Deception and security operations, self-hosted.</div>
+      <div class="f11-cmdrow"><div class="f11-cmd"><span class="f11-prompt">$</span><span class="f11-wrap"><span class="f11-text"></span><span class="f11-cursor"></span></span></div></div>
+      <div class="f11-note">One Docker Compose stack</div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+  <script>
+    (function () {
+      const root = document.querySelector('[data-composition-id="11-sign-off"]');
+      const $ = (sel) => root.querySelector(sel);
+      const tl = gsap.timeline({ paused: true });
+      // split a line into word spans so each word can land on its own beat
+      function words(el) {
+        const parts = el.textContent.trim().split(' ');
+        el.textContent = '';
+        return parts.map((w, i) => {
+          const s = document.createElement('span');
+          s.textContent = w;
+          s.style.display = 'inline-block';
+          el.appendChild(s);
+          if (i < parts.length - 1) el.appendChild(document.createTextNode(' '));
+          return s;
+        });
+      }
+      // per-word staggered reveal: start times are computed once from the word list
+      function reveal(el, at, step, rise) {
+        words(el).forEach((w, i) => {
+          tl.fromTo(w, { opacity: 0, y: rise }, { opacity: 1, y: 0, duration: 0.8, ease: 'power3.out' }, at + i * step);
+        });
+      }
+
+      const DURATION = 6;
+
+      // Scene 1 (0.0 to 1.4s): the mark and name settle as one centred lockup
+      tl.fromTo($('.f11-lock'), { scale: 0, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.7, ease: 'power3.out' }, 0.05);
+
+      // Scene 2 (1.4 to 3.0s): the line, word by word, while the ribbon echo grows out of the top right corner
+      reveal($('.f11-line'), 1.4, 0.1, 26);
+      tl.fromTo($('.f11-ribbon'), { scale: 0, opacity: 0 }, { scale: 1, opacity: 0.9, duration: 1.4, ease: 'power3.out' }, 1.6);
+
+      // Scene 3 (3.0 to 5.2s): the command pill appears and the command types on behind a caret
+      tl.fromTo($('.f11-cmd'), { scale: 0, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.5, ease: 'power3.out' }, 3.0);
+      const COMMAND = './setup.sh';
+      const SEQUENCE = [{ t: 0, text: '', color: '#7D8BA4' }];
+      for (let i = 1; i <= COMMAND.length; i++) SEQUENCE.push({ t: 3.4 + (i - 1) * 0.11, text: COMMAND.slice(0, i), color: '#533AFD' });
+      function entryAt(time) {
+        for (let i = SEQUENCE.length - 1; i >= 0; i--) if (time >= SEQUENCE[i].t) return SEQUENCE[i];
+        return SEQUENCE[0];
+      }
+      const textEl = $('.f11-text');
+      const cursorEl = $('.f11-cursor');
+      const driver = { t: 0 };
+      let lastText = null;
+      tl.to(driver, { t: DURATION, duration: DURATION, ease: 'none', onUpdate: () => {
+        const entry = entryAt(driver.t);
+        if (entry.text !== lastText) { textEl.textContent = entry.text; cursorEl.style.background = entry.color; lastText = entry.text; }
+      } }, 0);
+      // caret blink: a timeline-driven square wave, a whole number of cycles over the frame
+      const blink = { p: 0 };
+      tl.to(blink, { p: Math.PI * 2 * 8, duration: DURATION, ease: 'none', onUpdate: () => { cursorEl.style.opacity = Math.sin(blink.p) >= 0 ? '1' : '0'; } }, 0);
+      tl.fromTo($('.f11-note'), { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.6, ease: 'power3.out' }, 4.7);
+
+      // Scene 4 (5.2 to 6.0s): hold, then the only exit in the video, a fade to the white ground
+      tl.to($('.f11-stage'), { opacity: 0, duration: 0.55, ease: 'power2.in' }, 5.45);
+
+      window.__timelines = window.__timelines || {};
+      window.__timelines["11-sign-off"] = tl;
+    })();
+  </script>
+</template>

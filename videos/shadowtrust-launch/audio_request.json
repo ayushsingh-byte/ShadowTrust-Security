@@ -1,0 +1,11 @@
+{
+  "provider": "auto",
+  "speed": "1.0",
+  "lines": [],
+  "bgm": {
+    "mode": "retrieve",
+    "query": "confident minimal electronic underscore with a steady pulse, bright and modern, no vocals",
+    "blob": "ShadowTrust lets attackers in on purpose and turns everything they do into a case you can close.",
+    "arc": "Demo loop (invitation → a real attack arrives → the case → what was seen, where from, with what → the tools → the report → the wall → sign-off)"
+  }
+}

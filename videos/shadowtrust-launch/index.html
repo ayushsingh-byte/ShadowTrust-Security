@@ -1,0 +1,284 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1920, height=1080" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js" integrity="sha384-sG0Hv1tP1lZCk9KQmrIbY/XNwi+OY84GQqhMscbnsoBFqAz8KNCil1kvfL3Hbbk2" crossorigin="anonymous"></script>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        width: 1920px;
+        height: 1080px;
+        overflow: hidden;
+        background: #000;
+      }
+      #root {
+        position: relative;
+        width: 1920px;
+        height: 1080px;
+        overflow: hidden;
+        background: #FFFFFF;
+      }
+      .scene {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+      }
+    </style>
+  </head>
+  <body>
+    <div
+      id="root"
+      data-composition-id="main"
+      data-start="0"
+      data-duration="124.733"
+      data-width="1920"
+      data-height="1080"
+    >
+      <div
+        id="el-01-let-them-in"
+        class="scene"
+        data-composition-id="01-let-them-in"
+        data-composition-src="compositions/frames/01-let-them-in.html"
+        data-start="0"
+        data-duration="4.5"
+        data-track-index="1"
+      ></div>
+
+      <div
+        id="el-02-live-attack"
+        class="scene"
+        data-composition-id="02-live-attack"
+        data-composition-src="compositions/frames/02-live-attack.html"
+        data-start="4.5"
+        data-duration="13.333"
+        data-track-index="1"
+      ></div>
+
+      <div
+        id="el-03-investigations"
+        class="scene"
+        data-composition-id="03-investigations"
+        data-composition-src="compositions/frames/03-investigations.html"
+        data-start="17.833"
+        data-duration="15.567"
+        data-track-index="1"
+      ></div>
+
+      <div
+        id="el-04-attack-matrix"
+        class="scene"
+        data-composition-id="04-attack-matrix"
+        data-composition-src="compositions/frames/04-attack-matrix.html"
+        data-start="33.4"
+        data-duration="9.833"
+        data-track-index="1"
+      ></div>
+
+      <div
+        id="el-05-geo"
+        class="scene"
+        data-composition-id="05-geo"
+        data-composition-src="compositions/frames/05-geo.html"
+        data-start="43.233"
+        data-duration="14.7"
+        data-track-index="1"
+      ></div>
+
+      <div
+        id="el-06-credential-vault"
+        class="scene"
+        data-composition-id="06-credential-vault"
+        data-composition-src="compositions/frames/06-credential-vault.html"
+        data-start="57.93299999999999"
+        data-duration="7.2"
+        data-track-index="1"
+      ></div>
+
+      <div
+        id="el-07-url-scanner"
+        class="scene"
+        data-composition-id="07-url-scanner"
+        data-composition-src="compositions/frames/07-url-scanner.html"
+        data-start="65.133"
+        data-duration="13.9"
+        data-track-index="1"
+      ></div>
+
+      <div
+        id="el-08-analysis-lab"
+        class="scene"
+        data-composition-id="08-analysis-lab"
+        data-composition-src="compositions/frames/08-analysis-lab.html"
+        data-start="79.033"
+        data-duration="14.4"
+        data-track-index="1"
+      ></div>
+
+      <div
+        id="el-09-reports"
+        class="scene"
+        data-composition-id="09-reports"
+        data-composition-src="compositions/frames/09-reports.html"
+        data-start="93.433"
+        data-duration="17.267"
+        data-track-index="1"
+      ></div>
+
+      <div
+        id="el-10-wallboard"
+        class="scene"
+        data-composition-id="10-wallboard"
+        data-composition-src="compositions/frames/10-wallboard.html"
+        data-start="110.7"
+        data-duration="8.033"
+        data-track-index="1"
+      ></div>
+
+      <div
+        id="el-11-sign-off"
+        class="scene"
+        data-composition-id="11-sign-off"
+        data-composition-src="compositions/frames/11-sign-off.html"
+        data-start="118.733"
+        data-duration="6"
+        data-track-index="1"
+      ></div>
+
+      <video id="f02-clip" src="assets/clip3-live.mp4" muted playsinline
+        class="clip"
+        style="position:absolute;left:128px;top:36px;width:1664px;height:936px;object-fit:fill"
+        data-start="4.5"
+        data-duration="13.333"
+        data-track-index="2002"
+      ></video>
+
+      <video id="f03-clip" src="assets/clip3-investigate.mp4" muted playsinline
+        class="clip"
+        style="position:absolute;left:128px;top:36px;width:1664px;height:936px;object-fit:fill"
+        data-start="17.833"
+        data-duration="15.567"
+        data-track-index="3002"
+      ></video>
+
+      <video id="f04-clip" src="assets/clip3-mitre.mp4" muted playsinline
+        class="clip"
+        style="position:absolute;left:128px;top:36px;width:1664px;height:936px;object-fit:fill"
+        data-start="33.4"
+        data-duration="9.833"
+        data-track-index="4002"
+      ></video>
+
+      <video id="f05-clip" src="assets/clip3-geo.mp4" muted playsinline
+        class="clip"
+        style="position:absolute;left:128px;top:36px;width:1664px;height:936px;object-fit:fill"
+        data-start="43.233"
+        data-duration="14.7"
+        data-track-index="5002"
+      ></video>
+
+      <video id="f06-clip" src="assets/clip3-creds.mp4" muted playsinline
+        class="clip"
+        style="position:absolute;left:128px;top:36px;width:1664px;height:936px;object-fit:fill"
+        data-start="57.933"
+        data-duration="7.2"
+        data-track-index="6002"
+      ></video>
+
+      <video id="f07-clip" src="assets/clip3-urlscan.mp4" muted playsinline
+        class="clip"
+        style="position:absolute;left:128px;top:36px;width:1664px;height:936px;object-fit:fill"
+        data-start="65.133"
+        data-duration="13.9"
+        data-track-index="7002"
+      ></video>
+
+      <video id="f08-clip" src="assets/clip3-lab.mp4" muted playsinline
+        class="clip"
+        style="position:absolute;left:128px;top:36px;width:1664px;height:936px;object-fit:fill"
+        data-start="79.033"
+        data-duration="14.4"
+        data-track-index="8002"
+      ></video>
+
+      <video id="f09-clip" src="assets/clip3-reports.mp4" muted playsinline
+        class="clip"
+        style="position:absolute;left:128px;top:36px;width:1664px;height:936px;object-fit:fill"
+        data-start="93.433"
+        data-duration="17.267"
+        data-track-index="9002"
+      ></video>
+
+      <video id="f10-clip" src="assets/clip3-wall.mp4" muted playsinline
+        class="clip"
+        style="position:absolute;left:128px;top:36px;width:1664px;height:936px;object-fit:fill"
+        data-start="110.7"
+        data-duration="8.033"
+        data-track-index="10002"
+      ></video>
+
+      <!-- BGM -->
+      <audio
+        id="el-bgm"
+        src="assets/bgm/bed.mp3"
+        data-start="0"
+        data-duration="124.733"
+        data-track-index="11"
+        data-volume="0.9"
+      ></audio>
+
+      <!-- SFX -->
+      <audio
+        id="el-sfx-0"
+        src="assets/sfx/typing-investigate.wav"
+        data-start="17.833"
+        data-duration="15.567"
+        data-track-index="20"
+        data-volume="1"
+      ></audio>
+      <audio
+        id="el-sfx-1"
+        src="assets/sfx/typing-creds.wav"
+        data-start="57.933"
+        data-duration="7.2"
+        data-track-index="21"
+        data-volume="1"
+      ></audio>
+      <audio
+        id="el-sfx-2"
+        src="assets/sfx/typing-urlscan.wav"
+        data-start="65.133"
+        data-duration="13.9"
+        data-track-index="22"
+        data-volume="1"
+      ></audio>
+      <audio
+        id="el-sfx-3"
+        src="assets/sfx/typing-lab.wav"
+        data-start="79.033"
+        data-duration="14.4"
+        data-track-index="23"
+        data-volume="1"
+      ></audio>
+      <audio
+        id="el-sfx-4"
+        src="assets/sfx/typing-signoff.wav"
+        data-start="118.733"
+        data-duration="6"
+        data-track-index="24"
+        data-volume="1"
+      ></audio>
+    </div>
+
+    <script>
+      window.__timelines = window.__timelines || {};
+      window.__timelines["main"] = gsap.timeline({ paused: true });
+    </script>
+  </body>
+</html>

@@ -1,0 +1,47 @@
+{
+  "bgm": {
+    "path": "assets/bgm/bed.mp3",
+    "volume": 0.9,
+    "duration_s": 124.733,
+    "note": "library track (68s, 120 bpm) extended on the beat: 0-48s, 16-48s, 16-48s, 48-60.933s"
+  },
+  "bgm_pending": false,
+  "voices": [],
+  "sfx": [
+    {
+      "frame": 3,
+      "file": "assets/sfx/typing-investigate.wav",
+      "offset_s": 0,
+      "duration_s": 15.567,
+      "volume": 1
+    },
+    {
+      "frame": 6,
+      "file": "assets/sfx/typing-creds.wav",
+      "offset_s": 0,
+      "duration_s": 7.2,
+      "volume": 1
+    },
+    {
+      "frame": 7,
+      "file": "assets/sfx/typing-urlscan.wav",
+      "offset_s": 0,
+      "duration_s": 13.9,
+      "volume": 1
+    },
+    {
+      "frame": 8,
+      "file": "assets/sfx/typing-lab.wav",
+      "offset_s": 0,
+      "duration_s": 14.4,
+      "volume": 1
+    },
+    {
+      "frame": 11,
+      "file": "assets/sfx/typing-signoff.wav",
+      "offset_s": 0,
+      "duration_s": 6.0,
+      "volume": 1
+    }
+  ]
+}
