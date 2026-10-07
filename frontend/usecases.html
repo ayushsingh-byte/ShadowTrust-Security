@@ -1,221 +1,205 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Shadow Trust — Use Cases</title>
-    <link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
-    <link rel="stylesheet" href="css/landing/landingpage.css?v=5">
-    <link rel="stylesheet" href="css/landing/usecases.css?v=4">
+    <title>Use cases · ShadowTrust</title>
+    <meta name="description" content="How SOC teams, researchers, teachers, threat intelligence, defence and incident response teams use ShadowTrust.">
+    <!-- Link preview (LinkedIn, WhatsApp, Slack, X). Once the site has a public address, make og:image and twitter:image absolute, e.g. https://your-domain/og.png, and add og:url. -->
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="ShadowTrust">
+    <meta property="og:title" content="Use cases · ShadowTrust">
+    <meta property="og:description" content="How SOC teams, researchers, teachers, threat intelligence, defence and incident response teams use ShadowTrust.">
+    <meta property="og:image" content="og.png">
+    <meta property="og:image:type" content="image/png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:alt" content="ShadowTrust: Let them in. Watch every move. Decoy servers, detection, investigation and reporting in one self-hosted stack.">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Use cases · ShadowTrust">
+    <meta name="twitter:description" content="How SOC teams, researchers, teachers, threat intelligence, defence and incident response teams use ShadowTrust.">
+    <meta name="twitter:image" content="og.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300..600&family=Source+Code+Pro:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/tokens.css">
-    <script src="js/theme.js"></script>
+    <link rel="stylesheet" href="css/site.css">
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 28 28'%3E%3Crect width='28' height='28' rx='6' fill='%23533afd'/%3E%3Cpath d='M4.5 14c2.5-4.3 5.7-6.4 9.5-6.4s7 2.1 9.5 6.4c-2.5 4.3-5.7 6.4-9.5 6.4S7 18.3 4.5 14Z' fill='none' stroke='%23fff' stroke-width='1.8' stroke-linejoin='round'/%3E%3Ccircle cx='14' cy='14' r='3.2' fill='%23fff'/%3E%3C/svg%3E">
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#ffffff">
+    <script>if (!matchMedia('(prefers-reduced-motion: reduce)').matches) document.documentElement.classList.add('motion-ready');</script>
 </head>
-<body>
+<body class="site">
+<a class="skip" href="#main">Skip to content</a>
 
-<div class="container">
-
-    <!-- NAVBAR -->
-    <nav>
-        <div class="logo">Shadow Trust</div>
-        <ul>
-            <li><a href="index.html">Home</a></li>
+<header class="site-nav" data-nav>
+    <div class="wrap">
+        <a class="brand" href="index.html" aria-label="ShadowTrust home">
+            <svg viewBox="0 0 28 28" fill="none" aria-hidden="true"><path d="M2.5 14c3-5.3 7-8 11.5-8s8.5 2.7 11.5 8c-3 5.3-7 8-11.5 8S5.5 19.3 2.5 14Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><circle cx="14" cy="14" r="4.2" fill="var(--st-brand)"/></svg>
+            <span>ShadowTrust</span>
+        </a>
+        <ul class="nav-links" id="navLinks">
             <li><a href="features.html">Features</a></li>
             <li><a href="architecture.html">Architecture</a></li>
+            <li><a href="usecases.html" aria-current="page">Use cases</a></li>
             <li><a href="docs.html">Docs</a></li>
             <li><a href="status.html">Status</a></li>
-            <li><a href="usecases.html" class="active-link">Use Cases</a></li>
+            <li class="nav-mobile-only"><a href="login.html">Sign in</a></li>
         </ul>
-        <a href="login.html" class="btn">Sign In</a>
-    </nav>
-
-    <!-- HERO -->
-    <section class="usecases-hero" data-aos="fade-up">
-        <div class="usecases-hero-text">
-            <span class="section-label">Applications</span>
-            <h1>Shadow Trust <span>Use Cases</span></h1>
-            <p>From solo security researchers to enterprise SOC teams — Shadow Trust adapts to your mission. Honeypot deception, malware collection, behavioral profiling, and MITRE ATT&CK analysis across every security context.</p>
+        <div class="nav-end">
+            <a class="signin" href="login.html">Sign in</a>
+            <a class="btn btn-sm" href="login.html">Open console <span class="arr">→</span></a>
+            <button class="nav-burger" type="button" data-burger aria-label="Open menu" aria-controls="navLinks" aria-expanded="false">
+                <svg width="16" height="16" viewBox="0 0 16 16" stroke="currentColor" stroke-width="1.5"><path d="M2 5h12M2 11h12"/></svg>
+            </button>
         </div>
-        <div class="uc-hero-widget">
-            <div class="uc-widget-header">
-                <span class="uc-widget-title">Security Contexts</span>
-                <span class="uc-widget-count">6 Sectors</span>
+    </div>
+</header>
+
+<main id="main">
+    <section class="page-hero">
+        <canvas class="ribbon" data-ribbon="corner" aria-hidden="true"></canvas>
+        <div class="wrap page-hero-grid">
+            <div>
+                <span class="eyebrow" data-hero-fade>Use cases</span>
+                <h1 class="display" data-split>
+                    <span class="line"><span>Six teams.</span></span>
+                    <span class="line"><span><em>One</em> trap.</span></span>
+                </h1>
+                <p class="lede" data-hero-fade>From a researcher working alone to an enterprise SOC, ShadowTrust adapts to the job: honeypot deception, malware collection, behavioral profiling and ATT&amp;CK analysis in every setting.</p>
             </div>
-            <div class="uc-hex-grid">
-                <div class="uc-hex-item">
-                    <span class="uc-hex-icon">🔬</span>
-                    <span class="uc-hex-label">Research</span>
-                </div>
-                <div class="uc-hex-item highlight">
-                    <span class="uc-hex-icon">🛡️</span>
-                    <span class="uc-hex-label">Enterprise</span>
-                </div>
-                <div class="uc-hex-item">
-                    <span class="uc-hex-icon">🎓</span>
-                    <span class="uc-hex-label">Training</span>
-                </div>
-                <div class="uc-hex-item highlight">
-                    <span class="uc-hex-icon">🌐</span>
-                    <span class="uc-hex-label">Threat Intel</span>
-                </div>
-                <div class="uc-hex-item">
-                    <span class="uc-hex-icon">🏛️</span>
-                    <span class="uc-hex-label">Defence</span>
-                </div>
-                <div class="uc-hex-item highlight">
-                    <span class="uc-hex-icon">🚨</span>
-                    <span class="uc-hex-label">IR Teams</span>
-                </div>
+            <table class="spec" data-hero-fade>
+                <tr><th>Console pages</th><td>30 and counting</td></tr>
+                <tr><th>Honeypot types</th><td>Cowrie, Dionaea, Honeytrap</td></tr>
+                <tr><th>Roles</th><td>Six, enforced by the API</td></tr>
+                <tr><th>Exports</th><td>PDF reports, STIX 2.1, Splunk</td></tr>
+            </table>
+        </div>
+    </section>
+
+    <section class="section" id="workflows">
+        <div class="wrap">
+            <div class="section-head">
+                <span class="eyebrow"><span class="n">01</span> A day with ShadowTrust</span>
+                <h2 class="h2" data-reveal>Pick a team. See the <em>route</em> they take.</h2>
+                <p class="lede" data-reveal>Every team uses the same data, but walks through it differently. These are the four pages each one tends to open, in order.</p>
             </div>
-            <div class="uc-stat-strip">
-                <div class="uc-stat"><span>30+</span>Dashboard Views</div>
-                <div class="uc-stat"><span>3</span>Honeypot Types</div>
-                <div class="uc-stat"><span>6</span>RBAC Roles</div>
+            <div data-scen>
+                <div class="scen-tabs" role="tablist" aria-label="Teams">
+                    <button class="scen-tab" role="tab" aria-selected="true" data-tab="0">SOC team</button>
+                    <button class="scen-tab" role="tab" aria-selected="false" data-tab="1">Researcher</button>
+                    <button class="scen-tab" role="tab" aria-selected="false" data-tab="2">Teacher</button>
+                    <button class="scen-tab" role="tab" aria-selected="false" data-tab="3">Threat intel</button>
+                    <button class="scen-tab" role="tab" aria-selected="false" data-tab="4">Defence</button>
+                    <button class="scen-tab" role="tab" aria-selected="false" data-tab="5">Incident response</button>
+                    <span class="scen-ind" data-scen-ind></span>
+                </div>
+                <div class="scen-body" role="tabpanel" aria-live="polite">
+                    <div class="scen-intro"><h3 class="h3" data-scen-title></h3><p data-scen-text></p></div>
+                    <div class="scen-path" data-scen-path><span class="scen-line" data-scen-line></span></div>
+                </div>
             </div>
         </div>
     </section>
 
-    <!-- INDUSTRY GRID -->
-    <section class="section" data-aos="fade-up">
-        <span class="section-label">Who Uses It</span>
-        <h2>Built for Every <span>Security Context</span></h2>
-        <p class="section-sub">Whether you're hunting advanced threats, training the next generation of analysts, or building threat intelligence feeds — Shadow Trust delivers.</p>
-
-        <div class="industry-grid">
-
-            <div class="industry-card" data-aos="zoom-in" data-aos-delay="100">
-                <div class="industry-icon">🔬</div>
-                <div class="industry-content">
-                    <h3>Cybersecurity Research Labs</h3>
-                    <p>Run controlled experiments against real malware families. Spawn isolated EC2 analysis VMs, detonate samples in the 4-stage pipeline, and capture full attacker TTPs through honeypot interaction.</p>
-                    <ul class="benefit-list">
-                        <li>On-demand analysis VM orchestration</li>
-                        <li>Full session timeline reconstruction</li>
-                        <li>Automated malware sample collection</li>
-                        <li>APK & binary static/dynamic analysis</li>
-                    </ul>
-                </div>
+    <section class="section" id="sectors">
+        <div class="wrap">
+            <div class="section-head">
+                <span class="eyebrow"><span class="n">02</span> Who uses it</span>
+                <h2 class="h2" data-reveal>Built for every security <em>context.</em></h2>
+                <p class="lede" data-reveal>Hunting advanced threats, training the next analysts or building intelligence feeds. Here is what each setting gets out of it.</p>
             </div>
-
-            <div class="industry-card" data-aos="zoom-in" data-aos-delay="200">
-                <div class="industry-icon">🛡️</div>
-                <div class="industry-content">
-                    <h3>Enterprise SOC Teams</h3>
-                    <p>Deploy honeypot nodes across infrastructure, ingest real attacker telemetry, and correlate sessions across your network perimeter. Get email and WhatsApp alerts the moment a threat is detected.</p>
-                    <ul class="benefit-list">
-                        <li>Live honeypot telemetry ingestion</li>
-                        <li>Real-time threat map dashboard</li>
-                        <li>Multi-channel alerts (email + WhatsApp)</li>
-                        <li>6-tier RBAC for team access control</li>
-                    </ul>
-                </div>
+            <div class="bento" data-stagger>
+                <article class="card tile">
+                    <div class="tile-copy">
+                        <h3>Cybersecurity research labs</h3>
+                        <p>Run controlled experiments against real malware families. Spin up isolated analysis machines, run samples through the malware pipeline, and capture full attacker techniques through honeypot interaction.</p>
+                        <ul><li>On-demand analysis machines</li><li>Full session timeline reconstruction</li><li>Automatic malware sample collection</li><li>APK and binary static analysis, dynamic with CAPE</li></ul>
+                    </div>
+                    <div class="card-art"><div class="glow glow-violet"></div><div class="art shot-art"><img class="shot" src="media/real/behaviour.png" width="620" height="340" alt="Behavior profiling: the relationship graph of one sandbox session" loading="lazy" decoding="async"></div></div>
+                </article>
+                <article class="card tile">
+                    <div class="tile-copy">
+                        <h3>Enterprise SOC teams</h3>
+                        <p>Put decoys inside the network, ingest real attacker telemetry and correlate sessions across the perimeter. Detections show up on the console the moment they fire, and analyst accounts are delivered by email or WhatsApp.</p>
+                        <ul><li>Live honeypot telemetry</li><li>Real-time threat map</li><li>Detections opening incidents</li><li>Six-role access control</li></ul>
+                    </div>
+                    <div class="card-art"><div class="glow glow-rose"></div><div class="art shot-art"><img class="shot" src="media/real/caseHero.png" width="620" height="340" alt="An open case in Investigations with its risk score, status steps and actions" loading="lazy" decoding="async"></div></div>
+                </article>
+                <article class="card tile">
+                    <div class="tile-copy">
+                        <h3>Academic and training environments</h3>
+                        <p>Give students hands-on practice with real threat intelligence work: live attack maps, the ATT&amp;CK matrix, behavioral profiling and the full analyst toolset, in a safe and contained lab.</p>
+                        <ul><li>Live attack visualization for demos</li><li>ATT&amp;CK matrix walkthroughs</li><li>Separate roles for students and instructors</li><li>One command to bring the lab up</li></ul>
+                    </div>
+                    <div class="card-art"><div class="glow glow-peach"></div><div class="art shot-art"><img class="shot" src="media/real/heatmap.png" width="620" height="340" alt="The MITRE ATT&amp;CK tactics heatmap on the Behavior profiling page" loading="lazy" decoding="async"></div></div>
+                </article>
+                <article class="card tile">
+                    <div class="tile-copy">
+                        <h3>Threat intelligence providers</h3>
+                        <p>Collect telemetry across honeypot nodes, automate malware collection, GeoIP attribution and indicator extraction, and publish structured, enriched data.</p>
+                        <ul><li>Honeypot node management</li><li>Indicator and hash extraction</li><li>GeoIP-enriched attribution</li><li>STIX 2.1 export and Splunk forwarding</li></ul>
+                    </div>
+                    <div class="card-art"><div class="glow glow-peach"></div><div class="art shot-art"><img class="shot" src="media/real/actor.png" width="359" height="340" alt="Behavior profiling: the dominant threat actor card with its traits" loading="lazy" decoding="async"></div></div>
+                </article>
+                <article class="card tile">
+                    <div class="tile-copy">
+                        <h3>Government and defence</h3>
+                        <p>Run deception infrastructure that catches persistent, skilled actors. The whole stack is self-hosted, so telemetry stays on infrastructure you control, including restricted networks.</p>
+                        <ul><li>Self-hosted, no cloud dependency</li><li>Full ATT&amp;CK technique mapping</li><li>Audit logs for compliance reporting</li><li>Runs fully offline once images are built</li></ul>
+                    </div>
+                    <div class="card-art"><div class="glow glow-violet"></div><div class="art shot-art"><img class="shot" src="media/real/selfhosted.png" width="620" height="340" alt="Honeypot nodes: sensors online, CPU and memory in use, and the sensors table" loading="lazy" decoding="async"></div></div>
+                </article>
+                <article class="card tile">
+                    <div class="tile-copy">
+                        <h3>Incident response teams</h3>
+                        <p>While an incident is under way, ShadowTrust gives responders context straight away: behavioral profiles, session timelines, captured credentials and technique mappings, all in one place.</p>
+                        <ul><li>Session timeline reconstruction</li><li>Captured credential viewer</li><li>URL and hash reputation checks</li><li>Behavioral profiling across sessions</li></ul>
+                    </div>
+                    <div class="card-art"><div class="glow glow-rose"></div><div class="art shot-art"><img class="shot" src="media/real/replay.png" width="620" height="340" alt="Attack replay in a case: the timeline being stepped through, techniques lighting up" loading="lazy" decoding="async"></div></div>
+                </article>
             </div>
-
-            <div class="industry-card" data-aos="zoom-in" data-aos-delay="300">
-                <div class="industry-icon">🎓</div>
-                <div class="industry-content">
-                    <h3>Academic & Training Environments</h3>
-                    <p>Give students hands-on exposure to real threat intelligence workflows. Live attack maps, MITRE ATT&CK matrix, behavioral profiling, and the full SOC analyst toolset — in a safe, controlled environment.</p>
-                    <ul class="benefit-list">
-                        <li>Live attack visualization for demonstrations</li>
-                        <li>MITRE ATT&CK matrix walkthrough</li>
-                        <li>Role-based access for students vs instructors</li>
-                        <li>Docker — one command to spin up the lab</li>
-                    </ul>
-                </div>
-            </div>
-
-            <div class="industry-card" data-aos="zoom-in" data-aos-delay="400">
-                <div class="industry-icon">🌐</div>
-                <div class="industry-content">
-                    <h3>Threat Intelligence Providers</h3>
-                    <p>Aggregate telemetry from a global honeypot network. Automate malware collection, GeoIP attribution, and IOC extraction. Build actionable threat intelligence feeds with structured, enriched data.</p>
-                    <ul class="benefit-list">
-                        <li>Global honeypot node orchestration</li>
-                        <li>Automated IOC and hash extraction</li>
-                        <li>GeoIP-enriched attacker attribution</li>
-                        <li>STIX 2.1 export and Splunk forwarding</li>
-                    </ul>
-                </div>
-            </div>
-
-            <div class="industry-card" data-aos="zoom-in" data-aos-delay="500">
-                <div class="industry-icon">🏛️</div>
-                <div class="industry-content">
-                    <h3>Government & Defence</h3>
-                    <p>Deploy deception infrastructure that catches nation-state and APT-level actors. The whole stack is self-hosted, so telemetry stays on infrastructure you control — including restricted networks.</p>
-                    <ul class="benefit-list">
-                        <li>Self-hosted, no cloud dependency</li>
-                        <li>Full MITRE ATT&CK technique mapping</li>
-                        <li>Audit logs for compliance reporting</li>
-                        <li>Private deployment — no external dependencies</li>
-                    </ul>
-                </div>
-            </div>
-
-            <div class="industry-card" data-aos="zoom-in" data-aos-delay="600">
-                <div class="industry-icon">🚨</div>
-                <div class="industry-content">
-                    <h3>Incident Response Teams</h3>
-                    <p>When an incident is underway, Shadow Trust gives IR teams immediate context. Behavioral profiles, session timelines, captured credentials, and MITRE technique mappings — all from the dashboard.</p>
-                    <ul class="benefit-list">
-                        <li>Attacker session timeline reconstruction</li>
-                        <li>Captured credential viewer</li>
-                        <li>URL and hash reputation scanning</li>
-                        <li>Behavioral profiling across sessions</li>
-                    </ul>
-                </div>
-            </div>
-
+            <p class="art-note">These panels are crops of the real console, running on this project's own lab.</p>
         </div>
     </section>
 
-    <!-- BANNER -->
-    <div class="cta-banner" data-aos="zoom-in">
-        <h2>Your Mission. Our Platform.</h2>
-        <p>Shadow Trust deploys in minutes and adapts to your security context — research lab, enterprise SOC, training environment, or IR operation.</p>
-        <div class="cta-btns">
-            <a href="login.html" class="btn btn-primary">Launch Platform</a>
-            <a href="docs.html" class="btn btn-outline">Read Setup Guide</a>
+    <section class="section closer">
+        <div class="wrap closer-grid">
+            <h2 class="display" data-reveal>Your mission. <em>Your</em> data.</h2>
+            <div class="install" data-reveal>
+                <div class="install-label"><span>Next</span></div>
+                <p class="body-copy" style="margin:0 0 22px">ShadowTrust deploys in minutes and fits the job, whether that is a research lab, a SOC, a classroom or an active incident.</p>
+                <div style="display:flex;gap:14px;flex-wrap:wrap">
+                    <a class="btn" href="login.html">Open the console <span class="arr">→</span></a>
+                    <a class="btn btn-ghost" href="docs.html">Read the setup guide</a>
+                </div>
+            </div>
         </div>
-    </div>
+    </section>
+</main>
 
-</div>
-
-<!-- FOOTER -->
-<footer>
-    <div class="footer-grid">
-        <div class="footer-brand">
-            <span class="logo">Shadow Trust</span>
-            <p>AI-powered Security Operations Center with honeypot deception, malware analysis, and real-time threat intelligence.</p>
+<footer class="site-footer">
+    <div class="wrap">
+        <div class="foot-grid">
+            <div>
+                <a class="brand" href="index.html" aria-label="ShadowTrust home">
+                    <svg viewBox="0 0 28 28" fill="none" aria-hidden="true"><path d="M2.5 14c3-5.3 7-8 11.5-8s8.5 2.7 11.5 8c-3 5.3-7 8-11.5 8S5.5 19.3 2.5 14Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><circle cx="14" cy="14" r="4.2" fill="var(--st-brand)"/></svg>
+                    <span>ShadowTrust</span>
+                </a>
+                <p class="foot-blurb">Honeypots, detection, investigation and reporting in one self-hosted stack.</p>
+            </div>
+            <div><h4>Product</h4><ul><li><a href="features.html">Features</a></li><li><a href="architecture.html">Architecture</a></li><li><a href="usecases.html">Use cases</a></li></ul></div>
+            <div><h4>Learn</h4><ul><li><a href="docs.html">Documentation</a></li><li><a href="status.html">System status</a></li><li><a href="http://localhost:8000/docs" target="_blank" rel="noopener">API reference</a></li></ul></div>
+            <div><h4>Console</h4><ul><li><a href="login.html">Sign in</a></li><li><a href="register.html">Request access</a></li><li><a href="admin_login.html">Admin sign in</a></li></ul></div>
         </div>
-        <div class="footer-col">
-            <h4>Platform</h4>
-            <ul>
-                <li><a href="features.html">Features</a></li>
-                <li><a href="architecture.html">Architecture</a></li>
-                <li><a href="usecases.html">Use Cases</a></li>
-                <li><a href="docs.html">Documentation</a></li>
-                <li><a href="status.html">System Status</a></li>
-            </ul>
-        </div>
-        <div class="footer-col">
-            <h4>Access</h4>
-            <ul>
-                <li><a href="login.html">Sign In</a></li>
-                <li><a href="register.html">Register</a></li>
-                <li><a href="dashboard.html">Dashboard</a></li>
-                <li><a href="http://localhost:8000/docs" target="_blank">API Docs</a></li>
-            </ul>
-        </div>
-    </div>
-    <div class="footer-bottom">
-        <p>© 2026 Shadow Trust. All Rights Reserved.</p>
-        <div class="footer-status"><span class="dot"></span> All Systems Operational</div>
+        <div class="foot-base"><span>© 2026 ShadowTrust. Private repository.</span><a href="status.html">Check live system status <span class="arr">→</span></a></div>
     </div>
 </footer>
 
-<script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
-<script>AOS.init({ duration: 750, once: true, offset: 80 });</script>
+<script src="js/vendor/motion.js"></script>
+<script src="js/ribbon.js"></script>
+<script src="js/site.js"></script>
+<script src="js/explainers.js"></script>
 </body>
 </html>

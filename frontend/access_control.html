@@ -3,12 +3,16 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>Access Control Console | Shadow Trust</title>
+    <title>Access control · ShadowTrust</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 28 28'%3E%3Crect width='28' height='28' rx='6' fill='%23533afd'/%3E%3Cpath d='M4.5 14c2.5-4.3 5.7-6.4 9.500-6.400s7 2.100 9.500 6.400c-2.500 4.300-5.700 6.400-9.500 6.400S7 18.300 4.500 14Z' fill='none' stroke='%23fff' stroke-width='1.8' stroke-linejoin='round'/%3E%3Ccircle cx='14' cy='14' r='3.2' fill='%23fff'/%3E%3C/svg%3E">
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#ffffff">
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/dashboard.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600;700&amp;display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300..600&family=Source+Code+Pro:wght@400;500;600&display=swap">
     <link rel="stylesheet" href="css/tokens.css">
     <script src="js/theme.js"></script>
 </head>
@@ -22,13 +26,13 @@
         <main class="main-content">
             <div class="top-bar">
                 <div class="page-header">
-                    <h2>ADVANCED ACCESS CONTROL</h2>
-                    <p>SUPER ADMIN CONSOLE // <span class="text-purple">LEVEL 5 CLEARANCE</span></p>
+                    <h2>Access control</h2>
+                    <p>Approve access requests and decide who can do what.</p>
                 </div>
             </div>
 
             <!-- Inner Page Tab Nav -->
-            <div style="display:flex; gap:15px; margin-bottom:20px; border-bottom:1px solid var(--st-border); padding-bottom:10px;">
+            <div style="display:flex; gap:16px; margin-bottom:20px; border-bottom:1px solid var(--st-border); padding-bottom:12px;">
                 <button class="soc-btn tab-btn active" onclick="switchTab('tab-requests', this)"
                     style="border-color:var(--neon-purple);"><i class="fas fa-user-clock"></i> Access Requests</button>
                 <button class="soc-btn tab-btn" onclick="switchTab('tab-logs', this)"><i class="fas fa-history"></i>
@@ -39,7 +43,7 @@
             <div id="tab-requests">
                 <div class="soc-card">
                     <div class="soc-card-header">
-                        <span class="card-title">PENDING ACCESS REQUESTS</span>
+                        <span class="card-title">Pending access requests</span>
                         <button class="soc-btn" onclick="loadPendingUsers()"><i class="fas fa-sync"></i>
                             Refresh</button>
                     </div>
@@ -47,13 +51,13 @@
                         <thead>
                             <tr>
                                 <th>ID</th>
-                                <th>USERNAME</th>
-                                <th>EMAIL</th>
-                                <th>NAME</th>
-                                <th>DEPARTMENT</th>
-                                <th>REQUESTED LEVEL</th>
-                                <th>STATUS</th>
-                                <th>ACTIONS</th>
+                                <th>Username</th>
+                                <th>Email</th>
+                                <th>Name</th>
+                                <th>Department</th>
+                                <th>Requested level</th>
+                                <th>Status</th>
+                                <th>Actions</th>
                             </tr>
                         </thead>
                         <tbody id="pendingUsersTable">
@@ -67,17 +71,17 @@
             <div id="tab-logs" style="display:none;">
                 <div class="soc-card">
                     <div class="soc-card-header">
-                        <span class="card-title">ACCESS CONTROL AUDIT LOGS</span>
+                        <span class="card-title">Access control audit logs</span>
                         <button class="soc-btn" onclick="loadLogs()"><i class="fas fa-sync"></i> Refresh</button>
                     </div>
                     <table class="terminal-table">
                         <thead>
                             <tr>
-                                <th>TIME</th>
-                                <th>ADMIN</th>
-                                <th>TARGET USER</th>
-                                <th>ACTION</th>
-                                <th>DETAILS</th>
+                                <th>Time</th>
+                                <th>Admin</th>
+                                <th>Target user</th>
+                                <th>Action</th>
+                                <th>Details</th>
                             </tr>
                         </thead>
                         <tbody id="accessLogsTable">
@@ -94,31 +98,30 @@
     <div id="approveModal" class="modal"
         style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:var(--st-overlay); z-index:1000;">
         <div class="modal-content"
-            style="background:var(--st-surface); border:1px solid var(--st-border); width:400px; margin:100px auto; padding:20px; border-radius:5px;">
-            <h3 class="text-white">APPROVE USER ACCESS</h3>
+            style="background:var(--st-surface); border:1px solid var(--st-border); width:400px; margin:64px auto; padding:20px; border-radius:var(--st-radius-sm);">
+            <h3 class="text-white">Approve user access</h3>
             <input type="hidden" id="approveUserId">
             <div id="approveRequestedInfo"
-                style="margin-top:15px; padding:12px; background:color-mix(in srgb, var(--st-warning) 8%, transparent); border:1px solid var(--st-warning); border-radius:6px; color:var(--st-warning); font-size:0.85rem;">
+                style="margin-top:16px; padding:12px; background:color-mix(in srgb, var(--st-warning) 8%, transparent); border:1px solid var(--st-warning-solid); border-radius:var(--st-radius-lg); color:var(--st-warning); font-size:14px;">
                 <!-- Populated by JS with requested level info -->
             </div>
-            <div class="form-group" style="margin-top:15px;">
-                <label class="form-label text-muted">ASSIGN ROLE</label>
+            <div class="form-group" style="margin-top:16px;">
+                <label class="form-label text-muted">Assign role</label>
                 <select id="approveRole" class="form-select"
                     style="width:100%; padding:8px; background:var(--st-surface-2); color:var(--st-text); border:1px solid var(--st-border);">
-                    <option value="OPERATIVE">OPERATIVE (Level 1 — Basic Access)</option>
-                    <option value="SPECIALIST">SPECIALIST (Level 2 — Intermediate Access)</option>
-                    <option value="OVERSEER">OVERSEER (Level 3 — Full Access)</option>
+                    <option value="OPERATIVE">Operative (level 1, basic access)</option>
+                    <option value="SPECIALIST">Specialist (level 2, intermediate access)</option>
+                    <option value="OVERSEER">Overseer (level 3, full access)</option>
                 </select>
             </div>
-            <div class="form-group" style="margin-top:15px;">
-                <label class="form-label text-muted">CLEARANCE LEVEL (1-3)</label>
+            <div class="form-group" style="margin-top:16px;">
+                <label class="form-label text-muted">Clearance level (1-3)</label>
                 <input type="number" id="approveLevel" class="form-input" min="1" max="3" value="1"
                     style="width:100%; padding:8px; background:var(--st-surface-2); color:var(--st-text); border:1px solid var(--st-border);">
             </div>
             <div style="text-align:right; margin-top:20px;">
-                <button class="soc-btn" onclick="closeModal('approveModal')">CANCEL</button>
-                <button class="soc-btn" style="border-color:var(--st-success); color:var(--st-success);" onclick="submitApproval()">CONFIRM
-                    APPROVAL</button>
+                <button class="soc-btn" onclick="closeModal('approveModal')">Cancel</button>
+                <button class="soc-btn" style="border-color:var(--st-success); color:var(--st-success);" onclick="submitApproval()">Confirm approval</button>
             </div>
         </div>
     </div>
@@ -127,18 +130,17 @@
     <div id="denyModal" class="modal"
         style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:var(--st-overlay); z-index:1000;">
         <div class="modal-content"
-            style="background:var(--st-surface); border:1px solid var(--st-border); width:400px; margin:100px auto; padding:20px; border-radius:5px;">
-            <h3 class="text-red">DENY ACCESS REQUEST</h3>
+            style="background:var(--st-surface); border:1px solid var(--st-border); width:400px; margin:64px auto; padding:20px; border-radius:var(--st-radius-sm);">
+            <h3 class="text-red">Deny access request</h3>
             <input type="hidden" id="denyUserId">
-            <div class="form-group" style="margin-top:15px;">
-                <label class="form-label text-muted">REASON FOR REJECTION</label>
+            <div class="form-group" style="margin-top:16px;">
+                <label class="form-label text-muted">Reason for rejection</label>
                 <textarea id="denyReason" class="form-input" rows="3"
                     style="width:100%; padding:8px; background:var(--st-surface-2); color:var(--st-text); border:1px solid var(--st-border);"></textarea>
             </div>
             <div style="text-align:right; margin-top:20px;">
-                <button class="soc-btn" onclick="closeModal('denyModal')">CANCEL</button>
-                <button class="soc-btn" style="border-color:var(--st-danger); color:var(--st-danger);" onclick="submitDenial()">REJECT
-                    REQUEST</button>
+                <button class="soc-btn" onclick="closeModal('denyModal')">Cancel</button>
+                <button class="soc-btn" style="border-color:var(--st-danger); color:var(--st-danger);" onclick="submitDenial()">Reject request</button>
             </div>
         </div>
     </div>

@@ -3,7 +3,11 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>Virtual Lab | Shadow Trust</title>
+    <title>Virtual lab · ShadowTrust</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 28 28'%3E%3Crect width='28' height='28' rx='6' fill='%23533afd'/%3E%3Cpath d='M4.5 14c2.5-4.3 5.7-6.4 9.500-6.400s7 2.100 9.500 6.400c-2.500 4.300-5.700 6.400-9.500 6.400S7 18.300 4.500 14Z' fill='none' stroke='%23fff' stroke-width='1.8' stroke-linejoin='round'/%3E%3Ccircle cx='14' cy='14' r='3.2' fill='%23fff'/%3E%3C/svg%3E">
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#ffffff">
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/dashboard.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -25,8 +29,8 @@
         }
 
         .vm-icon-wrapper {
-            font-size: 2.5rem;
-            margin-bottom: 1rem;
+            font-size: 36px;
+            margin-bottom: 16px;
             color: var(--accent-primary);
         }
 
@@ -39,12 +43,12 @@
         }
 
         .vm-specs {
-            margin: 1.5rem 0;
+            margin: 24px 0;
             background: color-mix(in srgb, var(--st-bg) 40%, transparent);
-            padding: 1rem;
-            border-radius: 4px;
+            padding: 16px;
+            border-radius: var(--st-radius-sm);
             font-family: var(--font-mono);
-            font-size: 0.8rem;
+            font-size: 13.5px;
             color: var(--text-muted);
             border: 1px dashed var(--st-border);
         }
@@ -52,7 +56,7 @@
         .vm-specs span {
             color: var(--text-primary);
             float: right;
-            font-weight: bold;
+            font-weight: 600;
         }
 
         .vm-specs > div { margin-bottom: 8px; }
@@ -60,34 +64,34 @@
 
         .vm-env-tag {
             font-family: var(--font-mono);
-            font-size: 0.62rem;
-            letter-spacing: 1px;
+            font-size: 12px;
+            letter-spacing: 0;
             color: var(--text-muted);
-            margin-top: 6px;
+            margin-top: 8px;
         }
 
         .vm-desc {
             color: var(--text-secondary);
-            font-size: 0.85rem;
+            font-size: 14px;
             line-height: 1.5;
             margin-top: 12px;
         }
 
         .vm-note {
-            margin-top: 14px;
-            font-size: 0.75rem;
+            margin-top: 16px;
+            font-size: 13px;
             line-height: 1.45;
-            border-radius: 6px;
-            padding: 8px 10px;
+            border-radius: var(--st-radius-lg);
+            padding: 8px 12px;
             font-family: var(--font-mono);
         }
-        .vm-note code { background: color-mix(in srgb, var(--st-text) 6%, transparent); padding: 1px 5px; border-radius: 3px; }
+        .vm-note code { background: color-mix(in srgb, var(--st-text) 6%, transparent); padding: 1px 4px; border-radius: var(--st-radius-sm); }
         .vm-note-ok { color: var(--st-success); background: color-mix(in srgb, var(--st-success) 8%, transparent); border: 1px solid color-mix(in srgb, var(--st-success) 25%, transparent); }
-        .vm-note-warn { color: var(--st-warning); background: color-mix(in srgb, var(--st-warning) 8%, transparent); border: 1px solid color-mix(in srgb, var(--st-warning) 25%, transparent); }
+        .vm-note-warn { color: var(--st-warning); background: color-mix(in srgb, var(--st-warning) 8%, transparent); border: 1px solid color-mix(in srgb, var(--st-warning-solid) 25%, transparent); }
 
         .vm-actions {
             display: flex;
-            gap: 10px;
+            gap: 12px;
             margin-top: auto;
         }
 
@@ -124,40 +128,40 @@
         .workspace-mode .vm-card {
             flex-direction: row;
             align-items: center;
-            padding: 10px 15px;
+            padding: 12px 16px;
             height: auto;
             margin-bottom: 0;
         }
 
         .workspace-mode .vm-icon-wrapper {
             margin-bottom: 0;
-            margin-right: 15px;
-            font-size: 1.5rem;
+            margin-right: 16px;
+            font-size: 26px;
         }
 
         .workspace-mode .vm-actions {
             margin-top: 0;
             margin-left: auto;
-            gap: 10px;
+            gap: 12px;
             align-items: center;
         }
 
         .workspace-mode .vm-card h3 {
-            font-size: 1rem;
+            font-size: 18px;
             margin: 0 !important;
         }
 
         .workspace-mode #vmGrid {
             grid-template-columns: repeat(3, 1fr);
-            gap: 10px;
-            margin-bottom: 10px;
+            gap: 12px;
+            margin-bottom: 12px;
         }
 
         #vdiWorkspace {
             display: none;
             height: calc(100vh - 120px);
             border: 1px solid var(--accent-primary);
-            border-radius: 8px;
+            border-radius: var(--st-radius-xl);
             background: var(--st-surface-2);
             position: relative;
             box-shadow: var(--st-shadow-md);
@@ -166,7 +170,7 @@
 
         .workspace-mode #vdiWorkspace {
             display: block;
-            animation: slideUp 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+            animation: slideUp var(--st-dur-3) var(--st-ease-out) forwards;
         }
 
         @keyframes slideUp {
@@ -185,11 +189,11 @@
             background: color-mix(in srgb, var(--st-bg) 80%, transparent);
             color: var(--text-secondary);
             border: 1px solid var(--st-border);
-            padding: 8px 30px 8px 15px;
-            border-radius: 4px;
+            padding: 8px 32px 8px 16px;
+            border-radius: var(--st-radius-sm);
             font-family: var(--font-mono);
-            font-size: 0.75rem;
-            margin-right: 10px;
+            font-size: 13px;
+            margin-right: 12px;
             outline: none;
             cursor: pointer;
             appearance: none;
@@ -199,7 +203,7 @@
             background-position: right 10px center;
             background-size: 14px;
             text-transform: uppercase;
-            transition: all 0.2s;
+            transition: all var(--st-dur-2);
         }
 
         .protocol-select:hover {
@@ -238,7 +242,7 @@
             right: 10px;
             z-index: 10;
             display: flex;
-            gap: 10px;
+            gap: 12px;
         }
 
         .vdi-overlay-text {
@@ -263,22 +267,30 @@
             border: 1px solid var(--accent-primary);
             color: var(--accent-primary);
             font-family: var(--font-mono);
-            font-size: 0.7rem;
-            padding: 5px 14px;
-            border-radius: 4px;
+            font-size: 12px;
+            padding: 4px 16px;
+            border-radius: var(--st-radius-sm);
             z-index: 20;
             pointer-events: none;
             white-space: nowrap;
-            animation: fadeHint 4s ease-out forwards;
+            animation: fadeHint 4s var(--st-ease-out) forwards;
         }
         @keyframes fadeHint {
             0%   { opacity: 1; }
             60%  { opacity: 1; }
             100% { opacity: 0; }
         }
+    
+    
+        /* v3: enterprise system */
+        .vm-specs { background: var(--st-surface-2); border: 1px solid var(--st-border); border-radius: var(--st-radius-md); font-size: 13px; }
+        .vm-env-tag, .vm-note, .protocol-select, .vdi-overlay-text { font-family: var(--st-font-main); }
+        .vm-env-tag { font-size: 12px; }
+        .vm-note { border-radius: var(--st-radius-md); font-size: 13px; }
+        .protocol-select { min-height: 40px; border-radius: var(--st-radius-md); font-size: 13.5px; }
     </style>
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600;700&amp;display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300..600&family=Source+Code+Pro:wght@400;500;600&display=swap">
     <link rel="stylesheet" href="css/tokens.css">
     <script src="js/theme.js"></script>
 </head>
@@ -293,35 +305,35 @@
         <main class="main-content">
             <div class="top-bar">
                 <div class="page-header">
-                    <h2>ORCHESTRATION HUB</h2>
+                    <h2>Virtual lab</h2>
                     <p>Deploy and manage isolated honeypot environments.</p>
                 </div>
                 <div class="filters-bar">
                     <button class="soc-btn" data-admin-only onclick="window.location.href='aws_connection.html'"><i
-                            class="fas fa-link"></i> AWS CONFIGURATION</button>
+                            class="fas fa-link"></i> AWS configuration</button>
                     <button class="soc-btn" data-admin-only onclick="window.location.href='admin.html'"><i
-                            class="fas fa-shield-alt"></i> ADMIN PANEL</button>
+                            class="fas fa-shield-alt"></i> Admin panel</button>
                 </div>
             </div>
 
             <!-- Global Cluster Statistics -->
-            <div class="dashboard-grid grid-4" style="margin-bottom: 2rem;">
+            <div class="dashboard-grid grid-4" style="margin-bottom: 32px;">
                 <div class="soc-card metric-tile">
                     <div class="metric-header">
-                        <span>UPLINK STATUS</span>
+                        <span>Uplink status</span>
                         <i class="fas fa-satellite-dish text-green"></i>
                     </div>
-                    <div class="metric-value" id="global-uplink-status">ACTIVE</div>
+                    <div class="metric-value" id="global-uplink-status">Checking</div>
                     <div class="metric-sub text-green" id="global-uplink-region">resolving host…</div>
                 </div>
                 <div class="soc-card metric-tile">
                     <div class="metric-header">
-                        <span>COMPUTE CLUSTER</span>
+                        <span>Compute cluster</span>
                         <i class="fas fa-microchip text-yellow"></i>
                     </div>
                     <div class="metric-value"><span id="global-vcpu-count">0</span> / <span id="global-vcpu-max">–</span> <span
-                            style="font-size: 1rem; color: var(--st-text-faint);">vCPU</span></div>
-                    <div style="background: color-mix(in srgb, var(--st-text) 5%, transparent); height: 4px; border-radius: 2px; margin-top: 10px;">
+                            style="font-size: 18px; color: var(--st-text-faint);">vCPU</span></div>
+                    <div style="background: color-mix(in srgb, var(--st-text) 5%, transparent); height: 4px; border-radius: 2px; margin-top: 12px;">
                         <div id="global-vcpu-bar"
                             style="background: var(--accent-secondary); width: 0%; height: 100%; transition: width 0.5s ease;">
                         </div>
@@ -329,12 +341,12 @@
                 </div>
                 <div class="soc-card metric-tile">
                     <div class="metric-header">
-                        <span>MEMORY POOL</span>
+                        <span>Memory pool</span>
                         <i class="fas fa-memory text-red"></i>
                     </div>
                     <div class="metric-value"><span id="global-ram-count">0</span> / <span id="global-ram-max">–</span> <span
-                            style="font-size: 1rem; color: var(--st-text-faint);">GB</span></div>
-                    <div style="background: color-mix(in srgb, var(--st-text) 5%, transparent); height: 4px; border-radius: 2px; margin-top: 10px;">
+                            style="font-size: 18px; color: var(--st-text-faint);">GB</span></div>
+                    <div style="background: color-mix(in srgb, var(--st-text) 5%, transparent); height: 4px; border-radius: 2px; margin-top: 12px;">
                         <div id="global-ram-bar"
                             style="background: var(--accent-critical); width: 0%; height: 100%; transition: width 0.5s ease;">
                         </div>
@@ -342,7 +354,7 @@
                 </div>
                 <div class="soc-card metric-tile">
                     <div class="metric-header">
-                        <span>ACTIVE INSTANCES</span>
+                        <span>Active instances</span>
                         <i class="fas fa-server text-green"></i>
                     </div>
                     <div class="metric-value text-green" id="global-instance-count">0</div>
@@ -350,8 +362,8 @@
                 </div>
             </div>
 
-            <div class="page-header" style="margin-bottom: 1rem;">
-                <p>AVAILABLE TARGET PAYLOADS</p>
+            <div class="page-header" style="margin-bottom: 16px;">
+                <p>Available target payloads</p>
             </div>
 
             <div id="vmGrid" class="dashboard-grid grid-2">
@@ -363,10 +375,10 @@
                             <div class="vm-icon-wrapper"><i class="fab fa-linux"></i></div>
                             <div style="text-align: right;">
                                 <div class="orb" id="dot_kali_base"></div>
-                                <div class="vm-env-tag">ENV-KALI · LOCAL</div>
+                                <div class="vm-env-tag">Env-kali · local</div>
                             </div>
                         </div>
-                        <h3 style="margin: 0; font-family: var(--font-heading); letter-spacing: 1px;">KALI LINUX LAB</h3>
+                        <h3 style="margin: 0; font-family: var(--font-heading); letter-spacing: 0;">Kali Linux lab</h3>
                         <p class="vm-desc">
                             Kali Rolling + XFCE desktop, launched as a disposable Docker container on this host.
                             Full offensive toolkit (nmap, tcpdump, Metasploit-ready). Streams into the browser
@@ -378,18 +390,18 @@
                             <div>Access <span>RDP 3389 · SSH 22</span></div>
                             <div>Login <span>kali / kali</span></div>
                         </div>
-                        <div class="vm-note vm-note-ok"><i class="fas fa-circle-check"></i> Runs locally — no cloud, no cost.</div>
+                        <div class="vm-note vm-note-ok"><i class="fas fa-circle-check"></i> Runs locally. No cloud, no cost.</div>
                     </div>
 
                     <div class="vm-actions">
                         <select id="protocol_kali_base" class="protocol-select">
                             <option value="rdp">RDP GUI</option>
-                            <option value="ssh">SSH CLI</option>
+                            <option value="ssh">SSH cli</option>
                         </select>
                         <button id="create_kali_base" class="soc-btn soc-btn-primary btn-provision"
                             data-profile="kali_base" onclick="window.vmClient.launchInstance('kali_base', this)"><i
-                                class="fas fa-bolt"></i> PROVISION</button>
-                        <button id="terminate_kali_base" class="soc-btn soc-btn-danger" style="padding: 10px 15px;"
+                                class="fas fa-bolt"></i> Provision</button>
+                        <button id="terminate_kali_base" class="soc-btn soc-btn-danger" style="padding: 12px 16px;"
                             onclick="window.vmClient.terminateInstance('kali_base', document.getElementById('create_kali_base'), this)"><i
                                 class="fas fa-power-off"></i></button>
                     </div>
@@ -402,10 +414,10 @@
                             <div class="vm-icon-wrapper"><i class="fab fa-windows"></i></div>
                             <div style="text-align: right;">
                                 <div class="orb" id="dot_win_malware"></div>
-                                <div class="vm-env-tag">ENV-WINDOWS · ADVANCED</div>
+                                <div class="vm-env-tag">Env-windows · advanced</div>
                             </div>
                         </div>
-                        <h3 style="margin: 0; font-family: var(--font-heading); letter-spacing: 1px;">WINDOWS ANALYSIS LAB</h3>
+                        <h3 style="margin: 0; font-family: var(--font-heading); letter-spacing: 0;">Windows analysis lab</h3>
                         <p class="vm-desc">
                             Windows 11 desktop for malware detonation and forensic analysis. Provisions as a KVM
                             VM (dockurr/windows) or an EC2 instance, and connects over RDP via Guacamole exactly
@@ -428,8 +440,8 @@
                         </select>
                         <button id="create_win_malware" class="soc-btn soc-btn-primary btn-provision"
                             data-profile="win_malware" onclick="window.vmClient.launchInstance('win_malware', this)"><i
-                                class="fas fa-bolt"></i> PROVISION</button>
-                        <button id="terminate_win_malware" class="soc-btn soc-btn-danger" style="padding: 10px 15px;"
+                                class="fas fa-bolt"></i> Provision</button>
+                        <button id="terminate_win_malware" class="soc-btn soc-btn-danger" style="padding: 12px 16px;"
                             onclick="window.vmClient.terminateInstance('win_malware', document.getElementById('create_win_malware'), this)"><i
                                 class="fas fa-power-off"></i></button>
                     </div>
@@ -443,19 +455,19 @@
                     <button class="soc-btn"
                         style="padding: 8px 12px; background: var(--st-surface); border-color: var(--accent-primary);"
                         onclick="window.vmClient.closeWorkspace()">
-                        <i class="fas fa-times"></i> MINIMIZE
+                        <i class="fas fa-times"></i> Minimize
                     </button>
                     <button class="soc-btn"
                         style="padding: 8px 12px; background: var(--st-surface); border-color: var(--text-muted);"
                         onclick="window.vmClient.toggleFullscreen()">
-                        <i class="fas fa-expand"></i> FULLSCREEN
+                        <i class="fas fa-expand"></i> Fullscreen
                     </button>
                 </div>
 
                 <div class="vdi-overlay-text" id="vdiLoaderText">
-                    <i class="fas fa-circle-notch fa-spin" style="font-size: 2rem; margin-bottom: 10px;"></i>
-                    <div>BOOTING VIRTUAL MACHINE...</div>
-                    <div style="font-size: 0.75rem; color: var(--st-text-faint); margin-top: 5px;" id="vdiSubLoader">Negotiating
+                    <i class="fas fa-circle-notch fa-spin" style="font-size: 36px; margin-bottom: 12px;"></i>
+                    <div>Booting virtual machine...</div>
+                    <div style="font-size: 13px; color: var(--st-text-faint); margin-top: 4px;" id="vdiSubLoader">Negotiating
                         cryptographic keys</div>
                 </div>
 
@@ -465,7 +477,7 @@
                     style="outline: none;"></iframe>
 
                 <!-- Brief hint that auto-fades after 4 s -->
-                <div id="vdiKeyHint"><i class="fas fa-keyboard"></i>&nbsp; CLICK INSIDE TO ACTIVATE KEYBOARD</div>
+                <div id="vdiKeyHint"><i class="fas fa-keyboard"></i>&nbsp; Click inside to activate keyboard</div>
             </div>
 
         </main>

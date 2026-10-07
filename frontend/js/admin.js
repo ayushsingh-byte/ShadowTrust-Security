@@ -76,7 +76,7 @@ function initOrUpdateCharts(timelinePoints) {
                 maintainAspectRatio: false,
                 plugins: { legend: { display: false } },
                 scales: {
-                    y: { grid: { color: 'var(--st-text-faint)' }, ticks: { color: 'var(--st-text-faint)' } },
+                    y: { grid: { color: 'var(--st-border)' }, ticks: { color: 'var(--st-text-faint)' } },
                     x: { grid: { display: false }, ticks: { color: 'var(--st-text-faint)' } }
                 }
             }
@@ -103,7 +103,7 @@ function initOrUpdateCharts(timelinePoints) {
                 maintainAspectRatio: false,
                 plugins: { legend: { display: false } },
                 scales: {
-                    y: { grid: { color: 'var(--st-text-faint)' }, ticks: { color: 'var(--st-text-faint)' } },
+                    y: { grid: { color: 'var(--st-border)' }, ticks: { color: 'var(--st-text-faint)' } },
                     x: { grid: { display: false }, ticks: { color: 'var(--st-text-faint)' } }
                 }
             }
@@ -142,40 +142,41 @@ function renderOverviewMetrics(stats, health, latencyMs, credentialsKpi) {
     const summary = stats?.summary || {};
 
     setText('admin-metric-total-requests', fmtNum(summary.total_attacks));
-    setText('admin-metric-total-requests-sub', `Stored Requests (${fmtNum(summary.total_attacks)})`);
+    setText('admin-metric-total-requests-sub', `Stored requests`);
 
     setText('admin-metric-unique-ips', fmtNum(summary.unique_attackers));
-    setText('admin-metric-unique-ips-sub', `Distinct IPs (${fmtNum(summary.hostile_sources)})`);
+    setText('admin-metric-unique-ips-sub', `Distinct IPs · ${fmtNum(summary.hostile_sources)} hostile`);
 
     const weakPasswords = Number(credentialsKpi?.weak_passwords || 0);
     setText('admin-metric-critical', fmtNum(summary.high_risk_alerts));
-    setText('admin-metric-critical-sub', `High Risk Alerts | Weak Passwords: ${fmtNum(weakPasswords)}`);
+    setText('admin-metric-critical-sub', `High-risk alerts · ${fmtNum(weakPasswords)} weak passwords`);
 
-    const healthStatus = health?.status || 'UNKNOWN';
+    const cap = (v) => { const t = String(v || '').toLowerCase(); return t.charAt(0).toUpperCase() + t.slice(1); };
+    const healthStatus = cap(health?.status || 'unknown');
     setText('admin-metric-health', healthStatus);
-    setText('admin-metric-health-sub', `DB: ${health?.database || 'UNKNOWN'} | API: ${health?.api_version || 'N/A'}`);
+    setText('admin-metric-health-sub', `Database ${String(health?.database || 'unknown').toLowerCase()} · API ${health?.api_version || 'n/a'}`);
 
-    setText('micro-label-1', 'TOTAL EVENTS');
+    setText('micro-label-1', 'Total events');
     setText('micro-value-1', fmtNum(summary.total_attacks));
     setWidth('micro-bar-1', Math.min(100, (Number(summary.total_attacks || 0) / 50)));
 
-    setText('micro-label-2', 'UNIQUE ATTACKERS');
+    setText('micro-label-2', 'Unique attackers');
     setText('micro-value-2', fmtNum(summary.unique_attackers));
     setWidth('micro-bar-2', Math.min(100, (Number(summary.unique_attackers || 0) / 10)));
 
-    setText('micro-label-3', 'HIGH RISK ALERTS');
+    setText('micro-label-3', 'High-risk alerts');
     setText('micro-value-3', fmtNum(summary.high_risk_alerts));
     setWidth('micro-bar-3', Math.min(100, (Number(summary.high_risk_alerts || 0) * 5)));
 
-    setText('micro-label-4', 'LURES TRIPPED');
+    setText('micro-label-4', 'Lures tripped');
     setText('micro-value-4', fmtNum(summary.lures_tripped));
     setWidth('micro-bar-4', Math.min(100, (Number(summary.lures_tripped || 0) / 50)));
 
-    setText('micro-label-5', 'TARGETED SECTORS');
+    setText('micro-label-5', 'Targeted sectors');
     setText('micro-value-5', fmtNum(summary.targeted_sectors));
     setWidth('micro-bar-5', Math.min(100, Number(summary.targeted_sectors || 0) * 8));
 
-    setText('micro-label-6', 'API LATENCY');
+    setText('micro-label-6', 'API latency');
     setText('micro-value-6', `${Math.round(latencyMs)}ms`);
     setWidth('micro-bar-6', Math.max(5, Math.min(100, 100 - (latencyMs / 5))));
 
@@ -260,9 +261,9 @@ function renderUsers() {
 
 function getRoleBadge(role) {
     const normalized = String(role || '').toUpperCase();
-    if (normalized === 'SUPER_ADMIN') return '<span class="badge badge-purple">ROOT</span>';
-    if (normalized === 'ADMIN') return '<span class="badge badge-pink">ADMIN</span>';
-    if (normalized === 'OVERSEER') return '<span class="badge badge-cyan">OVERSEER</span>';
+    if (normalized === 'SUPER_ADMIN') return '<span class="badge badge-purple">Root</span>';
+    if (normalized === 'ADMIN') return '<span class="badge badge-pink">Admin</span>';
+    if (normalized === 'OVERSEER') return '<span class="badge badge-cyan">Overseer</span>';
     return `<span class="badge badge-blue">${normalized || 'ANALYST'}</span>`;
 }
 
@@ -391,15 +392,15 @@ window.checkHealth = async () => {
         healthDiv.innerHTML = `
             <div style="background:var(--st-surface); padding:15px; border-radius:5px; border:1px solid var(--st-border); margin-top:10px;">
                 <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
-                    <span class="text-white font-weight-bold">OVERALL STATUS</span>
+                    <span class="text-white font-weight-bold">Overall status</span>
                     <span class="badge ${res.status === 'HEALTHY' ? 'badge-green' : 'badge-red'}">${res.status}</span>
                 </div>
                 <div class="text-mono text-xs">
-                    <div>DATABASE: <span class="${res.database === 'ONLINE' ? 'text-green' : 'text-red'}">${res.database}</span></div>
+                    <div>Database: <span class="${res.database === 'ONLINE' ? 'text-green' : 'text-red'}">${res.database}</span></div>
                     <div>API VERSION: ${res.api_version}</div>
                     <div>TIMESTAMP: ${res.timestamp}</div>
                     <hr style="border-color:var(--st-border); margin:10px 0;">
-                    <div>SERVICES:</div>
+                    <div>Services:</div>
                     ${Object.entries(res.services || {}).map(([k, v]) => `
                         <div style="display:flex; justify-content:space-between;">
                             <span>${k.toUpperCase()}</span>
@@ -458,7 +459,7 @@ function renderFullDiagnostics(d) {
             ${containers}
         </div>
         <div style="margin-bottom:14px;">
-            <div class="text-muted" style="text-transform:uppercase;font-size:11px;margin-bottom:4px;">Database — ${escHtml(db.status)} · ${escHtml(db.server_version || '?')}</div>
+            <div class="text-muted" style="font-size:12px;margin-bottom:4px;">Database · ${escHtml(db.status)} · ${escHtml(db.server_version || '?')}</div>
             <div class="grid text-mono text-xs" style="display:grid;grid-template-columns:180px 1fr;gap:2px 12px;">${rowCounts}</div>
         </div>
         <div>
@@ -489,8 +490,8 @@ function renderGenerators(list) {
             <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap;">
                 <div class="text-xs text-muted" style="flex:1;min-width:200px;">${escHtml(g.target)}</div>
                 <div style="display:flex;gap:6px;flex-shrink:0;">
-                    <button class="soc-btn" data-copy-i="${i}">COPY</button>
-                    ${g.trigger ? `<button class="soc-btn soc-btn-danger" data-trigger="${escHtml(g.trigger)}" data-slot="${i}">EXECUTE</button>` : ''}
+                    <button class="soc-btn" data-copy-i="${i}">Copy</button>
+                    ${g.trigger ? `<button class="soc-btn soc-btn-danger" data-trigger="${escHtml(g.trigger)}" data-slot="${i}">Execute</button>` : ''}
                 </div>
             </div>
             <pre id="genCmd${i}" class="text-mono text-xs" style="white-space:pre-wrap;word-break:break-word;background:var(--st-surface);padding:8px;border-radius:4px;margin:8px 0 0;">${escHtml(g.cmd)}</pre>
@@ -502,8 +503,8 @@ function renderGenerators(list) {
             const txt = document.getElementById('genCmd' + btn.dataset.copyI).textContent;
             try {
                 await navigator.clipboard.writeText(txt);
-                btn.textContent = 'COPIED';
-                setTimeout(() => { btn.textContent = 'COPY'; }, 1500);
+                btn.textContent = 'Copied';
+                setTimeout(() => { btn.textContent = 'Copy'; }, 1500);
             } catch (e) { /* clipboard unavailable — command is still visible to select manually */ }
         };
     });

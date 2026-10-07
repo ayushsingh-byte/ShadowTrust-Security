@@ -1,6 +1,8 @@
 /*
-  SHADOW TRUST - BASE THEME
-  Shared components for every app page. Colors, type and radii come from css/tokens.css.
+  ShadowTrust console: base and components.
+  Colors, type, radii and elevation come from css/tokens.css.
+  Shared sizes are in px on purpose: the console root font-size is nudged up so that
+  older page-level rules written in small rem values stay legible.
 */
 
 * {
@@ -9,32 +11,51 @@
     box-sizing: border-box;
 }
 
+html:has(.app-container) {
+    font-size: 17px;
+}
+
 body {
     background-color: var(--st-bg);
     color: var(--st-text);
     font-family: var(--st-font-main);
+    font-size: 14px;
+    line-height: 1.5;
     overflow-x: hidden;
     overflow-y: scroll;
     scrollbar-gutter: stable;
-    line-height: 1.5;
     -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
 }
 
 ::selection {
-    background: var(--st-accent-tint);
+    background: color-mix(in srgb, var(--st-accent) 22%, transparent);
     color: var(--st-text);
 }
 
+a {
+    color: var(--st-link);
+    text-decoration: none;
+}
+
+a:hover {
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+
 a:focus-visible,
-button:focus-visible {
+button:focus-visible,
+[tabindex]:focus-visible {
     outline: 2px solid var(--st-accent);
     outline-offset: 2px;
+    border-radius: var(--st-radius-sm);
 }
 
 /* --- SCROLLBAR --- */
 ::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
+    width: 10px;
+    height: 10px;
 }
 
 ::-webkit-scrollbar-track {
@@ -43,14 +64,14 @@ button:focus-visible {
 
 ::-webkit-scrollbar-thumb {
     background: var(--st-border-strong);
-    border: 2px solid transparent;
-    border-radius: 8px;
+    border: 3px solid transparent;
+    border-radius: 10px;
     background-clip: padding-box;
 }
 
 ::-webkit-scrollbar-thumb:hover {
     background: var(--st-text-faint);
-    border: 2px solid transparent;
+    border: 3px solid transparent;
     background-clip: padding-box;
 }
 
@@ -62,30 +83,44 @@ h4,
 h5,
 h6 {
     font-family: var(--st-font-main);
-    font-weight: 700;
-    letter-spacing: -0.01em;
+    font-weight: 500;
+    letter-spacing: -0.012em;
     color: var(--st-text);
     margin-bottom: 0.5rem;
     text-wrap: balance;
 }
 
-.text-mono {
+.text-mono,
+code,
+kbd,
+pre {
     font-family: var(--st-font-mono);
     letter-spacing: 0;
     font-variant-numeric: tabular-nums;
 }
 
-/* TEXT UTILITIES */
-.text-cyan {
-    color: var(--st-info) !important;
+code {
+    font-size: 0.92em;
+    padding: 1px 5px;
+    border-radius: 4px;
+    background: var(--st-surface-2);
+    border: 1px solid var(--st-border);
 }
 
-.text-purple {
-    color: var(--st-warning) !important;
+pre code {
+    padding: 0;
+    border: 0;
+    background: none;
 }
 
+/* TEXT UTILITIES
+   Only meaning keeps a colour (red = danger, green = healthy, yellow = warning).
+   The old decorative hues no longer colour anything. */
+.text-cyan,
+.text-blue,
+.text-purple,
 .text-pink {
-    color: var(--st-danger) !important;
+    color: inherit !important;
 }
 
 .text-red {
@@ -100,10 +135,6 @@ h6 {
     color: var(--st-warning) !important;
 }
 
-.text-blue {
-    color: var(--st-info) !important;
-}
-
 .text-muted {
     color: var(--st-text-muted) !important;
 }
@@ -112,30 +143,54 @@ h6 {
     color: var(--st-text) !important;
 }
 
-/* --- COMPONENTS --- */
+.text-xs {
+    font-size: 12.5px;
+}
 
-/* Buttons */
+.text-xl {
+    font-size: 20px;
+}
+
+/* --- BUTTONS --- */
 .soc-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 34px;
+    padding: 0 14px;
     background: var(--st-surface);
-    border: 1px solid var(--st-border-strong);
-    color: var(--st-text);
-    padding: 8px 24px;
-    border-radius: var(--st-radius-sm);
+    border: 1px solid var(--st-accent-border);
+    border-radius: var(--st-radius-md);
+    box-shadow: 0 1px 2px rgba(0, 59, 137, 0.05);
+    color: var(--st-brand-text);
     font-family: var(--st-font-main);
-    font-weight: 600;
-    font-size: 0.85rem;
-    line-height: 1.3;
+    font-size: 14px;
+    font-weight: 450;
+    line-height: 1;
+    letter-spacing: 0;
+    text-transform: none;
     cursor: pointer;
-    transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
-    letter-spacing: 0.01em;
+    white-space: nowrap;
     position: relative;
-    overflow: hidden;
+    transition: background-color var(--st-dur-1) ease, border-color var(--st-dur-1) ease, color var(--st-dur-1) ease,
+        box-shadow var(--st-dur-1) ease, transform var(--st-dur-1) ease;
+}
+
+.soc-btn i {
+    font-size: 0.92em;
+    opacity: 0.85;
 }
 
 .soc-btn:hover {
-    background: var(--st-surface-hover);
-    border-color: var(--st-text-faint);
-    color: var(--st-text);
+    background: var(--st-accent-tint);
+    border-color: color-mix(in srgb, var(--st-accent) 55%, var(--st-surface));
+    color: var(--st-brand-text);
+    text-decoration: none;
+}
+
+.soc-btn:active {
+    transform: scale(0.98);
 }
 
 .soc-btn:focus-visible {
@@ -146,86 +201,97 @@ h6 {
 
 .soc-btn:disabled,
 .soc-btn[disabled] {
-    opacity: 0.55;
+    opacity: 0.5;
     cursor: not-allowed;
+    transform: none;
 }
 
 .soc-btn-primary {
-    background: var(--st-accent);
-    border-color: var(--st-accent);
-    color: var(--st-on-solid);
+    background: var(--st-brand);
+    border-color: var(--st-brand);
+    color: var(--st-on-brand);
+}
+
+.soc-btn-primary i {
+    opacity: 1;
 }
 
 .soc-btn-primary:hover {
-    background: var(--st-accent-hover);
-    border-color: var(--st-accent-hover);
-    color: var(--st-on-solid);
+    background: var(--st-brand-hover);
+    border-color: var(--st-brand-hover);
+    color: var(--st-on-brand);
 }
 
 .soc-btn-danger {
-    background: transparent;
-    border-color: color-mix(in srgb, var(--st-danger) 55%, transparent);
+    background: var(--st-surface);
+    border-color: color-mix(in srgb, var(--st-danger) 45%, var(--st-border));
     color: var(--st-danger);
 }
 
 .soc-btn-danger:hover {
-    background: var(--st-danger);
+    background: var(--st-danger-bg);
     border-color: var(--st-danger);
-    color: var(--st-on-solid);
+    color: var(--st-danger);
 }
 
-/* Cards */
+/* --- CARDS --- */
 .soc-card {
     background: var(--st-surface);
     border: 1px solid var(--st-border);
-    border-radius: var(--st-radius-md);
+    border-radius: var(--st-radius-lg);
     position: relative;
-    padding: 1.5rem;
-    box-shadow: var(--st-shadow-sm);
-    transition: border-color 0.15s ease;
-}
-
-.soc-card:hover {
-    border-color: var(--st-border-strong);
+    padding: 20px;
+    min-width: 0;
 }
 
 .soc-card-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    gap: 0.75rem;
-    margin-bottom: 1rem;
-    padding-bottom: 0.8rem;
-    border-bottom: 1px solid var(--st-border);
+    gap: 12px;
+    margin-bottom: 16px;
+    min-height: 24px;
 }
 
 .card-title {
-    font-family: var(--st-font-main);
-    font-size: 0.95rem;
-    font-weight: 700;
-    color: var(--st-text);
-    letter-spacing: 0;
     display: flex;
     align-items: center;
     gap: 8px;
+    font-family: var(--st-font-main);
+    font-size: 15px;
+    font-weight: 500;
+    letter-spacing: -0.01em;
+    color: var(--st-text);
 }
 
-/* Inputs */
+.card-title i,
+.soc-card-header > i {
+    color: var(--st-text-faint);
+    font-size: 0.9em;
+}
+
+/* --- INPUTS --- */
 .soc-select,
 .soc-input {
+    min-height: 36px;
+    padding: 0 12px;
     background: var(--st-surface);
     border: 1px solid var(--st-border-strong);
+    border-radius: var(--st-radius-md);
     color: var(--st-text);
-    padding: 8px 12px;
-    border-radius: var(--st-radius-sm);
     font-family: var(--st-font-main);
-    font-size: 0.85rem;
+    font-size: 13.5px;
     outline: none;
-    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    transition: border-color var(--st-dur-1) ease, box-shadow var(--st-dur-1) ease;
 }
 
 .soc-input::placeholder {
     color: var(--st-text-faint);
+}
+
+.soc-select:hover,
+.soc-input:hover {
+    border-color: var(--st-text-faint);
 }
 
 .soc-select:focus,
@@ -234,107 +300,162 @@ h6 {
     box-shadow: var(--st-focus-ring);
 }
 
-/* Tables */
-.soc-table {
+/* --- TABLES --- */
+.soc-table,
+.terminal-table {
     width: 100%;
     border-collapse: collapse;
     font-family: var(--st-font-main);
-    font-size: 0.85rem;
+    font-size: 13.5px;
     font-variant-numeric: tabular-nums;
 }
 
-.soc-table th {
+.soc-table th,
+.terminal-table thead th {
     text-align: left;
-    color: var(--st-text-muted);
-    background: var(--st-surface-2);
-    padding: 12px;
+    padding: 0 12px 10px 0;
     border-bottom: 1px solid var(--st-border);
-    text-transform: uppercase;
-    font-size: 0.7rem;
-    font-weight: 600;
-    letter-spacing: 0.06em;
+    background: transparent;
+    color: var(--st-text-subdued);
+    font-size: 12.5px;
+    font-weight: 500;
+    letter-spacing: 0;
+    text-transform: none;
+    white-space: nowrap;
 }
 
-.soc-table td {
-    padding: 12px;
+.soc-table td,
+.terminal-table tbody td {
+    padding: 11px 12px 11px 0;
     border-bottom: 1px solid var(--st-border);
     color: var(--st-text);
+    vertical-align: middle;
 }
 
-.soc-table tr:hover {
-    background: var(--st-surface-hover);
+.soc-table tbody tr:last-child td,
+.terminal-table tbody tr:last-child td {
+    border-bottom: 0;
 }
 
-/* Badges */
+.soc-table tbody tr,
+.terminal-table tbody tr {
+    transition: background-color var(--st-dur-1) ease;
+}
+
+.soc-table tbody tr:hover td,
+.terminal-table tbody tr:hover td {
+    background: var(--st-surface-2);
+}
+
+.terminal-table.fixed,
+.soc-table.fixed {
+    table-layout: fixed;
+}
+
+.cell-clip {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* --- BADGES --- */
 .badge {
-    padding: 3px 8px;
-    border-radius: 999px;
-    border: 1px solid transparent;
-    font-size: 0.68rem;
-    font-weight: 600;
-    line-height: 1.4;
-    text-transform: uppercase;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 1px 7px;
+    border-radius: var(--st-radius-sm);
+    border: 0;
+    background: var(--st-neutral-bg);
+    color: var(--st-text-muted);
     font-family: var(--st-font-main);
-    letter-spacing: 0.04em;
-    display: inline-block;
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 1.5;
+    letter-spacing: 0;
+    text-transform: none;
     white-space: nowrap;
 }
 
 .badge-green {
     background: var(--st-success-bg);
     color: var(--st-success);
-    border-color: color-mix(in srgb, var(--st-success) 28%, transparent);
 }
 
-.badge-blue {
-    background: var(--st-info-bg);
-    color: var(--st-info);
-    border-color: color-mix(in srgb, var(--st-info) 28%, transparent);
+.badge-blue,
+.badge-teal {
+    background: var(--st-accent-tint);
+    color: var(--st-accent);
 }
 
 .badge-purple,
 .badge-yellow {
     background: var(--st-warning-bg);
     color: var(--st-warning);
-    border-color: color-mix(in srgb, var(--st-warning) 28%, transparent);
 }
 
 .badge-red,
 .badge-pink {
     background: var(--st-danger-bg);
     color: var(--st-danger);
-    border-color: color-mix(in srgb, var(--st-danger) 28%, transparent);
 }
 
 .badge-orange {
     background: var(--st-caution-bg);
     color: var(--st-caution);
-    border-color: color-mix(in srgb, var(--st-caution) 28%, transparent);
-}
-
-.badge-teal {
-    background: var(--st-accent-tint);
-    color: var(--st-accent);
-    border-color: color-mix(in srgb, var(--st-accent) 28%, transparent);
 }
 
 .badge-gray {
     background: var(--st-neutral-bg);
-    color: var(--st-neutral);
-    border-color: color-mix(in srgb, var(--st-neutral) 28%, transparent);
+    color: var(--st-text-secondary);
+}
+
+/* --- NOTE / BANNER --- */
+.st-note {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    padding: 12px 16px;
+    border-radius: var(--st-radius-md);
+    background: var(--st-accent-tint);
+    border: 1px solid var(--st-accent-border);
+    color: var(--st-text-secondary);
+    font-size: 13.5px;
+}
+
+.st-note > i {
+    color: var(--st-accent);
+    margin-top: 3px;
+}
+
+/* --- SKELETON --- */
+@keyframes st-shimmer {
+    from {
+        background-position: 100% 50%;
+    }
+
+    to {
+        background-position: 0 50%;
+    }
+}
+
+.st-skeleton {
+    border-radius: var(--st-radius-sm);
+    background: linear-gradient(90deg, var(--st-accent-tint) 25%, color-mix(in srgb, var(--st-accent) 20%, var(--st-surface)) 37%, var(--st-accent-tint) 63%);
+    background-size: 400% 100%;
+    animation: st-shimmer 1.4s ease-in-out infinite;
 }
 
 /* Toggles / Misc */
 .toggle-btn {
     color: var(--st-text-muted) !important;
-    transition: color 0.15s ease, transform 0.3s ease;
+    transition: color var(--st-dur-1) ease, transform var(--st-dur-2) var(--st-ease-out);
 }
 
 .toggle-btn:hover {
     color: var(--st-text) !important;
 }
 
-/* Utilities */
 .animate-pulse {
     animation: pulse 2s infinite;
 }
@@ -345,7 +466,7 @@ h6 {
     }
 
     50% {
-        opacity: 0.5;
+        opacity: 0.45;
     }
 
     100% {
@@ -353,8 +474,22 @@ h6 {
     }
 }
 
+/* Cross-fade between pages (browsers without view transitions just navigate).
+   The type lets dashboard.css tell a page change from a change inside one page. */
+@view-transition {
+    navigation: auto;
+    types: page;
+}
+
+::view-transition-old(root),
+::view-transition-new(root) {
+    animation-duration: var(--st-dur-2);
+}
+
 @media (prefers-reduced-motion: reduce) {
-    .animate-pulse {
+
+    .animate-pulse,
+    .st-skeleton {
         animation: none;
     }
 }

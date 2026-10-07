@@ -3,7 +3,11 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>MITRE ATT&CK Matrix | Shadow Trust</title>
+    <title>MITRE ATT&amp;CK · ShadowTrust</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 28 28'%3E%3Crect width='28' height='28' rx='6' fill='%23533afd'/%3E%3Cpath d='M4.5 14c2.5-4.3 5.7-6.4 9.500-6.400s7 2.100 9.500 6.400c-2.500 4.300-5.700 6.400-9.500 6.400S7 18.300 4.500 14Z' fill='none' stroke='%23fff' stroke-width='1.8' stroke-linejoin='round'/%3E%3Ccircle cx='14' cy='14' r='3.2' fill='%23fff'/%3E%3C/svg%3E">
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#ffffff">
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/dashboard.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -29,7 +33,7 @@
             background: var(--st-surface);
             padding: 10px;
             text-align: center;
-            font-weight: bold;
+            font-weight: 600;
             border-bottom: 1px solid var(--st-border);
             color: var(--st-text);
             font-size: 0.82rem;
@@ -99,7 +103,7 @@
         }
 
         .tc-id {
-            font-weight: bold;
+            font-weight: 600;
             font-family: var(--st-font-mono);
         }
 
@@ -114,7 +118,7 @@
             font-size: 0.6rem;
             padding: 1px 5px;
             border-radius: 4px;
-            font-weight: bold;
+            font-weight: 600;
         }
 
         .tc-manual {
@@ -268,9 +272,31 @@
             border-radius: 3px;
             cursor: pointer;
         }
+
+    
+        /* v3: enterprise system */
+        .mitre-grid { gap: 12px; }
+        .tactic-column { background: var(--st-surface-2); border-radius: var(--st-radius-md); min-width: 200px; }
+        .tactic-header { background: transparent; text-align: left; padding: 12px 12px 10px; font-size: 13px; font-weight: 600; }
+        .tcol-list { padding: 4px 8px; }
+        .tcol-empty { font-style: normal; font-size: 12.5px; }
+        .technique-card { background: var(--st-surface); border-radius: var(--st-radius-md); padding: 10px; font-size: 13px; box-shadow: var(--st-shadow-sm); }
+        .technique-card.active { background: var(--st-surface); border-left-color: var(--st-danger); color: var(--st-text); }
+        .tc-id { font-weight: 600; font-size: 12.5px; }
+        .tc-name { font-size: 13px; font-weight: 500; color: var(--st-text); }
+        .count-badge { background: var(--st-danger); border-radius: var(--st-radius-sm); font-size: 11px; padding: 0 6px; }
+        .tc-manual { font-size: 11px; border-radius: var(--st-radius-sm); padding: 0 6px; }
+        .tc-status, .tc-note { min-height: 30px; background: var(--st-surface); border-color: var(--st-border-strong); border-radius: var(--st-radius-sm); font-family: var(--st-font-main); font-size: 12.5px; padding: 4px 8px; }
+        .tcol-add { border-radius: var(--st-radius-md); font-size: 12.5px; padding: 7px; border-color: var(--st-border-strong); }
+        .tcol-add:hover { border-color: var(--st-accent); color: var(--st-accent); }
+        .tc-doc:hover { color: var(--st-accent); }
+        .tp-box { background: var(--st-surface); border: 1px solid var(--st-border); border-radius: var(--st-radius-lg); box-shadow: var(--st-shadow-lg); padding: 18px; }
+        #tp-search { min-height: 36px; background: var(--st-surface); border-color: var(--st-border-strong); border-radius: var(--st-radius-md); padding: 0 12px; }
+        .tp-item { font-size: 13.5px; padding: 9px 10px; border-radius: var(--st-radius-sm); }
+        .tp-item:hover { background: var(--st-accent-tint); color: var(--st-accent); }
     </style>
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600;700&amp;display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300..600&family=Source+Code+Pro:wght@400;500;600&display=swap">
     <link rel="stylesheet" href="css/tokens.css">
     <script src="js/theme.js"></script>
 </head>
@@ -283,7 +309,7 @@
             width: 0%;
             height: 100%;
             background: var(--accent-primary);
-            transition: width 1.5s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: width 1.5s var(--st-ease-in-out);
         }
 
         @keyframes cyber-pulse {
@@ -319,7 +345,7 @@
             <div class="soc-card-header"
                 style="border-bottom: 1px solid var(--st-border); padding-bottom: 10px; margin-bottom: 15px; position:relative;">
                 <span id="modal-title" class="card-title text-yellow"><i class="fas fa-exclamation-triangle"></i>
-                    AUTHORIZATION REQUIRED</span>
+                    Authorization required</span>
             </div>
 
             <div id="modal-message"
@@ -335,8 +361,8 @@
 
             <div id="modal-buttons" style="display: flex; justify-content: flex-end; gap: 10px; position:relative;">
                 <button id="modal-btn-cancel" class="soc-btn"
-                    style="background: transparent; border: 1px solid var(--st-border); color: var(--st-text-secondary);">CANCEL</button>
-                <button id="modal-btn-confirm" class="soc-btn soc-btn-primary">PROCEED</button>
+                    style="background: transparent; border: 1px solid var(--st-border); color: var(--st-text-secondary);">Cancel</button>
+                <button id="modal-btn-confirm" class="soc-btn soc-btn-primary">Proceed</button>
             </div>
         </div>
     </div>
@@ -350,15 +376,14 @@
         <main class="main-content">
             <div class="top-bar">
                 <div class="page-header">
-                    <h2>MITRE ATT&CK MATRIX</h2>
-                    <p>REAL-TIME TACTIC MAPPING // <span class="text-red" id="activeThreatsCount">0 ACTIVE
-                            THREATS</span></p>
+                    <h2>MITRE ATT&CK matrix</h2>
+                    <p>Techniques seen in your data, mapped to tactics as events arrive. <span class="text-red" id="activeThreatsCount">0 observed techniques</span></p>
                 </div>
                 <div class="filters-bar">
-                    <button id="btn-live-matrix" class="soc-btn">LIVE MATRIX</button>
-                    <button id="btn-ext-lib" class="soc-btn">EXTERNAL LIBRARY</button>
+                    <button id="btn-live-matrix" class="soc-btn">Live matrix</button>
+                    <button id="btn-ext-lib" class="soc-btn">External library</button>
                     <button id="btn-refresh" class="soc-btn soc-btn-primary"><i class="fas fa-sync"></i>
-                        REFRESH</button>
+                        Refresh</button>
                 </div>
             </div>
 
@@ -367,8 +392,8 @@
 
                 <div class="soc-card" style="margin-bottom: 20px;">
                     <div class="soc-card-header">
-                        <span class="card-title">ACTIVE TACTICS (LIVE)</span>
-                        <span class="badge badge-green">UPDATED: JUST NOW</span>
+                        <span class="card-title">Active tactics (live)</span>
+                        <span class="badge badge-green">Updated: just now</span>
                     </div>
 
                     <div class="mitre-grid" id="matrixContainer">
@@ -377,14 +402,14 @@
                 </div>
 
                 <div class="soc-card">
-                    <div class="soc-card-header"><span class="card-title">RECENT MAPPED EVENTS</span></div>
+                    <div class="soc-card-header"><span class="card-title">Recent mapped events</span></div>
                     <table class="terminal-table" style="width: 100%;">
                         <thead>
                             <tr>
-                                <th>TIMESTAMP</th>
-                                <th>TACTIC</th>
-                                <th>TECHNIQUE ID</th>
-                                <th>SEVERITY</th>
+                                <th>Timestamp</th>
+                                <th>Tactic</th>
+                                <th>Technique ID</th>
+                                <th>Severity</th>
                             </tr>
                         </thead>
                         <tbody id="eventsTable">
@@ -436,7 +461,7 @@
                 console.warn('mitre save failed', e);
                 dirty = true;
                 const badge = document.querySelector('.badge-green');
-                if (badge) badge.innerText = 'SAVE FAILED — RETRYING';
+                if (badge) badge.innerText = 'Save failed, retrying';
                 clearTimeout(saveTimer);
                 saveTimer = setTimeout(saveAnnotations, 5000);
             }
@@ -510,7 +535,7 @@
                 </div>`;
             }).join('');
 
-            document.getElementById('activeThreatsCount').innerText = `${total} OBSERVED TECHNIQUES`;
+            document.getElementById('activeThreatsCount').innerText = `${total} observed technique${total === 1 ? '' : 's'}`;
             const badge = document.querySelector('.badge-green');
             if (badge) badge.innerText = `UPDATED: ${new Date().toLocaleTimeString()}`;
 
@@ -522,7 +547,7 @@
                     rows.push({ tactic, ...e });
             rows.sort((a, b) => (b.timestamp || '').localeCompare(a.timestamp || ''));
             tb.innerHTML = rows.slice(0, 40).map(e => `<tr>
-                <td class="text-mono text-muted">${e.timestamp ? new Date(e.timestamp).toLocaleTimeString() : '—'}</td>
+                <td class="text-mono text-muted">${e.timestamp ? new Date(e.timestamp).toLocaleTimeString() : 'n/a'}</td>
                 <td class="text-cyan">${e.tactic}</td><td class="text-mono">${e.id}</td>
                 <td class="${e.severity === 'CRITICAL' ? 'text-red' : 'text-yellow'}">${e.severity || ''}</td></tr>`).join('')
                 || '<tr><td colspan="4" class="text-muted">No mapped events yet</td></tr>';
@@ -728,7 +753,7 @@
 
         document.getElementById('btn-refresh').addEventListener('click', () => {
             showModal(
-                '<i class="fas fa-sync-alt"></i> RECALIBRATE SENSORS',
+                '<i class="fas fa-sync-alt"></i> Recalibrate sensors',
                 'Refresh the matrix with the latest sensor data mapping?',
                 false,
                 () => {

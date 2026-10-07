@@ -3,218 +3,472 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>URL Intelligence | Shadow Trust</title>
+    <title>URL scanner · ShadowTrust</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 28 28'%3E%3Crect width='28' height='28' rx='6' fill='%23533afd'/%3E%3Cpath d='M4.5 14c2.5-4.3 5.7-6.4 9.500-6.400s7 2.100 9.500 6.400c-2.500 4.300-5.700 6.400-9.500 6.400S7 18.300 4.500 14Z' fill='none' stroke='%23fff' stroke-width='1.8' stroke-linejoin='round'/%3E%3Ccircle cx='14' cy='14' r='3.2' fill='%23fff'/%3E%3C/svg%3E">
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#ffffff">
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/dashboard.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        /* Scanline sweep */
-        .url-hero {
-            background: color-mix(in srgb, var(--st-bg) 90%, transparent);
+        /* =========================================================
+           URL scanner. One scan bar, then two columns on a 20px grid: what the
+           checks found on the left, the sandboxed preview and WHOIS on the right.
+           Cards in a column are 20px apart; both columns end on the same line.
+           ========================================================= */
+
+        .us-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            height: 34px;
+            padding: 0 12px;
             border: 1px solid var(--st-border);
-            padding: 26px 30px 20px;
-            margin-bottom: 1.2rem;
+            border-radius: var(--st-radius-md);
+            background: var(--st-surface);
+            font-size: 13px;
+            color: var(--st-text-muted);
+        }
+
+        .us-chip b {
+            font-weight: 500;
+            color: var(--st-text);
+            font-variant-numeric: tabular-nums;
+        }
+
+        .us-chip.bad b {
+            color: var(--st-danger);
+        }
+
+        /* ---------- scan bar ---------- */
+        .url-hero {
             position: relative;
+            padding: 20px;
+            border: 1px solid var(--st-border);
+            border-radius: var(--st-radius-lg);
+            background: var(--st-surface);
+            box-shadow: var(--st-shadow-sm);
             overflow: hidden;
         }
 
         .url-hero::before {
             content: '';
             position: absolute;
+            left: 0;
+            right: 0;
             top: 0;
-            left: -100%;
-            width: 100%;
             height: 2px;
-            background: linear-gradient(90deg, transparent, var(--st-info), transparent);
-            animation: sweep 3s infinite linear;
+            background: var(--st-ribbon);
         }
 
-        @keyframes sweep {
-            to {
-                left: 200%;
-            }
+        .us-bar {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) auto;
+            gap: 12px;
         }
 
         .big-input {
-            flex: 1;
+            width: 100%;
+            height: 44px;
+            padding: 0 14px;
+            border: 1px solid var(--st-border-strong);
+            border-radius: var(--st-radius-md);
             background: var(--st-surface);
-            border: 1px solid var(--st-border);
-            padding: 13px 18px;
+            font: 400 15px var(--st-font-main);
             color: var(--st-text);
-            font-family: var(--font-mono);
-            font-size: 1rem;
-            outline: none;
-            transition: all .3s;
-            min-width: 0;
+            outline: 0;
+            transition: border-color var(--st-dur-1) ease, box-shadow var(--st-dur-1) ease;
+        }
+
+        .big-input::placeholder {
+            color: var(--st-text-faint);
         }
 
         .big-input:focus {
-            border-color: var(--st-info);
-            
+            border-color: var(--st-accent);
+            box-shadow: var(--st-focus-ring);
         }
 
         .scan-btn-large {
-            padding: 13px 32px;
-            background: color-mix(in srgb, var(--st-success) 8%, transparent);
-            border: 1px solid var(--st-success);
-            color: var(--st-success);
-            font-family: var(--font-mono);
-            font-weight: 700;
-            cursor: pointer;
-            transition: all .3s;
-            text-transform: uppercase;
-            letter-spacing: 2px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            height: 44px;
+            padding: 0 20px;
+            border: 1px solid var(--st-brand);
+            border-radius: var(--st-radius-md);
+            background: var(--st-brand);
+            font: 450 15px var(--st-font-main);
+            color: var(--st-on-brand);
             white-space: nowrap;
-            flex-shrink: 0;
+            cursor: pointer;
+            transition: background-color var(--st-dur-1) ease;
         }
 
         .scan-btn-large:hover {
-            background: var(--st-success);
-            color: var(--st-on-solid);
-            
+            background: var(--st-brand-hover);
         }
 
         .scan-btn-large:disabled {
-            opacity: .4;
-            cursor: not-allowed;
+            opacity: 0.6;
+            cursor: progress;
+        }
+
+        .us-engines {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 8px;
+            margin-top: 16px;
+            font-size: 13px;
+            color: var(--st-text-muted);
         }
 
         .engine-tag {
             display: inline-flex;
             align-items: center;
-            gap: 5px;
-            font-size: .62rem;
-            padding: 3px 9px;
+            gap: 6px;
+            height: 26px;
+            padding: 0 9px;
             border: 1px solid var(--st-border);
-            color: var(--st-text-faint);
-            font-family: var(--font-mono);
-            margin: 2px;
-            transition: all .3s;
+            border-radius: var(--st-radius-sm);
+            font-size: 12.5px;
+            color: var(--st-text-muted);
+            transition: border-color var(--st-dur-2) ease, background-color var(--st-dur-2) ease, color var(--st-dur-2) ease;
         }
 
+        .engine-tag i {
+            font-size: 11px;
+        }
+
+        /* a check that is running or has run */
         .engine-tag.active {
-            border-color: var(--st-info);
-            color: var(--st-info);
-            background: color-mix(in srgb, var(--st-info) 5%, transparent);
+            border-color: var(--st-accent-border);
+            background: var(--st-accent-tint);
+            color: var(--st-brand-text);
         }
 
-        /* Main layout */
+        #inlineError {
+            margin-top: 12px;
+            font-size: 13.5px;
+            color: var(--st-danger);
+        }
+
+        /* ---------- verdict line ---------- */
+        .threat-banner {
+            display: none;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 16px;
+            border: 1px solid var(--st-border);
+            border-radius: var(--st-radius-md);
+            background: var(--st-surface-2);
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--st-text);
+            overflow-wrap: anywhere;
+        }
+
+        .threat-banner.malicious {
+            border-color: color-mix(in srgb, var(--st-danger-solid) 34%, var(--st-surface));
+            background: var(--st-danger-bg);
+            color: var(--st-danger);
+        }
+
+        .threat-banner.suspicious {
+            border-color: color-mix(in srgb, var(--st-warning-solid) 40%, var(--st-surface));
+            background: var(--st-warning-bg);
+            color: var(--st-warning);
+        }
+
+        .threat-banner.safe {
+            border-color: color-mix(in srgb, var(--st-success-solid) 34%, var(--st-surface));
+            background: var(--st-success-bg);
+            color: var(--st-success);
+        }
+
+        /* ---------- two columns ---------- */
         .url-lab {
             display: grid;
-            grid-template-columns: 420px 1fr;
-            gap: 1rem;
-            margin-bottom: 1rem;
+            grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+            gap: 20px;
+            align-items: stretch;
         }
 
-        .url-preview-pane {
+        .us-col {
             display: flex;
             flex-direction: column;
-            gap: 1rem;
+            gap: 20px;
+            min-width: 0;
         }
 
-        /* Score ring */
+        .us-card {
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+            border: 1px solid var(--st-border);
+            border-radius: var(--st-radius-lg);
+            background: var(--st-surface);
+            overflow: hidden;
+        }
+
+        .us-card.grow {
+            flex: 1;
+        }
+
+        .us-card > .hd {
+            flex: none;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            min-height: 52px;
+            padding: 0 20px;
+            border-bottom: 1px solid var(--st-border);
+        }
+
+        .us-card > .hd .t {
+            font-size: 15px;
+            font-weight: 500;
+            letter-spacing: -0.01em;
+            color: var(--st-text);
+        }
+
+        .us-card > .bd {
+            padding: 20px;
+        }
+
+        /* score */
+        .us-score {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
         .score-ring {
-            width: 110px;
-            height: 110px;
-            border-radius: 50%;
-            border: 5px solid var(--st-border);
+            --ring: var(--st-border-strong);
+            position: relative;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            transition: all .5s;
-            flex-shrink: 0;
-        }
-
-        .score-ring.safe {
-            border-color: var(--st-success);
-            
-        }
-
-        .score-ring.suspicious {
-            border-color: var(--st-info);
-            
+            flex: none;
+            width: 92px;
+            height: 92px;
+            border: 6px solid var(--ring);
+            border-radius: 50%;
+            transition: border-color var(--st-dur-2) ease;
         }
 
         .score-ring.malicious {
-            border-color: var(--st-danger);
-            
+            --ring: var(--st-danger-solid);
+        }
+
+        .score-ring.suspicious {
+            --ring: var(--st-warning-solid);
+        }
+
+        .score-ring.safe {
+            --ring: var(--st-success-solid);
         }
 
         .score-ring .s-number {
-            font-size: 2rem;
-            font-weight: 800;
-            color: var(--st-text);
+            font-size: 26px;
+            font-weight: 300;
             line-height: 1;
+            letter-spacing: -0.02em;
+            color: var(--st-text);
+            font-variant-numeric: tabular-nums;
         }
 
         .score-ring .s-label {
-            font-size: .55rem;
+            margin-top: 4px;
+            font-size: 11px;
             color: var(--st-text-faint);
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-top: 2px;
         }
 
-        /* Preview iframe */
-        .preview-browser {
-            background: var(--st-surface-2);
-            border: 1px solid var(--st-border);
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-        }
-
-        .browser-bar {
-            background: var(--st-surface-2);
-            border-bottom: 1px solid var(--st-border);
-            padding: 7px 10px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            flex-shrink: 0;
-        }
-
-        .browser-dots span {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            display: inline-block;
-            margin-right: 3px;
-        }
-
-        .b-red {
-            background: var(--st-danger);
-        }
-
-        .b-yellow {
-            background: var(--st-warning);
-        }
-
-        .b-green {
-            background: var(--st-success);
-        }
-
-        .browser-addr {
-            flex: 1;
-            background: var(--st-surface-2);
-            border: 1px solid var(--st-border);
-            color: var(--st-text-faint);
-            font-size: .65rem;
-            font-family: var(--font-mono);
-            padding: 4px 8px;
+        #domainDisplay {
+            font: 500 15px var(--st-font-mono);
+            color: var(--st-text);
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
         }
 
-        .preview-frame {
-            flex: 1;
-            width: 100%;
-            border: none;
-            min-height: 330px;
+        #categoryBadges {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 8px;
+        }
+
+        #categoryBadges:empty {
+            display: none;
+        }
+
+        .cat-badge {
+            height: 22px;
+            padding: 0 8px;
+            border-radius: var(--st-radius-sm);
+            background: var(--st-accent-tint);
+            font-size: 12px;
+            font-weight: 500;
+            line-height: 22px;
+            color: var(--st-brand-text);
+        }
+
+        .cat-badge.red {
+            background: var(--st-danger-bg);
+            color: var(--st-danger);
+        }
+
+        .cat-badge.amber {
+            background: var(--st-warning-bg);
+            color: var(--st-warning);
+        }
+
+        #ipCountry {
+            margin-top: 8px;
+            font-size: 13px;
+            color: var(--st-text-muted);
+            overflow-wrap: anywhere;
+        }
+
+        /* network facts: two equal columns of label over value, divided by hairlines */
+        .intel-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 1px;
+            background: var(--st-border);
+        }
+
+        .intel-item {
+            min-width: 0;
+            padding: 12px 20px 13px;
+            background: var(--st-surface);
+        }
+
+        .intel-lbl {
+            font-size: 12.5px;
+            color: var(--st-text-subdued);
+        }
+
+        .intel-val,
+        #ii-ssl {
+            margin-top: 3px;
+            font: 500 13.5px var(--st-font-main);
+            color: var(--st-text);
+            overflow-wrap: anywhere;
+        }
+
+        .ssl-valid {
+            color: var(--st-success);
+        }
+
+        .ssl-invalid {
+            color: var(--st-danger);
+        }
+
+        /* findings */
+        #findingsList {
+            max-height: 264px;
+            overflow-y: auto;
+            scrollbar-width: thin;
+        }
+
+        .finding-row {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            padding: 10px 0;
+            border-bottom: 1px solid var(--st-border);
+            font-size: 13.5px;
+            line-height: 1.5;
+            color: var(--st-text-secondary);
+        }
+
+        .finding-row:first-child {
+            padding-top: 0;
+        }
+
+        .finding-row:last-child {
+            padding-bottom: 0;
+            border-bottom: 0;
+        }
+
+        .finding-row i {
+            margin-top: 4px;
+            font-size: 13px;
+        }
+
+        .finding-text {
+            min-width: 0;
+            overflow-wrap: anywhere;
+        }
+
+        .us-none {
+            font-size: 13.5px;
+            color: var(--st-text-muted);
+        }
+
+        /* preview */
+        .browser-bar {
+            flex: none;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            height: 44px;
+            padding: 0 14px;
+            border-bottom: 1px solid var(--st-border);
             background: var(--st-surface-2);
+        }
+
+        .browser-dots {
+            display: flex;
+            gap: 6px;
+        }
+
+        .browser-dots span {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--st-border-strong);
+        }
+
+        .browser-addr {
+            flex: 1;
+            min-width: 0;
+            height: 28px;
+            padding: 0 12px;
+            border: 1px solid var(--st-border);
+            border-radius: var(--st-radius-md);
+            background: var(--st-surface);
+            font: 400 12.5px var(--st-font-mono);
+            line-height: 26px;
+            color: var(--st-text-muted);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .browser-bar button {
+            display: grid;
+            place-items: center;
+            width: 28px;
+            height: 28px;
+            border: 0;
+            border-radius: var(--st-radius-sm);
+            background: none;
+            font-size: 13px;
+            color: var(--st-text-muted);
+            cursor: pointer;
+        }
+
+        .browser-bar button:hover {
+            background: var(--st-surface-hover);
+            color: var(--st-text);
         }
 
         .preview-placeholder {
@@ -223,249 +477,146 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            color: var(--st-text-faint);
-            font-family: var(--font-mono);
-            font-size: .75rem;
-            min-height: 330px;
-            gap: 10px;
-        }
-
-        /* Engine results */
-        .vt-engine {
-            display: flex;
-            align-items: center;
             gap: 8px;
-            padding: 5px 0;
-            border-bottom: 1px solid var(--st-border);
-            font-family: var(--font-mono);
-            font-size: .66rem;
+            min-height: 340px;
+            padding: 24px;
+            text-align: center;
+            font-size: 14px;
+            color: var(--st-text-muted);
         }
 
-        .vt-engine .e-name {
+        .preview-placeholder > i {
+            margin-bottom: 4px;
+            font-size: 28px !important;
+            color: var(--st-v200) !important;
+        }
+
+        .preview-placeholder > i.fa-ban {
+            color: var(--st-danger-solid) !important;
+        }
+
+        .preview-placeholder span,
+        .preview-placeholder a {
+            font-family: var(--st-font-main) !important;
+            font-size: 13px !important;
+        }
+
+        .preview-placeholder span:first-of-type {
+            font-size: 14.5px !important;
+            font-weight: 500;
+            color: var(--st-text) !important;
+        }
+
+        .preview-frame {
             flex: 1;
-            color: var(--st-text-faint);
+            width: 100%;
+            min-height: 340px;
+            border: 0;
+            background: #fff;
         }
 
-        .vt-engine .e-clean {
-            color: var(--st-success);
-            font-size: .6rem;
+        #whoisBody {
+            font-size: 13.5px;
+            line-height: 1.7;
+            color: var(--st-text-muted);
+            overflow-wrap: anywhere;
         }
 
-        .vt-engine .e-detect {
-            color: var(--st-danger);
-            font-size: .6rem;
+        /* ---------- history ---------- */
+        .us-hist {
+            width: 100%;
+            table-layout: fixed;
+            border-collapse: collapse;
+            font-size: 13.5px;
         }
 
-        /* Findings */
-        .finding-row {
-            display: flex;
-            align-items: flex-start;
-            gap: 8px;
-            padding: 5px 0;
+        .us-hist th {
+            padding: 12px 20px;
             border-bottom: 1px solid var(--st-border);
-            font-family: var(--font-mono);
-            font-size: .67rem;
-        }
-
-        .finding-row i {
-            color: var(--st-caution);
-            flex-shrink: 0;
-            margin-top: 2px;
-            font-size: .7rem;
-        }
-
-        .finding-text {
-            color: var(--st-text-secondary);
-            line-height: 1.4;
-        }
-
-        /* Info grid */
-        .intel-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 6px;
-        }
-
-        .intel-item {
             background: var(--st-surface-2);
-            border: 1px solid var(--st-border);
-            padding: 8px 10px;
+            text-align: left;
+            font-size: 12.5px;
+            font-weight: 500;
+            color: var(--st-text-subdued);
         }
 
-        .intel-lbl {
-            font-size: .58rem;
-            color: var(--st-text-faint);
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-bottom: 3px;
-            font-family: var(--font-mono);
-        }
-
-        .intel-val {
-            font-size: .75rem;
-            color: var(--st-text);
-            font-family: var(--font-mono);
+        .us-hist td {
+            padding: 12px 20px;
+            border-bottom: 1px solid var(--st-border);
+            color: var(--st-text-secondary);
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
         }
 
-        /* SSL badge */
-        .ssl-valid {
-            color: var(--st-success);
-            border: 1px solid color-mix(in srgb, var(--st-success) 30%, transparent);
-            background: color-mix(in srgb, var(--st-success) 5%, transparent);
-            padding: 2px 8px;
-            font-size: .62rem;
-            font-family: var(--font-mono);
+        .us-hist tr:last-child td {
+            border-bottom: 0;
         }
 
-        .ssl-invalid {
-            color: var(--st-danger);
-            border: 1px solid color-mix(in srgb, var(--st-danger) 30%, transparent);
-            background: color-mix(in srgb, var(--st-danger) 5%, transparent);
-            padding: 2px 8px;
-            font-size: .62rem;
-            font-family: var(--font-mono);
+        .us-hist td[style] {
+            max-width: none !important;
         }
 
-        /* History table */
         .url-tr {
             cursor: pointer;
-            transition: background .2s;
         }
 
         .url-tr:hover td {
-            background: color-mix(in srgb, var(--st-info) 3%, transparent);
+            background: var(--st-surface-2);
         }
 
-        .url-tr td {
-            padding: 9px 12px;
-            border-bottom: 1px solid var(--st-border);
-            font-family: var(--font-mono);
-            font-size: .68rem;
-            color: var(--st-text-muted);
-        }
-
-        /* Score bar inline */
         .score-bar-inline {
-            display: inline-flex;
+            display: flex;
             align-items: center;
-            gap: 6px;
+            gap: 10px;
+            font-variant-numeric: tabular-nums;
         }
 
         .sb-track {
-            width: 40px;
-            height: 3px;
-            background: var(--st-surface);
+            flex: 1;
+            max-width: 110px;
+            height: 5px;
+            border-radius: 3px;
+            background: var(--st-surface-hover);
+            overflow: hidden;
         }
 
         .sb-fill {
             height: 100%;
-            transition: width .4s;
+            border-radius: 3px;
         }
 
-        /* Threat category */
-        .cat-badge {
-            display: inline-block;
-            padding: 2px 8px;
-            font-size: .6rem;
-            font-family: var(--font-mono);
-            border: 1px solid var(--st-border);
-            color: var(--st-text-faint);
-            margin: 2px;
-        }
-
-        .cat-badge.red {
-            border-color: color-mix(in srgb, var(--st-danger) 40%, transparent);
-            color: var(--st-danger);
-            background: color-mix(in srgb, var(--st-danger) 5%, transparent);
-        }
-
-        .cat-badge.amber {
-            border-color: color-mix(in srgb, var(--st-caution) 40%, transparent);
-            color: var(--st-caution);
-            background: color-mix(in srgb, var(--st-caution) 5%, transparent);
-        }
-
-        .cat-badge.cyan {
-            border-color: color-mix(in srgb, var(--st-info) 30%, transparent);
-            color: var(--st-info);
-            background: color-mix(in srgb, var(--st-info) 4%, transparent);
-        }
-
-        /* Scanning animation */
-        @keyframes scanning {
-
-            0%,
-            100% {
-                opacity: 1
-            }
-
-            50% {
-                opacity: .3
+        @media (max-width: 1100px) {
+            .url-lab {
+                grid-template-columns: minmax(0, 1fr);
             }
         }
 
-        .scanning {
-            animation: scanning .7s infinite;
-        }
+        @media (max-width: 640px) {
+            .us-bar {
+                grid-template-columns: minmax(0, 1fr);
+            }
 
-        /* Alert banner */
-        .threat-banner {
-            display: none;
-            padding: 10px 16px;
-            font-family: var(--font-mono);
-            font-size: .75rem;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 1rem;
-            border-left: 4px solid;
-        }
+            .scan-btn-large {
+                justify-content: center;
+            }
 
-        .threat-banner.malicious {
-            background: color-mix(in srgb, var(--st-danger) 6%, transparent);
-            border-color: var(--st-danger);
-            color: var(--st-danger);
-        }
+            .us-score {
+                flex-direction: column;
+                align-items: flex-start;
+            }
 
-        .threat-banner.suspicious {
-            background: color-mix(in srgb, var(--st-info) 6%, transparent);
-            border-color: var(--st-info);
-            color: var(--st-info);
-        }
+            .us-hist {
+                table-layout: auto;
+            }
 
-        .threat-banner.safe {
-            background: color-mix(in srgb, var(--st-success) 6%, transparent);
-            border-color: var(--st-success);
-            color: var(--st-success);
-        }
-
-        /* Redirect chain */
-        .redirect-step {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-family: var(--font-mono);
-            font-size: .65rem;
-            margin-bottom: 5px;
-        }
-
-        .redirect-step .r-url {
-            color: var(--st-text-faint);
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-            flex: 1;
-        }
-
-        .redirect-step .r-arrow {
-            color: var(--st-text-faint);
-            flex-shrink: 0;
+            .us-card.hist {
+                overflow-x: auto;
+            }
         }
     </style>
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600;700&amp;display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300..600&family=Source+Code+Pro:wght@400;500;600&display=swap">
     <link rel="stylesheet" href="css/tokens.css">
     <script src="js/theme.js"></script>
 </head>
@@ -477,214 +628,130 @@
         <main class="main-content">
             <div class="top-bar">
                 <div class="page-header">
-                    <h2>URL INTELLIGENCE</h2>
-                    <p>MULTI-ENGINE THREAT SCANNER // <span class="text-cyan">DNS · SSL · WHOIS · PREVIEW</span></p>
+                    <h2>URL scanner</h2>
+                    <p>DNS, TLS, WHOIS and HTTP checks on a link, plus a safe preview of the page.</p>
                 </div>
                 <div class="filters-bar">
-                    <div style="text-align:right;">
-                        <div style="font-size:.65rem;color:var(--st-text-faint);">SCANS TODAY</div>
-                        <div id="scansToday" class="text-mono" style="color:var(--st-text);font-size:1.3rem;">0</div>
-                    </div>
-                    <div style="margin-left:20px;text-align:right;">
-                        <div style="font-size:.65rem;color:var(--st-text-faint);">MALICIOUS</div>
-                        <div id="totalMalicious" class="text-mono text-red" style="font-size:1.3rem;">0</div>
-                    </div>
+                    <span class="us-chip">Scans this session <b id="scansToday">0</b></span>
+                    <span class="us-chip bad">Malicious <b id="totalMalicious">0</b></span>
                 </div>
             </div>
 
-            <!-- SEARCH HERO -->
             <div class="url-hero">
-                <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
-                    <i class="fas fa-crosshairs" style="color:var(--st-info);font-size:1.3rem;flex-shrink:0;"></i>
-                    <input type="text" id="urlInput" class="big-input"
-                        placeholder="ENTER URL (e.g. https://suspicious-login.net)…">
-                    <button id="scanBtn" class="scan-btn-large"><i class="fas fa-satellite-dish"></i> INITIATE
-                        SCAN</button>
+                <div class="us-bar">
+                    <input type="text" id="urlInput" class="big-input" placeholder="Paste a URL, for example https://suspicious-login.net" aria-label="URL to scan">
+                    <button id="scanBtn" class="scan-btn-large"><i class="fas fa-satellite-dish"></i> Scan URL</button>
                 </div>
-                <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-                    <span style="font-size:.6rem;color:var(--st-text-faint);font-family:var(--font-mono);">ENGINES:</span>
-                    <span class="engine-tag" id="eng-heuristic"><i class="fas fa-brain"></i> HEURISTICS</span>
-                    <span class="engine-tag" id="eng-dns"><i class="fas fa-server"></i> DNS RESOLVE</span>
-                    <span class="engine-tag" id="eng-ssl"><i class="fas fa-lock"></i> SSL/TLS</span>
-                    <span class="engine-tag" id="eng-http"><i class="fas fa-globe"></i> HTTP PROBE</span>
+                <div class="us-engines">
+                    <span>Checks</span>
+                    <span class="engine-tag" id="eng-heuristic"><i class="fas fa-brain"></i> Heuristics</span>
+                    <span class="engine-tag" id="eng-dns"><i class="fas fa-server"></i> DNS resolve</span>
+                    <span class="engine-tag" id="eng-ssl"><i class="fas fa-lock"></i> SSL / TLS</span>
+                    <span class="engine-tag" id="eng-http"><i class="fas fa-globe"></i> HTTP probe</span>
                     <span class="engine-tag" id="eng-whois"><i class="fas fa-id-card"></i> WHOIS</span>
-                    <span class="engine-tag" id="eng-preview"><i class="fas fa-eye"></i> LIVE PREVIEW</span>
+                    <span class="engine-tag" id="eng-preview"><i class="fas fa-eye"></i> Live preview</span>
                 </div>
-                <div id="inlineError"
-                    style="display:none;font-family:var(--font-mono);font-size:.8rem;color:var(--st-danger);margin-top:10px;text-align:center;">
-                </div>
+                <div id="inlineError" style="display:none;"></div>
             </div>
 
-            <!-- THREAT BANNER -->
             <div id="threatBanner" class="threat-banner">
                 <i id="bannerIcon" class="fas fa-exclamation-triangle"></i>
                 <span id="bannerText"></span>
             </div>
 
-            <!-- MAIN LAB -->
             <div class="url-lab">
-
-                <!-- LEFT: ANALYSIS PANELS -->
-                <div class="url-preview-pane">
-
-                    <!-- Score + Summary -->
-                    <div class="soc-card" style="padding:0;">
-                        <div class="soc-card-header" style="padding:10px 14px;">
-                            <span class="card-title"><i class="fas fa-crosshairs"
-                                    style="color:var(--st-info);margin-right:6px;"></i>THREAT ASSESSMENT</span>
-                            <span id="riskBadge" class="badge badge-green">AWAITING</span>
+                <!-- what the checks found -->
+                <div class="us-col">
+                    <section class="us-card">
+                        <div class="hd">
+                            <span class="t">Threat assessment</span>
+                            <span id="riskBadge" class="badge">Awaiting scan</span>
                         </div>
-                        <div style="padding:14px;display:flex;align-items:center;gap:16px;">
+                        <div class="bd us-score">
                             <div id="scoreRing" class="score-ring">
                                 <span id="scoreNum" class="s-number">--</span>
-                                <span id="scoreLbl" class="s-label">score</span>
+                                <span id="scoreLbl" class="s-label">Score</span>
                             </div>
                             <div style="flex:1;min-width:0;">
-                                <div id="domainDisplay"
-                                    style="font-size:.9rem;font-weight:700;color:var(--st-text);font-family:var(--font-mono);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-bottom:6px;">
-                                    No target</div>
-                                <div id="categoryBadges" style="margin-bottom:8px;"></div>
-                                <div id="ipCountry" style="font-size:.65rem;color:var(--st-text-faint);font-family:var(--font-mono);">
-                                </div>
+                                <div id="domainDisplay">No target</div>
+                                <div id="categoryBadges"></div>
+                                <div id="ipCountry"></div>
                             </div>
                         </div>
-                    </div>
+                    </section>
 
-                    <!-- Intel Grid -->
-                    <div class="soc-card" style="padding:12px;">
-                        <div
-                            style="font-size:.62rem;color:var(--st-info);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;">
-                            NETWORK INTELLIGENCE</div>
+                    <section class="us-card">
+                        <div class="hd"><span class="t">Network intelligence</span></div>
                         <div class="intel-grid">
-                            <div class="intel-item">
-                                <div class="intel-lbl">IP ADDRESS</div>
-                                <div class="intel-val" id="ii-ip">—</div>
-                            </div>
-                            <div class="intel-item">
-                                <div class="intel-lbl">COUNTRY</div>
-                                <div class="intel-val" id="ii-country">—</div>
-                            </div>
-                            <div class="intel-item">
-                                <div class="intel-lbl">ISP / ASN</div>
-                                <div class="intel-val" id="ii-isp">—</div>
-                            </div>
-                            <div class="intel-item">
-                                <div class="intel-lbl">DOMAIN AGE</div>
-                                <div class="intel-val" id="ii-age">—</div>
-                            </div>
-                            <div class="intel-item">
-                                <div class="intel-lbl">SERVER</div>
-                                <div class="intel-val" id="ii-server">—</div>
-                            </div>
-                            <div class="intel-item">
-                                <div class="intel-lbl">HTTP STATUS</div>
-                                <div class="intel-val" id="ii-status">—</div>
-                            </div>
-                            <div class="intel-item">
-                                <div class="intel-lbl">ENTROPY</div>
-                                <div class="intel-val" id="ii-entropy">—</div>
-                            </div>
-                            <div class="intel-item">
-                                <div class="intel-lbl">SSL STATUS</div>
-                                <div id="ii-ssl">—</div>
-                            </div>
+                            <div class="intel-item"><div class="intel-lbl">IP address</div><div class="intel-val" id="ii-ip">n/a</div></div>
+                            <div class="intel-item"><div class="intel-lbl">Country</div><div class="intel-val" id="ii-country">n/a</div></div>
+                            <div class="intel-item"><div class="intel-lbl">ISP / ASN</div><div class="intel-val" id="ii-isp">n/a</div></div>
+                            <div class="intel-item"><div class="intel-lbl">Domain age</div><div class="intel-val" id="ii-age">n/a</div></div>
+                            <div class="intel-item"><div class="intel-lbl">Server</div><div class="intel-val" id="ii-server">n/a</div></div>
+                            <div class="intel-item"><div class="intel-lbl">HTTP status</div><div class="intel-val" id="ii-status">n/a</div></div>
+                            <div class="intel-item"><div class="intel-lbl">Entropy</div><div class="intel-val" id="ii-entropy">n/a</div></div>
+                            <div class="intel-item"><div class="intel-lbl">SSL status</div><div id="ii-ssl">n/a</div></div>
                         </div>
-                    </div>
+                    </section>
 
-                    <!-- Findings -->
-                    <div class="soc-card" style="padding:12px;max-height:260px;overflow-y:auto;">
-                        <div
-                            style="font-size:.62rem;color:var(--st-info);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;">
-                            THREAT FINDINGS</div>
-                        <div id="findingsList">
-                            <div style="color:var(--st-text-faint);font-size:.72rem;font-family:var(--font-mono);">No scan yet. Enter a
-                                URL above.</div>
+                    <section class="us-card grow">
+                        <div class="hd"><span class="t">Threat findings</span></div>
+                        <div class="bd">
+                            <div id="findingsList"><div class="us-none">No scan yet. Enter a URL above.</div></div>
                         </div>
-                    </div>
-
+                    </section>
                 </div>
 
-                <!-- RIGHT: LIVE PREVIEW + VT -->
-                <div style="display:flex;flex-direction:column;gap:1rem;">
-
-                    <!-- Live browser preview -->
-                    <div class="soc-card preview-browser" style="flex:1;min-height:380px;">
+                <!-- sandboxed preview and registration -->
+                <div class="us-col">
+                    <section class="us-card grow preview-browser">
                         <div class="browser-bar">
-                            <div class="browser-dots"><span class="b-red"></span><span class="b-yellow"></span><span
-                                    class="b-green"></span></div>
+                            <div class="browser-dots" aria-hidden="true"><span></span><span></span><span></span></div>
                             <div id="browserAddr" class="browser-addr">about:blank</div>
-                            <button id="refreshPreview"
-                                style="background:none;border:none;color:var(--st-text-faint);cursor:pointer;font-size:.75rem;flex-shrink:0;"
-                                title="Reload preview"><i class="fas fa-redo"></i></button>
-                            <button id="openExternal"
-                                style="background:none;border:none;color:var(--st-text-faint);cursor:pointer;font-size:.75rem;flex-shrink:0;"
-                                title="Open in new tab"><i class="fas fa-external-link-alt"></i></button>
+                            <button id="refreshPreview" title="Reload preview" aria-label="Reload preview"><i class="fas fa-redo"></i></button>
+                            <button id="openExternal" title="Open in new tab" aria-label="Open in new tab"><i class="fas fa-external-link-alt"></i></button>
                         </div>
                         <div id="previewPlaceholder" class="preview-placeholder">
-                            <i class="fas fa-eye" style="font-size:2.5rem;color:var(--st-on-solid);"></i>
-                            <span>LIVE SITE PREVIEW</span>
-                            <span style="font-size:.62rem;color:var(--st-on-solid);">Enter a URL and run scan to load
-                                preview</span>
+                            <i class="fas fa-eye"></i>
+                            <span>Live site preview</span>
+                            <span>Enter a URL and run a scan to load the preview</span>
                         </div>
-                        <iframe id="siteFrame" class="preview-frame" style="display:none;"
-                            sandbox="" referrerpolicy="no-referrer"></iframe>
-                    </div>
+                        <iframe id="siteFrame" class="preview-frame" style="display:none;" sandbox="" referrerpolicy="no-referrer"></iframe>
+                    </section>
 
-                    <!-- Domain registration (WHOIS) -->
-                    <div class="soc-card" style="padding:0;">
-                        <div class="soc-card-header" style="padding:10px 14px;">
-                            <span class="card-title"><i class="fas fa-id-card"
-                                    style="color:var(--st-info);margin-right:5px;"></i>DOMAIN REGISTRATION (WHOIS)</span>
-                            <span id="whoisBadge" class="badge badge-green">—</span>
+                    <section class="us-card">
+                        <div class="hd">
+                            <span class="t">Domain registration (WHOIS)</span>
+                            <span id="whoisBadge" class="badge">n/a</span>
                         </div>
-                        <div style="padding:14px;font-size:.75rem;font-family:var(--font-mono);color:var(--st-text-secondary);">
-                            <div id="whoisBody" style="color:var(--st-text-faint);">Run a scan to see WHOIS registration data.</div>
+                        <div class="bd">
+                            <div id="whoisBody">Run a scan to see WHOIS registration data.</div>
                         </div>
-                    </div>
+                    </section>
                 </div>
             </div>
 
-            <!-- SCAN HISTORY -->
-            <div class="soc-card" style="padding:0;margin-bottom:1rem;">
-                <div class="soc-card-header" style="padding:10px 14px;">
-                    <span class="card-title"><i class="fas fa-history"
-                            style="color:var(--st-info);margin-right:5px;"></i>RECENT SCAN HISTORY</span>
-                    <span class="badge badge-purple">LIVE FEED</span>
+            <section class="us-card hist">
+                <div class="hd">
+                    <span class="t">Scan history</span>
+                    <span class="badge badge-gray">This session</span>
                 </div>
-                <div style="overflow-x:auto;">
-                    <table style="width:100%;border-collapse:collapse;min-width:800px;">
-                        <thead>
-                            <tr style="background:var(--st-surface-2);">
-                                <th
-                                    style="padding:9px 12px;font-size:.62rem;color:var(--st-text-faint);text-align:left;font-family:var(--font-mono);border-bottom:1px solid var(--st-border);">
-                                    TIME</th>
-                                <th
-                                    style="padding:9px 12px;font-size:.62rem;color:var(--st-text-faint);text-align:left;font-family:var(--font-mono);border-bottom:1px solid var(--st-border);">
-                                    URL</th>
-                                <th
-                                    style="padding:9px 12px;font-size:.62rem;color:var(--st-text-faint);text-align:left;font-family:var(--font-mono);border-bottom:1px solid var(--st-border);">
-                                    IP</th>
-                                <th
-                                    style="padding:9px 12px;font-size:.62rem;color:var(--st-text-faint);text-align:left;font-family:var(--font-mono);border-bottom:1px solid var(--st-border);">
-                                    COUNTRY</th>
-                                <th
-                                    style="padding:9px 12px;font-size:.62rem;color:var(--st-text-faint);text-align:left;font-family:var(--font-mono);border-bottom:1px solid var(--st-border);">
-                                    SCORE</th>
-                                <th
-                                    style="padding:9px 12px;font-size:.62rem;color:var(--st-text-faint);text-align:left;font-family:var(--font-mono);border-bottom:1px solid var(--st-border);">
-                                    VERDICT</th>
-                            </tr>
-                        </thead>
-                        <tbody id="historyBody">
-                            <tr>
-                                <td colspan="6"
-                                    style="padding:16px 12px;color:var(--st-text-faint);font-family:var(--font-mono);font-size:.7rem;">
-                                    No scans yet</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
+                <table class="us-hist">
+                    <thead>
+                        <tr>
+                            <th style="width:12%">Time</th>
+                            <th>URL</th>
+                            <th style="width:15%">IP</th>
+                            <th style="width:14%">Country</th>
+                            <th style="width:17%">Score</th>
+                            <th style="width:12%">Verdict</th>
+                        </tr>
+                    </thead>
+                    <tbody id="historyBody">
+                        <tr><td colspan="6" class="text-muted">No scans yet</td></tr>
+                    </tbody>
+                </table>
+            </section>
         </main>
     </div>
 
@@ -698,6 +765,8 @@
         function engOn(id) { $(id).classList.add('active'); }
         function engOff(id) { $(id).classList.remove('active'); }
         function esc(s) { return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+        /* verdicts arrive in capitals ('MALICIOUS'); the page shows sentence case */
+        const cap = v => { const t = String(v ?? '').replace(/_/g, ' ').toLowerCase(); return t.charAt(0).toUpperCase() + t.slice(1); };
 
         $('scanBtn').addEventListener('click', runScan);
         $('urlInput').addEventListener('keydown', e => { if (e.key === 'Enter') runScan(); });
@@ -709,7 +778,7 @@
             if (!url) { showErr('Please enter a URL to scan.'); return; }
             $('inlineError').style.display = 'none';
             $('scanBtn').disabled = true;
-            $('scanBtn').innerHTML = '<i class="fas fa-spinner fa-spin"></i> SCANNING…';
+            $('scanBtn').innerHTML = '<i class="fas fa-spinner fa-spin"></i> Scanning';
 
             // Animate engines
             engines.forEach(e => engOff(e));
@@ -731,7 +800,7 @@
                 showErr('Scan failed: ' + err.message);
             } finally {
                 $('scanBtn').disabled = false;
-                $('scanBtn').innerHTML = '<i class="fas fa-satellite-dish"></i> INITIATE SCAN';
+                $('scanBtn').innerHTML = '<i class="fas fa-satellite-dish"></i> Scan URL';
             }
         }
 
@@ -744,26 +813,26 @@
             // Banner
             const banner = $('threatBanner');
             const bColors = {
-                MALICIOUS: ['malicious', 'var(--st-danger)', 'fa-biohazard', 'THREAT CONFIRMED — '],
-                SUSPICIOUS: ['suspicious', 'var(--st-info)', 'fa-exclamation-triangle', 'SUSPICIOUS TARGET — '],
-                SAFE: ['safe', 'var(--st-success)', 'fa-check-circle', 'CLEAN TARGET — ']
+                MALICIOUS: ['malicious', 'var(--st-danger)', 'fa-biohazard', 'Threat confirmed: '],
+                SUSPICIOUS: ['suspicious', 'var(--st-info)', 'fa-exclamation-triangle', 'Suspicious target: '],
+                SAFE: ['safe', 'var(--st-success)', 'fa-check-circle', 'Clean target: ']
             };
             const [cls, col, icon, prefix] = bColors[r.risk_level] || bColors['SAFE'];
             banner.className = `threat-banner ${cls}`;
             $('bannerIcon').className = `fas ${icon}`;
-            $('bannerText').textContent = prefix + r.domain + ` · Score ${r.risk_score}/100 · ${r.threat_category || '—'}`;
+            $('bannerText').textContent = prefix + r.domain + ` · Score ${r.risk_score}/100 · ${r.threat_category || 'n/a'}`;
             banner.style.display = 'flex';
 
             // Score ring
             const ring = $('scoreRing');
             ring.className = 'score-ring ' + r.risk_level.toLowerCase();
             $('scoreNum').textContent = r.risk_score;
-            $('scoreLbl').textContent = r.risk_level;
+            $('scoreLbl').textContent = cap(r.risk_level);
 
             // Badge
             const badgeCls = r.risk_level === 'MALICIOUS' ? 'badge-red' : r.risk_level === 'SUSPICIOUS' ? 'badge-purple' : 'badge-green';
             $('riskBadge').className = `badge ${badgeCls}`;
-            $('riskBadge').textContent = r.risk_level;
+            $('riskBadge').textContent = cap(r.risk_level);
 
             $('domainDisplay').textContent = r.domain || r.url;
             $('ipCountry').textContent = `${r.country || ''} · ${r.isp || ''}`;
@@ -775,24 +844,24 @@
                 `<span class="cat-badge ${catCol(c)}">${esc(c)}</span>`).join('');
 
             // Intel grid
-            const setII = (id, val, col = '') => { const el = $(id); if (el) { el.textContent = val || '—'; if (col) el.style.color = col; } };
+            const setII = (id, val, col = '') => { const el = $(id); if (el) { el.textContent = val || 'n/a'; if (col) el.style.color = col; } };
             setII('ii-ip', r.ip_address);
             setII('ii-country', r.country);
             setII('ii-isp', r.isp);
             setII('ii-age', r.domain_age, (r.domain_age_days != null && r.domain_age_days < 30) ? 'var(--st-danger)' : (r.domain_age_days != null && r.domain_age_days < 180) ? 'var(--st-caution)' : 'var(--st-success)');
             setII('ii-server', r.http?.server || 'Unknown');
-            setII('ii-status', r.http?.status_code ? String(r.http.status_code) : (r.http?.error || '—'));
+            setII('ii-status', r.http?.status_code ? String(r.http.status_code) : (r.http?.error || 'n/a'));
             const entEl = $('ii-entropy');
-            if (entEl) { entEl.textContent = r.entropy?.toFixed(3) || '—'; entEl.style.color = r.entropy > 3.8 ? 'var(--st-caution)' : 'var(--st-info)'; }
+            if (entEl) { entEl.textContent = r.entropy?.toFixed(3) || 'n/a'; entEl.style.color = r.entropy > 3.8 ? 'var(--st-caution)' : 'var(--st-info)'; }
             const sslEl = $('ii-ssl');
             if (sslEl) sslEl.innerHTML = r.ssl?.valid
-                ? `<span class="ssl-valid"><i class="fas fa-lock"></i> VALID · ${esc(r.ssl.issuer || '')}</span>`
+                ? `<span class="ssl-valid"><i class="fas fa-lock"></i> Valid · ${esc(r.ssl.issuer || '')}</span>`
                 : `<span class="ssl-invalid"><i class="fas fa-lock-open"></i> ${esc(r.ssl?.error || 'No SSL')}</span>`;
 
             // Findings
             const fl = $('findingsList');
             fl.innerHTML = (r.findings || []).length === 0
-                ? '<div style="color:var(--st-success);font-size:.72rem;font-family:var(--font-mono);">No threats detected</div>'
+                ? '<div class="us-none" style="color:var(--st-success);">No threats detected</div>'
                 : (r.findings || []).map(f => {
                     const isGood = f.startsWith('SSL issued');
                     return `<div class="finding-row">
@@ -808,10 +877,10 @@
                 $('whoisBadge').className = 'badge ' + (w.age_days != null && w.age_days < 30 ? 'badge-red' : 'badge-green');
                 $('whoisBody').style.color = 'var(--st-text-secondary)';
                 $('whoisBody').innerHTML = [
-                    ['Registrar', w.registrar || '—'],
-                    ['Created', (w.created || '—').slice(0, 10)],
-                    ['Expires', (w.expires || '—').slice(0, 10)],
-                    ['Age', w.age_days != null ? w.age_days + ' days' : '—'],
+                    ['Registrar', w.registrar || 'n/a'],
+                    ['Created', (w.created || 'n/a').slice(0, 10)],
+                    ['Expires', (w.expires || 'n/a').slice(0, 10)],
+                    ['Age', w.age_days != null ? w.age_days + ' days' : 'n/a'],
                 ].map(([k, v]) => `<div style="display:grid;grid-template-columns:90px 1fr;gap:4px;"><span style="color:var(--st-text-faint);">${k}</span><span>${esc(v)}</span></div>`).join('');
             } else {
                 $('whoisBadge').textContent = 'unavailable';
@@ -841,10 +910,10 @@
             $('siteFrame').style.display = 'none';
             $('previewPlaceholder').style.display = 'flex';
             $('previewPlaceholder').innerHTML = `
-    <i class="fas fa-ban" style="font-size:2rem;color:var(--st-danger);"></i>
-    <span style="color:var(--st-danger);font-size:.75rem;font-family:var(--font-mono);">PREVIEW BLOCKED</span>
-    <span style="font-size:.62rem;color:var(--st-text-faint);font-family:var(--font-mono);">Site uses X-Frame-Options: DENY</span>
-    <a href="${esc(url).replace(/"/g, '&quot;')}" target="_blank" rel="noopener noreferrer" style="font-size:.65rem;color:var(--st-info);font-family:var(--font-mono);margin-top:6px;">→ OPEN IN NEW TAB</a>`;
+    <i class="fas fa-ban"></i>
+    <span>Preview blocked</span>
+    <span>The site does not allow itself to be shown inside another page (X-Frame-Options).</span>
+    <a href="${esc(url).replace(/"/g, '&quot;')}" target="_blank" rel="noopener noreferrer">Open in a new tab</a>`;
         }
 
         function addHistory(r) {
@@ -854,17 +923,17 @@
             const row = document.createElement('tr');
             row.className = 'url-tr';
             row.innerHTML = `
-    <td style="color:var(--st-text-faint);white-space:nowrap;">${new Date().toLocaleTimeString()}</td>
-    <td style="max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--st-text-muted);" title="${esc(r.url)}">${esc(r.url)}</td>
-    <td>${esc(r.ip_address || '—')}</td>
-    <td>${esc(r.country || '—')}</td>
+    <td>${new Date().toLocaleTimeString()}</td>
+    <td style="color:var(--st-text);" title="${esc(r.url)}">${esc(r.url)}</td>
+    <td>${esc(r.ip_address || 'n/a')}</td>
+    <td>${esc(r.country || 'n/a')}</td>
     <td>
       <div class="score-bar-inline">
         <div class="sb-track"><div class="sb-fill" style="width:${r.risk_score}%;background:${r.risk_score > 65 ? 'var(--st-danger)' : r.risk_score > 30 ? 'var(--st-info)' : 'var(--st-success)'};"></div></div>
         <span style="color:var(--st-text);">${r.risk_score}</span>
       </div>
     </td>
-    <td><span class="badge ${rc}">${r.risk_level}</span></td>`;
+    <td><span class="badge ${rc}">${esc(cap(r.risk_level))}</span></td>`;
             row.onclick = () => { if (lastResult && lastResult.url === r.url) loadPreview(r.url); };
             hb.insertBefore(row, hb.firstChild);
         }

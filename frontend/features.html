@@ -1,231 +1,312 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Shadow Trust — Features</title>
-    <link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
-    <link rel="stylesheet" href="css/landing/landingpage.css?v=5">
-    <link rel="stylesheet" href="css/landing/features.css?v=4">
+    <title>Features · ShadowTrust</title>
+    <meta name="description" content="Honeypots, live telemetry, detection rules, ATT&CK mapping, malware and APK analysis, URL scanning, lab VMs and role-based access in one self-hosted platform.">
+    <!-- Link preview (LinkedIn, WhatsApp, Slack, X). Once the site has a public address, make og:image and twitter:image absolute, e.g. https://your-domain/og.png, and add og:url. -->
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="ShadowTrust">
+    <meta property="og:title" content="Features · ShadowTrust">
+    <meta property="og:description" content="Honeypots, live telemetry, detection rules, ATT&CK mapping, malware and APK analysis, URL scanning, lab VMs and role-based access in one self-hosted platform.">
+    <meta property="og:image" content="og.png">
+    <meta property="og:image:type" content="image/png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:alt" content="ShadowTrust: Let them in. Watch every move. Decoy servers, detection, investigation and reporting in one self-hosted stack.">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Features · ShadowTrust">
+    <meta name="twitter:description" content="Honeypots, live telemetry, detection rules, ATT&CK mapping, malware and APK analysis, URL scanning, lab VMs and role-based access in one self-hosted platform.">
+    <meta name="twitter:image" content="og.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300..600&family=Source+Code+Pro:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/tokens.css">
-    <script src="js/theme.js"></script>
+    <link rel="stylesheet" href="css/site.css">
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 28 28'%3E%3Crect width='28' height='28' rx='6' fill='%23533afd'/%3E%3Cpath d='M4.5 14c2.5-4.3 5.7-6.4 9.5-6.4s7 2.1 9.5 6.4c-2.5 4.3-5.7 6.4-9.5 6.4S7 18.3 4.5 14Z' fill='none' stroke='%23fff' stroke-width='1.8' stroke-linejoin='round'/%3E%3Ccircle cx='14' cy='14' r='3.2' fill='%23fff'/%3E%3C/svg%3E">
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#ffffff">
+    <script>if (!matchMedia('(prefers-reduced-motion: reduce)').matches) document.documentElement.classList.add('motion-ready');</script>
 </head>
-<body>
+<body class="site">
+<a class="skip" href="#main">Skip to content</a>
 
-<div class="container">
-
-    <!-- NAVBAR -->
-    <nav>
-        <div class="logo">Shadow Trust</div>
-        <ul>
-            <li><a href="index.html">Home</a></li>
-            <li><a href="features.html" class="active-link">Features</a></li>
+<header class="site-nav" data-nav>
+    <div class="wrap">
+        <a class="brand" href="index.html" aria-label="ShadowTrust home">
+            <svg viewBox="0 0 28 28" fill="none" aria-hidden="true"><path d="M2.5 14c3-5.3 7-8 11.5-8s8.5 2.7 11.5 8c-3 5.3-7 8-11.5 8S5.5 19.3 2.5 14Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><circle cx="14" cy="14" r="4.2" fill="var(--st-brand)"/></svg>
+            <span>ShadowTrust</span>
+        </a>
+        <ul class="nav-links" id="navLinks">
+            <li><a href="features.html" aria-current="page">Features</a></li>
             <li><a href="architecture.html">Architecture</a></li>
+            <li><a href="usecases.html">Use cases</a></li>
             <li><a href="docs.html">Docs</a></li>
             <li><a href="status.html">Status</a></li>
-            <li><a href="usecases.html">Use Cases</a></li>
+            <li class="nav-mobile-only"><a href="login.html">Sign in</a></li>
         </ul>
-        <a href="login.html" class="btn">Sign In</a>
-    </nav>
-
-    <!-- HERO -->
-    <section class="features-hero" data-aos="fade-up">
-        <div class="features-hero-text">
-            <span class="section-label">Full Feature Set</span>
-            <h1>Shadow Trust <span>Platform Features</span></h1>
-            <p>A complete SOC toolkit — from honeypot deception and real-time telemetry to 4-stage malware analysis, AWS VM orchestration, MITRE ATT&CK mapping, and a 30-page threat intelligence dashboard. Every feature built for real operations.</p>
+        <div class="nav-end">
+            <a class="signin" href="login.html">Sign in</a>
+            <a class="btn btn-sm" href="login.html">Open console <span class="arr">→</span></a>
+            <button class="nav-burger" type="button" data-burger aria-label="Open menu" aria-controls="navLinks" aria-expanded="false">
+                <svg width="16" height="16" viewBox="0 0 16 16" stroke="currentColor" stroke-width="1.5"><path d="M2 5h12M2 11h12"/></svg>
+            </button>
         </div>
-        <img src="./features_hero.png" alt="Shadow Trust Features">
-    </section>
+    </div>
+</header>
 
-    <!-- FEATURES GRID -->
-    <section class="section" data-aos="fade-up">
-        <span class="section-label">Capabilities</span>
-        <h2>Everything You Need to <span>Hunt Threats</span></h2>
-        <p class="section-sub">Shadow Trust combines detection, analysis, and response in a single platform — no stitching together separate tools.</p>
-        <div class="detailed-features">
+<main id="main">
 
-            <div class="feature-card" data-aos="zoom-in" data-aos-delay="100">
-                <div class="feature-icon">🧠</div>
-                <h3>AI Attack Classification</h3>
-                <p>Automatically classifies SQL injection, XSS, brute force, RCE, path traversal, and anomalous payloads using heuristic rule-based classifiers and behavioral pattern matching. Zero manual tagging.</p>
+    <section class="page-hero">
+        <canvas class="ribbon" data-ribbon="corner" aria-hidden="true"></canvas>
+        <div class="wrap page-hero-grid">
+            <div>
+                <span class="eyebrow" data-hero-fade>Features</span>
+                <h1 class="display" data-split>
+                    <span class="line"><span>A whole SOC,</span></span>
+                    <span class="line"><span><em>wired</em> together.</span></span>
+                </h1>
+                <p class="lede" data-hero-fade>Honeypot deception, live telemetry, detection rules, ATT&amp;CK mapping, malware and APK analysis, URL scanning, lab machines and role-based access. Every tool reads from and writes to the same database, so nothing has to be stitched together by hand.</p>
             </div>
-
-            <div class="feature-card" data-aos="zoom-in" data-aos-delay="150">
-                <div class="feature-icon">🍯</div>
-                <h3>Multi-Protocol Honeypots</h3>
-                <p>Cowrie captures SSH/Telnet interactions. Dionaea traps malware binaries. Honeytrap monitors multi-port network traffic. All three feed into the same ingestion pipeline with session correlation.</p>
-            </div>
-
-            <div class="feature-card" data-aos="zoom-in" data-aos-delay="200">
-                <div class="feature-icon">📡</div>
-                <h3>Real-Time Telemetry</h3>
-                <p>Every attacker keystroke, command and file event is tailed from the sensor logs into MariaDB and pushed to the dashboard over Server-Sent Events — measured end-to-end latency, no polling.</p>
-            </div>
-
-            <div class="feature-card" data-aos="zoom-in" data-aos-delay="250">
-                <div class="feature-icon">🔗</div>
-                <h3>Session Correlation Engine</h3>
-                <p>Groups raw events into attacker sessions with full timeline reconstruction. Background engine runs every 60 seconds, linking events by IP, protocol, and timing. Full attacker lifecycle tracking.</p>
-            </div>
-
-            <div class="feature-card" data-aos="zoom-in" data-aos-delay="300">
-                <div class="feature-icon">☣️</div>
-                <h3>4-Stage Malware Pipeline</h3>
-                <p>Static analysis → controlled sandbox detonation → Android APK scanning via MobSF → credential and API key extraction. Fully automated from file capture to intelligence report.</p>
-            </div>
-
-            <div class="feature-card" data-aos="zoom-in" data-aos-delay="350">
-                <div class="feature-icon">🖥️</div>
-                <h3>AWS VM Orchestration</h3>
-                <p>Launch and terminate isolated EC2 analysis instances via boto3. JIT credential injection through AWS Systems Manager. Browser-based remote desktop via Apache Guacamole. Auto-terminate on session end.</p>
-            </div>
-
-            <div class="feature-card" data-aos="zoom-in" data-aos-delay="400">
-                <div class="feature-icon">🎯</div>
-                <h3>MITRE ATT&CK Mapping</h3>
-                <p>Every detected attack is automatically tagged with MITRE ATT&CK techniques and tactics. Navigate the full matrix from the dashboard and see which techniques your honeypots are catching.</p>
-            </div>
-
-            <div class="feature-card" data-aos="zoom-in" data-aos-delay="450">
-                <div class="feature-icon">📱</div>
-                <h3>APK Security Analysis</h3>
-                <p>Upload Android APKs directly to the dashboard. MobSF backend delivers full static analysis reports — permission audits, network call mapping, hardcoded secret detection, and risk scoring.</p>
-            </div>
-
-            <div class="feature-card" data-aos="zoom-in" data-aos-delay="500">
-                <div class="feature-icon">🔗</div>
-                <h3>URL Reputation Scanner</h3>
-                <p>Multi-engine URL analysis with threat intel lookup. Safe isolated preview of suspicious links. Phishing detection with ML scoring. All captured attacker URLs automatically queued for analysis.</p>
-            </div>
-
-            <div class="feature-card" data-aos="zoom-in" data-aos-delay="550">
-                <div class="feature-icon">🌍</div>
-                <h3>GeoIP Enrichment</h3>
-                <p>Every attacker IP is enriched with country, city, ASN, and ISP data. Plotted on the live threat map with origin clustering and attack density heatmaps across geographic regions.</p>
-            </div>
-
-            <div class="feature-card" data-aos="zoom-in" data-aos-delay="600">
-                <div class="feature-icon">🔐</div>
-                <h3>6-Tier RBAC System</h3>
-                <p>Super Admin, Overseer, Auditor, Analyst, Specialist, and Operative roles. Clearance levels 1–3 gate access to sensitive tools. JWT-authenticated with full API audit trail.</p>
-            </div>
-
-            <div class="feature-card" data-aos="zoom-in" data-aos-delay="650">
-                <div class="feature-icon">🔔</div>
-                <h3>Credential Delivery</h3>
-                <p>New analyst credentials are issued with one-time tokens and delivered by SMTP email or WhatsApp (Twilio) when those integrations are configured, with a full audit trail.</p>
-            </div>
-
+            <ol class="toc" data-hero-fade aria-label="On this page">
+                <li><a href="#pipeline">A sample's path through the pipeline</a></li>
+                <li><a href="#capture">Deception and capture</a></li>
+                <li><a href="#detect">Detection and intelligence</a></li>
+                <li><a href="#analyse">Analysis tools</a></li>
+                <li><a href="#access">Access and operations</a></li>
+                <li><a href="#compare">Compared with a classic SIEM</a></li>
+            </ol>
         </div>
     </section>
 
-    <!-- COMPARISON TABLE -->
-    <section class="comparison-section" data-aos="fade-up">
-        <span class="section-label">Comparison</span>
-        <h2>Why Choose <span>Shadow Trust</span>?</h2>
-        <div class="comparison-table-wrapper">
-            <table class="comparison-table">
-                <thead>
-                    <tr>
-                        <th>Capability</th>
-                        <th>Traditional SIEM / Tools</th>
-                        <th>Shadow Trust</th>
-                    </tr>
-                </thead>
+    <!-- Fig. 1: scroll-driven malware pipeline -->
+    <section class="pipe" id="pipeline" data-pipe>
+        <div class="pipe-sticky">
+            <div class="wrap">
+                <div class="pipe-head">
+                    <h2 class="h2">What happens to a file an attacker <em>drops.</em></h2>
+                    <span class="mono faint">Fig. 1 · keep scrolling</span>
+                </div>
+            </div>
+            <div class="wrap">
+                <div class="pipe-track">
+                    <div class="pipe-rail"><i data-pipe-rail></i></div>
+                    <span class="pipe-token" data-pipe-token aria-hidden="true"></span>
+                    <ol class="stations">
+                        <li class="station" data-station><span class="sn">01</span><span class="dot"></span><div class="st">Capture</div><div class="sd">Sensor keeps the upload or download URL</div></li>
+                        <li class="station" data-station><span class="sn">02</span><span class="dot"></span><div class="st">Hash</div><div class="sd">MD5, SHA-1, SHA-256 on arrival</div></li>
+                        <li class="station" data-station><span class="sn">03</span><span class="dot"></span><div class="st">Static</div><div class="sd">Headers, imports, entropy, strings</div></li>
+                        <li class="station" data-station><span class="sn">04</span><span class="dot"></span><div class="st">Signatures</div><div class="sd">ClamAV and YARA rules</div></li>
+                        <li class="station" data-station><span class="sn">05</span><span class="dot"></span><div class="st">Detonate</div><div class="sd">CAPE sandbox, when configured</div></li>
+                        <li class="station" data-station><span class="sn">06</span><span class="dot"></span><div class="st">Secrets</div><div class="sd">Keys and tokens pulled out</div></li>
+                    </ol>
+                </div>
+                <div class="readout" aria-live="polite">
+                    <div><h3 class="h3" data-readout-title>Capture</h3><p data-readout-text>Dionaea keeps whatever is uploaded to it. Cowrie records every wget or curl URL as a file_download event, tied to the session that ran it.</p></div>
+                    <pre data-readout-code></pre>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="wrap">
+
+        <section class="fgroup" id="capture">
+            <div class="section-head">
+                <h2 class="h2" data-reveal>Deception and capture.</h2>
+                <p class="lede" data-reveal>Get attackers talking to something that looks real, and keep every word they say.</p>
+            </div>
+            <div class="bento" data-stagger>
+            <article class="card tile">
+                <div class="tile-copy">
+                    <h3>Multi-protocol honeypots</h3>
+                    <p>Cowrie captures SSH and Telnet sessions with a believable shell. Dionaea traps malware on SMB, FTP and MSSQL. Honeytrap listens on the leftover web ports. All three feed the same ingestion pipeline and the same session correlation.</p>
+                    <div class="meta"><span>cowrie 2222, 2223</span><span>dionaea 445, 2121, 1433</span><span>honeytrap 8022, 8023</span></div>
+                </div>
+                <div class="card-art"><div class="glow glow-violet"></div><div class="art shot-art"><img class="shot" src="media/real/honeypots.png" width="620" height="340" alt="The sensors table on the Honeypot nodes page: Cowrie, Dionaea and Honeytrap with their containers and load" loading="lazy" decoding="async"></div></div>
+            </article>
+            <article class="card tile">
+                <div class="tile-copy">
+                    <h3>Real-time telemetry</h3>
+                    <p>Every keystroke, command and file event is tailed from the sensor logs into MariaDB and pushed to open dashboards over Server-Sent Events. The collector uses kernel file notifications where available and reads each line exactly once from a stored byte offset.</p>
+                    <div class="meta"><span>inotify with polling fallback</span><span>batched inserts</span><span>SSE, no polling in the browser</span></div>
+                </div>
+                <div class="card-art"><div class="glow glow-rose"></div><div class="art shot-art"><video class="shot" data-loop muted loop playsinline preload="none" poster="media/real/telemetry.jpg" width="620" height="340" aria-label="The live activity list in the Event log while an SSH session arrives"><source src="media/real/telemetry.mp4" type="video/mp4"></video></div></div>
+            </article>
+            <article class="card tile">
+                <div class="tile-copy">
+                    <h3>GeoIP enrichment</h3>
+                    <p>Attacker addresses are enriched with country, city, ASN and ISP, then plotted on a keyless OpenStreetMap threat map with origin clustering. Lab-internal addresses are shown as such instead of being guessed.</p>
+                    <div class="meta"><span>country, city, ASN</span><span>keyless map tiles</span></div>
+                </div>
+                <div class="card-art"><div class="glow glow-peach"></div><div class="art shot-art"><video class="shot" data-loop muted loop playsinline preload="none" poster="media/real/geo.jpg" width="620" height="340" aria-label="The globe on the Geo intelligence page being turned, with spikes at source locations"><source src="media/real/geo.mp4" type="video/mp4"></video></div></div>
+            </article>
+            </div>
+        </section>
+
+        <section class="fgroup" id="detect">
+            <div class="section-head">
+                <h2 class="h2" data-reveal>Detection and intelligence.</h2>
+                <p class="lede" data-reveal>Turn a stream of raw events into a short list of things someone should look at.</p>
+            </div>
+            <div class="bento" data-stagger>
+            <article class="card tile">
+                <div class="tile-copy">
+                    <h3>Attack classification</h3>
+                    <p>Events are sorted into categories such as SQL injection, XSS, brute force, remote code execution and path traversal using rule-based classifiers and behavioral patterns. No manual tagging, and every label can be traced back to the rule that produced it.</p>
+                    <div class="meta"><span>heuristic, explainable</span><span>per-event categories</span></div>
+                </div>
+                <div class="card-art"><div class="glow glow-peach"></div><div class="art shot-art"><img class="shot" src="media/real/classify.png" width="500" height="340" alt="The Logs page: counts per category, source filters and rows tagged with category and severity" loading="lazy" decoding="async"></div></div>
+            </article>
+            <article class="card tile">
+                <div class="tile-copy">
+                    <h3>Detections and session correlation</h3>
+                    <p>Six YAML detection rules watch the stream and open incidents with severity and evidence. A background session engine runs every 60 seconds and groups events by source, timing and protocol into full attacker sessions with reconstructed timelines.</p>
+                    <div class="meta"><span>6 rules, 8 validation scenarios</span><span>60 s session engine</span></div>
+                </div>
+                <div class="card-art"><div class="glow glow-violet"></div><div class="art shot-art"><img class="shot" src="media/real/rules.png" width="620" height="340" alt="Detection validation: scenarios with the rules and ATT&amp;CK techniques each should trigger" loading="lazy" decoding="async"></div></div>
+            </article>
+            <article class="card tile">
+                <div class="tile-copy">
+                    <h3>MITRE ATT&amp;CK mapping</h3>
+                    <p>Every event is tagged with techniques and tactics based on its type and command content. The matrix page shows which techniques your sensors are catching and the events behind each one.</p>
+                    <div class="meta"><span>T1110, T1059, T1046, T1105, T1190, T1595</span></div>
+                </div>
+                <div class="card-art"><div class="glow glow-rose"></div><div class="art shot-art"><img class="shot" src="media/real/matrix.png" width="620" height="340" alt="The MITRE ATT&amp;CK board with techniques under their tactics" loading="lazy" decoding="async"></div></div>
+            </article>
+            </div>
+        </section>
+
+        <section class="fgroup" id="analyse">
+            <div class="section-head">
+                <h2 class="h2" data-reveal>Analysis tools.</h2>
+                <p class="lede" data-reveal>Open what attackers left behind without leaving the console.</p>
+            </div>
+            <div class="bento" data-stagger>
+            <article class="card tile wide c6">
+                <div class="tile-copy">
+                    <h3>Malware pipeline</h3>
+                    <p>Hashing and static analysis, ClamAV and YARA signatures, optional dynamic analysis in a CAPE sandbox, and extraction of credentials and API keys. When CAPE is not configured the report says dynamic analysis was not run, rather than inventing a result.</p>
+                    <div class="meta"><span>PE, ELF, Mach-O, PDF, DOCX, scripts</span><span>VirusTotal optional</span></div>
+                </div>
+                <div class="card-art"><div class="glow glow-violet"></div><div class="art shot-art"><img class="shot" src="media/real/malware.png" width="360" height="340" alt="Binary analysis: threat family distribution across scanned samples" loading="lazy" decoding="async"></div></div>
+            </article>
+            <article class="card tile wide c6">
+                <div class="tile-copy">
+                    <h3>APK security analysis</h3>
+                    <p>Upload an Android package and MobSF returns a full static report: permission audit, network endpoints, hardcoded secrets and a risk score.</p>
+                    <div class="meta"><span>MobSF on port 5055</span></div>
+                </div>
+                <div class="card-art"><div class="glow glow-rose"></div><div data-art="apk"></div></div>
+            </article>
+            <article class="card tile wide c6">
+                <div class="tile-copy">
+                    <h3>URL reputation scanner</h3>
+                    <p>DNS, TLS certificate, WHOIS and HTTP probes plus heuristics for homograph domains, entropy and known phishing patterns, with a safe isolated preview of the page.</p>
+                    <div class="meta"><span>heuristic scoring</span><span>isolated rendering</span></div>
+                </div>
+                <div class="card-art"><div class="glow glow-peach"></div><div class="art shot-art"><img class="shot" src="media/real/url.png" width="458" height="340" alt="URL scanner result for example.com: verdict and network intelligence" loading="lazy" decoding="async"></div></div>
+            </article>
+            <article class="card tile wide c6">
+                <div class="tile-copy">
+                    <h3>Lab machines</h3>
+                    <p>Kali and analysis desktops run locally and open in the browser through Apache Guacamole. With AWS configured, isolated EC2 instances can be launched on demand, reached through Systems Manager without SSH keys, and terminated when the session ends.</p>
+                    <div class="meta"><span>Guacamole</span><span>EC2 and SSM optional</span></div>
+                </div>
+                <div class="card-art"><div class="glow glow-violet"></div><div class="art shot-art"><img class="shot" src="media/real/lab.png" width="549" height="262" alt="The Kali Linux lab card on the Virtual lab page" loading="lazy" decoding="async"></div></div>
+            </article>
+            </div>
+        </section>
+
+        <section class="fgroup" id="access">
+            <div class="section-head">
+                <h2 class="h2" data-reveal>Access and operations.</h2>
+                <p class="lede" data-reveal>Decide who sees what, and keep a record of it.</p>
+            </div>
+            <div class="bento" data-stagger>
+            <article class="card tile wide c6">
+                <div class="tile-copy">
+                    <h3>Six-tier role-based access</h3>
+                    <p>Super Admin, Overseer, Auditor, Analyst, Specialist and Operative, with clearance levels 1 to 3 gating sensitive tools. Sessions use JWTs, and admin routes are checked on the server, not just hidden in the interface.</p>
+                    <div class="meta"><span>JWT</span><span>server-side role checks</span><span>audit trail</span></div>
+                </div>
+                <div class="card-art"><div class="glow glow-rose"></div><div data-art="roles"></div></div>
+            </article>
+            <article class="card tile wide c6">
+                <div class="tile-copy">
+                    <h3>Credential delivery</h3>
+                    <p>New analyst credentials are issued with one-time tokens and sent by SMTP email or WhatsApp through Twilio when those integrations are configured, with every issue logged.</p>
+                    <div class="meta"><span>one-time tokens</span><span>SMTP, Twilio optional</span></div>
+                </div>
+                <div class="card-art"><div class="glow glow-peach"></div><div class="art shot-art"><img class="shot" src="media/real/delivery.png" width="620" height="340" alt="The credential issuance form on the Credential management page" loading="lazy" decoding="async"></div></div>
+            </article>
+            </div>
+            <p class="art-note">Ten of these panels are crops and short recordings of the real console, running on this project's own lab. The APK and roles panels are drawings with example data.</p>
+        </section>
+    </div>
+
+    <section class="section" id="compare">
+        <div class="wrap">
+            <div class="section-head">
+                <span class="eyebrow">Comparison</span>
+                <h2 class="h2" data-reveal>Why not just a <em>SIEM?</em></h2>
+                <p class="lede" data-reveal>A SIEM is good at collecting what you already have. ShadowTrust creates new, high-signal data by giving attackers something to touch.</p>
+            </div>
+            <table class="spec compare" data-reveal>
+                <thead><tr><th>Capability</th><th>Typical SIEM and tools</th><th>ShadowTrust</th></tr></thead>
                 <tbody>
-                    <tr>
-                        <td>Setup Time</td>
-                        <td>Weeks of configuration</td>
-                        <td><span class="highlight">One command (./setup.sh)</span></td>
-                    </tr>
-                    <tr>
-                        <td>Honeypot Integration</td>
-                        <td>Separate tool, manual config</td>
-                        <td><span class="highlight">Built-in (Cowrie, Dionaea, Honeytrap)</span></td>
-                    </tr>
-                    <tr>
-                        <td>Attack Classification</td>
-                        <td>Signature-only</td>
-                        <td><span class="highlight">AI + Behavioral Heuristics</span></td>
-                    </tr>
-                    <tr>
-                        <td>Malware Analysis</td>
-                        <td>External tool, manual upload</td>
-                        <td><span class="highlight">Automated 4-stage pipeline</span></td>
-                    </tr>
-                    <tr>
-                        <td>VM Orchestration</td>
-                        <td>Not included</td>
-                        <td><span class="highlight">AWS EC2 on-demand via API</span></td>
-                    </tr>
-                    <tr>
-                        <td>MITRE ATT&CK</td>
-                        <td>Manual mapping</td>
-                        <td><span class="highlight">Automatic per-event tagging</span></td>
-                    </tr>
-                    <tr>
-                        <td>Incident Correlation</td>
-                        <td>Manual triage</td>
-                        <td><span class="highlight">Rule-based detections → incidents</span></td>
-                    </tr>
-                    <tr>
-                        <td>Deployment</td>
-                        <td>Cloud-dependent</td>
-                        <td><span class="highlight">Self-hosted Docker Compose</span></td>
-                    </tr>
+                    <tr><th>Setup time</th><td>Weeks of configuration</td><td>One command, <code>./setup.sh</code></td></tr>
+                    <tr><th>Honeypot integration</th><td>Separate tool, manual wiring</td><td>Built in: Cowrie, Dionaea, Honeytrap</td></tr>
+                    <tr><th>Attack classification</th><td>Signature only</td><td>Rules plus behavioral heuristics</td></tr>
+                    <tr><th>Malware analysis</th><td>External tool, manual upload</td><td>Automatic on capture</td></tr>
+                    <tr><th>Lab machines</th><td>Not included</td><td>Kali in the browser, EC2 optional</td></tr>
+                    <tr><th>MITRE ATT&amp;CK</th><td>Manual mapping</td><td>Tagged per event</td></tr>
+                    <tr><th>Incident correlation</th><td>Manual triage</td><td>Detections open incidents</td></tr>
+                    <tr><th>Deployment</th><td>Often cloud-dependent</td><td>Self-hosted Docker Compose</td></tr>
                 </tbody>
             </table>
         </div>
     </section>
 
-    <!-- CTA -->
-    <div class="cta-banner" data-aos="zoom-in">
-        <h2>See Every Feature in Action</h2>
-        <p>Sign in to the dashboard and explore the full platform — threat map, malware lab, VM orchestrator, MITRE matrix, and more.</p>
-        <div class="cta-btns">
-            <a href="login.html" class="btn btn-primary">Open Dashboard</a>
-            <a href="docs.html" class="btn btn-outline">Read the Docs</a>
+    <section class="section closer">
+        <div class="wrap closer-grid">
+            <h2 class="display" data-reveal>See it with <em>your</em> data.</h2>
+            <div class="install" data-reveal>
+                <div class="install-label"><span>Next</span></div>
+                <p class="body-copy" style="margin:0 0 22px">Sign in and open the threat map, the malware lab, the ATT&amp;CK matrix and the rest of the console.</p>
+                <div style="display:flex;gap:14px;flex-wrap:wrap">
+                    <a class="btn" href="login.html">Open the console <span class="arr">→</span></a>
+                    <a class="btn btn-ghost" href="docs.html">Read the docs</a>
+                </div>
+            </div>
         </div>
-    </div>
+    </section>
+</main>
 
-</div>
-
-<!-- FOOTER -->
-<footer>
-    <div class="footer-grid">
-        <div class="footer-brand">
-            <span class="logo">Shadow Trust</span>
-            <p>AI-powered Security Operations Center with honeypot deception, malware analysis, and real-time threat intelligence.</p>
+<footer class="site-footer">
+    <div class="wrap">
+        <div class="foot-grid">
+            <div>
+                <a class="brand" href="index.html" aria-label="ShadowTrust home">
+                    <svg viewBox="0 0 28 28" fill="none" aria-hidden="true"><path d="M2.5 14c3-5.3 7-8 11.5-8s8.5 2.7 11.5 8c-3 5.3-7 8-11.5 8S5.5 19.3 2.5 14Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><circle cx="14" cy="14" r="4.2" fill="var(--st-brand)"/></svg>
+                    <span>ShadowTrust</span>
+                </a>
+                <p class="foot-blurb">Honeypots, detection, investigation and reporting in one self-hosted stack.</p>
+            </div>
+            <div><h4>Product</h4><ul><li><a href="features.html">Features</a></li><li><a href="architecture.html">Architecture</a></li><li><a href="usecases.html">Use cases</a></li></ul></div>
+            <div><h4>Learn</h4><ul><li><a href="docs.html">Documentation</a></li><li><a href="status.html">System status</a></li><li><a href="http://localhost:8000/docs" target="_blank" rel="noopener">API reference</a></li></ul></div>
+            <div><h4>Console</h4><ul><li><a href="login.html">Sign in</a></li><li><a href="register.html">Request access</a></li><li><a href="admin_login.html">Admin sign in</a></li></ul></div>
         </div>
-        <div class="footer-col">
-            <h4>Platform</h4>
-            <ul>
-                <li><a href="features.html">Features</a></li>
-                <li><a href="architecture.html">Architecture</a></li>
-                <li><a href="usecases.html">Use Cases</a></li>
-                <li><a href="docs.html">Documentation</a></li>
-                <li><a href="status.html">System Status</a></li>
-            </ul>
-        </div>
-        <div class="footer-col">
-            <h4>Access</h4>
-            <ul>
-                <li><a href="login.html">Sign In</a></li>
-                <li><a href="register.html">Register</a></li>
-                <li><a href="dashboard.html">Dashboard</a></li>
-                <li><a href="http://localhost:8000/docs" target="_blank">API Docs</a></li>
-            </ul>
-        </div>
-    </div>
-    <div class="footer-bottom">
-        <p>© 2026 Shadow Trust. All Rights Reserved.</p>
-        <div class="footer-status"><span class="dot"></span> All Systems Operational</div>
+        <div class="foot-base"><span>© 2026 ShadowTrust. Private repository.</span><a href="status.html">Check live system status <span class="arr">→</span></a></div>
     </div>
 </footer>
 
-<script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
-<script>AOS.init({ duration: 750, once: true, offset: 80 });</script>
+<script src="js/vendor/motion.js"></script>
+<script src="js/ribbon.js"></script>
+<script src="js/site.js"></script>
+<script src="js/art.js"></script>
+<script src="js/explainers.js"></script>
 </body>
 </html>

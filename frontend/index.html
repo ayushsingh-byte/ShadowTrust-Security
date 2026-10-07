@@ -1,245 +1,977 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Shadow Trust — AI-Powered SOC & Threat Intelligence Platform</title>
-    <link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
-    <link rel="stylesheet" href="css/landing/landingpage.css?v=5">
+    <title>ShadowTrust · Deception and security operations, self-hosted</title>
+    <meta name="description" content="ShadowTrust runs decoy SSH, Telnet, SMB, FTP and web services, records everything an attacker does, and turns it into incidents, ATT&CK mappings and reports. One Docker Compose stack.">
+    <!-- Link preview (LinkedIn, WhatsApp, Slack, X). Once the site has a public address, make og:image and twitter:image absolute, e.g. https://your-domain/og.png, and add og:url. -->
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="ShadowTrust">
+    <meta property="og:title" content="ShadowTrust · Deception and security operations, self-hosted">
+    <meta property="og:description" content="ShadowTrust runs decoy SSH, Telnet, SMB, FTP and web services, records everything an attacker does, and turns it into incidents, ATT&CK mappings and reports. One Docker Compose stack.">
+    <meta property="og:image" content="og.png">
+    <meta property="og:image:type" content="image/png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:alt" content="ShadowTrust: Let them in. Watch every move. Decoy servers, detection, investigation and reporting in one self-hosted stack.">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="ShadowTrust · Deception and security operations, self-hosted">
+    <meta name="twitter:description" content="ShadowTrust runs decoy SSH, Telnet, SMB, FTP and web services, records everything an attacker does, and turns it into incidents, ATT&CK mappings and reports. One Docker Compose stack.">
+    <meta name="twitter:image" content="og.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300..600&family=Source+Code+Pro:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/tokens.css">
-    <script src="js/theme.js"></script>
+    <link rel="stylesheet" href="css/site.css">
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 28 28'%3E%3Crect width='28' height='28' rx='6' fill='%23533afd'/%3E%3Cpath d='M4.5 14c2.5-4.3 5.7-6.4 9.500-6.400s7 2.100 9.500 6.400c-2.500 4.300-5.700 6.400-9.500 6.400S7 18.300 4.500 14Z' fill='none' stroke='%23fff' stroke-width='1.8' stroke-linejoin='round'/%3E%3Ccircle cx='14' cy='14' r='3.2' fill='%23fff'/%3E%3C/svg%3E">
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#ffffff">
+    <script>if (!matchMedia('(prefers-reduced-motion: reduce)').matches) document.documentElement.classList.add('motion-ready');</script>
 </head>
-<body>
+<body class="site">
+<a class="skip" href="#main">Skip to content</a>
 
-<div class="container">
+<!-- icons used inside the drawings -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <symbol id="i-key" viewBox="0 0 20 20"><circle cx="6.5" cy="13.5" r="3.5"/><path d="m9 11 7.500-7.500M13.500 6.500l2 2M11.500 8.500 13 10"/></symbol>
+    <symbol id="i-file" viewBox="0 0 20 20"><path d="M5.500 2.500h6L15 6v10a1.500 1.500 0 0 1-1.500 1.500h-8A1.500 1.500 0 0 1 4 16V4a1.500 1.500 0 0 1 1.500-1.500Z"/><path d="M11.500 2.500V6H15M7.500 10.500h5M7.500 13.500h3"/></symbol>
+    <symbol id="i-open" viewBox="0 0 16 16"><path d="M9.500 3H13v3.500M6.500 13H3V9.500"/></symbol>
+    <symbol id="i-bolt" viewBox="0 0 16 16"><path d="M9 1.500 3.500 9H8l-1 5.500L12.500 7H8Z"/></symbol>
+    <symbol id="i-case" viewBox="0 0 20 20"><path d="M2.500 6A1.500 1.500 0 0 1 4 4.500h3.300l1.700 2H16A1.500 1.500 0 0 1 17.500 8v6.500A1.500 1.500 0 0 1 16 16H4a1.500 1.500 0 0 1-1.500-1.500Z"/></symbol>
+    <symbol id="i-book" viewBox="0 0 20 20"><path d="M4 3.500h9.500A2.500 2.500 0 0 1 16 6v10.500H6.500A2.500 2.500 0 0 1 4 14Z"/><path d="M4 14a2.500 2.500 0 0 1 2.500-2.500H16M7.500 7h5"/></symbol>
+    <symbol id="i-pulse" viewBox="0 0 20 20"><path d="M2.500 10.500h3.500l2-5 3.500 9 2-4h4"/></symbol>
+</svg>
 
-    <!-- NAVBAR -->
-    <nav>
-        <div class="logo">Shadow Trust</div>
-        <ul>
-            <li><a href="index.html" class="active-link">Home</a></li>
+<header class="site-nav" data-nav>
+    <div class="wrap">
+        <a class="brand" href="index.html" aria-label="ShadowTrust home">
+            <svg viewBox="0 0 28 28" fill="none" aria-hidden="true"><path d="M2.500 14c3-5.300 7-8 11.500-8s8.500 2.700 11.500 8c-3 5.300-7 8-11.500 8S5.500 19.300 2.500 14Z" stroke="currentColor" stroke-width="2.200" stroke-linejoin="round"/><circle cx="14" cy="14" r="4.200" fill="var(--st-brand)"/></svg>
+            <span>ShadowTrust</span>
+        </a>
+        <ul class="nav-links" id="navLinks">
             <li><a href="features.html">Features</a></li>
             <li><a href="architecture.html">Architecture</a></li>
+            <li><a href="usecases.html">Use cases</a></li>
             <li><a href="docs.html">Docs</a></li>
             <li><a href="status.html">Status</a></li>
-            <li><a href="usecases.html">Use Cases</a></li>
+            <li class="nav-mobile-only"><a href="login.html">Sign in</a></li>
         </ul>
-        <a href="login.html" class="btn">Sign In</a>
-    </nav>
-
-    <!-- HERO -->
-    <section class="hero" data-aos="fade-up">
-        <div class="hero-text">
-            <div class="hero-badge">
-                <span class="dot"></span>
-                AI-Powered Security Operations Center
-            </div>
-            <h1>Deceive. Capture.<br><span>Analyze. Respond.</span></h1>
-            <p>Shadow Trust is a full-stack threat intelligence platform that orchestrates honeypot networks, captures attack telemetry in real-time, runs AI-driven classification, and delivers a 30+ page SOC dashboard — all in one Docker command.</p>
-            <div class="hero-buttons">
-                <a href="login.html" class="btn btn-primary">Launch Platform</a>
-                <a href="features.html" class="btn btn-outline">Explore Features</a>
-            </div>
-        </div>
-        <div class="hero-img-wrap" data-aos="fade-left" data-aos-delay="200">
-            <img src="./hero_image.png" alt="Shadow Trust Platform Dashboard">
-        </div>
-    </section>
-
-</div>
-
-<!-- STATS BAR -->
-<div class="container" data-aos="fade-up" data-aos-delay="100">
-    <div class="stats-bar">
-        <div class="stat-item">
-            <span class="stat-num">30+</span>
-            <span class="stat-label">Dashboard Pages</span>
-        </div>
-        <div class="stat-item">
-            <span class="stat-num">19</span>
-            <span class="stat-label">API Modules</span>
-        </div>
-        <div class="stat-item">
-            <span class="stat-num">6</span>
-            <span class="stat-label">RBAC Roles</span>
-        </div>
-        <div class="stat-item">
-            <span class="stat-num">4</span>
-            <span class="stat-label">Malware Pipeline Stages</span>
-        </div>
-        <div class="stat-item">
-            <span class="stat-num">3</span>
-            <span class="stat-label">Honeypot Protocols</span>
-        </div>
-        <div class="stat-item">
-            <span class="stat-num">5</span>
-            <span class="stat-label">Docker Services</span>
+        <div class="nav-end">
+            <a class="signin" href="login.html">Sign in</a>
+            <a class="btn btn-sm" href="login.html">Open console <span class="arr">→</span></a>
+            <button class="nav-burger" type="button" data-burger aria-label="Open menu" aria-controls="navLinks" aria-expanded="false">
+                <svg width="16" height="16" viewBox="0 0 16 16" stroke="currentColor" stroke-width="1.500"><path d="M2 5h12M2 11h12"/></svg>
+            </button>
         </div>
     </div>
-</div>
+</header>
 
-<div class="container">
+<main id="main">
 
-    <!-- CORE CAPABILITIES -->
-    <section class="section" data-aos="fade-up">
-        <span class="section-label">Core Platform</span>
-        <h2>Built for <span>Real Operations</span></h2>
-        <p class="section-sub">Every component is purpose-built for threat detection, not just monitoring. From honeypot deception to cloud VM orchestration — Shadow Trust handles the full kill chain.</p>
-        <div class="features">
-            <div class="card" data-aos="zoom-in" data-aos-delay="100">
-                <span class="card-icon">🗺️</span>
-                <h3>Global Threat Map</h3>
-                <p>Real-time interactive world map showing live attack origins, GeoIP-enriched threat levels, and attacker session overlays across your honeypot network.</p>
+    <!-- ============ HERO ============ -->
+    <section class="hero">
+        <canvas class="ribbon" data-ribbon aria-hidden="true"></canvas>
+        <div class="wrap">
+            <div class="hero-inner">
+                <a class="hero-stat" href="status.html" data-hero-fade data-live-line>Self-hosted deception and security operations</a>
+                <h1 class="hero-title" aria-label="Let them in. Watch every move.">
+                    <span class="typed" data-typed aria-hidden="true"><span data-typed-line>Let them in.</span><span class="soft" data-typed-line>Watch every move.</span></span>
+                </h1>
+                <p class="hero-lede" data-hero-fade>ShadowTrust runs decoy servers on your network, records every login, keystroke and dropped file, and turns them into cases your analysts can close.</p>
+                <div class="hero-actions" data-hero-fade>
+                    <a class="btn" href="login.html">Open the console <span class="arr">→</span></a>
+                    <a class="btn btn-ghost" href="#how">See how it works</a>
+                </div>
             </div>
-            <div class="card" data-aos="zoom-in" data-aos-delay="200">
-                <span class="card-icon">🍯</span>
-                <h3>Multi-Protocol Honeypots</h3>
-                <p>Deploy Cowrie (SSH/Telnet), Dionaea (malware capture), and Honeytrap (multi-port) nodes. Their logs are tailed into MariaDB within seconds — no cloud dependency.</p>
-            </div>
-            <div class="card" data-aos="zoom-in" data-aos-delay="300">
-                <span class="card-icon">🔬</span>
-                <h3>4-Stage Malware Pipeline</h3>
-                <p>Static analysis → sandbox detonation → APK scanning via MobSF → secret extraction. Full automated pipeline from capture to intelligence.</p>
-            </div>
-            <div class="card" data-aos="zoom-in" data-aos-delay="400">
-                <span class="card-icon">🖥️</span>
-                <h3>AWS VM Orchestration</h3>
-                <p>Launch isolated EC2 analysis VMs on demand. JIT credential injection via SSM. Guacamole remote desktop access. Auto-terminate after session.</p>
-            </div>
-            <div class="card" data-aos="zoom-in" data-aos-delay="500">
-                <span class="card-icon">🎯</span>
-                <h3>MITRE ATT&CK Mapping</h3>
-                <p>Every captured attack is automatically mapped to MITRE ATT&CK techniques and tactics — giving your analysts structured, actionable context.</p>
-            </div>
-            <div class="card" data-aos="zoom-in" data-aos-delay="600">
-                <span class="card-icon">🔐</span>
-                <h3>6-Tier RBAC System</h3>
-                <p>Super Admin, Overseer, Analyst, Specialist, Operative, and Auditor roles with clearance levels 1–3. JWT-authenticated with full audit logging.</p>
+            <!-- What the stack really runs, flowing past. Marks come from the Simple Icons set and from YARA's own
+                 repository; projects without a one-colour mark are set in type. Sources and the owners' rules:
+                 media/ICONS-LICENSES.txt. The second list is a copy that closes the loop and is hidden from
+                 assistive technology. -->
+            <div class="stack-strip bleed rule-top" data-hero-fade>
+                <svg class="stack-defs" width="0" height="0" aria-hidden="true" focusable="false">
+                    <symbol id="lg-docker" viewBox="0 0 24 24"><path d="M13.983 11.078h2.119a.186.186 0 00.186-.185V9.006a.186.186 0 00-.186-.186h-2.119a.185.185 0 00-.185.185v1.888c0 .102.083.185.185.185m-2.954-5.43h2.118a.186.186 0 00.186-.186V3.574a.186.186 0 00-.186-.185h-2.118a.185.185 0 00-.185.185v1.888c0 .102.082.185.185.185m0 2.716h2.118a.187.187 0 00.186-.186V6.29a.186.186 0 00-.186-.185h-2.118a.185.185 0 00-.185.185v1.887c0 .102.082.185.185.186m-2.93 0h2.12a.186.186 0 00.184-.186V6.29a.185.185 0 00-.185-.185H8.1a.185.185 0 00-.185.185v1.887c0 .102.083.185.185.186m-2.964 0h2.119a.186.186 0 00.185-.186V6.29a.185.185 0 00-.185-.185H5.136a.186.186 0 00-.186.185v1.887c0 .102.084.185.186.186m5.893 2.715h2.118a.186.186 0 00.186-.185V9.006a.186.186 0 00-.186-.186h-2.118a.185.185 0 00-.185.185v1.888c0 .102.082.185.185.185m-2.93 0h2.12a.185.185 0 00.184-.185V9.006a.185.185 0 00-.184-.186h-2.12a.185.185 0 00-.184.185v1.888c0 .102.083.185.185.185m-2.964 0h2.119a.185.185 0 00.185-.185V9.006a.185.185 0 00-.184-.186h-2.12a.186.186 0 00-.186.186v1.887c0 .102.084.185.186.185m-2.92 0h2.12a.185.185 0 00.184-.185V9.006a.185.185 0 00-.184-.186h-2.12a.185.185 0 00-.184.185v1.888c0 .102.082.185.185.185M23.763 9.89c-.065-.051-.672-.51-1.954-.51-.338.001-.676.03-1.01.087-.248-1.7-1.653-2.53-1.716-2.566l-.344-.199-.226.327c-.284.438-.49.922-.612 1.43-.23.97-.09 1.882.403 2.661-.595.332-1.55.413-1.744.42H.751a.751.751 0 00-.75.748 11.376 11.376 0 00.692 4.062c.545 1.428 1.355 2.48 2.41 3.124 1.18.723 3.1 1.137 5.275 1.137.983.003 1.963-.086 2.93-.266a12.248 12.248 0 003.823-1.389c.98-.567 1.86-1.288 2.61-2.136 1.252-1.418 1.998-2.997 2.553-4.4h.221c1.372 0 2.215-.549 2.68-1.009.309-.293.55-.65.707-1.046l.098-.288Z"/></symbol>
+                    <symbol id="lg-fastapi" viewBox="0 0 24 24"><path d="M12 .0387C5.3729.0384.0003 5.3931 0 11.9988c-.001 6.6066 5.372 11.9628 12 11.9625 6.628.0003 12.001-5.3559 12-11.9625-.0003-6.6057-5.3729-11.9604-12-11.96m-.829 5.4153h7.55l-7.5805 5.3284h5.1828L5.279 18.5436q2.9466-6.5444 5.892-13.0896"/></symbol>
+                    <symbol id="lg-mariadb" viewBox="0 0 24 24"><path d="M23.157 4.412c-.676.284-.79.31-1.673.372-.65.045-.757.057-1.212.209-.75.246-1.395.75-2.02 1.59-.296.398-1.249 1.913-1.249 1.988 0 .057-.65.998-.915 1.32-.574.713-1.08 1.079-2.14 1.59-.77.36-1.224.524-4.102 1.477-1.073.353-2.133.738-2.367.864-.852.449-1.515 1.036-2.203 1.938-1.003 1.32-.972 1.313-3.042.947a12.264 12.264 0 00-.675-.063c-.644-.05-1.023.044-1.332.334L0 17.193l.177.088c.094.05.353.234.561.398.215.17.461.347.55.391.088.044.17.088.183.101.012.013-.089.17-.228.353-.435.581-.593.871-.574 1.048.019.164.032.17.43.17.517-.006.826-.056 1.261-.208.65-.233 2.058-.94 2.784-1.4.776-.5 1.717-.998 1.956-1.042.082-.02.354-.07.594-.114.58-.107 1.464-.095 2.587.05.108.013.373.045.6.064.227.025.43.057.454.076.026.012.474.037.998.056.934.026 1.104.007 1.3-.189.126-.133.385-.631.498-.985.209-.643.417-.921.366-.492-.113.966-.322 1.692-.713 2.411-.259.499-.663 1.092-.934 1.395-.322.347-.315.36.088.315.619-.063 1.471-.397 2.096-.82.827-.562 1.647-1.691 2.19-3.03.107-.27.22-.22.183.083-.013.094-.038.315-.057.498l-.031.328.353-.202c.833-.48 1.414-1.262 2.127-2.884.227-.518.877-2.922 1.073-3.976a9.64 9.64 0 01.271-1.042c.127-.429.196-.555.48-.858.183-.19.625-.555.978-.808.72-.505.953-.75 1.187-1.205.208-.417.284-1.13.132-1.357-.132-.202-.284-.196-.763.006Z"/></symbol>
+                    <symbol id="lg-yara" viewBox="558.8 1094.1 1725.2 592.3"><path fill-rule="evenodd" d="M879.408,1390.265 c0,96.75,0.138,296,0.138,296s-86.502-0.023-126.786,0.082c-4.489,0.007-6.872,0.252-5.338-6.005 c2.298-9.372,4.265-19.155,7.469-27.977c2.122-5.844,5.241-10.942,7.444-16.512c2.302-5.814,6.336-12.029,1.66-18.827 c-2.173-3.167-4.587-5.339-8.635-5.176c-8.573,0.345-17.162,1.06-25.717,0.795c-6.21-0.186-12.714-0.085-18.247-4.046 c-4.425-3.164-6.256-6.485-9.051-12.415c-1.726-3.66-2.442-6.129-2.842-9.799c-1.005-9.217,2.249-13.657,5.294-19.848 c5.829-11.851,11.624-22.12,17.867-32.878c5.584-9.623,12.827-18.289,19.391-27.336c11.743-16.177,23.752-32.205,33.866-49.446 c3.918-6.676,8.181-13.621,7.407-22.375c-0.781-8.847-4.462-13.378-12.623-16.859c-7.263-3.094-14.767-5.554-22.161-8.013 c-7.987-2.657-16.111-5.037-24.1-7.866c-7.632-2.703-15.252-5.31-22.866-8.156c-1.996-0.746-1.644-0.622-3.473-1.209 c-0.573-0.184-3.692-0.89-3.762-1.259c-0.162-0.844,0.647-0.889,1.234-1.109c5.999-2.251,11.033-3.756,16.537-5.736 c5.989-2.155,12.163-4.076,18.316-5.758c4.9-1.339,9.72-2.936,14.606-4.31c5.715-1.606,11.366-3.449,17.046-5.186 c4.994-1.527,10.104-2.916,14.998-4.516c8.632-2.822,17.748-5.195,21.505-13.748c0.517-1.177,0.75-2.611,0.889-3.954 c1.135-10.837-1.698-20.822-5.442-30.95c-2.75-7.443-5.601-14.92-7.936-22.56c-2.438-7.976-5.795-15.667-8.285-23.628 c-1.357-4.346-2.603-8.874-3.726-13.123c-1.838-6.951-3.178-13.781-4.649-20.449c-2.67-12.102-3.295-24.021-3.397-36.139 c-0.069-8.351,1.674-16.247,7.236-22.996c3.467-4.208,7.099-6.853,12.829-8.463c10.68-3,25.52-3.515,40.042-2.178 c8.177,0.753,17.732,0.923,20.459-7.923c1.015-3.291,0.526-7.372,0.578-11.03c0.149-10.551-0.691-20.045-0.214-32.101 c0.178-4.487,0.545-9.524,0.576-14.341c0.046-6.884,0.004-6.884,7.11-6.882c6.197,0,24.888,0.134,24.888,0.134 s0.006,3.228-0.004,5.815c-0.201,65.246-0.132,130.493-0.132,195.741V1390.265z"/><path fill-rule="evenodd" d="M735.789,1094.061 c-14.538,4.643-27.112,12.524-38.714,21.756c-9.016,7.173-16.059,16.18-22.051,26.303c-5.76,9.721-9.635,19.965-11.518,30.739 c-0.983,5.627-0.969,11.637-1.026,17.47c-0.08,8.429-0.634,17,0.64,25.259c1.339,8.679,2.627,17.432,4.99,26.021 c1.597,5.806,2.757,11.831,4.414,17.671c1.717,6.054,3.96,12.618,5.413,17.83c1.041,3.734,2.21,7.502,3.192,11.153 c2.373,8.813,4.79,17.518,7.705,26.272c1.31,3.934,0.966,2.669,3.067,10.72c1.802,6.906-1.418,10.151-8.207,12.175 c-9.051,2.697-17.968,5.726-26.873,8.965c-7.453,2.711-15.11,5.165-22.781,7.365c-6.61,1.895-11.986,8.472-13.65,15.025 c-2.341,9.22-3.519,17.742-4.868,27.048c-0.604,4.167-1.018,8.825-1.332,13.282c-1.018,14.424,3.936,15.239,14.787,19.709 c7.319,3.02,14.729,5.794,22.112,8.703c3.719,1.466,7.673,2.826,11.349,4.254c3.235,1.257,6.064,2.438,8.573,4.125 c2.685,1.803,1.633,4.901-0.179,7.702c-7.473,11.561-16.215,22.144-24.817,32.835c-12.469,15.488-24.241,31.541-33.894,48.882 c-6.146,11.041-10.32,23.152-14.826,35.085c-6.512,17.236-8.302,34.808-5.441,52.141c0.856,5.189,2.493,9.838,3.927,14.665 c2.453,8.252,6.012,16.253,11.395,23.267c8.319,10.838,18.791,18.688,31.551,23.518c0.753,0.287,1.936,0.244,1.821,1.347 c-0.125,1.188-1.354,0.811-2.086,0.819c-7.916,0.08-15.835,0.108-23.754,0.112c-16.871,0.014-55.885-0.013-55.885-0.013 s0.309-176.078,0.309-261.638c0-108.286-0.309-330.435-0.309-330.435s115.598-0.133,170.343-0.133H735.789z"/><path fill-rule="evenodd" d="M1050.408,1213.489v216.623c0,34.472,18.1,51.705,54.319,51.705h85.734v-268.328h93.587v359.95 c0,37.962-9.929,63.259-29.777,75.917c-19.858,12.648-32.181,20.174-36.979,22.579c-4.804,2.394-10.256,4.685-16.36,6.871 c-6.983,1.741-15.165,3.271-24.542,4.582c-9.386,1.308-20.185,1.964-32.397,1.964H961.402v-75.915h189.792 c10.47,0,19.634-3.713,27.487-11.13c7.854-7.424,11.78-16.359,11.78-26.832v-13.743h-107.33c-21.822,0-39.381-2.392-52.684-7.198 c-13.313-4.797-29.123-16.361-47.448-34.688c-18.324-18.321-27.487-44.501-27.487-78.531v-223.825H1050.408z"/><path fill-rule="evenodd" d="M1424.1,1557.731c-28.796,0-52.91-9.489-72.315-28.467 c-19.42-18.981-29.124-42.429-29.124-70.357c0-29.665,9.049-54.204,27.16-73.625c18.099-19.408,40.904-29.122,68.391-29.122 h162.957v-18.324c0-15.269-5.238-27.263-15.707-35.997c-10.467-8.722-25.52-13.088-45.153-13.088h-174.743v-75.263h149.215h28.144 h30.102c17.885,0,33.921,2.843,48.106,8.53c14.175,5.684,27.26,14.203,39.267,25.574c11.99,11.37,20.826,26.013,26.502,43.93 c5.669,17.926,8.51,41.312,8.51,70.159v196.05H1424.1z M1581.168,1481.816v-60.864H1462.06c-11.353,0-20.944,3.271-28.796,9.815 c-7.854,6.546-11.783,14.623-11.783,24.213c0,7.425,3.488,13.743,10.474,18.982c6.974,5.233,15.707,7.854,26.178,7.854H1581.168z"/><path fill-rule="evenodd" d="M1723.18,1213.489h94.893v47.121c6.109-15.892,15.813-28.918,29.129-39.083 c13.302-10.154,30.858-15.237,52.683-15.237c5.233,0,12.431,0.879,21.597,2.638v80.477h-103.408v268.327h-94.893V1213.489z"/><path fill-rule="evenodd" d="M2032.729,1557.731c-28.794,0-52.91-9.489-72.316-28.467 c-19.42-18.981-29.124-42.429-29.124-70.357c0-29.665,9.05-54.204,27.159-73.625c18.101-19.408,40.903-29.122,68.393-29.122 h162.959v-18.324c0-15.269-5.238-27.263-15.707-35.997c-10.473-8.722-25.523-13.088-45.158-13.088h-174.74v-75.263h149.217h28.139 h30.105c17.887,0,33.92,2.843,48.102,8.53c14.178,5.684,27.264,14.203,39.27,25.574c11.994,11.37,20.83,26.013,26.506,43.93 c5.662,17.926,8.506,41.312,8.506,70.159v196.05H2032.729z M2189.799,1481.816v-60.864h-119.115 c-11.346,0-20.941,3.271-28.793,9.815c-7.855,6.546-11.78,14.623-11.78,24.213c0,7.425,3.489,13.743,10.473,18.982 c6.975,5.233,15.707,7.854,26.176,7.854H2189.799z"/></symbol>
+                    <symbol id="lg-python" viewBox="0 0 24 24"><path d="M14.25.18l.9.2.73.26.59.3.45.32.34.34.25.34.16.33.1.3.04.26.02.2-.01.13V8.5l-.05.63-.13.55-.21.46-.26.38-.3.31-.33.25-.35.19-.35.14-.33.1-.3.07-.26.04-.21.02H8.77l-.69.05-.59.14-.5.22-.41.27-.33.32-.27.35-.2.36-.15.37-.1.35-.07.32-.04.27-.02.21v3.06H3.17l-.21-.03-.28-.07-.32-.12-.35-.18-.36-.26-.36-.36-.35-.46-.32-.59-.28-.73-.21-.88-.14-1.05-.05-1.23.06-1.22.16-1.04.24-.87.32-.71.36-.57.4-.44.42-.33.42-.24.4-.16.36-.1.32-.05.24-.01h.16l.06.01h8.16v-.83H6.18l-.01-2.75-.02-.37.05-.34.11-.31.17-.28.25-.26.31-.23.38-.2.44-.18.51-.15.58-.12.64-.1.71-.06.77-.04.84-.02 1.27.05zm-6.3 1.98l-.23.33-.08.41.08.41.23.34.33.22.41.09.41-.09.33-.22.23-.34.08-.41-.08-.41-.23-.33-.33-.22-.41-.09-.41.09zm13.09 3.95l.28.06.32.12.35.18.36.27.36.35.35.47.32.59.28.73.21.88.14 1.04.05 1.23-.06 1.23-.16 1.04-.24.86-.32.71-.36.57-.4.45-.42.33-.42.24-.4.16-.36.09-.32.05-.24.02-.16-.01h-8.22v.82h5.84l.01 2.76.02.36-.05.34-.11.31-.17.29-.25.25-.31.24-.38.2-.44.17-.51.15-.58.13-.64.09-.71.07-.77.04-.84.01-1.27-.04-1.07-.14-.9-.2-.73-.25-.59-.3-.45-.33-.34-.34-.25-.34-.16-.33-.1-.3-.04-.25-.02-.2.01-.13v-5.34l.05-.64.13-.54.21-.46.26-.38.3-.32.33-.24.35-.2.35-.14.33-.1.3-.06.26-.04.21-.02.13-.01h5.84l.69-.05.59-.14.5-.21.41-.28.33-.32.27-.35.2-.36.15-.36.1-.35.07-.32.04-.28.02-.21V6.07h2.09l.14.01zm-6.47 14.25l-.23.33-.08.41.08.41.23.33.33.23.41.08.41-.08.33-.23.23-.33.08-.41-.08-.41-.23-.33-.33-.23-.41-.08-.41.08z"/></symbol>
+                    <symbol id="lg-nginx" viewBox="0 0 24 24"><path d="M12 0L1.605 6v12L12 24l10.395-6V6L12 0zm6 16.59c0 .705-.646 1.29-1.529 1.29-.631 0-1.351-.255-1.801-.81l-6-7.141v6.66c0 .721-.57 1.29-1.274 1.29H7.32c-.721 0-1.29-.6-1.29-1.29V7.41c0-.705.63-1.29 1.5-1.29.646 0 1.38.255 1.83.81l5.97 7.141V7.41c0-.721.6-1.29 1.29-1.29h.075c.72 0 1.29.6 1.29 1.29v9.18H18z"/></symbol>
+                    <symbol id="lg-kalilinux" viewBox="0 0 24 24"><path d="M12.778 5.943s-1.97-.13-5.327.92c-3.42 1.07-5.36 2.587-5.36 2.587s5.098-2.847 10.852-3.008zm7.351 3.095l.257-.017s-1.468-1.78-4.278-2.648c1.58.642 2.954 1.493 4.021 2.665zm.42.74c.039-.068.166.217.263.337.004.024.01.039-.045.027-.005-.025-.013-.032-.013-.032s-.135-.08-.177-.137c-.041-.057-.049-.157-.028-.195zm3.448 8.479s.312-3.578-5.31-4.403a18.277 18.277 0 0 0-2.524-.187c-4.506.06-4.67-5.197-1.275-5.462 1.407-.116 3.087.643 4.73 1.408-.007.204.002.385.136.552.134.168.648.35.813.445.164.094.691.43 1.014.85.07-.131.654-.512.654-.512s-.14.003-.465-.119c-.326-.122-.713-.49-.722-.511-.01-.022-.015-.055.06-.07.059-.049-.072-.207-.13-.265-.058-.058-.445-.716-.454-.73-.009-.016-.012-.031-.04-.05-.085-.027-.46.04-.46.04s-.575-.283-.774-.893c.003.107-.099.224 0 .469-.3-.127-.558-.344-.762-.88-.12.305 0 .499 0 .499s-.707-.198-.82-.85c-.124.293 0 .469 0 .469s-1.153-.602-3.069-.61c-1.283-.118-1.55-2.374-1.43-2.754 0 0-1.85-.975-5.493-1.406-3.642-.43-6.628-.065-6.628-.065s6.45-.31 11.617 1.783c.176.785.704 2.094.989 2.723-.815.563-1.733 1.092-1.876 2.97-.143 1.878 1.472 3.53 3.474 3.58 1.9.102 3.214.116 4.806.942 1.52.84 2.766 3.4 2.89 5.703.132-1.709-.509-5.383-3.5-6.498 4.181.732 4.549 3.832 4.549 3.832zM12.68 5.663l-.15-.485s-2.484-.441-5.822-.204C3.37 5.211 0 6.38 0 6.38s6.896-1.735 12.68-.717Z"/></symbol>
+                    <symbol id="lg-apacheguacamole" viewBox="0 0 24 24"><path d="M11.324 23.984c-.7-.055-1.581-.198-2.236-.363a11.942 11.942 0 0 1-7.814-6.303c-.61-1.239-.967-2.383-1.127-3.61a9.074 9.074 0 0 0-.102-.639c-.058-.25-.058-1.891 0-2.142.024-.103.07-.39.102-.638.16-1.228.517-2.372 1.127-3.611A11.799 11.799 0 0 1 6.68 1.272C7.919.663 9.063.305 10.29.145c.248-.032.536-.078.639-.102.25-.057 1.892-.057 2.142 0 .103.024.391.07.638.102 1.228.16 2.372.518 3.611 1.127a11.799 11.799 0 0 1 5.406 5.406c.61 1.239.967 2.383 1.127 3.611.032.248.078.535.102.638.026.113.043.541.043 1.071 0 .531-.017.958-.043 1.071-.024.103-.07.391-.102.639-.16 1.227-.517 2.371-1.127 3.61a11.799 11.799 0 0 1-5.406 5.406c-1.239.61-2.383.967-3.611 1.127-.247.033-.526.075-.619.094-.234.049-1.334.073-1.766.039Zm1.551-4.36a10.307 10.307 0 0 0 1.868-.248c2.176-.486 3.95-1.695 5.122-3.492.398-.61.405-.712.027-.416-1.135.891-3.013 1.632-4.999 1.973-1.082.186-1.423.211-2.837.211-1.058 0-1.464-.015-1.865-.065-.998-.127-2.116-.366-2.944-.631-1.252-.4-2.535-1.056-3.199-1.637-.212-.186-.314-.243-.314-.177 0 .048.269.554.426.801 1.435 2.269 3.908 3.516 7.295 3.679l.676.034c.042.003.377-.011.744-.032Zm.233-3.907c1.801-.132 3.472-.507 5.054-1.134 1.175-.466 2.374-1.167 2.867-1.675.167-.172.211-.316.345-1.119.05-.301.134-.672.187-.826.076-.219.105-.404.135-.871.058-.893.007-1.261-.237-1.694-.139-.247-.469-.607-.64-.7l-.129-.069-.221.161c-.317.229-.326.246-.243.41.133.261.2.572.199.923-.003.631-.222 1.091-.798 1.675-2.165 2.198-7.956 2.956-12.17 1.594-1.933-.625-3.219-1.592-3.559-2.676-.085-.27-.095-.358-.08-.676.02-.451.088-.613.511-1.239.166-.244.353-.576.418-.739.065-.163.142-.343.172-.402.086-.166.006-.167-.293-.002-.631.35-1.294.878-1.644 1.31-.469.579-.591 1.01-.547 1.934.027.562.087.854.225 1.094.066.116.096.24.113.476.042.551.138 1.102.215 1.228.1.164.616.593 1.066.886 2.328 1.516 5.915 2.36 9.054 2.131Zm-.056-3.569c1.745-.108 3.299-.463 4.478-1.023.594-.283.934-.515 1.331-.909.414-.413.573-.703.6-1.102.019-.282-.072-.621-.172-.638-.045-.008-.901.459-1.53.835-.067.039-.13.063-.142.051a1.993 1.993 0 0 1-.072-.336c-.071-.44-.135-.573-.345-.718-.324-.225-.391-.298-.523-.572-.116-.241-.149-.28-.288-.334-.26-.102-.557-.299-.557-.368 0-.072.239-.753.39-1.112a3.34 3.34 0 0 0 .099-.249c0-.036-.833-.632-.956-.683-.16-.067-.723-.128-1.205-.13a3.688 3.688 0 0 1-1.258-.206c-.631-.208-.665-.211-1.217-.13-.435.063-.514.087-.698.206-.49.315-.879.428-1.478.43a4.01 4.01 0 0 0-.654.059c-.511.106-.66.182-1.031.528-.469.439-.777.645-1.337.897-.589.265-.655.311-.741.515-.199.469-.293.645-.522.976-.367.53-.453.736-.424 1.016.072.69.818 1.448 1.947 1.981 1.638.772 4.02 1.156 6.305 1.016Zm6.174-4.675c.945-.578 1.504-1.038 1.672-1.377.087-.177.076-.241-.075-.425-.373-.452-1.844-1.32-2.491-1.47-.299-.069-.359-.045-.539.217-.277.403-.946 1.948-.946 2.183 0 .032.084.103.187.159.164.09.204.137.315.37.107.226.157.286.319.387.12.074.235.187.304.3.185.297.165.291.445.136.139-.077.503-.292.809-.48Z"/></symbol>
+                    <symbol id="lg-leaflet" viewBox="0 0 24 24"><path d="M17.69 0c-.355.574-8.432 4.74-10.856 8.649-2.424 3.91-3.116 6.988-2.237 9.882.879 2.893 2.559 2.763 3.516 3.717.958.954 2.257 2.113 4.332 1.645 2.717-.613 5.335-2.426 6.638-7.508 1.302-5.082.448-9.533-.103-11.99A35.395 35.395 0 0 0 17.69 0zm-.138.858l-9.22 21.585-.574-.577Z"/></symbol>
+                    <symbol id="lg-openstreetmap" viewBox="0 0 24 24"><path d="M2.672 23.969c-.352-.089-.534-.234-1.471-1.168C.085 21.688.014 21.579.018 20.999c0-.645-.196-.414 3.368-3.986 3.6-3.608 3.415-3.451 4.064-3.449.302 0 .378.016.62.14l.277.14 1.744-1.744-.218-.343c-.425-.662-.825-1.629-1.006-2.429a7.657 7.657 0 0 1 1.479-6.44c2.49-3.12 6.959-3.812 10.26-1.588 1.812 1.218 2.99 3.099 3.328 5.314.07.467.07 1.579 0 2.074a7.554 7.554 0 0 1-2.205 4.402 6.712 6.712 0 0 1-1.943 1.401c-.959.483-1.775.71-2.881.803-1.573.131-3.32-.305-4.656-1.163l-.343-.218-1.744 1.744.14.28c.125.241.14.316.14.617.003.651.156.467-3.426 4.049-2.761 2.756-3.186 3.164-3.398 3.261-.271.125-.69.171-.945.106zM17.485 13.95a6.425 6.425 0 0 0 4.603-3.51c1.391-2.899.455-6.306-2.227-8.108-.638-.43-1.529-.794-2.367-.962-.581-.117-1.809-.104-2.414.025a6.593 6.593 0 0 0-2.452 1.064c-.444.315-1.177 1.048-1.487 1.487a6.384 6.384 0 0 0 .38 7.907 6.406 6.406 0 0 0 3.901 2.136c.509.078 1.542.058 2.065-.037zm-3.738 7.376a80.97 80.97 0 0 1-2.196-.651c-.025-.028 1.207-4.396 1.257-4.449.023-.026 4.242 1.152 4.414 1.236.062.026-.003.288-.525 2.102a398.513 398.513 0 0 0-.635 2.236c-.025.087-.069.156-.097.156-.028-.003-1.028-.287-2.219-.631zm2.912.524c0-.053 1.227-4.333 1.246-4.347.047-.034 4.324-1.23 4.341-1.211.019.019-1.199 4.337-1.23 4.36-.02.019-4.126 1.191-4.259 1.218-.054.011-.098 0-.098-.019zm-7.105-1.911c.846-.852 1.599-1.627 1.674-1.728.171-.218.405-.732.472-1.015.026-.118.053-.352.058-.522l.011-.307.182-.051c.103-.028.193-.044.202-.034.023.025-1.207 4.321-1.246 4.36-.02.016-.677.213-1.464.436l-1.425.405 1.537-1.542zm8.289-3.06a1.371 1.371 0 0 1-.059-.187l-.044-.156.156-.028c1.339-.227 2.776-.856 3.908-1.713.16-.125.252-.171.265-.134.054.165.272.95.265.959-.034.034-4.48 1.282-4.492 1.261zm-15.083-1.3c-.05-.039-1.179-3.866-1.264-4.29-.016-.084.146-.044 2.174.536 2.121.604 2.192.629 2.222.74.028.098.011.129-.125.223-.084.059-.769.724-1.523 1.479a63.877 63.877 0 0 1-1.39 1.367c-.016 0-.056-.025-.093-.054zm.821-4.378c-1.188-.343-2.164-.623-2.167-.626-.016-.012 1.261-4.433 1.285-4.46.022-.022 4.422 1.211 4.469 1.252.009.009-.269 1.017-.618 2.239-.576 2.02-.643 2.224-.723 2.22-.05-.003-1.059-.285-2.247-.626zm2.959.538c.012-.031.212-.723.444-1.534l.42-1.476.056.321c.093.556.265 1.188.464 1.741.106.296.187.539.181.545-.008.006-.332.101-.719.212-.389.109-.741.21-.786.224-.058.016-.075.006-.059-.034zM4.905 6.112c-1.187-.339-2.167-.635-2.18-.654-.04-.062-1.246-4.321-1.23-4.338.026-.025 4.31 1.204 4.351 1.246.047.051 1.28 4.379 1.246 4.376L4.91 6.113zm2.148-1.713l-.519-1.806-.078-.28 1.693-.483c.934-.265 1.724-.495 1.76-.508.034-.016-.083.14-.26.336A8.729 8.729 0 0 0 7.69 5.23a4.348 4.348 0 0 0-.132.561c0 .293-.115-.025-.505-1.39z"/></symbol>
+                    <symbol id="lg-chartdotjs" viewBox="0 0 24 24"><path d="M12 0L1.605 6v12L12 24l10.395-6V6zm0 1.41l9.172 5.295v10.59L12 22.59l-9.172-5.295V6.705zM5.902 8.334c-1.306 0-1.983.956-2.574 2.41v6.262L12 22.014l8.672-5.008v-5.971c-.447-.264-.894-.412-1.336-.412-4.275 0-3.97 4.885-6.717 5.8-2.748.917-3.511-8.089-6.717-8.089zm12.364.457c-2.9 0-2.137 4.732-5.342 4.732-1.63 0-2.52-1.317-3.477-1.981.148.326.3.655.442.98.467 1.068.922 2.09 1.379 2.734.228.322.455.541.644.644a.595.595 0 0 0 .549.05c.558-.187.968-.571 1.36-1.112.39-.541.74-1.228 1.154-1.916.413-.688.894-1.385 1.59-1.918.695-.534 1.607-.881 2.77-.881.465 0 .908.136 1.337.352v-.121c-.633-.849-1.348-1.563-2.406-1.563zm-6.68.152c-.868 0-1.491.82-2.076 2.06.094.055.192.106.277.167 1.06.761 1.798 1.853 3.137 1.853.678 0 1.067-.218 1.418-.585-.722-1.546-1.432-3.492-2.756-3.495Z"/></symbol>
+                </svg>
+                <span class="stack-label">Built on</span>
+                <div class="stack-flow">
+                    <div class="stack-track">
+                        <ul aria-label="Open source components the platform is built on">
+                            <li class="mono-mark">cowrie</li>
+                            <li style="--b:#2496ED"><svg class="lg" width="22" height="22" aria-hidden="true"><use href="#lg-docker"/></svg>Docker</li>
+                            <li class="mono-mark">dionaea</li>
+                            <li style="--b:#009688"><svg class="lg" width="22" height="22" aria-hidden="true"><use href="#lg-fastapi"/></svg>FastAPI</li>
+                            <li class="mono-mark">honeytrap</li>
+                            <li style="--b:#003545"><svg class="lg" width="22" height="22" aria-hidden="true"><use href="#lg-mariadb"/></svg>MariaDB</li>
+                            <li style="--b:#C42A2B"><svg class="lg lg-word" width="55" height="19" role="img" aria-label="YARA"><use href="#lg-yara"/></svg></li>
+                            <li style="--b:#3776AB"><svg class="lg" width="22" height="22" aria-hidden="true"><use href="#lg-python"/></svg>Python</li>
+                            <li>ClamAV</li>
+                            <li style="--b:#009639"><svg class="lg" width="22" height="22" aria-hidden="true"><use href="#lg-nginx"/></svg>NGINX</li>
+                            <li style="--b:#557C94"><svg class="lg" width="26" height="26" aria-hidden="true"><use href="#lg-kalilinux"/></svg>Kali Linux</li>
+                            <li>MobSF</li>
+                            <li style="--b:#578B34"><svg class="lg" width="22" height="22" aria-hidden="true"><use href="#lg-apacheguacamole"/></svg>Apache Guacamole</li>
+                            <li style="--b:#199900"><svg class="lg" width="22" height="22" aria-hidden="true"><use href="#lg-leaflet"/></svg>Leaflet</li>
+                            <li style="--b:#7EBC6F"><svg class="lg" width="22" height="22" aria-hidden="true"><use href="#lg-openstreetmap"/></svg>OpenStreetMap</li>
+                            <li style="--b:#FF6384"><svg class="lg" width="22" height="22" aria-hidden="true"><use href="#lg-chartdotjs"/></svg>Chart.js</li>
+                        </ul>
+                        <ul aria-hidden="true">
+                            <li class="mono-mark">cowrie</li>
+                            <li style="--b:#2496ED"><svg class="lg" width="22" height="22" aria-hidden="true"><use href="#lg-docker"/></svg>Docker</li>
+                            <li class="mono-mark">dionaea</li>
+                            <li style="--b:#009688"><svg class="lg" width="22" height="22" aria-hidden="true"><use href="#lg-fastapi"/></svg>FastAPI</li>
+                            <li class="mono-mark">honeytrap</li>
+                            <li style="--b:#003545"><svg class="lg" width="22" height="22" aria-hidden="true"><use href="#lg-mariadb"/></svg>MariaDB</li>
+                            <li style="--b:#C42A2B"><svg class="lg lg-word" width="55" height="19" role="img" aria-label="YARA"><use href="#lg-yara"/></svg></li>
+                            <li style="--b:#3776AB"><svg class="lg" width="22" height="22" aria-hidden="true"><use href="#lg-python"/></svg>Python</li>
+                            <li>ClamAV</li>
+                            <li style="--b:#009639"><svg class="lg" width="22" height="22" aria-hidden="true"><use href="#lg-nginx"/></svg>NGINX</li>
+                            <li style="--b:#557C94"><svg class="lg" width="26" height="26" aria-hidden="true"><use href="#lg-kalilinux"/></svg>Kali Linux</li>
+                            <li>MobSF</li>
+                            <li style="--b:#578B34"><svg class="lg" width="22" height="22" aria-hidden="true"><use href="#lg-apacheguacamole"/></svg>Apache Guacamole</li>
+                            <li style="--b:#199900"><svg class="lg" width="22" height="22" aria-hidden="true"><use href="#lg-leaflet"/></svg>Leaflet</li>
+                            <li style="--b:#7EBC6F"><svg class="lg" width="22" height="22" aria-hidden="true"><use href="#lg-openstreetmap"/></svg>OpenStreetMap</li>
+                            <li style="--b:#FF6384"><svg class="lg" width="22" height="22" aria-hidden="true"><use href="#lg-chartdotjs"/></svg>Chart.js</li>
+                        </ul>
+                    </div>
+                </div>
             </div>
         </div>
     </section>
 
-    <!-- ARCHITECTURE SPLIT -->
-    <section class="why" data-aos="fade-right">
-        <div>
-            <span class="section-label">Architecture</span>
-            <h2>Self-Hosted <span>Detection Pipeline</span></h2>
-            <p>Cowrie, Dionaea and Honeytrap write JSON logs that a local collector tails byte-by-byte into MariaDB, then streams to the dashboard over Server-Sent Events. A rule-based detection engine correlates events into incidents mapped to MITRE ATT&amp;CK. Everything runs in one Docker Compose stack; AWS is an optional lab provider.</p>
-            <a href="architecture.html" class="btn btn-outline">View Architecture →</a>
-        </div>
-        <img src="./architecture_hero.png" alt="Shadow Trust Architecture">
-    </section>
-
-    <!-- FEATURE SEGMENT: TELEMETRY -->
-    <section class="feature-segment reverse" data-aos="fade-left">
-        <div class="feature-info">
-            <span class="section-label">Telemetry</span>
-            <h2>Real-Time <span>Attack Monitoring</span></h2>
-            <p>When an attacker touches a honeypot, lightweight agents capture every keystroke, command, file upload, and network probe in near real-time. Structured telemetry is enriched with GeoIP, risk scoring, and AI classification — then streamed directly to your dashboard.</p>
-            <a href="login.html" class="btn btn-outline">View Live Dashboard →</a>
-        </div>
-        <img src="https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" alt="Real-Time Telemetry Stream">
-    </section>
-
-    <!-- FEATURE SEGMENT: MALWARE -->
-    <section class="feature-segment" data-aos="fade-right">
-        <div class="feature-info">
-            <span class="section-label">Malware Analysis</span>
-            <h2>Automated <span>Sample Collection</span></h2>
-            <p>The moment an attacker uploads a binary, script, or APK — automated collectors detect the file event, hash the sample, push it to secure S3 storage, and link it to the attacker session. The full 4-stage pipeline (static → sandbox → APK → secrets) runs without analyst intervention.</p>
-            <a href="login.html" class="btn btn-outline">Explore Malware Lab →</a>
-        </div>
-        <img src="https://images.unsplash.com/photo-1563986768494-4dee2763ff3f?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" alt="Malware Collection Pipeline">
-    </section>
-
-    <!-- FEATURE SEGMENT: ANALYSIS -->
-    <section class="feature-segment reverse" data-aos="fade-left">
-        <div class="feature-info">
-            <span class="section-label">Sandbox & APK</span>
-            <h2>Deep <span>Behavioral Analysis</span></h2>
-            <p>Spin up isolated analysis VMs with tools pre-loaded. MobSF integration delivers full Android APK security reports — permissions, network calls, hardcoded secrets — in minutes. URL scanner runs multi-engine reputation analysis with safe isolated rendering. All from the browser.</p>
-            <a href="login.html" class="btn btn-outline">Open VM Lab →</a>
-        </div>
-        <img src="https://images.unsplash.com/photo-1558494949-ef010cbdcc31?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" alt="Sandbox Analysis Environment">
-    </section>
-
-    <!-- DEPLOYMENT USE CASES -->
-    <section class="section" data-aos="fade-up">
-        <span class="section-label">Deployment</span>
-        <h2>Built for <span>Every Mission</span></h2>
-        <p class="section-sub">One platform — multiple deployment models. From a solo researcher to an enterprise SOC, Shadow Trust scales to your operation.</p>
-        <div class="pricing">
-            <div class="price-card" data-aos="zoom-in" data-aos-delay="100">
-                <div style="font-size:36px;margin-bottom:12px;">🔬</div>
-                <h3>Research & Analysis</h3>
-                <div class="price">Automated</div>
-                <p>On-demand reverse-engineering VMs, MobSF APK scanning, and full malware pipeline automation for security research teams.</p>
-            </div>
-            <div class="price-card" data-aos="zoom-in" data-aos-delay="200">
-                <div style="font-size:36px;margin-bottom:12px;">🛡️</div>
-                <h3>Enterprise SOC</h3>
-                <div class="price">Scalable</div>
-                <p>Deploy honeypot networks, monitor threats in real-time, correlate attacker sessions, and send alerts via email and WhatsApp.</p>
-            </div>
-            <div class="price-card" data-aos="zoom-in" data-aos-delay="300">
-                <div style="font-size:36px;margin-bottom:12px;">🎓</div>
-                <h3>Academic & Training</h3>
-                <div class="price">Interactive</div>
-                <p>Live attack visualization, MITRE ATT&CK mapping demos, and interactive threat intelligence dashboards for cybersecurity education.</p>
+    <!-- ============ WHAT YOU GET ============ -->
+    <!-- ============ THE FILM ============
+         Starts at half size under the hero, grows with the scroll until it fills the window,
+         holds there while it plays, then lets the page go on (js/home.js initFilm). -->
+    <section class="film" id="film" aria-label="ShadowTrust in use, a two minute film">
+        <div class="film-zone" data-film-zone>
+            <div class="film-pin">
+                <div class="film-scale" data-film-scale>
+                    <div class="film-frame">
+                        <video class="film-video" data-film poster="media/shadowtrust-launch.jpg" preload="none" muted loop playsinline aria-label="ShadowTrust in use: a real brute force arrives in the event log, a case opens, the analyst reads it, and a report is generated">
+                            <source src="media/shadowtrust-launch.mp4" type="video/mp4">
+                        </video>
+                        <div class="film-controls">
+                            <button type="button" class="film-btn" data-film-sound aria-pressed="false" aria-label="Turn sound on">
+                                <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3.500 7.500h2.800L10 4.500v11l-3.700-3H3.500Z"/><path class="on" d="M13 7.200a4 4 0 0 1 0 5.600M15.200 5a7 7 0 0 1 0 10"/><path class="off" d="m13.200 8 3.600 4M16.800 8l-3.600 4"/></svg>
+                            </button>
+                            <button type="button" class="film-btn" data-film-toggle aria-label="Play">
+                                <svg viewBox="0 0 20 20" aria-hidden="true"><path class="play" d="M7 4.800v10.400l8.500-5.200Z"/><path class="pause" d="M6.500 5v10M13.500 5v10"/></svg>
+                            </button>
+                        </div>
+                    </div>
+                    <ol class="film-chapters" data-film-chapters data-film-end="113.98" aria-label="Chapters of the film">
+                        <li><button type="button" class="film-chap" data-t="0"><span>Event log</span></button></li>
+                        <li><button type="button" class="film-chap" data-t="13.08"><span>Investigations</span></button></li>
+                        <li><button type="button" class="film-chap" data-t="28.65"><span>MITRE ATT&amp;CK</span></button></li>
+                        <li><button type="button" class="film-chap" data-t="38.48"><span>Geo intelligence</span></button></li>
+                        <li><button type="button" class="film-chap" data-t="53.18"><span>Credential vault</span></button></li>
+                        <li><button type="button" class="film-chap" data-t="60.38"><span>URL scanner</span></button></li>
+                        <li><button type="button" class="film-chap" data-t="74.28"><span>Analysis lab</span></button></li>
+                        <li><button type="button" class="film-chap" data-t="88.68"><span>Reports</span></button></li>
+                        <li><button type="button" class="film-chap" data-t="105.95"><span>Wallboard</span></button></li>
+                    </ol>
+                </div>
             </div>
         </div>
+        <div class="wrap">
+            <p class="art-note film-note">Two minutes of the real console at real speed. Recorded on this project's own lab, with traffic fired at its honeypots by the built-in triggers. It has music and soft key sounds, and starts muted.</p>
+        </div>
     </section>
 
-    <!-- CTA BANNER -->
-    <div class="cta-banner" data-aos="zoom-in">
-        <h2>Ready to Deploy Shadow Trust?</h2>
-        <p>One command. Five services. Full SOC capability. Clone the repo, run the setup wizard, and you're live in minutes.</p>
-        <div class="cta-btns">
-            <a href="login.html" class="btn btn-primary">Launch Platform</a>
-            <a href="docs.html" class="btn btn-outline">Read the Docs</a>
-        </div>
+    <!-- ============ THE SYMBOLS ============
+         One round chip per part of the product, riding a slow wave (css: .symbols, js/home.js initSymbols).
+         Line icons from Feather (MIT) and Lucide (ISC), licences in media/ICONS-LICENSES.txt;
+         the eye is the ShadowTrust mark. Decorative, so hidden from screen readers. -->
+    <div class="symbols" data-symbols aria-hidden="true">
+        <ul class="symbols-row">
+            <li style="--i:0"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></li>
+            <li style="--i:1"><svg viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"/><rect x="2" y="14" width="20" height="8" rx="2" ry="2"/><line x1="6" y1="6" x2="6.01" y2="6"/><line x1="6" y1="18" x2="6.01" y2="18"/></svg></li>
+            <li style="--i:2"><svg viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg></li>
+            <li style="--i:3"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></li>
+            <li style="--i:4"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></li>
+            <li style="--i:5"><svg viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg></li>
+            <li style="--i:6"><svg viewBox="0 0 24 24"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg></li>
+            <li style="--i:7"><svg viewBox="0 0 24 24"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg></li>
+            <li style="--i:8"><svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></li>
+            <li style="--i:9"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></li>
+            <li style="--i:10"><svg viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></li>
+            <li style="--i:11"><svg viewBox="0 0 28 28" class="symbols-eye"><path d="M2.500 14c3-5.300 7-8 11.500-8s8.500 2.700 11.500 8c-3 5.300-7 8-11.500 8S5.500 19.300 2.500 14Z"/><circle cx="14" cy="14" r="4.200"/></svg></li>
+            <li style="--i:12"><svg viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg></li>
+            <li style="--i:13"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg></li>
+            <li style="--i:14"><svg viewBox="0 0 24 24"><path d="M12 20v-9"/><path d="M14 7a4 4 0 0 1 4 4v3a6 6 0 0 1-12 0v-3a4 4 0 0 1 4-4z"/><path d="M14.12 3.88 16 2"/><path d="M21 21a4 4 0 0 0-3.81-4"/><path d="M21 5a4 4 0 0 1-3.55 3.97"/><path d="M22 13h-4"/><path d="M3 21a4 4 0 0 1 3.81-4"/><path d="M3 5a4 4 0 0 0 3.55 3.97"/><path d="M6 13H2"/><path d="m8 2 1.88 1.88"/><path d="M9 7.13V6a3 3 0 1 1 6 0v1.13"/></svg></li>
+            <li style="--i:15"><svg viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></li>
+            <li style="--i:16"><svg viewBox="0 0 24 24"><path d="M14 2v6a2 2 0 0 0 .245.96l5.51 10.08A2 2 0 0 1 18 22H6a2 2 0 0 1-1.755-2.96l5.51-10.08A2 2 0 0 0 10 8V2"/><path d="M6.453 15h11.094"/><path d="M8.5 2h7"/></svg></li>
+            <li style="--i:17"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg></li>
+            <li style="--i:18"><svg viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg></li>
+            <li style="--i:19"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="22" y1="12" x2="18" y2="12"/><line x1="6" y1="12" x2="2" y2="12"/><line x1="12" y1="6" x2="12" y2="2"/><line x1="12" y1="22" x2="12" y2="18"/></svg></li>
+            <li style="--i:20"><svg viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg></li>
+            <li style="--i:21"><svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg></li>
+            <li style="--i:22"><svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></li>
+            <li style="--i:23"><svg viewBox="0 0 24 24"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/><polyline points="9 14 11 16 15 12"/></svg></li>
+        </ul>
     </div>
 
-</div>
+    <section class="section subdued" id="platform">
+        <div class="wrap rule-top">
+            <div class="section-head">
+                <h2 class="h2" data-reveal>One stack, from the first packet to the final report.</h2>
+                <p class="lede" data-reveal>Sensors, pipeline, detections, case handling and reporting ship together, so there is nothing to wire up between tools.</p>
+            </div>
 
-<!-- FOOTER -->
-<footer>
-    <div class="footer-grid">
-        <div class="footer-brand">
-            <span class="logo">Shadow Trust</span>
-            <p>AI-powered Security Operations Center with honeypot deception, malware analysis, and real-time threat intelligence. Built for the next generation of cyber operations.</p>
+            <div class="bento" data-stagger>
+                <!-- A: decoys and the event stream -->
+                <article class="card c8">
+                    <h3 class="card-title">Decoys that look real, events as they happen</h3>
+                    <a class="card-open" href="features.html#capture" aria-label="More about deception and capture"><svg><use href="#i-open"/></svg></a>
+                    <div class="card-art art-flow">
+                        <div class="glow glow-sunset"></div>
+                        <div class="mock flow-canvas">
+                            <div class="mock-head"><span>Decoy network</span><span class="sub">3 sensors, 7 ports</span></div>
+                            <svg class="flow-svg" id="flowSvg" viewBox="0 0 520 384" role="img" aria-label="Probes from internet addresses reach three decoy services and flow into the collector.">
+                                <g id="flowSources"></g>
+
+                                <path class="wire" d="M408 82 C 446 82, 446 192, 468 192"/>
+                                <path class="wire" d="M408 192 L 468 192"/>
+                                <path class="wire" d="M408 302 C 446 302, 446 192, 468 192"/>
+                                <line class="out-wire" x1="512" y1="192" x2="520" y2="192"/>
+
+                                <g class="decoy" data-decoy="0" transform="translate(186 46)">
+                                    <rect class="decoy-box" width="222" height="72" rx="6"/>
+                                    <text class="decoy-name" x="16" y="29">cowrie</text>
+                                    <text class="decoy-ports" x="16" y="52">ssh 2222 · telnet 2223</text>
+                                    <circle class="led on" cx="192" cy="22" r="3"/><circle class="led" cx="204" cy="22" r="3"/>
+                                </g>
+                                <g class="decoy" data-decoy="1" transform="translate(186 156)">
+                                    <rect class="decoy-box" width="222" height="72" rx="6"/>
+                                    <text class="decoy-name" x="16" y="29">dionaea</text>
+                                    <text class="decoy-ports" x="16" y="52">smb 445 · ftp 2121 · mssql 1433</text>
+                                    <circle class="led on" cx="192" cy="22" r="3"/><circle class="led" cx="204" cy="22" r="3"/>
+                                </g>
+                                <g class="decoy" data-decoy="2" transform="translate(186 266)">
+                                    <rect class="decoy-box" width="222" height="72" rx="6"/>
+                                    <text class="decoy-name" x="16" y="29">honeytrap</text>
+                                    <text class="decoy-ports" x="16" y="52">http 8022 · alt 8023</text>
+                                    <circle class="led on" cx="192" cy="22" r="3"/><circle class="led" cx="204" cy="22" r="3"/>
+                                </g>
+
+                                <g transform="translate(490 192)">
+                                    <circle class="collector-ring" r="22"/>
+                                    <circle class="collector-core" r="5"/>
+                                    <circle class="pulse" id="collectorPulse" r="22" opacity="0"/>
+                                </g>
+                                <text class="col-label" x="490" y="240" text-anchor="middle">collector</text>
+
+                                <g id="flowPackets"></g>
+                            </svg>
+                        </div>
+                        <div class="mock flow-stream">
+                            <div class="mock-head"><span>Event stream</span><span class="sub">newest first</span></div>
+                            <ol class="stream" id="flowStream"></ol>
+                            <div class="flow-case" id="flowCase" aria-hidden="true">
+                                <div class="case-top"><span>Case opened</span><span>High</span></div>
+                                <p>Brute force, then a payload download from 198.51.100.7</p>
+                                <div class="tags">T1110 · T1059 · T1105 · st-exec-004</div>
+                            </div>
+                        </div>
+                    </div>
+                </article>
+
+                <!-- B: a detection rule -->
+                <article class="card">
+                    <h3 class="card-title">Detections you can read</h3>
+                    <a class="card-open" href="features.html#detect" aria-label="More about detection"><svg><use href="#i-open"/></svg></a>
+                    <div class="card-art">
+                        <div class="glow glow-violet"></div>
+                        <div class="art-stack" data-art="rule">
+                            <div class="mock rule-file">
+                                <div class="mock-head"><span>brute_force.yml</span><span class="sub">backend/detections</span></div>
+                                <div class="lines">
+                                    <span class="ln"><span class="k">id:</span> st-auth-001</span>
+                                    <span class="ln"><span class="k">name:</span> SSH / Telnet brute force</span>
+                                    <span class="ln"><span class="k">severity:</span> HIGH</span>
+                                    <span class="ln"><span class="k">attack:</span></span>
+                                    <span class="ln">  <span class="k">technique:</span> T1110</span>
+                                    <span class="ln"><span class="k">type:</span> threshold</span>
+                                    <span class="ln"><span class="k">timeframe:</span> 10m</span>
+                                    <span class="ln"><span class="k">group_by:</span> source_ip</span>
+                                    <span class="ln"><span class="k">threshold:</span> 5</span>
+                                </div>
+                            </div>
+                            <div class="mock rule-hit" data-fired>
+                                <span class="dot"><svg class="ico" viewBox="0 0 16 16"><use href="#i-bolt"/></svg></span>
+                                <b>Rule fired · High</b>
+                                <span>Five failed logins in ten minutes from one address</span>
+                            </div>
+                        </div>
+                    </div>
+                </article>
+
+                <!-- C: ATT&CK matrix -->
+                <article class="card">
+                    <h3 class="card-title">Mapped to MITRE ATT&amp;CK</h3>
+                    <a class="card-open" href="features.html#detect" aria-label="More about ATT&amp;CK mapping"><svg><use href="#i-open"/></svg></a>
+                    <div class="card-art">
+                        <div class="glow glow-rose"></div>
+                        <div class="art-stack">
+                            <div class="mock matrix-card" data-art="matrix">
+                                <div class="mock-head"><span>Techniques seen</span><span class="sub">ATT&amp;CK</span></div>
+                                <div class="art-matrix"><i></i><i class="on"></i><i></i><i></i><i></i><i class="on"></i><i></i><i></i><i></i><i></i><i class="on"></i><i></i><i></i><i></i><i class="on"></i><i></i><i></i><i></i><i></i><i></i><i class="on"></i><i></i><i></i><i class="on"></i><i></i><i></i><i></i><i></i><i></i><i></i><i class="on"></i><i></i><i></i><i></i><i></i><i></i><i></i><i class="on"></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i class="on"></i><i></i><i></i></div>
+                                <div class="art-tech" data-tech><b>T1110</b>Brute Force</div>
+                            </div>
+                        </div>
+                    </div>
+                </article>
+
+                <!-- D: credential vault -->
+                <article class="card">
+                    <h3 class="card-title">Every credential they try</h3>
+                    <a class="card-open" href="features.html#detect" aria-label="More about the credential vault"><svg><use href="#i-open"/></svg></a>
+                    <div class="card-art">
+                        <div class="glow glow-peach"></div>
+                        <div class="art-stack">
+                            <div class="mock vault-card">
+                                <div class="mock-head"><span>Credential vault</span><span class="sub">username / password</span></div>
+                                <div class="art-vault" aria-hidden="true">
+                                    <ul>
+                                        <li><svg class="ico" viewBox="0 0 20 20"><use href="#i-key"/></svg>root <span class="s">/</span> <span class="p">123456</span></li>
+                                        <li><svg class="ico" viewBox="0 0 20 20"><use href="#i-key"/></svg>admin <span class="s">/</span> <span class="p">admin</span></li>
+                                        <li><svg class="ico" viewBox="0 0 20 20"><use href="#i-key"/></svg>support <span class="s">/</span> <span class="p">support</span></li>
+                                        <li><svg class="ico" viewBox="0 0 20 20"><use href="#i-key"/></svg>root <span class="s">/</span> <span class="p">toor</span></li>
+                                        <li><svg class="ico" viewBox="0 0 20 20"><use href="#i-key"/></svg>oracle <span class="s">/</span> <span class="p">oracle</span><span class="chip green">accepted</span></li>
+                                        <li><svg class="ico" viewBox="0 0 20 20"><use href="#i-key"/></svg>root <span class="s">/</span> <span class="p">raspberry</span></li>
+                                        <li><svg class="ico" viewBox="0 0 20 20"><use href="#i-key"/></svg>admin <span class="s">/</span> <span class="p">changeme</span></li>
+                                        <li><svg class="ico" viewBox="0 0 20 20"><use href="#i-key"/></svg>root <span class="s">/</span> <span class="p">root</span></li>
+                                        <li><svg class="ico" viewBox="0 0 20 20"><use href="#i-key"/></svg>root <span class="s">/</span> <span class="p">123456</span></li>
+                                        <li><svg class="ico" viewBox="0 0 20 20"><use href="#i-key"/></svg>admin <span class="s">/</span> <span class="p">admin</span></li>
+                                        <li><svg class="ico" viewBox="0 0 20 20"><use href="#i-key"/></svg>support <span class="s">/</span> <span class="p">support</span></li>
+                                        <li><svg class="ico" viewBox="0 0 20 20"><use href="#i-key"/></svg>root <span class="s">/</span> <span class="p">toor</span></li>
+                                        <li><svg class="ico" viewBox="0 0 20 20"><use href="#i-key"/></svg>oracle <span class="s">/</span> <span class="p">oracle</span><span class="chip green">accepted</span></li>
+                                        <li><svg class="ico" viewBox="0 0 20 20"><use href="#i-key"/></svg>root <span class="s">/</span> <span class="p">raspberry</span></li>
+                                        <li><svg class="ico" viewBox="0 0 20 20"><use href="#i-key"/></svg>admin <span class="s">/</span> <span class="p">changeme</span></li>
+                                        <li><svg class="ico" viewBox="0 0 20 20"><use href="#i-key"/></svg>root <span class="s">/</span> <span class="p">root</span></li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </article>
+
+                <!-- E: where traffic comes from -->
+                <article class="card">
+                    <h3 class="card-title">See who is knocking, on a live map</h3>
+                    <a class="card-open" href="features.html#capture" aria-label="More about geo intelligence"><svg><use href="#i-open"/></svg></a>
+                    <div class="card-art art-globe">
+                        <span class="globe-chip" data-live-wrap hidden><b data-live="attackers">0</b> source addresses seen on this deployment</span>
+                        <canvas data-globe aria-hidden="true"></canvas>
+                    </div>
+                </article>
+
+                <!-- F: the console -->
+                <article class="card c12">
+                    <h3 class="card-title">Work the whole case<br>in one console</h3>
+                    <a class="card-open" href="login.html" aria-label="Open the console"><svg><use href="#i-open"/></svg></a>
+                    <div class="card-art art-console" aria-hidden="true">
+                        <div class="glow glow-hatch"></div>
+                        <div class="mock case-card" data-console-card>
+                            <div class="cc-top"><span class="ic"><svg class="ico" viewBox="0 0 20 20"><use href="#i-case"/></svg></span>INC-000092</div>
+                            <div class="cc-title">SSH brute force, then a payload pulled onto the host</div>
+                            <div class="cc-sub">Auto-correlated · 198.51.100.7</div>
+                            <dl>
+                                <dt>Rules</dt><dd class="mono">st-auth-001 · st-exec-004</dd>
+                                <dt>ATT&amp;CK</dt><dd class="mono">T1110 → T1105</dd>
+                                <dt>Evidence</dt><dd>8 events, 1 session</dd>
+                            </dl>
+                            <span class="cc-btn">Export PDF report</span>
+                        </div>
+                        <div class="browser">
+                            <div class="browser-bar"><i></i><i></i><i></i><span>localhost:5500/incidents.html</span></div>
+                            <div class="browser-body">
+                                <div class="mini-nav">
+                                    <div class="brandline"><svg viewBox="0 0 28 28" fill="none"><path d="M2.500 14c3-5.300 7-8 11.500-8s8.500 2.700 11.500 8c-3 5.300-7 8-11.500 8S5.500 19.300 2.500 14Z" stroke="currentColor" stroke-width="2.400" stroke-linejoin="round"/><circle cx="14" cy="14" r="4.200" fill="var(--st-brand)"/></svg>ShadowTrust</div>
+                                    <div>Overview</div>
+                                    <div class="on">Investigations</div>
+                                    <div>Event log</div>
+                                    <div>Logs</div>
+                                    <div>Reports</div>
+                                    <div>Geo intelligence</div>
+                                    <div>MITRE ATT&amp;CK</div>
+                                    <div>Credential vault</div>
+                                </div>
+                                <div class="mini-main">
+                                    <h4>Investigations</h4>
+                                    <table class="mini-table">
+                                        <thead><tr><th>Case</th><th>Title</th><th>Source</th><th>Severity</th><th>Status</th></tr></thead>
+                                        <tbody data-console-rows>
+                                            <tr><td class="mono">INC-000092</td><td>SSH brute force, then a payload pulled onto the host</td><td class="mono">198.51.100.7</td><td><span class="chip orange">High</span></td><td>New</td></tr>
+                                            <tr><td class="mono">INC-000091</td><td>Port sweep across exposed honeypot ports</td><td class="mono">203.0.113.24</td><td><span class="chip grey">Medium</span></td><td>Triaging</td></tr>
+                                            <tr><td class="mono">INC-000090</td><td>Login after brute force</td><td class="mono">198.51.100.42</td><td><span class="chip ruby">Critical</span></td><td>Investigating</td></tr>
+                                            <tr><td class="mono">INC-000089</td><td>Post-exploitation commands in a Cowrie shell</td><td class="mono">203.0.113.80</td><td><span class="chip orange">High</span></td><td>Contained</td></tr>
+                                            <tr><td class="mono">INC-000088</td><td>Payload download / stager on honeypot</td><td class="mono">192.0.2.61</td><td><span class="chip orange">High</span></td><td>Resolved</td></tr>
+                                            <tr><td class="mono">INC-000087</td><td>Suspicious PowerShell</td><td class="mono">192.0.2.14</td><td><span class="chip grey">Medium</span></td><td>False positive</td></tr>
+                                            <tr><td class="mono">INC-000086</td><td>SSH / Telnet brute force</td><td class="mono">203.0.113.9</td><td><span class="chip orange">High</span></td><td>Resolved</td></tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </article>
+            </div>
+            <p class="art-note">The drawings use example data. Addresses come from documentation ranges; credentials and commands are from sessions captured by the lab sensors.</p>
         </div>
-        <div class="footer-col">
-            <h4>Platform</h4>
-            <ul>
-                <li><a href="features.html">Features</a></li>
-                <li><a href="architecture.html">Architecture</a></li>
-                <li><a href="usecases.html">Use Cases</a></li>
-                <li><a href="docs.html">Documentation</a></li>
-                <li><a href="status.html">System Status</a></li>
-            </ul>
+    </section>
+
+    <!-- ============ HOW IT WORKS ============ -->
+    <section class="section" id="how">
+        <div class="wrap">
+            <div class="section-head">
+                <h2 class="h2" data-reveal>Five steps from a stranger's first packet to a closed case.</h2>
+                <p class="lede" data-reveal>Scroll through the pipeline and watch what each stage does with the data.</p>
+            </div>
+
+            <div class="story" data-story>
+                <div class="story-stage" aria-hidden="true">
+                    <div class="stage-frame"></div>
+                    <div class="stage-meta">
+                        <span class="stage-step" data-stage-label>01 · Deceive</span>
+                        <span class="stage-dots" data-stage-dots><i class="on"></i><i></i><i></i><i></i><i></i></span>
+                    </div>
+
+                    <!-- Scene 1: Deceive -->
+                    <div class="scene" data-scene="0">
+                        <svg viewBox="0 0 600 440" preserveAspectRatio="xMidYMid meet">
+                            <g data-s1-probes></g>
+                            <g transform="translate(250 36)">
+                                <rect class="ink" width="320" height="96" rx="8"/>
+                                <text class="label-strong" x="20" y="34">cowrie</text>
+                                <text x="20" y="56">emulated Linux shell, fake filesystem</text>
+                                <text x="20" y="76">ports 2222 ssh · 2223 telnet</text>
+                                <circle class="port" data-port="0" cx="0" cy="48" r="5"/>
+                            </g>
+                            <g transform="translate(250 172)">
+                                <rect class="ink" width="320" height="96" rx="8"/>
+                                <text class="label-strong" x="20" y="34">dionaea</text>
+                                <text x="20" y="56">vulnerable-looking services, keeps payloads</text>
+                                <text x="20" y="76">ports 445 smb · 2121 ftp · 1433 mssql</text>
+                                <circle class="port" data-port="1" cx="0" cy="48" r="5"/>
+                            </g>
+                            <g transform="translate(250 308)">
+                                <rect class="ink" width="320" height="96" rx="8"/>
+                                <text class="label-strong" x="20" y="34">honeytrap</text>
+                                <text x="20" y="56">answers on any port it is given</text>
+                                <text x="20" y="76">ports 8022 http · 8023 alt</text>
+                                <circle class="port" data-port="2" cx="0" cy="48" r="5"/>
+                            </g>
+                            <text x="20" y="430">probes from the internet</text>
+                        </svg>
+                    </div>
+
+                    <!-- Scene 2: Capture -->
+                    <div class="scene" data-scene="1">
+                        <div class="scene-fit">
+                        <svg viewBox="0 0 600 440" preserveAspectRatio="xMidYMid meet">
+                            <g transform="translate(10 120)"><rect class="ink" width="150" height="46" rx="6"/><text class="label-strong" x="14" y="28">cowrie.json</text></g>
+                            <g transform="translate(10 197)"><rect class="ink" width="150" height="46" rx="6"/><text class="label-strong" x="14" y="28">dionaea.json</text></g>
+                            <g transform="translate(10 274)"><rect class="ink" width="150" height="46" rx="6"/><text class="label-strong" x="14" y="28">honeytrap.json</text></g>
+                            <path class="faint-line dash" d="M160 143 H 186 M160 220 H 186 M160 297 H 186"/>
+                            <path class="faint-line dash" d="M440 220 H 466"/>
+                            <g transform="translate(470 0)">
+                                <path class="ink" d="M0 130 V 312 A 60 15 0 0 0 120 312 V 130"/>
+                                <ellipse class="ink" cx="60" cy="130" rx="60" ry="15"/>
+                                <g data-db-rows>
+                                    <line class="faint-line" x1="14" x2="106" y1="170" y2="170"/>
+                                    <line class="faint-line" x1="14" x2="106" y1="190" y2="190"/>
+                                    <line class="faint-line" x1="14" x2="106" y1="210" y2="210"/>
+                                    <line class="faint-line" x1="14" x2="106" y1="230" y2="230"/>
+                                    <line class="faint-line" x1="14" x2="106" y1="250" y2="250"/>
+                                    <line class="faint-line" x1="14" x2="106" y1="270" y2="270"/>
+                                    <line class="faint-line" x1="14" x2="106" y1="290" y2="290"/>
+                                </g>
+                                <text x="60" y="356" text-anchor="middle" class="label-strong" style="font-size:13px">MariaDB</text>
+                                <text x="60" y="374" text-anchor="middle">raw_events</text>
+                                <path class="data-line" d="M60 104 V 54" data-sse/>
+                                <path class="data" d="M54 60 L60 50 L66 60 Z" data-sse/>
+                                <text x="60" y="38" text-anchor="middle">SSE to browser</text>
+                            </g>
+                            <text x="190" y="430">collector tails each file from its last byte offset</text>
+                        </svg>
+                        <div class="scene-html"><div class="json-tail" data-json-tail></div></div>
+                        </div>
+                    </div>
+
+                    <!-- Scene 3: Enrich -->
+                    <div class="scene" data-scene="2">
+                        <div class="scene-html">
+                            <div class="record-card">
+                                <div><span class="rk">eventid </span><span class="rv">cowrie.session.file_download</span></div>
+                                <div><span class="rk">src_ip  </span><span class="rv">198.51.100.7</span></div>
+                                <div><span class="rk">url     </span><span class="rv">…/bins/mirai.arm7</span></div>
+                                <div><span class="rk">session </span><span class="rv">93ff915d8dee</span></div>
+                                <div class="record-tags" data-tags>
+                                    <span class="tag"><i>geo</i> GeoIP country + ASN</span>
+                                    <span class="tag sig"><i>att&amp;ck</i> T1105 Ingress Tool Transfer</span>
+                                    <span class="tag"><i>tactic</i> Command and Control</span>
+                                    <span class="tag"><i>hash</i> SHA-256</span>
+                                    <span class="tag"><i>av</i> ClamAV</span>
+                                    <span class="tag"><i>yara</i> starter ruleset</span>
+                                    <span class="tag"><i>risk</i> scored 0 to 100</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Scene 4: Correlate -->
+                    <div class="scene" data-scene="3">
+                        <div class="scene-html">
+                            <div class="timeline-col" data-tl>
+                                <span class="tl-line" data-tl-line></span>
+                                <div class="tl-item" style="top:4%"><span class="tt">19:11:31</span>login.failed root / root</div>
+                                <div class="tl-item" style="top:16%"><span class="tt">19:11:33</span>login.failed admin / admin</div>
+                                <div class="tl-item" style="top:28%"><span class="tt">19:11:34</span>login.failed root / toor</div>
+                                <div class="tl-item" style="top:40%"><span class="tt">19:11:35</span>login.failed support / support</div>
+                                <div class="tl-item" style="top:52%"><span class="tt">19:11:36</span>login.failed root / 123456</div>
+                                <div class="tl-item sig" style="top:64%"><span class="tt">19:11:37</span>login.success oracle / oracle</div>
+                                <div class="tl-item" style="top:76%"><span class="tt">19:11:37</span>command busybox; cat /proc/…</div>
+                                <div class="tl-item sig" style="top:88%"><span class="tt">19:11:37</span>file_download mirai.arm7</div>
+                            </div>
+                            <div class="case-sheet" data-case>
+                                <div class="cs-top"><span>Incident</span><span class="sig">High</span></div>
+                                <div class="cs-title">SSH brute force, then a payload pulled onto the host</div>
+                                <dl>
+                                    <dt>Source</dt><dd class="mono">198.51.100.7</dd>
+                                    <dt>Rules</dt><dd class="mono">st-auth-001 · st-cred-002 · st-exec-004</dd>
+                                    <dt>ATT&amp;CK</dt><dd class="mono">T1110 → T1059 → T1105</dd>
+                                    <dt>Evidence</dt><dd>8 events, 1 session, 1 URL</dd>
+                                </dl>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Scene 5: Respond -->
+                    <div class="scene" data-scene="4">
+                        <div class="scene-html">
+                            <div class="report-sheet" data-report>
+                                <div class="rs-kicker">Incident report · PDF</div>
+                                <div class="rs-title">SSH brute force and payload download</div>
+                                <div class="bar" style="width:92%"></div>
+                                <div class="bar" style="width:78%"></div>
+                                <div class="bar" style="width:85%"></div>
+                                <div class="chart"><i style="height:30%"></i><i style="height:52%"></i><i style="height:44%"></i><i class="s" style="height:92%"></i><i style="height:60%"></i><i style="height:36%"></i><i style="height:24%"></i></div>
+                                <div class="bar" style="width:88%"></div>
+                                <div class="bar" style="width:64%"></div>
+                                <div class="bar" style="width:72%"></div>
+                                <div class="rs-foot"><span>sha256 9f2c…e41a</span><span>p. 1 of 6</span></div>
+                            </div>
+                            <ul class="controls-list" data-controls>
+                                <li><svg class="tick" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 8.500 6.500 12 13 4.500" pathLength="1"/></svg><span class="cc">CC7.2</span><span>Security monitoring</span></li>
+                                <li><svg class="tick" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 8.500 6.500 12 13 4.500" pathLength="1"/></svg><span class="cc">CC7.3</span><span>Security incident evaluation</span></li>
+                                <li><svg class="tick" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 8.500 6.500 12 13 4.500" pathLength="1"/></svg><span class="cc">CC7.4</span><span>Incident response</span></li>
+                                <li><svg class="tick" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 8.500 6.500 12 13 4.500" pathLength="1"/></svg><span class="cc">CC6.3</span><span>Role-based access</span></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="story-steps">
+                    <article class="step" data-step="0">
+                        <div class="step-num">01 · Deceive</div>
+                        <h3 class="h3">Put out services that look worth breaking into.</h3>
+                        <p>Three open-source honeypots run as containers next to the platform. They answer like real servers, so scanners and bots keep talking long enough to show their hand.</p>
+                        <ul class="facts">
+                            <li><b>cowrie</b>SSH and Telnet with a believable shell</li>
+                            <li><b>dionaea</b>SMB, FTP and MSSQL, keeps whatever is uploaded</li>
+                            <li><b>honeytrap</b>Catches traffic on the leftover web ports</li>
+                        </ul>
+                    </article>
+                    <article class="step" data-step="1">
+                        <div class="step-num">02 · Capture</div>
+                        <h3 class="h3">Every keystroke lands in the database within seconds.</h3>
+                        <p>Each sensor writes JSON lines. A collector follows the files from their last byte offset, normalises the fields, writes batches into MariaDB and pushes each new event to open dashboards over Server-Sent Events.</p>
+                        <ul class="facts">
+                            <li><b>source</b>Local files or S3, same collector</li>
+                            <li><b>store</b>MariaDB, browsable in phpMyAdmin</li>
+                            <li><b>stream</b>SSE, no polling loop in the browser</li>
+                        </ul>
+                    </article>
+                    <article class="step" data-step="2">
+                        <div class="step-num">03 · Enrich</div>
+                        <h3 class="h3">Context gets attached before anyone looks.</h3>
+                        <p>Events are geolocated, mapped to MITRE ATT&amp;CK techniques by event type and command content, and risk scored. Files that attackers drop are hashed and scanned with ClamAV and YARA.</p>
+                        <ul class="facts">
+                            <li><b>att&amp;ck</b>T1110, T1059, T1046, T1105, T1190 and more</li>
+                            <li><b>files</b>SHA-256, ClamAV, YARA, optional VirusTotal</li>
+                            <li><b>apps</b>APKs go through MobSF</li>
+                        </ul>
+                    </article>
+                    <article class="step" data-step="3">
+                        <div class="step-num">04 · Correlate</div>
+                        <h3 class="h3">Noise turns into a single case with a timeline.</h3>
+                        <p>Detection rules written in a Sigma-style YAML format watch the event stream. When one fires, related events from the same source and session are grouped into an incident with severity, evidence and an ordered timeline.</p>
+                        <ul class="facts">
+                            <li><b>6 rules</b>Brute force, login after brute force, payload download, scan, post-exploit command, PowerShell</li>
+                            <li><b>8 tests</b>Validation scenarios replay attacks to prove each rule fires</li>
+                        </ul>
+                    </article>
+                    <article class="step" data-step="4">
+                        <div class="step-num">05 · Respond</div>
+                        <h3 class="h3">Hand over something finished.</h3>
+                        <p>Analysts work the case in Investigations, then export a PDF report. The same evidence feeds a SOC 2 readiness view, so monitoring and incident handling are documented as they happen.</p>
+                        <ul class="facts">
+                            <li><b>reports</b>Executive, incident, geo, malware, credentials, DFIR</li>
+                            <li><b>grc</b>SOC 2 criteria, risk register, evidence</li>
+                            <li><b>access</b>Six roles, enforced by the API</li>
+                        </ul>
+                    </article>
+                </div>
+            </div>
         </div>
-        <div class="footer-col">
-            <h4>Access</h4>
-            <ul>
-                <li><a href="login.html">Sign In</a></li>
-                <li><a href="register.html">Register</a></li>
-                <li><a href="dashboard.html">Dashboard</a></li>
-                <li><a href="http://localhost:8000/docs" target="_blank">API Docs</a></li>
-            </ul>
+    </section>
+
+    <!-- ============ SESSION REPLAY ============ -->
+    <section class="section tight" id="replay">
+        <div class="wrap">
+            <div class="banner st-theme-dark">
+                <canvas class="wave" data-strands aria-hidden="true"></canvas>
+                <div>
+                    <h2 data-reveal>Eleven seconds. Everything on the record.</h2>
+                    <p class="lede" data-reveal>A Mirai-style dropper replayed against the Cowrie sensor in the lab. The lines and timestamps are from the captured session.</p>
+                    <ol class="notes" data-notes>
+                        <li class="note" data-note="0">
+                            <span class="tid">T1110</span>
+                            <div><h4>Password guessed</h4><p><span class="mono">oracle / oracle</span> was accepted and stored in the credential vault with its session.</p></div>
+                        </li>
+                        <li class="note" data-note="1">
+                            <span class="tid">T1059</span>
+                            <div><h4>Commands executed</h4><p>Busybox, mounts, CPU count. Every line is kept in order against the session.</p></div>
+                        </li>
+                        <li class="note" data-note="2">
+                            <span class="tid">T1105</span>
+                            <div><h4>Tooling pulled in</h4><p><span class="mono">wget</span> and <span class="mono">curl | sh</span> fetch an ARM build of Mirai. Both URLs are logged as file downloads.</p></div>
+                        </li>
+                        <li class="note" data-note="3">
+                            <span class="tid">st-exec-004</span>
+                            <div><h4>Rule fired, case opened</h4><p>"Payload download / stager on honeypot", severity High, linked to all of the above.</p></div>
+                        </li>
+                    </ol>
+                    <button class="replay-btn" type="button" data-replay>Replay session <span class="arr">→</span></button>
+                </div>
+                <div class="term" data-term>
+                    <div class="term-head"><span>session 93ff915d8dee · cowrie · ssh</span><span>17 Sep 2026 UTC</span></div>
+                    <div data-term-body></div>
+                </div>
+                <p class="replay-foot">Source address 172.18.0.5 is the lab's internal traffic generator.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============ NUMBERS ============ -->
+    <section class="section subdued stats-section" id="numbers">
+        <div class="wrap">
+            <div class="section-head center">
+                <h2 class="h2" data-reveal>Counted from the repository</h2>
+            </div>
+            <div class="stats bleed" data-stats>
+                <button class="stat is-active" type="button" data-stat="0"><span class="fig" data-count="3">3</span><span class="cap">honeypot sensors on seven listening ports</span><span class="src">docker-compose.yml</span></button>
+                <button class="stat" type="button" data-stat="1"><span class="fig" data-count="6">6</span><span class="cap">detection rules mapped to ATT&amp;CK techniques</span><span class="src">backend/detections/*.yml</span></button>
+                <button class="stat" type="button" data-stat="2"><span class="fig" data-count="8">8</span><span class="cap">attack scenarios that prove the rules fire</span><span class="src">backend/scenarios/*.yml</span></button>
+                <button class="stat" type="button" data-stat="3"><span class="fig" data-count="12">12</span><span class="cap">core containers started with one command</span><span class="src">./setup.sh</span></button>
+            </div>
+            <canvas class="burst bleed" data-burst aria-hidden="true"></canvas>
+        </div>
+    </section>
+
+    <!-- ============ AUDIENCE ============ -->
+    <section class="section" id="who">
+        <div class="wrap">
+            <div class="section-head" style="margin-bottom:0;padding-bottom:64px">
+                <h2 class="h2" data-reveal>Built for people who read the logs.</h2>
+                <p class="lede" data-reveal>Researchers, SOC teams and classrooms use the same console in different ways.</p>
+            </div>
+            <div class="aud-row bleed rule-top" data-reveal>
+                <div>
+                    <h3 class="h3">Collect real attacker behavior without building the plumbing first</h3>
+                    <a class="btn" href="usecases.html">ShadowTrust for researchers <span class="arr">→</span></a>
+                </div>
+                <div>
+                    <p>Samples, sessions and credentials are captured, hashed and kept, ready to take apart.</p>
+                    <ul><li>Malware samples kept and hashed</li><li>APK and URL analysis on the side</li><li>Kali desktop in the browser</li></ul>
+                </div>
+            </div>
+            <div class="aud-row bleed rule-top" data-reveal>
+                <div>
+                    <h3 class="h3">An early-warning layer inside your network</h3>
+                    <a class="btn" href="usecases.html">ShadowTrust for SOC teams <span class="arr">→</span></a>
+                </div>
+                <div>
+                    <p>Anything that touches a decoy is suspicious by definition, so the signal starts clean.</p>
+                    <ul><li>Detections with validation tests</li><li>Cases, timelines, PDF reports</li><li>Optional Splunk forwarding</li></ul>
+                </div>
+            </div>
+            <div class="aud-row bleed rule-top" data-reveal>
+                <div>
+                    <h3 class="h3">Teach a real kill chain on real data</h3>
+                    <a class="btn" href="usecases.html">ShadowTrust for teaching <span class="arr">→</span></a>
+                </div>
+                <div>
+                    <p>Show students an attack as it happens, then let them investigate it themselves.</p>
+                    <ul><li>Attacks mapped to ATT&amp;CK live</li><li>Replayable lab traffic</li><li>Role-based accounts per student</li></ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============ ARCHITECTURE (navy) ============ -->
+    <section class="section dark st-theme-dark" id="architecture">
+        <div class="wrap">
+            <div class="section-head" style="margin-bottom:32px">
+                <h2 class="h2" data-reveal>Twelve containers. Nothing phones home.</h2>
+                <p class="lede" data-reveal>The whole stack runs from one Compose file on a laptop or a server. AWS is an optional provider for analysis VMs, not a dependency.</p>
+            </div>
+            <div class="btn-row" data-reveal>
+                <a class="btn" href="docs.html">Read the docs <span class="arr">→</span></a>
+                <a class="btn btn-ghost" href="architecture.html">Architecture notes</a>
+            </div>
+        </div>
+        <div class="wrap rule-top block">
+            <div class="section-head" style="font-size:clamp(1.3rem,2.1vw,1.625rem);max-width:720px;margin-bottom:40px">
+                <h3 class="h2" data-reveal>Follow the data.</h3>
+                <p class="lede" data-reveal>Sensors write JSON lines, the collector reads them into MariaDB, and the API streams each event to your browser.</p>
+            </div>
+            <figure class="arch-fig" data-arch>
+                <svg class="arch-svg" viewBox="0 0 1180 470" role="img" aria-label="Architecture: honeypots write logs that the backend collector reads into MariaDB; the backend serves the dashboard through Nginx and streams events over SSE; ClamAV, MobSF and Guacamole support analysis.">
+                    <defs>
+                        <marker id="ah" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path class="arrow" d="M0 0 L8 4 L0 8 Z"/></marker>
+                        <marker id="ahs" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path class="arrow sig" d="M0 0 L8 4 L0 8 Z"/></marker>
+                    </defs>
+
+                    <text class="t-group" x="20" y="16">Internet</text>
+                    <g transform="translate(12 174)"><circle class="node sig" cx="42" cy="40" r="40"/><text x="42" y="37" text-anchor="middle" class="t-strong" style="font-size:13px">probes</text><text x="42" y="53" text-anchor="middle" style="font-size:10.5px">bots</text></g>
+
+                    <rect class="group" x="170" y="30" width="230" height="410" rx="8"/>
+                    <text class="t-group" x="186" y="54">Sensors</text>
+                    <g transform="translate(192 78)"><rect class="node" width="186" height="74" rx="4"/><text class="t-strong" x="16" y="30">cowrie</text><text x="16" y="52">ssh 2222 · telnet 2223</text></g>
+                    <g transform="translate(192 198)"><rect class="node" width="186" height="74" rx="4"/><text class="t-strong" x="16" y="30">dionaea</text><text x="16" y="52">445 · 2121 · 1433</text></g>
+                    <g transform="translate(192 318)"><rect class="node" width="186" height="74" rx="4"/><text class="t-strong" x="16" y="30">honeytrap</text><text x="16" y="52">8022 · 8023</text></g>
+
+                    <path class="edge sig" data-draw data-wave="0" d="M92 198 C 140 160, 150 115, 190 115" marker-end="url(#ahs)"/>
+                    <path class="edge sig" data-draw data-wave="0" d="M94 214 C 140 214, 150 235, 190 235" marker-end="url(#ahs)"/>
+                    <path class="edge sig" data-draw data-wave="0" d="M92 230 C 140 270, 150 355, 190 355" marker-end="url(#ahs)"/>
+
+                    <g transform="translate(470 196)"><rect class="node alt" width="130" height="78" rx="4"/><text class="t-strong" x="16" y="30">telemetry/raw</text><text x="16" y="52">JSON lines</text></g>
+                    <path class="edge" data-draw data-wave="1" d="M378 115 C 430 115, 430 220, 468 222" marker-end="url(#ah)"/>
+                    <path class="edge" data-draw data-wave="1" d="M378 235 L 468 235" marker-end="url(#ah)"/>
+                    <path class="edge" data-draw data-wave="1" d="M378 355 C 430 355, 430 250, 468 248" marker-end="url(#ah)"/>
+
+                    <rect class="group" x="660" y="30" width="250" height="410" rx="8"/>
+                    <text class="t-group" x="676" y="54">Backend · FastAPI</text>
+                    <g transform="translate(682 78)"><rect class="node" width="206" height="62" rx="4"/><text class="t-strong" x="16" y="27">collector</text><text x="16" y="47">tail · normalise · insert</text></g>
+                    <g transform="translate(682 160)"><rect class="node" width="206" height="62" rx="4"/><text class="t-strong" x="16" y="27">detection engine</text><text x="16" y="47">YAML rules → incidents</text></g>
+                    <g transform="translate(682 242)"><rect class="node" width="206" height="62" rx="4"/><text class="t-strong" x="16" y="27">API · 31 modules</text><text x="16" y="47">JWT, six roles, SSE</text></g>
+                    <g transform="translate(682 324)"><rect class="node" width="206" height="62" rx="4"/><text class="t-strong" x="16" y="27">reports · GRC</text><text x="16" y="47">PDF engine, SOC 2</text></g>
+                    <path class="edge" data-draw data-wave="2" d="M600 222 C 640 222, 640 109, 680 109" marker-end="url(#ah)"/>
+                    <path class="edge soft" d="M785 140 V 158 M785 222 V 240 M785 304 V 322"/>
+
+                    <g transform="translate(990 70)"><path class="node" d="M0 14 V 76 A 60 14 0 0 0 120 76 V 14" /><ellipse class="node" cx="60" cy="14" rx="60" ry="14"/><text class="t-strong" x="60" y="56" text-anchor="middle">MariaDB</text><text x="60" y="74" text-anchor="middle">raw_events</text></g>
+                    <path class="edge" data-draw data-wave="3" d="M888 109 C 940 109, 950 100, 988 100" marker-end="url(#ah)"/>
+
+                    <g transform="translate(990 232)"><rect class="node" width="170" height="62" rx="4"/><text class="t-strong" x="16" y="27">nginx :5500</text><text x="16" y="47">console + /api proxy</text></g>
+                    <path class="edge" data-draw data-wave="4" d="M888 273 L 988 266" marker-end="url(#ah)"/>
+                    <g transform="translate(990 360)"><rect class="node lit" width="170" height="62" rx="4"/><text class="t-strong" x="16" y="27">your browser</text><text x="16" y="47" style="fill:#dbe3f6">live over SSE</text></g>
+                    <path class="edge" data-draw data-wave="5" d="M1075 294 V 358" marker-end="url(#ah)"/>
+
+                    <text class="t-group" x="470" y="330">Analysis services</text>
+                    <g transform="translate(470 344)"><rect class="node alt" width="150" height="30" rx="4"/><text x="14" y="20">clamav · yara</text></g>
+                    <g transform="translate(470 380)"><rect class="node alt" width="150" height="30" rx="4"/><text x="14" y="20">mobsf :5055</text></g>
+                    <g transform="translate(470 416)"><rect class="node alt" width="150" height="30" rx="4"/><text x="14" y="20">guacamole · kali</text></g>
+                    <path class="edge soft" d="M620 395 H 680"/>
+                    <g data-arch-packets></g>
+                </svg>
+                <div class="arch-legend">
+                    <span><i class="sig"></i>Hostile traffic</span>
+                    <span><i></i>Data path</span>
+                    <span><i class="soft"></i>Internal call</span>
+                    <a class="link-arrow" href="architecture.html">Full architecture notes <span class="arr">→</span></a>
+                </div>
+            </figure>
+        </div>
+        <div class="wrap rule-top block">
+            <div class="section-head" style="font-size:clamp(1.3rem,2.1vw,1.625rem);max-width:720px;margin-bottom:40px">
+                <h3 class="h2" data-reveal>Three ways in.</h3>
+                <p class="lede" data-reveal>Start the stack with one script, write a rule in YAML, or call the API directly.</p>
+            </div>
+            <div class="paths" data-stagger>
+                <div class="path">
+                    <div class="path-art" aria-hidden="true">
+                        <div class="code-lines">
+                            <span class="cl"><span class="kw">$</span> ./setup.sh</span>
+                            <span class="cl">[1/6] Checking prerequisites...</span>
+                            <span class="cl">  <span class="ok">✓</span> Docker</span>
+                            <span class="cl">  <span class="ok">✓</span> Compose (docker compose)</span>
+                            <span class="cl">[3/6] Setting up environment files...</span>
+                            <span class="cl">[5/6] Building images and starting...</span>
+                            <span class="cl">[6/6] Verifying services...</span>
+                        </div>
+                        <div class="status"><b>READY</b><span>Console → http://localhost:5500</span></div>
+                    </div>
+                    <h3>Start with one script.</h3>
+                    <p> setup.sh checks Docker, writes the environment files, builds the images and starts every container.</p>
+                    <a class="link-arrow" href="docs.html">Read the quick start <span class="arr">→</span></a>
+                </div>
+                <div class="path">
+                    <div class="path-art" aria-hidden="true">
+                        <div class="code-lines">
+                            <span class="cl"><span class="kw">id:</span> st-exec-004</span>
+                            <span class="cl"><span class="kw">name:</span> <span class="str">Payload download / stager on honeypot</span></span>
+                            <span class="cl"><span class="kw">severity:</span> HIGH</span>
+                            <span class="cl"><span class="kw">source:</span> honeypot</span>
+                            <span class="cl"><span class="kw">attack:</span></span>
+                            <span class="cl">  <span class="kw">technique:</span> T1105</span>
+                            <span class="cl"><span class="cm"># one of six rules that ship</span></span>
+                        </div>
+                        <div class="status"><b>YAML</b><span>backend/detections/malware_download.yml</span></div>
+                    </div>
+                    <h3>Write detections in YAML.</h3>
+                    <p> Thresholds, sequences and content matches, each mapped to an ATT&amp;CK technique and backed by a replayable scenario.</p>
+                    <a class="link-arrow" href="features.html#detect">See detection features <span class="arr">→</span></a>
+                </div>
+                <div class="path">
+                    <div class="path-art" aria-hidden="true">
+                        <div class="api-list">
+                            <div class="api-row"><span class="verb">GET</span><code>/api/v1/public/status</code></div>
+                            <div class="api-row"><span class="verb">GET</span><code>/api/v1/public/summary</code></div>
+                            <div class="api-row"><span class="verb post">POST</span><code>/api/v1/live/stream-ticket</code></div>
+                            <div class="api-row"><span class="verb">GET</span><code>/api/v1/live/stream</code></div>
+                            <div class="api-row"><span class="verb">GET</span><code>/api/v1/users/me</code></div>
+                            <div class="api-row"><span class="verb">GET</span><code>/api/v1/dashboard/geo</code></div>
+                        </div>
+                    </div>
+                    <h3>Call the API.</h3>
+                    <p> 31 endpoint modules behind JWT and six roles, with interactive documentation served by the backend.</p>
+                    <a class="link-arrow" href="http://localhost:8000/docs" target="_blank" rel="noopener">Open the API reference <span class="arr">→</span></a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============ CONSOLE TOUR ============ -->
+    <section class="section" id="inside">
+        <div class="wrap">
+            <div class="section-head">
+                <h2 class="h2" data-reveal>Sixteen tools, one evidence trail.</h2>
+                <p class="lede" data-reveal>Each one is a page in the console and reads from the same event store, so a credential in the vault links to its session, its incident and its report.</p>
+            </div>
+            <ol class="index-list bleed" data-index>
+                <li><a class="index-item" href="login.html"><span class="ti">Overview</span><span class="de">Live counts, threat map and the newest events, straight from the database.</span><span class="go">→</span></a></li>
+                <li><a class="index-item" href="login.html"><span class="ti">Investigations</span><span class="de">Case queue with timelines, linked evidence, notes and status.</span><span class="go">→</span></a></li>
+                <li><a class="index-item" href="login.html"><span class="ti">Event log and logs</span><span class="de">Every raw event, searchable and grouped by category.</span><span class="go">→</span></a></li>
+                <li><a class="index-item" href="login.html"><span class="ti">Geo intelligence</span><span class="de">Where attacks come from, by country and ASN, on a keyless map.</span><span class="go">→</span></a></li>
+                <li><a class="index-item" href="login.html"><span class="ti">MITRE ATT&amp;CK matrix</span><span class="de">Techniques seen in your data, with the events behind each cell.</span><span class="go">→</span></a></li>
+                <li><a class="index-item" href="login.html"><span class="ti">Detection validation</span><span class="de">Replays known attacks and checks that the right rule fires.</span><span class="go">→</span></a></li>
+                <li><a class="index-item" href="login.html"><span class="ti">Attack analytics</span><span class="de">Ports, protocols and volume over time, drawn from real rows.</span><span class="go">→</span></a></li>
+                <li><a class="index-item" href="login.html"><span class="ti">Credential vault</span><span class="de">Every username and password attackers tried, ranked and searchable.</span><span class="go">→</span></a></li>
+                <li><a class="index-item" href="login.html"><span class="ti">Behavior profiling</span><span class="de">Groups attackers by what they do, not just where they come from.</span><span class="go">→</span></a></li>
+                <li><a class="index-item" href="login.html"><span class="ti">Analysis lab</span><span class="de">An egress-free Linux sandbox in the browser that feeds detection live.</span><span class="go">→</span></a></li>
+                <li><a class="index-item" href="login.html"><span class="ti">Binary analysis</span><span class="de">Upload a sample for hashing, strings, ClamAV and YARA.</span><span class="go">→</span></a></li>
+                <li><a class="index-item" href="login.html"><span class="ti">URL scanner</span><span class="de">Reputation checks and a safe rendering of suspicious links.</span><span class="go">→</span></a></li>
+                <li><a class="index-item" href="login.html"><span class="ti">APK inspector</span><span class="de">Android apps through MobSF: permissions, endpoints, secrets.</span><span class="go">→</span></a></li>
+                <li><a class="index-item" href="login.html"><span class="ti">Virtual lab</span><span class="de">Kali and analysis desktops in the browser through Guacamole.</span><span class="go">→</span></a></li>
+                <li><a class="index-item" href="login.html"><span class="ti">Reports</span><span class="de">PDF reports per incident, per period or per topic, with hashes.</span><span class="go">→</span></a></li>
+                <li><a class="index-item" href="login.html"><span class="ti">GRC and SOC 2</span><span class="de">Readiness by criterion, a risk register and collected evidence.</span><span class="go">→</span></a></li>
+            </ol>
+        </div>
+    </section>
+
+    <!-- ============ CLOSER ============ -->
+    <section class="section subdued closer">
+        <div class="wrap closer-grid">
+            <div data-reveal>
+                <h2 class="h2">Set the trap tonight.</h2>
+                <p class="lede">One script checks Docker, writes the environment files, builds the images and starts every container.</p>
+                <div class="install" style="max-width:460px;margin-bottom:28px">
+                    <div class="install-label"><span>From a fresh clone</span><button class="copy-btn" type="button" data-copy="./setup.sh">Copy</button></div>
+<pre><span class="p">$ </span>./setup.sh
+<span class="c"># console on http://localhost:5500</span></pre>
+                </div>
+                <a class="btn" href="login.html">Open the console <span class="arr">→</span></a>
+            </div>
+            <div class="next-steps" data-reveal>
+                <div class="next-step">
+                    <span class="tile-ic"><svg class="ico" viewBox="0 0 20 20"><use href="#i-book"/></svg></span>
+                    <h3>Read the docs</h3>
+                    <p>Docker setup, environment variables, roles, the API and the make targets you will actually use.</p>
+                    <a class="link-arrow" href="docs.html">Documentation <span class="arr">→</span></a>
+                </div>
+                <div class="next-step">
+                    <span class="tile-ic"><svg class="ico" viewBox="0 0 20 20"><use href="#i-pulse"/></svg></span>
+                    <h3>Check live status</h3>
+                    <p>Services, sensors and the telemetry pipeline of this deployment, measured in your browser.</p>
+                    <a class="link-arrow" href="status.html">System status <span class="arr">→</span></a>
+                </div>
+            </div>
+        </div>
+    </section>
+</main>
+
+<footer class="site-footer">
+    <div class="wrap">
+        <div class="foot-grid">
+            <div>
+                <a class="brand" href="index.html" aria-label="ShadowTrust home">
+                    <svg viewBox="0 0 28 28" fill="none" aria-hidden="true"><path d="M2.500 14c3-5.300 7-8 11.500-8s8.500 2.700 11.500 8c-3 5.300-7 8-11.500 8S5.500 19.300 2.500 14Z" stroke="currentColor" stroke-width="2.200" stroke-linejoin="round"/><circle cx="14" cy="14" r="4.200" fill="var(--st-brand)"/></svg>
+                    <span>ShadowTrust</span>
+                </a>
+                <p class="foot-blurb">Honeypots, detection, investigation and reporting in one self-hosted stack.</p>
+            </div>
+            <div>
+                <h4>Product</h4>
+                <ul>
+                    <li><a href="features.html">Features</a></li>
+                    <li><a href="architecture.html">Architecture</a></li>
+                    <li><a href="usecases.html">Use cases</a></li>
+                </ul>
+            </div>
+            <div>
+                <h4>Learn</h4>
+                <ul>
+                    <li><a href="docs.html">Documentation</a></li>
+                    <li><a href="status.html">System status</a></li>
+                    <li><a href="http://localhost:8000/docs" target="_blank" rel="noopener">API reference</a></li>
+                </ul>
+            </div>
+            <div>
+                <h4>Console</h4>
+                <ul>
+                    <li><a href="login.html">Sign in</a></li>
+                    <li><a href="register.html">Request access</a></li>
+                    <li><a href="admin_login.html">Admin sign in</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="foot-base">
+            <span>© 2026 ShadowTrust. Private repository. Other names and logos belong to their owners.</span>
+            <a href="status.html">Check live system status <span class="arr">→</span></a>
         </div>
     </div>
-    <div class="footer-bottom">
-        <p>© 2026 Shadow Trust. All Rights Reserved. Private Repository.</p>
-        <div class="footer-status">
-            <span class="dot"></span>
-            All Systems Operational
-        </div>
+    <div class="foot-mark" aria-hidden="true">
+        <canvas class="ribbon" data-ribbon></canvas>
+        <span>ShadowTrust</span>
     </div>
 </footer>
 
-<script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
-<script>AOS.init({ duration: 750, once: true, offset: 80 });</script>
+<script src="js/vendor/motion.js"></script>
+<script src="js/ribbon.js"></script>
+<script src="js/site.js"></script>
+<script src="js/globe.js"></script>
+<script src="js/home.js"></script>
 </body>
 </html>

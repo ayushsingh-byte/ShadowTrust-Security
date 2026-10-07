@@ -4,17 +4,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Splunk Blue Team | Shadow Trust</title>
+    <title>Splunk blue team · ShadowTrust</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 28 28'%3E%3Crect width='28' height='28' rx='6' fill='%23533afd'/%3E%3Cpath d='M4.5 14c2.5-4.3 5.7-6.4 9.500-6.400s7 2.100 9.500 6.400c-2.500 4.300-5.700 6.400-9.500 6.400S7 18.300 4.500 14Z' fill='none' stroke='%23fff' stroke-width='1.8' stroke-linejoin='round'/%3E%3Ccircle cx='14' cy='14' r='3.2' fill='%23fff'/%3E%3C/svg%3E">
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#ffffff">
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/dashboard.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         .sp-kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 20px; }
         .sp-kpi { background: var(--st-surface-2); border: 1px solid var(--st-border); border-radius: 8px; padding: 16px; }
-        .sp-kpi .v { font-size: 1.8rem; font-weight: 700; font-family: var(--font-mono, monospace); color: var(--st-success); }
+        .sp-kpi .v { font-size: 1.8rem; font-weight: 600; font-family: var(--font-mono, monospace); color: var(--st-success); }
         .sp-kpi .l { font-size: 0.65rem; letter-spacing: 1px; color: var(--st-text-muted); margin-top: 4px; text-transform: uppercase; }
         .sp-pill { display: inline-flex; align-items: center; gap: 7px; font-size: 0.75rem; font-family: var(--font-mono, monospace);
-                   padding: 3px 12px; border-radius: 999px; border: 1px solid var(--st-border); }
+                   padding: 3px 12px; border-radius: var(--st-radius-sm); border: 1px solid var(--st-border); }
         .sp-pill .dot { width: 8px; height: 8px; border-radius: 50%; }
         .sp-up { color: var(--st-success); } .sp-up .dot { background: var(--st-success); }
         .sp-down { color: var(--st-danger); } .sp-down .dot { background: var(--st-danger); }
@@ -42,9 +46,29 @@
         .sp-drop { border: 2px dashed var(--st-border); border-radius: 8px; padding: 22px; text-align: center;
                    color: var(--st-text-muted); cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 8px; }
         .sp-drop.drag { border-color: var(--st-info); background: var(--st-surface); color: var(--st-text-secondary); }
+
+    
+        /* v3: enterprise system */
+        .sp-pill { font-family: var(--st-font-main); font-size: 12.5px; font-weight: 500; border: 0; padding: 1px 10px; background: var(--st-neutral-bg); }
+        .sp-pill.sp-up { background: var(--st-success-bg); }
+        .sp-pill.sp-down { background: var(--st-danger-bg); }
+        .sp-card { border-radius: var(--st-radius-lg); padding: 20px; margin-bottom: 20px; box-shadow: var(--st-shadow-sm); }
+        .sp-card h3 { margin: 0 0 14px; }
+        .sp-search input, .sp-search select { min-height: 36px; padding: 0 12px; background: var(--st-surface); border-color: var(--st-border-strong); border-radius: var(--st-radius-md); font-size: 13px; }
+        .sp-search input:focus, .sp-search select:focus { outline: none; border-color: var(--st-accent); box-shadow: var(--st-focus-ring); }
+        .sp-table-wrap { border-radius: var(--st-radius-md); }
+        table.sp-table { font-size: 13px; }
+        table.sp-table th { background: var(--st-surface-2); font-size: 12.5px; padding: 10px 12px; }
+        table.sp-table td { font-size: 12.5px; padding: 8px 12px; }
+        .sp-note { font-size: 13px; }
+        .sp-chip { border-radius: var(--st-radius-sm); padding: 4px 12px; background: var(--st-surface); border-color: var(--st-border-strong); color: var(--st-text-secondary); font-size: 12.5px; }
+        .sp-chip:hover { border-color: var(--st-accent); color: var(--st-accent); }
+        .sp-drop { border: 1.5px dashed var(--st-border-strong); border-radius: var(--st-radius-lg); padding: 28px; font-size: 13.5px; }
+        .sp-drop.drag { border-color: var(--st-accent); background: var(--st-accent-tint); }
+        #sp-offline { background: var(--st-danger-bg); border-color: color-mix(in srgb, var(--st-danger) 30%, var(--st-surface)) !important; box-shadow: none; }
     </style>
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600;700&amp;display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300..600&family=Source+Code+Pro:wght@400;500;600&display=swap">
     <link rel="stylesheet" href="css/tokens.css">
     <script src="js/theme.js"></script>
 </head>
@@ -56,29 +80,29 @@
         <main class="main-content">
             <div class="top-bar">
                 <div class="page-header">
-                    <h2>SPLUNK · BLUE TEAM</h2>
-                    <p>SIEM QUERY CONSOLE // <span id="sp-health" class="sp-pill sp-down"><span class="dot"></span> checking…</span></p>
+                    <h2>Splunk blue team</h2>
+                    <p>Search, upload and purge data in your Splunk instance. <span id="sp-health" class="sp-pill sp-down"><span class="dot"></span> checking…</span></p>
                 </div>
                 <div class="filters-bar">
                     <a id="sp-open" href="#" target="_blank" class="soc-btn soc-btn-primary">
-                        <i class="fas fa-external-link-alt"></i> OPEN SPLUNK CONSOLE</a>
+                        <i class="fas fa-external-link-alt"></i> Open Splunk console</a>
                 </div>
             </div>
 
             <div id="sp-offline" class="sp-card" style="display:none; border-color:var(--st-danger);">
                 <h3 style="color:var(--st-danger);">Splunk unreachable</h3>
                 <div class="sp-note">
-                    Start it: <code>cd ~/splunk-lab &amp;&amp; docker compose up -d</code> — the web UI must be on
+                    Start it: <code>cd ~/splunk-lab &amp;&amp; docker compose up -d</code>. The web UI must be on
                     <code>:8009</code> and the management API <code>:8089</code> must be published
                     (see <code>~/splunk-lab/docker-compose.yml</code>). Login: <code>admin</code> / <code>ChangeMe123!</code>.
                 </div>
             </div>
 
             <div class="sp-kpis">
-                <div class="sp-kpi"><div class="v" id="kpi-events">—</div><div class="l">Events indexed</div></div>
-                <div class="sp-kpi"><div class="v" id="kpi-hosts">—</div><div class="l">Hosts</div></div>
-                <div class="sp-kpi"><div class="v" id="kpi-sourcetypes">—</div><div class="l">Sourcetypes</div></div>
-                <div class="sp-kpi"><div class="v" id="kpi-indexes">—</div><div class="l">Indexes</div></div>
+                <div class="sp-kpi"><div class="v" id="kpi-events">n/a</div><div class="l">Events indexed</div></div>
+                <div class="sp-kpi"><div class="v" id="kpi-hosts">n/a</div><div class="l">Hosts</div></div>
+                <div class="sp-kpi"><div class="v" id="kpi-sourcetypes">n/a</div><div class="l">Sourcetypes</div></div>
+                <div class="sp-kpi"><div class="v" id="kpi-indexes">n/a</div><div class="l">Indexes</div></div>
             </div>
 
             <div class="sp-card">
@@ -94,9 +118,9 @@
                         <option value="-1y">last year</option>
                         <option value="0">all time</option>
                     </select>
-                    <button class="soc-btn soc-btn-primary" id="spl-run"><i class="fas fa-play"></i> RUN</button>
+                    <button class="soc-btn soc-btn-primary" id="spl-run"><i class="fas fa-play"></i> Run</button>
                     <button class="soc-btn" id="spl-csv"><i class="fas fa-download"></i> CSV</button>
-                    <button class="soc-btn" id="spl-del" style="border-color:var(--st-danger); color:var(--st-danger);" title="Delete the events matching this search"><i class="fas fa-trash"></i> DELETE MATCHES</button>
+                    <button class="soc-btn" id="spl-del" style="border-color:var(--st-danger); color:var(--st-danger);" title="Delete the events matching this search"><i class="fas fa-trash"></i> Delete matches</button>
                 </div>
                 <div class="sp-chips">
                     <span class="sp-chip" data-spl='search index=* | stats count by sourcetype | sort - count'>count by sourcetype</span>
@@ -110,7 +134,7 @@
             </div>
 
             <div class="sp-card">
-                <h3>Manage data — upload log files</h3>
+                <h3>Manage data: upload log files</h3>
                 <div id="drop" class="sp-drop">
                     <i class="fas fa-file-upload" style="font-size:1.6rem;"></i>
                     <div>Drop <code>.log / .txt / .json / .csv</code> files here, or <b>click to choose</b> (multiple OK)</div>
@@ -125,7 +149,7 @@
                         <div style="display:flex; flex-direction:column; gap:8px;">
                             <input id="ing-sourcetype" placeholder="sourcetype" value="shadowtrust:manual">
                             <input id="ing-index" placeholder="index" value="main">
-                            <button class="soc-btn soc-btn-primary" id="ing-run"><i class="fas fa-plus"></i> INGEST</button>
+                            <button class="soc-btn soc-btn-primary" id="ing-run"><i class="fas fa-plus"></i> Ingest</button>
                         </div>
                     </div>
                     <div id="ing-status" class="sp-note" style="margin-top:8px;"></div>
@@ -133,19 +157,19 @@
             </div>
 
             <div class="sp-card">
-                <h3>Purge data — delete by source or age</h3>
+                <h3>Purge data: delete by source or age</h3>
                 <div class="sp-search">
-                    <select id="purge-source" style="min-width:280px;"><option value="">— pick a source —</option></select>
+                    <select id="purge-source" style="min-width:280px;"><option value="">Pick a source</option></select>
                     <span class="sp-note">and / or older than</span>
                     <input id="purge-days" type="number" min="0" placeholder="days" style="width:90px;">
                     <button class="soc-btn" id="purge-refresh" title="reload source list"><i class="fas fa-rotate"></i></button>
-                    <button class="soc-btn" id="purge-run" style="border-color:var(--st-danger); color:var(--st-danger);"><i class="fas fa-trash"></i> PURGE</button>
+                    <button class="soc-btn" id="purge-run" style="border-color:var(--st-danger); color:var(--st-danger);"><i class="fas fa-trash"></i> Purge</button>
                 </div>
                 <div id="purge-status" class="sp-note" style="margin-top:8px;"></div>
             </div>
 
             <div class="sp-card">
-                <h3>Notable events <span style="color:var(--st-text-muted); font-weight:400; text-transform:none;">— failed logons · account changes · blocked actions · sysmon</span></h3>
+                <h3>Notable events <span style="color:var(--st-text-muted); font-weight:400; text-transform:none;">failed logons · account changes · blocked actions · sysmon</span></h3>
                 <div id="notable-status" class="sp-note"></div>
                 <div class="sp-table-wrap"><table class="sp-table" id="notable-table"></table></div>
             </div>
@@ -289,8 +313,8 @@
             try { res = await apiService.upload('/splunk/upload', fd); }
             catch (e) { $('#up-status').innerHTML = `<span class="sp-err">${esc(e.message)}</span>`; return; }
             const lines = (res.files || []).map(r =>
-                r.ok ? `<span style="color:var(--st-success)">✓ ${esc(r.name)} — ${r.events} events (${esc(r.sourcetype)})</span>`
-                     : `<span class="sp-err">✗ ${esc(r.name)} — ${esc(r.error || 'failed')}</span>`);
+                r.ok ? `<span style="color:var(--st-success)">✓ ${esc(r.name)}: ${r.events} events (${esc(r.sourcetype)})</span>`
+                     : `<span class="sp-err">✗ ${esc(r.name)}: ${esc(r.error || 'failed')}</span>`);
             $('#up-status').innerHTML = `total ${res.total_events} event(s)<br>` + lines.join('<br>');
             fileInput.value = '';
             setTimeout(() => { loadKpis(); loadNotable(); loadSources(); }, 2000);
@@ -302,7 +326,7 @@
             try { s = await apiService.get('/splunk/sources'); } catch (e) { return; }
             const sel = $('#purge-source');
             const cur = sel.value;
-            sel.innerHTML = '<option value="">— pick a source —</option>' +
+            sel.innerHTML = '<option value="">Pick a source</option>' +
                 (s.sources || []).map(x =>
                     `<option value="${esc(x.source)}">${esc(x.source)} · ${x.count.toLocaleString()} ev · ${esc(x.sourcetype)}</option>`).join('');
             sel.value = cur;
@@ -330,7 +354,7 @@
         $('#spl-csv').onclick = () => {
             if (!lastRows.length) {
                 const el = $('#sp-search-status') || $('#purge-status');
-                if (el) el.innerHTML = '<span style="color:var(--st-warning)">Run a search first — no rows to export.</span>';
+                if (el) el.innerHTML = '<span style="color:var(--st-warning)">Run a search first. There are no rows to export.</span>';
                 return;
             }
             const blob = new Blob([toCsv(lastRows)], { type: 'text/csv' });

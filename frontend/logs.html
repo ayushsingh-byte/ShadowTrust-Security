@@ -4,47 +4,56 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Logs | Shadow Trust</title>
+    <title>Logs · ShadowTrust</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 28 28'%3E%3Crect width='28' height='28' rx='6' fill='%23533afd'/%3E%3Cpath d='M4.5 14c2.5-4.3 5.7-6.4 9.500-6.400s7 2.100 9.500 6.400c-2.500 4.300-5.700 6.400-9.500 6.400S7 18.300 4.500 14Z' fill='none' stroke='%23fff' stroke-width='1.8' stroke-linejoin='round'/%3E%3Ccircle cx='14' cy='14' r='3.2' fill='%23fff'/%3E%3C/svg%3E">
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#ffffff">
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/dashboard.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        .lg-kpis { display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; margin-bottom: 16px; }
-        .lg-kpi { background: var(--st-surface-2); border: 1px solid var(--st-border); border-radius: 8px; padding: 12px; text-align: center; cursor: pointer; }
-        .lg-kpi.sel { border-color: var(--st-info); }
-        .lg-kpi .v { font-size: 1.4rem; font-weight: 700; font-family: var(--font-mono, monospace); }
-        .lg-kpi .l { font-size: 0.6rem; letter-spacing: 1px; color: var(--st-text-muted); text-transform: uppercase; margin-top: 3px; }
-        .lg-bar { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 14px; }
-        .lg-bar select, .lg-bar input { background: var(--st-surface-hover); border: 1px solid var(--st-border); color: var(--st-text);
-            padding: 7px 10px; border-radius: 6px; font: inherit; font-size: 0.85rem; }
+        .main-content .lg-kpis > .lg-kpi { cursor: pointer; transition: background-color var(--st-dur-1) ease; }
+        .main-content .lg-kpis > .lg-kpi:hover { background: var(--st-surface-2); }
+        .main-content .lg-kpis > .lg-kpi.sel { background: var(--st-accent-tint); box-shadow: inset 0 -2px 0 var(--st-accent); }
+        .main-content .lg-kpis > .lg-kpi.sel .l { color: var(--st-accent); }
+        .lg-bar { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 16px; }
+        .lg-bar select, .lg-bar input { min-height: 36px; padding: 0 12px; background: var(--st-surface); border: 1px solid var(--st-border-strong);
+            border-radius: var(--st-radius-md); color: var(--st-text); font: inherit; font-size: 13.5px; }
+        .lg-bar select:focus, .lg-bar input:focus { outline: none; border-color: var(--st-accent); box-shadow: var(--st-focus-ring); }
         .lg-bar input.q { flex: 1; min-width: 200px; }
         .lg-src { display: flex; gap: 6px; }
-        .lg-src label { background: var(--st-surface-hover); border: 1px solid var(--st-border); border-radius: 6px; padding: 6px 9px;
-            font-size: 0.75rem; font-family: var(--font-mono, monospace); cursor: pointer; user-select: none; }
-        .lg-src label.on { border-color: var(--st-info); color: var(--st-info); }
-        .lg-wrap { border: 1px solid var(--st-border); border-radius: 8px; overflow: auto; max-height: calc(100vh - 320px); }
-        table.lg { border-collapse: collapse; width: 100%; font-size: 0.78rem; font-family: var(--font-mono, monospace); }
-        table.lg th { position: sticky; top: 0; background: var(--st-surface-hover); color: var(--st-text-muted); text-align: left; padding: 8px 10px; white-space: nowrap; }
-        table.lg td { padding: 5px 10px; border-top: 1px solid var(--st-border); color: var(--st-text-secondary); vertical-align: top; }
-        table.lg tr:hover td { background: var(--st-surface); }
-        .chip { display: inline-block; padding: 1px 7px; border-radius: 5px; font-size: 0.68rem; letter-spacing: .3px; }
-        .cat-auth { background: color-mix(in srgb, var(--st-info) 14%, transparent); color: var(--st-info); }
-        .cat-recon { background: color-mix(in srgb, var(--st-warning) 14%, transparent); color: var(--st-warning); }
-        .cat-exec, .cat-c2 { background: color-mix(in srgb, var(--st-caution) 16%, transparent); color: var(--st-caution); }
-        .cat-malware { background: color-mix(in srgb, var(--st-danger) 18%, transparent); color: var(--st-danger); }
-        .cat-lateral, .cat-exfil, .cat-persistence, .cat-privilege, .cat-defense-evasion { background: color-mix(in srgb, var(--st-info) 16%, transparent); color: var(--st-info); }
-        .cat-error { background: color-mix(in srgb, var(--st-danger) 12%, transparent); color: var(--st-danger); }
-        .cat-network, .cat-system, .cat-info { background: color-mix(in srgb, var(--st-text) 14%, transparent); color: var(--st-text-muted); }
-        .cat-audit { background: color-mix(in srgb, var(--st-success) 14%, transparent); color: var(--st-success); }
-        .sev-CRITICAL { color: var(--st-danger); font-weight: 700; }
-        .sev-HIGH { color: var(--st-caution); } .sev-MEDIUM { color: var(--st-warning); }
-        .sev-LOW { color: var(--st-text-muted); } .sev-INFO { color: var(--st-text-muted); }
-        .lg-msg { max-width: 780px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .lg-src label { display: inline-flex; align-items: center; height: 32px; padding: 0 13px; border: 1px solid var(--st-border-strong); border-radius: var(--st-radius-sm);
+            background: var(--st-surface); font-size: 13px; font-weight: 500; color: var(--st-text-muted); cursor: pointer; user-select: none; transition: all var(--st-dur-1) ease; }
+        .lg-src label::first-letter { text-transform: uppercase !important; }
+        .lg-src label.on { background: var(--st-accent-tint); border-color: var(--st-accent-border); color: var(--st-accent); }
+        .lg-wrap { background: var(--st-surface); border: 1px solid var(--st-border); border-radius: var(--st-radius-lg); box-shadow: var(--st-shadow-sm);
+            overflow: auto; max-height: calc(100vh - 372px); min-height: 280px; }
+        table.lg { border-collapse: collapse; width: 100%; font-size: 13.5px; }
+        table.lg th { position: sticky; top: 0; z-index: 1; background: var(--st-surface); color: var(--st-text-muted); text-align: left; padding: 12px 16px;
+            white-space: nowrap; font-size: 12.5px; font-weight: 600; border-bottom: 1px solid var(--st-border); }
+        table.lg td { padding: 10px 16px; border-bottom: 1px solid var(--st-border); color: var(--st-text-secondary); vertical-align: top; }
+        table.lg td:first-child { font-family: var(--st-font-mono); font-size: 12.5px; color: var(--st-text-muted); white-space: nowrap; }
+        table.lg tr:hover td { background: var(--st-surface-2); }
+        .chip { display: inline-block; padding: 1px 9px; border-radius: var(--st-radius-sm); font-size: 12px; font-weight: 600; }
+        .chip::first-letter { text-transform: uppercase !important; }
+        .cat-auth { background: var(--st-info-bg); color: var(--st-info); }
+        .cat-recon { background: var(--st-warning-bg); color: var(--st-warning); }
+        .cat-exec, .cat-c2 { background: var(--st-caution-bg); color: var(--st-caution); }
+        .cat-malware { background: var(--st-danger-bg); color: var(--st-danger); }
+        .cat-lateral, .cat-exfil, .cat-persistence, .cat-privilege, .cat-defense-evasion { background: var(--st-info-bg); color: var(--st-info); }
+        .cat-error { background: var(--st-danger-bg); color: var(--st-danger); }
+        .cat-network, .cat-system, .cat-info { background: var(--st-neutral-bg); color: var(--st-text-secondary); }
+        .cat-audit { background: var(--st-success-bg); color: var(--st-success); }
+        td[class^="sev-"] { font-size: 12px; font-weight: 600; }
+        .sev-CRITICAL { color: var(--st-danger); } .sev-HIGH { color: var(--st-caution); } .sev-MEDIUM { color: var(--st-warning); }
+        .sev-LOW { color: var(--st-text-muted); } .sev-INFO { color: var(--st-text-faint); }
+        .lg-msg { max-width: 780px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: var(--st-font-mono); font-size: 12.5px; color: var(--st-text); cursor: pointer; }
         .lg-msg.exp { white-space: pre-wrap; overflow: visible; }
         .lg-src-tag { color: var(--st-text-muted); }
     </style>
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600;700&amp;display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300..600&family=Source+Code+Pro:wght@400;500;600&display=swap">
     <link rel="stylesheet" href="css/tokens.css">
     <script src="js/theme.js"></script>
 </head>
@@ -56,12 +65,12 @@
         <main class="main-content">
             <div class="top-bar">
                 <div class="page-header">
-                    <h2>LOGS</h2>
-                    <p>UNIFIED FEED // every source, categorised &nbsp;<span id="lg-meta" class="lg-src-tag"></span></p>
+                    <h2>Logs</h2>
+                    <p>Every source in one feed, categorised. &nbsp;<span id="lg-meta" class="lg-src-tag"></span></p>
                 </div>
                 <div class="filters-bar">
-                    <label class="lg-src-tag" style="font-size:.8rem;"><input type="checkbox" id="lg-auto" checked> auto-refresh</label>
-                    <button class="soc-btn soc-btn-primary" id="lg-refresh"><i class="fas fa-rotate"></i> REFRESH</button>
+                    <label class="lg-src-tag" style="font-size:.8rem;"><input type="checkbox" id="lg-auto" checked> Auto-refresh</label>
+                    <button class="soc-btn soc-btn-primary" id="lg-refresh"><i class="fas fa-rotate"></i> Refresh</button>
                 </div>
             </div>
 
@@ -75,23 +84,23 @@
                     <label data-src="audit" class="on"><input type="checkbox" checked hidden> audit</label>
                 </div>
                 <select id="lg-cat">
-                    <option value="">all categories</option>
+                    <option value="">All categories</option>
                     <option>auth</option><option>recon</option><option>exec</option><option>c2</option>
                     <option>malware</option><option>lateral</option><option>exfil</option><option>persistence</option>
                     <option>privilege</option><option>defense-evasion</option><option>network</option>
                     <option>system</option><option>audit</option><option>error</option><option>info</option>
                 </select>
                 <select id="lg-sev">
-                    <option value="">any severity</option>
+                    <option value="">Any severity</option>
                     <option>LOW</option><option>MEDIUM</option><option>HIGH</option><option>CRITICAL</option>
                 </select>
-                <input class="q" id="lg-q" placeholder="search text…">
+                <input class="q" id="lg-q" placeholder="Search log text…">
                 <button class="soc-btn" id="lg-csv"><i class="fas fa-download"></i> CSV</button>
             </div>
 
             <div class="lg-wrap">
                 <table class="lg">
-                    <thead><tr><th>time</th><th>source</th><th>category</th><th>sev</th><th>message</th></tr></thead>
+                    <thead><tr><th>Time</th><th>Source</th><th>Category</th><th>Severity</th><th>Message</th></tr></thead>
                     <tbody id="lg-rows"><tr><td colspan="5" style="padding:16px; color:var(--st-text-muted);">loading…</td></tr></tbody>
                 </table>
             </div>

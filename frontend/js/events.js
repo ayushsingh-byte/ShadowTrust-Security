@@ -134,7 +134,7 @@
             <span class="ts">${fmtTime(ev.timestamp)}</span>
             <span class="sensor">${esc(ev.sensor)}</span>
             ${severityBadge(ev.severity)}
-            <span class="detail"><span class="ip">${esc(ev.source_ip || '?')}</span> — ${describeEvent(ev)}</span>
+            <span class="detail"><span class="ip">${esc(ev.source_ip || '?')}</span>${describeEvent(ev)}</span>
         `;
         el.feed.insertBefore(row, el.feed.firstChild);
 
@@ -211,7 +211,7 @@
             el.timeline.innerHTML = '<div class="hn-empty">No data</div>';
             return;
         }
-        el.timelineTitle.textContent = `${profile.source_ip} — ${profile.event_count} event(s), first seen ${fmtRelative(profile.first_seen)}`;
+        el.timelineTitle.textContent = `${profile.source_ip}: ${profile.event_count} event(s), first seen ${fmtRelative(profile.first_seen)}`;
         el.timeline.innerHTML = profile.timeline.map((ev) => `
             <div class="hn-timeline-item">
                 <span class="ts">${fmtTime(ev.timestamp)}</span>

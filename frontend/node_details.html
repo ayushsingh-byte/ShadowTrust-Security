@@ -3,338 +3,460 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>Node Investigation | Shadow Trust</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sensor investigation · ShadowTrust</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 28 28'%3E%3Crect width='28' height='28' rx='6' fill='%23533afd'/%3E%3Cpath d='M4.5 14c2.5-4.3 5.7-6.4 9.500-6.400s7 2.100 9.500 6.400c-2.500 4.300-5.700 6.400-9.500 6.400S7 18.300 4.500 14Z' fill='none' stroke='%23fff' stroke-width='1.8' stroke-linejoin='round'/%3E%3Ccircle cx='14' cy='14' r='3.2' fill='%23fff'/%3E%3C/svg%3E">
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#ffffff">
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/dashboard.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        /* SOC DASHBOARD SPECIFIC STYLES */
-        .node-header {
+        /* =========================================================
+           Sensor investigation: one honeypot sensor, from the API.
+           Totals come from /live/sensors, the container line from /nodes, and
+           every list and chart from the latest events of that sensor
+           (/live/events), which the page says next to each heading.
+           ========================================================= */
+
+        .nd-id {
             display: flex;
-            justify-content: space-between;
             align-items: center;
-            background: color-mix(in srgb, var(--st-bg) 80%, transparent);
-            border: 1px solid var(--st-border);
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 16px 24px;
             padding: 20px;
-            margin-bottom: 20px;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .node-header::after {
-            content: '';
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            height: 2px;
-            background: linear-gradient(90deg, var(--neon-cyan), transparent);
-        }
-
-        .risk-badge {
-            font-size: 0.8rem;
-            padding: 5px 12px;
-            border: 1px solid var(--neon-red);
-            color: var(--neon-red);
-            background: color-mix(in srgb, var(--st-danger) 10%, transparent);
-            text-transform: uppercase;
-            font-weight: 700;
-            letter-spacing: 1px;
-            animation: pulse-red 2s infinite;
-        }
-
-        @keyframes pulse-red {
-            0% {
-                box-shadow: 0 0 0 0 color-mix(in srgb, var(--st-danger) 40%, transparent);
-            }
-
-            70% {
-                box-shadow: 0 0 0 10px color-mix(in srgb, var(--st-danger) 1%, transparent);
-            }
-
-            100% {
-                box-shadow: 0 0 0 0 color-mix(in srgb, var(--st-danger) 1%, transparent);
-            }
-        }
-
-        .stat-grid-compact {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 15px;
-            margin-bottom: 20px;
-        }
-
-        .stat-box {
-            background: var(--bg-card);
             border: 1px solid var(--st-border);
-            padding: 15px;
+            border-radius: var(--st-radius-lg);
+            background: var(--st-surface);
+        }
+
+        .nd-id h3 {
+            margin: 0;
+            font-size: 22px;
+            font-weight: 300;
+            letter-spacing: -0.015em;
+        }
+
+        .nd-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px 20px;
+            margin-top: 6px;
+            font-size: 13px;
+            color: var(--st-text-muted);
+        }
+
+        .nd-meta b {
+            font-weight: 500;
+            color: var(--st-text);
+        }
+
+        .nd-card {
             display: flex;
             flex-direction: column;
-        }
-
-        .terminal-log-container {
-            height: 300px;
-            background: var(--st-surface-2);
+            min-width: 0;
+            height: 380px;
             border: 1px solid var(--st-border);
-            padding: 10px;
-            overflow-y: auto;
-            font-family: var(--st-font-mono);
-            font-size: 0.75rem;
-            color: var(--st-text-secondary);
+            border-radius: var(--st-radius-lg);
+            background: var(--st-surface);
+            overflow: hidden;
         }
 
-        .log-entry {
-            margin-bottom: 4px;
-            border-bottom: 1px solid var(--st-border);
-            padding-bottom: 2px;
+        .nd-card.tall {
+            height: 300px;
+        }
+
+        .nd-card > .hd {
+            flex: none;
             display: flex;
-            gap: 10px;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            height: 52px;
+            padding: 0 20px;
+            border-bottom: 1px solid var(--st-border);
         }
 
-        .log-time {
+        .nd-card > .hd .t {
+            font-size: 15px;
+            font-weight: 500;
+            letter-spacing: -0.01em;
+            color: var(--st-text);
+        }
+
+        .nd-card > .hd .aside {
+            font-size: 12.5px;
             color: var(--st-text-faint);
-            width: 70px;
         }
 
-        .log-ip {
-            color: var(--neon-cyan);
-            width: 110px;
-        }
-
-        .log-type {
-            color: var(--neon-purple);
-            width: 100px;
-        }
-
-        .log-payload {
-            color: var(--st-text-secondary);
+        .nd-body {
             flex: 1;
-            white-space: nowrap;
+            min-height: 0;
+            overflow-y: auto;
+            scrollbar-width: thin;
+        }
+
+        .nd-body.pad {
+            padding: 16px 20px;
+        }
+
+        .nd-row {
+            display: grid;
+            align-items: baseline;
+            gap: 12px;
+            padding: 9px 20px;
+            border-bottom: 1px solid var(--st-border);
+            font-size: 13px;
+            color: var(--st-text-secondary);
+        }
+
+        .nd-row:last-child {
+            border-bottom: 0;
+        }
+
+        .nd-row.src {
+            grid-template-columns: minmax(0, 1fr) 60px;
+        }
+
+        .nd-row.feed {
+            grid-template-columns: 64px minmax(0, 1fr) auto;
+        }
+
+        .nd-row.cmd {
+            grid-template-columns: 64px minmax(0, 1fr);
+        }
+
+        .nd-row .mono {
+            font: 400 12.5px var(--st-font-mono);
+            color: var(--st-text);
+            overflow-wrap: anywhere;
+        }
+
+        .nd-row .tm {
+            font: 400 12px var(--st-font-mono);
+            color: var(--st-text-faint);
+        }
+
+        .nd-row .n {
+            text-align: right;
+            font-weight: 500;
+            color: var(--st-text);
+            font-variant-numeric: tabular-nums;
+        }
+
+        .nd-row small {
+            display: block;
+            margin-top: 2px;
+            font-size: 12px;
+            color: var(--st-text-muted);
+            overflow-wrap: anywhere;
+        }
+
+        .nd-bars {
+            display: grid;
+            gap: 12px;
+        }
+
+        .nd-bar {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) 48px;
+            gap: 4px 12px;
+            font-size: 13px;
+        }
+
+        .nd-bar .lab {
+            font-family: var(--st-font-mono);
+            font-size: 12.5px;
+            color: var(--st-text);
             overflow: hidden;
             text-overflow: ellipsis;
+            white-space: nowrap;
         }
 
-        .ioc-tag {
-            background: var(--st-surface);
-            border: 1px solid var(--st-border);
-            padding: 2px 6px;
-            font-size: 0.7rem;
-            color: var(--neon-cyan);
-            margin-right: 5px;
-            font-family: var(--st-font-mono);
-            display: inline-block;
-            margin-bottom: 5px;
-            cursor: pointer;
+        .nd-bar .n {
+            text-align: right;
+            color: var(--st-text-muted);
+            font-variant-numeric: tabular-nums;
         }
 
-        .ioc-tag:hover {
-            border-color: var(--neon-cyan);
-            background: color-mix(in srgb, var(--st-info) 10%, transparent);
-        }
-
-        .country-bar {
-            height: 4px;
+        .nd-bar .track {
+            grid-column: 1 / -1;
+            height: 5px;
+            border-radius: 3px;
             background: var(--st-surface-hover);
-            width: 100%;
-            margin-top: 5px;
-            border-radius: 2px;
             overflow: hidden;
+        }
+
+        .nd-bar .track i {
+            display: block;
+            height: 100%;
+            border-radius: 3px;
+            background: var(--st-grad-brand);
+        }
+
+        .nd-empty {
+            display: grid;
+            place-items: center;
+            height: 100%;
+            padding: 24px;
+            text-align: center;
+            font-size: 13.5px;
+            color: var(--st-text-muted);
+        }
+
+        .nd-chart {
+            position: relative;
+            flex: 1;
+            min-height: 0;
+            margin: 16px 20px 16px 12px;
+        }
+
+        @media (max-width: 760px) {
+            .nd-card,
+            .nd-card.tall {
+                height: 340px;
+            }
         }
     </style>
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600;700&amp;display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300..600&family=Source+Code+Pro:wght@400;500;600&display=swap">
     <link rel="stylesheet" href="css/tokens.css">
     <script src="js/theme.js"></script>
 </head>
 
 <body>
-
     <div class="app-container">
-
-        <!-- SIDEBAR -->
         <aside class="sidebar" id="sidebar"></aside>
 
-        <!-- MAIN CONTENT -->
         <main class="main-content">
-
             <div class="top-bar">
                 <div class="page-header">
-                    <h2><a href="nodes.html" style="text-decoration: none; color: var(--st-text-muted);">NODES</a> / INVESTIGATION</h2>
-                    <p>SOC ANALYST CONSOLE // <span class="text-cyan">LIVE FORENSICS</span></p>
+                    <h2>Sensor investigation</h2>
+                    <p>One honeypot sensor: who is talking to it, what they send, and what it recorded.</p>
                 </div>
+                <div class="filters-bar">
+                    <select class="soc-select" id="nd-sensor" aria-label="Sensor"></select>
+                    <a class="soc-btn" href="nodes.html"><i class="fas fa-arrow-left"></i> All sensors</a>
+                </div>
+            </div>
+
+            <div class="nd-id">
                 <div>
-                    <button class="soc-btn" onclick="window.location.href='nodes.html'"><i
-                            class="fas fa-arrow-left"></i> BACK TO GRID</button>
-                    <button class="soc-btn soc-btn-primary"><i class="fas fa-file-export"></i> EXPORT REPORT</button>
+                    <h3 id="nd-name">Loading</h3>
+                    <div class="nd-meta" id="nd-meta"></div>
                 </div>
+                <span class="live-indicator" id="nd-state" data-status="connecting"><span class="live-dot"></span><span id="nd-state-text">Checking</span></span>
             </div>
 
-            <!-- SECTION 1: IDENTITY HEADER -->
-            <div class="node-header">
-                <div style="display: flex; gap: 20px; align-items: center;">
-                    <i class="fas fa-server" style="font-size: 2.5rem; color: var(--st-text);"></i>
-                    <div>
-                        <h1 style="font-size: 1.5rem; color: var(--st-text); margin-bottom: 5px;">—</h1>
-                        <div class="text-mono" style="color: var(--st-text-muted); font-size: 0.85rem;">
-                            IP: <span class="text-white">—</span> |
-                            TYPE: <span class="text-cyan">—</span> |
-                            SECTOR: <span class="text-white">—</span>
-                        </div>
-                    </div>
-                </div>
-                <div style="text-align: right;">
-                    <div style="margin-bottom: 5px;">CURRENT THREAT LEVEL</div>
-                    <span class="risk-badge">—</span>
-                </div>
+            <div class="kpis">
+                <div class="kpi"><div class="kpi-label">Events recorded</div><div class="kpi-value" id="nd-events">0</div><div class="kpi-sub">All time, this sensor</div></div>
+                <div class="kpi"><div class="kpi-label">Source addresses</div><div class="kpi-value" id="nd-ips">0</div><div class="kpi-sub">Distinct, all time</div></div>
+                <div class="kpi"><div class="kpi-label"><span class="kpi-flag bad"></span>High and critical</div><div class="kpi-value" id="nd-high">0</div><div class="kpi-sub" id="nd-high-sub">In the latest events</div></div>
+                <div class="kpi"><div class="kpi-label">Last event</div><div class="kpi-value" id="nd-last">n/a</div><div class="kpi-sub" id="nd-last-sub">&nbsp;</div></div>
             </div>
 
-            <!-- SECTION A: ATTACK SUMMARY (COMPACT) -->
-            <div class="stat-grid-compact">
-                <div class="stat-box">
-                    <div class="text-xs text-muted">TOTAL ATTACKS (24H)</div>
-                    <div class="text-xl text-white font-bold">—</div>
-                    <div class="text-xs text-muted">—</div>
-                </div>
-                <div class="stat-box">
-                    <div class="text-xs text-muted">UNIQUE ATTACKERS</div>
-                    <div class="text-xl text-cyan font-bold">—</div>
-                    <div class="text-xs text-muted">Source IPs</div>
-                </div>
-                <div class="stat-box">
-                    <div class="text-xs text-muted">TOP ATTACK TYPE</div>
-                    <div class="text-xl text-purple font-bold">—</div>
-                    <div class="text-xs text-muted">—</div>
-                </div>
-                <div class="stat-box">
-                    <div class="text-xs text-muted">LAST ACTIVITY</div>
-                    <div class="text-xl text-green font-bold">—</div>
-                    <div class="text-xs text-muted">—</div>
-                </div>
+            <div class="grid12">
+                <section class="nd-card c4">
+                    <div class="hd"><span class="t">Top sources</span><span class="aside" data-sample></span></div>
+                    <div class="nd-body" id="nd-sources"></div>
+                </section>
+                <section class="nd-card c4">
+                    <div class="hd"><span class="t">Event types</span><span class="aside" data-sample></span></div>
+                    <div class="nd-body pad" id="nd-types"></div>
+                </section>
+                <section class="nd-card c4">
+                    <div class="hd"><span class="t">Event feed</span><span class="aside">Newest first, updates live</span></div>
+                    <div class="nd-body" id="nd-feed"></div>
+                </section>
             </div>
 
-            <!-- MAIN DASHBOARD GRID -->
-            <div class="dashboard-grid grid-3">
-
-                <!-- COL 1: ATTACKERS & GEO -->
-                <div style="display: flex; flex-direction: column; gap: 20px;">
-
-                    <!-- SECTION B: TOP ATTACKERS -->
-                    <div class="soc-card" style="padding: 0;">
-                        <div class="soc-card-header" style="padding: 15px;">
-                            <span class="card-title">TOP ATTACKERS (24H)</span>
-                        </div>
-                        <table class="terminal-table">
-                            <thead>
-                                <tr>
-                                    <th>IP</th>
-                                    <th>CN</th>
-                                    <th>ATTEMPTS</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td colspan="3" class="text-muted">No data yet</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-
-                    <!-- SECTION F: GEO INTELLIGENCE -->
-                    <div class="soc-card">
-                        <div class="soc-card-header">
-                            <span class="card-title">GEO ORIGINS</span>
-                        </div>
-                        <div class="text-muted" style="font-size:0.75rem;">No data yet</div>
-                    </div>
-
-                </div>
-
-                <!-- COL 2: CHARTS & LOGS -->
-                <div style="display: flex; flex-direction: column; gap: 20px;">
-
-                    <!-- SECTION C: ATTACK BREAKDOWN -->
-                    <div class="soc-card" style="height: 250px;">
-                        <div class="soc-card-header">
-                            <span class="card-title">ATTACK VECTORS</span>
-                        </div>
-                        <div style="height: 180px; width: 100%;">
-                            <canvas id="attackChart"></canvas>
-                        </div>
-                    </div>
-
-                    <!-- SECTION D: REAL-TIME LOG -->
-                    <div class="soc-card" style="padding: 0;">
-                        <div class="soc-card-header" style="padding: 15px;">
-                            <span class="card-title">LIVE EVENT FEED</span>
-                            <span class="badge badge-green animate-pulse">LIVE</span>
-                        </div>
-                        <div class="terminal-log-container" id="liveLog">
-                            <!-- JS Populated -->
-                        </div>
-                    </div>
-
-                </div>
-
-                <!-- COL 3: PAYLOADS & IOCs -->
-                <div style="display: flex; flex-direction: column; gap: 20px;">
-
-                    <!-- SECTION G: IOCs -->
-                    <div class="soc-card">
-                        <div class="soc-card-header">
-                            <span class="card-title">EXTRACTED IOCs</span>
-                        </div>
-                        <div style="display: flex; flex-wrap: wrap; gap: 5px;">
-                            <div class="text-muted" style="font-size:0.75rem;">No data yet</div>
-                        </div>
-                    </div>
-
-                    <!-- SECTION E: CAPTURED PAYLOADS -->
-                    <div class="soc-card" style="padding: 0; flex: 1;">
-                        <div class="soc-card-header" style="padding: 15px;">
-                            <span class="card-title">CAPTURED COMMANDS</span>
-                        </div>
-                        <table class="terminal-table">
-                            <tbody>
-                                <tr>
-                                    <td class="text-muted">No data yet</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-
-                    <!-- SECTION H: ALERTS -->
-                    <div class="soc-card" style="padding: 0;">
-                        <div class="soc-card-header" style="padding: 10px 15px; border-bottom: 1px solid var(--st-border);">
-                            <span class="card-title">ACTIVE ALERTS</span>
-                        </div>
-                        <div class="text-muted" style="padding:10px 15px;">No data yet</div>
-                    </div>
-
-                </div>
-
+            <div class="grid12">
+                <section class="nd-card c6">
+                    <div class="hd"><span class="t">Credentials tried</span><span class="aside" data-sample></span></div>
+                    <div class="nd-body" id="nd-creds"></div>
+                </section>
+                <section class="nd-card c6">
+                    <div class="hd"><span class="t">Commands captured</span><span class="aside" data-sample></span></div>
+                    <div class="nd-body" id="nd-cmds"></div>
+                </section>
             </div>
 
-            <!-- SECTION I: TIMELINE -->
-            <div class="soc-card" style="margin-top: 20px;">
-                <div class="soc-card-header">
-                    <span class="card-title">ATTACK TIMELINE (24H)</span>
-                </div>
-                <div style="height: 200px; width: 100%;">
-                    <canvas id="timelineChart"></canvas>
-                </div>
-            </div>
-
+            <section class="nd-card tall">
+                <div class="hd"><span class="t">Events over time</span><span class="aside" id="nd-span"></span></div>
+                <div class="nd-chart"><canvas id="nd-chart"></canvas></div>
+            </section>
         </main>
     </div>
 
     <script src="js/sidebar.js"></script>
-    <script>
-        const logContainer = document.getElementById('liveLog');
-        if (logContainer) {
-            logContainer.innerHTML = '<div style="color:var(--st-text-faint); padding:10px;">No live data yet.</div>';
+    <script type="module">
+        import { apiService } from './js/api.js';
+
+        const SAMPLE = 1000;
+        const $ = (id) => document.getElementById(id);
+        const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+        const cap = (v) => { const t = String(v ?? '').replace(/_/g, ' ').toLowerCase(); return t.charAt(0).toUpperCase() + t.slice(1); };
+        const has = (v) => v !== null && v !== undefined && v !== '' && v !== 'None';
+        // API timestamps are UTC without a zone suffix
+        const when = (ts) => new Date(String(ts).replace(' ', 'T').replace(/Z?$/, 'Z'));
+        const clock = (ts) => { const d = when(ts); return isNaN(d) ? '' : d.toISOString().slice(11, 19); };
+        const ago = (ts) => {
+            const s = Math.max(0, (Date.now() - when(ts).getTime()) / 1000);
+            if (!isFinite(s)) return 'n/a';
+            if (s < 90) return `${Math.round(s)}s ago`;
+            if (s < 5400) return `${Math.round(s / 60)}m ago`;
+            if (s < 129600) return `${Math.round(s / 3600)}h ago`;
+            return `${Math.round(s / 86400)}d ago`;
+        };
+        const sevBadge = (s) => `<span class="badge ${{ CRITICAL: 'badge-red', HIGH: 'badge-orange', MEDIUM: 'badge-yellow', LOW: 'badge-blue' }[s] || 'badge-gray'}">${esc(cap(s || 'info'))}</span>`;
+        const empty = (text) => `<div class="nd-empty">${esc(text)}</div>`;
+
+        let sensor = new URLSearchParams(location.search).get('sensor') || '';
+        let events = [];
+        let chart = null;
+
+        function describe(e) {
+            if (has(e.command)) return e.command;
+            if (has(e.username)) return `${e.username}${has(e.authentication_result) ? ' · ' + String(e.authentication_result).toLowerCase() : ''}`;
+            return has(e.destination_port) ? `port ${e.destination_port}` : '';
         }
 
+        function feedRow(e, fresh) {
+            const type = String(e.sensor_event_type || '').replace(/^(cowrie|dionaea|honeytrap)\./, '');
+            const more = describe(e);
+            return `<div class="nd-row feed${fresh ? ' st-new' : ''}">
+                <span class="tm">${esc(clock(e.timestamp))}</span>
+                <span><span class="mono">${esc(type)}</span><small>${esc(e.source_ip || '')}${more ? ' · ' + esc(String(more).slice(0, 90)) : ''}</small></span>
+                ${sevBadge(e.severity)}
+            </div>`;
+        }
+
+        function tally(list, key) {
+            const m = new Map();
+            list.forEach((e) => { const k = key(e); if (has(k)) m.set(k, (m.get(k) || 0) + 1); });
+            return [...m.entries()].sort((a, b) => b[1] - a[1]);
+        }
+
+        function render() {
+            const n = events.length;
+            document.querySelectorAll('[data-sample]').forEach((el) => { el.textContent = n ? `Latest ${n.toLocaleString()} events` : ''; });
+
+            const high = events.filter((e) => e.severity === 'HIGH' || e.severity === 'CRITICAL').length;
+            $('nd-high').textContent = high.toLocaleString();
+            $('nd-high-sub').textContent = n ? `Of the latest ${n.toLocaleString()} events` : 'No events yet';
+
+            const sources = tally(events, (e) => e.source_ip).slice(0, 12);
+            $('nd-sources').innerHTML = sources.length ? sources.map(([ip, c]) =>
+                `<div class="nd-row src"><span class="mono">${esc(ip)}</span><span class="n">${c.toLocaleString()}</span></div>`).join('') : empty('No source addresses in the latest events.');
+
+            const types = tally(events, (e) => e.sensor_event_type).slice(0, 8);
+            const top = types.length ? types[0][1] : 1;
+            $('nd-types').innerHTML = types.length ? `<div class="nd-bars">${types.map(([t, c]) =>
+                `<div class="nd-bar"><span class="lab" title="${esc(t)}">${esc(t)}</span><span class="n">${c.toLocaleString()}</span><span class="track"><i style="width:${Math.max(2, c / top * 100)}%"></i></span></div>`).join('')}</div>` : empty('No events recorded by this sensor yet.');
+
+            $('nd-feed').innerHTML = n ? events.slice(0, 40).map((e) => feedRow(e, false)).join('') : empty('No events recorded by this sensor yet.');
+
+            const creds = events.filter((e) => has(e.username)).slice(0, 40);
+            $('nd-creds').innerHTML = creds.length ? creds.map((e) => `<div class="nd-row feed">
+                <span class="tm">${esc(clock(e.timestamp))}</span>
+                <span><span class="mono">${esc(e.username)}${has(e.password) ? ' / ' + esc(e.password) : ''}</span><small>${esc(e.source_ip || '')}</small></span>
+                <span class="badge ${String(e.authentication_result).toUpperCase() === 'SUCCESS' ? 'badge-red' : 'badge-gray'}">${esc(cap(has(e.authentication_result) ? e.authentication_result : 'tried'))}</span>
+            </div>`).join('') : empty('No login attempts in the latest events.');
+
+            const cmds = events.filter((e) => has(e.command)).slice(0, 40);
+            $('nd-cmds').innerHTML = cmds.length ? cmds.map((e) => `<div class="nd-row cmd">
+                <span class="tm">${esc(clock(e.timestamp))}</span>
+                <span><span class="mono">${esc(e.command)}</span><small>${esc(e.source_ip || '')}</small></span>
+            </div>`).join('') : empty('No commands in the latest events.');
+
+            drawChart();
+        }
+
+        // Events per bucket across the time the sample covers (24 buckets).
+        function drawChart() {
+            const times = events.map((e) => when(e.timestamp).getTime()).filter(isFinite);
+            const ctx = $('nd-chart');
+            if (chart) { chart.destroy(); chart = null; }
+            if (times.length < 2) { $('nd-span').textContent = ''; return; }
+            const min = Math.min(...times), max = Math.max(...times);
+            const B = 24, span = Math.max(1, max - min);
+            const counts = new Array(B).fill(0);
+            times.forEach((t) => { counts[Math.min(B - 1, Math.floor((t - min) / span * B))]++; });
+            const label = (t) => { const d = new Date(t); return span > 36 * 3600e3 ? d.toISOString().slice(5, 10) : d.toISOString().slice(11, 16); };
+            $('nd-span').textContent = `${new Date(min).toISOString().slice(0, 16).replace('T', ' ')} to ${new Date(max).toISOString().slice(0, 16).replace('T', ' ')} UTC`;
+            chart = new Chart(ctx, {
+                type: 'line',
+                data: { labels: counts.map((_, i) => label(min + span * (i + 0.5) / B)), datasets: [{ label: 'Events', data: counts, borderColor: 'var(--st-chart-1)', borderWidth: 2, pointRadius: 0, tension: 0.35 }] },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: { display: false }, ticks: { maxTicksLimit: 8 } }, y: { beginAtZero: true, ticks: { precision: 0 } } } },
+            });
+        }
+
+        async function load() {
+            let sensors = [];
+            try { sensors = await apiService.get('/live/sensors'); } catch (_) { sensors = []; }
+            if (!Array.isArray(sensors) || !sensors.length) {
+                $('nd-name').textContent = 'No sensors reported';
+                $('nd-state-text').textContent = 'Unavailable';
+                render();
+                return;
+            }
+            if (!sensors.some((s) => s.sensor === sensor)) sensor = sensors[0].sensor;
+            const pick = $('nd-sensor');
+            pick.innerHTML = sensors.map((s) => `<option value="${esc(s.sensor)}" ${s.sensor === sensor ? 'selected' : ''}>${esc(cap(s.sensor))}</option>`).join('');
+            pick.onchange = () => { location.search = `?sensor=${encodeURIComponent(pick.value)}`; };
+
+            const me = sensors.find((s) => s.sensor === sensor);
+            $('nd-name').textContent = cap(sensor);
+            $('nd-events').textContent = Number(me.event_count || 0).toLocaleString();
+            $('nd-ips').textContent = Number(me.unique_source_ips || 0).toLocaleString();
+            $('nd-last').textContent = me.last_event ? ago(me.last_event) : 'n/a';
+            $('nd-last-sub').textContent = me.last_event ? `${String(me.last_event).replace('T', ' ')} UTC` : 'No events yet';
+
+            // the container behind this sensor, from the node inventory
+            try {
+                const nodes = await apiService.get('/nodes/');
+                const node = (nodes || []).find((x) => String(x.type || '').toLowerCase() === sensor.toLowerCase());
+                if (node) {
+                    const up = Number(node.uptime_seconds);
+                    $('nd-meta').innerHTML = [
+                        ['Container', node.ip_address], ['Node', node.name], ['Sector', cap(node.sector)],
+                        ['CPU', has(node.cpu_percent) ? `${node.cpu_percent}%` : null],
+                        ['Up', isFinite(up) && up > 0 ? (up > 5400 ? `${(up / 3600).toFixed(1)} h` : `${Math.round(up / 60)} min`) : null],
+                    ].filter(([, v]) => has(v)).map(([k, v]) => `<span>${k} <b>${esc(v)}</b></span>`).join('');
+                    const online = /ONLINE|RUNNING/i.test(node.status || '');
+                    $('nd-state').dataset.status = online ? 'live' : 'signed-out';
+                    $('nd-state-text').textContent = cap(node.status || 'unknown');
+                } else {
+                    $('nd-meta').innerHTML = '<span>No container is registered for this sensor</span>';
+                    $('nd-state').dataset.status = 'signed-out';
+                    $('nd-state-text').textContent = cap(me.status || 'unknown');
+                }
+            } catch (_) { $('nd-state-text').textContent = cap(me.status || 'unknown'); }
+
+            try { events = await apiService.get(`/live/events?sensor=${encodeURIComponent(sensor)}&limit=${SAMPLE}`); } catch (_) { events = []; }
+            if (!Array.isArray(events)) events = [];
+            render();
+        }
+
+        // Events pushed over the live stream join the feed and the sample.
+        (function hookLive() {
+            if (!window.STLive) { setTimeout(hookLive, 600); return; }
+            window.STLive.on('event', (e) => {
+                if (!e || e.sensor !== sensor) return;
+                events.unshift(e);
+                if (events.length > SAMPLE) events.pop();
+                const feed = $('nd-feed');
+                if (feed.querySelector('.nd-empty')) feed.innerHTML = '';
+                feed.insertAdjacentHTML('afterbegin', feedRow(e, true));
+                while (feed.children.length > 40) feed.lastElementChild.remove();
+                $('nd-last').textContent = 'just now';
+            });
+        })();
+
+        load();
     </script>
 </body>
 

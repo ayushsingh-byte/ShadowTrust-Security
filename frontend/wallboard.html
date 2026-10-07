@@ -1,0 +1,746 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wallboard · ShadowTrust</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 28 28'%3E%3Crect width='28' height='28' rx='6' fill='%23533afd'/%3E%3Cpath d='M4.5 14c2.5-4.3 5.7-6.4 9.5-6.4s7 2.1 9.5 6.4c-2.5 4.3-5.7 6.4-9.5 6.4S7 18.3 4.5 14Z' fill='none' stroke='%23fff' stroke-width='1.8' stroke-linejoin='round'/%3E%3Ccircle cx='14' cy='14' r='3.2' fill='%23fff'/%3E%3C/svg%3E">
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0b1330">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300..600&family=Source+Code+Pro:wght@400;500;600&display=swap">
+    <link rel="stylesheet" href="css/tokens.css">
+    <style>
+        /* =========================================================
+           Wallboard: one screen for a projector or a wall display.
+           Always dark navy. Three columns: figures, the globe, the live feed;
+           then three lists along the bottom. Every number is read from the
+           API and refreshed while the page is open; nothing scrolls.
+           Sizes use vh so the board fills any 16:9 or 16:10 screen.
+           ========================================================= */
+
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+        }
+
+        html,
+        body {
+            height: 100%;
+            margin: 0;
+        }
+
+        body {
+            display: grid;
+            grid-template-rows: auto minmax(0, 1fr) auto;
+            gap: 1.6vh;
+            padding: 1.8vh 2vw 2vh;
+            background:
+                radial-gradient(60% 50% at 50% 46%, rgba(83, 58, 253, 0.2), rgba(83, 58, 253, 0) 70%),
+                #0b1330;
+            color: var(--st-text);
+            font-family: var(--st-font-main);
+            font-size: clamp(12px, 1.5vh, 17px);
+            line-height: 1.4;
+            overflow: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .wb-ribbon {
+            position: fixed;
+            top: 0;
+            right: 0;
+            z-index: 0;
+            width: 46vw;
+            height: 30vh;
+            opacity: 0.85;
+            pointer-events: none;
+            -webkit-mask-image: linear-gradient(180deg, #000 0, rgba(0, 0, 0, 0.45) 45%, transparent 100%);
+            mask-image: linear-gradient(180deg, #000 0, rgba(0, 0, 0, 0.45) 45%, transparent 100%);
+        }
+
+        body > * {
+            position: relative;
+            z-index: 1;
+        }
+
+        /* ---------- top line ---------- */
+        .wb-top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 2vw;
+        }
+
+        .wb-brand {
+            display: flex;
+            align-items: center;
+            gap: 0.8em;
+            font-size: 1.5em;
+            font-weight: 600;
+            letter-spacing: -0.015em;
+        }
+
+        .wb-brand svg {
+            width: 1.5em;
+            height: 1.5em;
+        }
+
+        .wb-brand span {
+            font-weight: 300;
+            color: var(--st-text-muted);
+        }
+
+        .wb-right {
+            display: flex;
+            align-items: center;
+            gap: 0.8em;
+        }
+
+        .wb-chip,
+        .wb-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.6em;
+            height: 2.5em;
+            padding: 0 1em;
+            border: 1px solid var(--st-border-strong);
+            border-radius: var(--st-radius-md);
+            background: rgba(15, 26, 62, 0.72);
+            font: inherit;
+            color: var(--st-text-secondary);
+            white-space: nowrap;
+        }
+
+        .wb-chip b {
+            font-weight: 500;
+            color: var(--st-text);
+            font-variant-numeric: tabular-nums;
+        }
+
+        .wb-dot {
+            width: 0.6em;
+            height: 0.6em;
+            border-radius: 50%;
+            background: var(--st-text-faint);
+        }
+
+        .wb-dot.live {
+            background: #00b261;
+            box-shadow: 0 0 0 0.25em rgba(0, 178, 97, 0.22);
+        }
+
+        .wb-chip.level-high b,
+        .wb-chip.level-critical b {
+            color: #ff6b9a;
+        }
+
+        .wb-btn {
+            cursor: pointer;
+            text-decoration: none;
+            transition: border-color var(--st-dur-1) ease, color var(--st-dur-1) ease;
+        }
+
+        .wb-btn:hover {
+            border-color: var(--st-accent);
+            color: var(--st-text);
+        }
+
+        /* ---------- middle: figures, globe, feed ---------- */
+        .wb-main {
+            display: grid;
+            grid-template-columns: minmax(0, 22fr) minmax(0, 50fr) minmax(0, 28fr);
+            gap: 1.6vh;
+            min-height: 0;
+        }
+
+        .wb-card {
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+            min-height: 0;
+            border: 1px solid var(--st-border);
+            border-radius: var(--st-radius-xl);
+            background: rgba(15, 26, 62, 0.74);
+            overflow: hidden;
+        }
+
+        .wb-card > h2 {
+            flex: none;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1em;
+            margin: 0;
+            padding: 1em 1.3em 0.9em;
+            border-bottom: 1px solid var(--st-border);
+            font-size: 1.05em;
+            font-weight: 500;
+            letter-spacing: -0.01em;
+        }
+
+        .wb-card > h2 small {
+            font-size: 0.82em;
+            font-weight: 400;
+            color: var(--st-text-faint);
+        }
+
+        /* figures: five equal cells */
+        .wb-figs {
+            display: grid;
+            grid-template-rows: repeat(5, minmax(0, 1fr));
+            gap: 1px;
+            position: relative;
+            border: 1px solid var(--st-border);
+            border-radius: var(--st-radius-xl);
+            background: var(--st-border);
+            overflow: hidden;
+        }
+
+        .wb-figs::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            z-index: 1;
+            width: 3px;
+            background: linear-gradient(180deg, #7fb2ff, #7f7dfc 20%, #533afd 40%, #f44bcc 62%, #ff6118 84%, #f9b900);
+        }
+
+        .wb-fig {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            gap: 0.25em;
+            min-height: 0;
+            padding: 0 1.5em 0 1.7em;
+            background: rgba(15, 26, 62, 0.92);
+        }
+
+        .wb-fig .l {
+            display: flex;
+            align-items: center;
+            gap: 0.6em;
+            font-size: 0.95em;
+            color: var(--st-text-muted);
+        }
+
+        .wb-fig .l i {
+            width: 0.55em;
+            height: 0.55em;
+            border-radius: 50%;
+        }
+
+        .wb-fig .v {
+            font-size: clamp(26px, 5.4vh, 64px);
+            font-weight: 300;
+            line-height: 1.05;
+            letter-spacing: -0.025em;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .wb-fig .s {
+            font-size: 0.82em;
+            color: var(--st-text-faint);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* globe */
+        .wb-globe {
+            position: relative;
+            min-height: 0;
+        }
+
+        .wb-globe canvas {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        .wb-globe .cap {
+            position: absolute;
+            left: 0;
+            right: 0;
+            bottom: 0.2em;
+            text-align: center;
+            font-size: 0.9em;
+            color: var(--st-text-faint);
+            pointer-events: none;
+        }
+
+        .wb-tip {
+            position: absolute;
+            z-index: 3;
+            display: flex;
+            flex-direction: column;
+            gap: 0.15em;
+            padding: 0.6em 0.9em;
+            border: 1px solid var(--st-border-strong);
+            border-radius: var(--st-radius-lg);
+            background: #121e47;
+            font-size: 0.9em;
+            color: var(--st-text-muted);
+            white-space: nowrap;
+            pointer-events: none;
+            transform: translate(-50%, calc(-100% - 12px));
+        }
+
+        .wb-tip b {
+            font-family: var(--st-font-mono);
+            font-weight: 500;
+            color: var(--st-text);
+        }
+
+        .wb-tip[hidden] {
+            display: none;
+        }
+
+        /* lists */
+        .wb-list {
+            flex: 1;
+            min-height: 0;
+            overflow: hidden;
+        }
+
+        .wb-row {
+            display: grid;
+            align-items: center;
+            gap: 1em;
+            padding: 0.55em 1.3em;
+            border-bottom: 1px solid var(--st-border);
+        }
+
+        .wb-row:last-child {
+            border-bottom: 0;
+        }
+
+        .wb-row.feed {
+            grid-template-columns: 5.2em minmax(0, 1fr) auto;
+        }
+
+        .wb-row.bar {
+            grid-template-columns: minmax(0, 1fr) auto;
+            gap: 0.3em 1em;
+        }
+
+        .wb-row.inc {
+            grid-template-columns: 6.6em minmax(0, 1fr) auto;
+        }
+
+        .wb-row .tm,
+        .wb-row .key {
+            font: 400 0.86em var(--st-font-mono);
+            color: var(--st-text-faint);
+        }
+
+        .wb-row .main {
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .wb-row .main small {
+            display: block;
+            font: 400 0.86em var(--st-font-mono);
+            color: var(--st-text-muted);
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .wb-row .n {
+            font-weight: 500;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .wb-row .track {
+            grid-column: 1 / -1;
+            height: 0.32em;
+            border-radius: 1em;
+            background: rgba(120, 140, 220, 0.16);
+            overflow: hidden;
+        }
+
+        .wb-row .track i {
+            display: block;
+            height: 100%;
+            border-radius: 1em;
+            background: linear-gradient(90deg, #533afd, #4a8cff);
+            transition: width 0.8s var(--st-ease-out);
+        }
+
+        .wb-row .track i.hot {
+            background: linear-gradient(90deg, #ea2261, #ff6118);
+        }
+
+        .wb-sev {
+            padding: 0.12em 0.6em;
+            border-radius: var(--st-radius-sm);
+            background: rgba(120, 140, 220, 0.16);
+            font-size: 0.82em;
+            font-weight: 500;
+            color: var(--st-text-secondary);
+            white-space: nowrap;
+        }
+
+        .wb-sev.CRITICAL {
+            background: rgba(234, 34, 97, 0.2);
+            color: #ff6b9a;
+        }
+
+        .wb-sev.HIGH {
+            background: rgba(255, 97, 24, 0.2);
+            color: #ff9a66;
+        }
+
+        .wb-sev.MEDIUM {
+            background: rgba(249, 185, 0, 0.18);
+            color: #ffcf5c;
+        }
+
+        .wb-sev.LOW {
+            background: rgba(74, 140, 255, 0.2);
+            color: #7fb2ff;
+        }
+
+        .wb-none {
+            display: grid;
+            place-items: center;
+            height: 100%;
+            padding: 1.5em;
+            text-align: center;
+            color: var(--st-text-faint);
+        }
+
+        .wb-new {
+            animation: wb-new 1.8s var(--st-ease-out);
+        }
+
+        @keyframes wb-new {
+            0% {
+                opacity: 0;
+                transform: translateY(-0.6em);
+                background: rgba(142, 157, 255, 0.24);
+            }
+
+            25% {
+                opacity: 1;
+                transform: none;
+                background: rgba(142, 157, 255, 0.24);
+            }
+
+            100% {
+                background: transparent;
+            }
+        }
+
+        /* ---------- bottom: three lists of one height ---------- */
+        .wb-bottom {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 1.6vh;
+            height: 27vh;
+            min-height: 160px;
+        }
+
+        /* small screens: the board becomes a normal scrolling page */
+        @media (max-width: 1000px), (max-height: 560px) {
+
+            html,
+            body {
+                height: auto;
+            }
+
+            body {
+                display: block;
+                padding: 16px;
+                font-size: 14px;
+                overflow: auto;
+            }
+
+            body > * + * {
+                margin-top: 16px;
+            }
+
+            .wb-top,
+            .wb-right {
+                flex-wrap: wrap;
+            }
+
+            .wb-row.inc {
+                grid-template-columns: minmax(0, 1fr) auto;
+            }
+
+            .wb-row.inc .key {
+                display: none;
+            }
+
+            .wb-main,
+            .wb-bottom {
+                grid-template-columns: minmax(0, 1fr);
+                height: auto;
+            }
+
+            .wb-figs {
+                grid-template-rows: none;
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+
+            .wb-fig {
+                padding: 14px 16px;
+            }
+
+            .wb-fig .v {
+                font-size: 32px;
+            }
+
+            .wb-fig:last-child {
+                grid-column: 1 / -1;
+            }
+
+            .wb-globe {
+                height: 62vw;
+                min-height: 300px;
+            }
+
+            .wb-card {
+                max-height: 380px;
+            }
+
+            .wb-ribbon {
+                width: 90vw;
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+
+            .wb-new {
+                animation: none;
+            }
+
+            .wb-row .track i {
+                transition: none;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <canvas class="wb-ribbon" data-ribbon="console" aria-hidden="true"></canvas>
+
+    <header class="wb-top">
+        <div class="wb-brand">
+            <svg viewBox="0 0 28 28" fill="none" aria-hidden="true"><path d="M2.5 14c3-5.3 7-8 11.5-8s8.500 2.700 11.500 8c-3 5.300-7 8-11.500 8S5.500 19.300 2.500 14Z" stroke="currentColor" stroke-width="2.200" stroke-linejoin="round"/><circle cx="14" cy="14" r="4.200" fill="#8e9dff"/></svg>
+            ShadowTrust <span>Wallboard</span>
+        </div>
+        <div class="wb-right">
+            <span class="wb-chip" id="wb-level">Threat level <b>n/a</b></span>
+            <span class="wb-chip"><span class="wb-dot" id="wb-dot"></span><span id="wb-stream">Connecting</span></span>
+            <span class="wb-chip"><b id="wb-clock">--:--:--</b> UTC</span>
+            <button class="wb-btn" id="wb-full" type="button">Full screen</button>
+            <a class="wb-btn" href="dashboard.html">Exit</a>
+        </div>
+    </header>
+
+    <main class="wb-main">
+        <section class="wb-figs" aria-label="Key figures">
+            <div class="wb-fig"><div class="l"><i style="background:#8e9dff"></i>Events logged</div><div class="v" id="f-events">0</div><div class="s">All sensors, all time</div></div>
+            <div class="wb-fig"><div class="l"><i style="background:#4a8cff"></i>Source addresses</div><div class="v" id="f-ips">0</div><div class="s">Distinct attackers seen</div></div>
+            <div class="wb-fig"><div class="l"><i style="background:#ea2261"></i>High-risk alerts</div><div class="v" id="f-high">0</div><div class="s">Risk score 80 or more</div></div>
+            <div class="wb-fig"><div class="l"><i style="background:#ff6118"></i>Open incidents</div><div class="v" id="f-open">0</div><div class="s" id="f-open-sub">&nbsp;</div></div>
+            <div class="wb-fig"><div class="l"><i style="background:#00b261"></i>Sensors online</div><div class="v" id="f-sensors">0 / 0</div><div class="s" id="f-sensors-sub">&nbsp;</div></div>
+        </section>
+
+        <section class="wb-globe" aria-label="Where attack traffic comes from">
+            <canvas id="wb-globe"></canvas>
+            <div class="wb-tip" id="wb-tip" hidden></div>
+            <div class="cap" id="wb-globe-cap">Each spike is one source location. Height follows its event count.</div>
+        </section>
+
+        <section class="wb-card">
+            <h2>Live event feed <small>Newest first</small></h2>
+            <div class="wb-list" id="wb-feed"><div class="wb-none">Waiting for events</div></div>
+        </section>
+    </main>
+
+    <footer class="wb-bottom">
+        <section class="wb-card">
+            <h2>Top source locations <small>By events</small></h2>
+            <div class="wb-list" id="wb-locs"><div class="wb-none">Loading</div></div>
+        </section>
+        <section class="wb-card">
+            <h2>Most targeted ports <small>By events</small></h2>
+            <div class="wb-list" id="wb-ports"><div class="wb-none">Loading</div></div>
+        </section>
+        <section class="wb-card">
+            <h2>Latest incidents <small id="wb-inc-sub">&nbsp;</small></h2>
+            <div class="wb-list" id="wb-incs"><div class="wb-none">Loading</div></div>
+        </section>
+    </footer>
+
+    <script src="js/ribbon.js"></script>
+    <script src="js/globe.js"></script>
+    <script src="js/live.js"></script>
+    <script type="module">
+        import { apiService } from './js/api.js';
+
+        // signed-out visitors go to the sign-in page, like every console page
+        if (!apiService.getToken()) location.replace('login.html');
+
+        const $ = (id) => document.getElementById(id);
+        // stored titles may contain a spaced em dash; the board shows a middle dot, like the rest of the console
+        const esc = (s) => String(s ?? '').replace(/\s+\u2014\s+/g, ' · ').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+        // a list never shows half a row: rows that do not fit its card are dropped from the end
+        const fit = (el) => { while (el.children.length > 1 && el.scrollHeight > el.clientHeight + 1) el.lastElementChild.remove(); };
+        const cap = (v) => { const t = String(v ?? '').replace(/_/g, ' ').toLowerCase(); return t.charAt(0).toUpperCase() + t.slice(1); };
+        const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;
+        const FEED_ROWS = 14;
+
+        /* figures count up to a new value instead of jumping */
+        const shown = new WeakMap();
+        function setNumber(el, value) {
+            const to = Number(value) || 0;
+            const from = shown.get(el) ?? 0;
+            shown.set(el, to);
+            if (REDUCED || from === to) { el.textContent = to.toLocaleString(); return; }
+            const start = performance.now();
+            (function tick(now) {
+                const p = Math.min(1, (now - start) / 900);
+                const e = 1 - Math.pow(1 - p, 3);
+                el.textContent = Math.round(from + (to - from) * e).toLocaleString();
+                if (p < 1 && shown.get(el) === to) requestAnimationFrame(tick);
+            })(start);
+        }
+
+        const globe = window.STGlobe ? STGlobe.create($('wb-globe'), { tip: $('wb-tip') }) : null;
+
+        function bars(el, rows, emptyText) {
+            if (!rows.length) { el.innerHTML = `<div class="wb-none">${esc(emptyText)}</div>`; return; }
+            const top = Math.max(...rows.map((r) => r.n), 1);
+            el.innerHTML = rows.map((r, i) => `<div class="wb-row bar">
+                <span class="main">${esc(r.label)}${r.sub ? `<small>${esc(r.sub)}</small>` : ''}</span>
+                <span class="n">${r.n.toLocaleString()}</span>
+                <span class="track"><i class="${i === 0 && r.hot ? 'hot' : ''}" style="width:${Math.max(2, r.n / top * 100)}%"></i></span>
+            </div>`).join('');
+            fit(el);
+        }
+
+        function feedRow(e, fresh) {
+            // /dashboard/stats rows and stream payloads name their fields differently
+            const ts = String(e.timestamp || '').replace(' ', 'T');
+            const ip = e.attacker_ip || e.source_ip || '';
+            const sensor = e.honeypot_type || e.sensor || '';
+            const type = String(e.event_type || e.sensor_event_type || '').replace(/^(cowrie|dionaea|honeytrap)\./, '');
+            const port = e.target_port || e.destination_port;
+            return `<div class="wb-row feed${fresh ? ' wb-new' : ''}">
+                <span class="tm">${esc(ts.slice(11, 19))}</span>
+                <span class="main">${esc(ip)}${port ? ':' + esc(port) : ''}<small>${esc(String(sensor).toLowerCase())}${type ? ' · ' + esc(type) : ''}</small></span>
+                ${e.severity ? `<span class="wb-sev ${esc(e.severity)}">${esc(cap(e.severity))}</span>` : ''}
+            </div>`;
+        }
+
+        let feedSeeded = false;
+        async function loadStats() {
+            const d = await apiService.get('/dashboard/stats');
+            const s = d.summary || {};
+            setNumber($('f-events'), s.total_attacks);
+            setNumber($('f-ips'), s.unique_attackers);
+            setNumber($('f-high'), s.high_risk_alerts);
+            const dec = (d.system || {}).deception || {};
+            $('f-sensors').textContent = `${dec.sensors_online ?? 0} / ${dec.sensors_total ?? 0}`;
+            $('f-sensors-sub').textContent = d.system?.last_event_at ? `Last event ${String(d.system.last_event_at).replace('T', ' ')} UTC` : 'No events yet';
+            const level = String(s.current_threat_level || 'n/a');
+            $('wb-level').className = `wb-chip level-${level.toLowerCase()}`;
+            $('wb-level').innerHTML = `Threat level <b>${esc(cap(level))}</b>`;
+
+            bars($('wb-ports'), (d.top_vectors || []).slice(0, 5).map((v) => ({ label: `Port ${v.port}${v.service ? ' · ' + v.service : ''}`, n: Number(v.count) || 0 })), 'No port activity recorded yet');
+
+            if (!feedSeeded && (d.recent || []).length) {
+                feedSeeded = true;
+                $('wb-feed').innerHTML = d.recent.slice(0, FEED_ROWS).map((e) => feedRow(e, false)).join('');
+                fit($('wb-feed'));
+            }
+        }
+
+        async function loadGeo() {
+            const g = await apiService.get('/dashboard/geo');
+            const markers = (g.markers || []).slice(0, 30);
+            if (globe) globe.setPoints(markers);
+            $('wb-globe-cap').textContent = markers.length
+                ? `${markers.length} source locations shown. Each spike's height follows its event count.`
+                : 'No geolocated sources yet.';
+            bars($('wb-locs'), (g.top_locations || []).slice(0, 5).map((l) => ({ label: l.location || l.code || 'Unknown', n: Number(l.events) || 0, hot: true })), 'No source resolved to a location yet');
+        }
+
+        async function loadIncidents() {
+            const [list, stats] = await Promise.all([
+                apiService.get('/incidents?limit=5'),
+                apiService.get('/incidents/stats').catch(() => null),
+            ]);
+            if (stats) {
+                setNumber($('f-open'), stats.open);
+                $('f-open-sub').textContent = `${Number(stats.total || 0).toLocaleString()} tracked in total`;
+                $('wb-inc-sub').textContent = `${Number(stats.by_severity?.CRITICAL || 0).toLocaleString()} critical`;
+            }
+            const rows = (list && list.incidents) || [];
+            $('wb-incs').innerHTML = rows.length ? rows.map((i) => `<div class="wb-row inc">
+                <span class="key">${esc(i.incident_key || '')}</span>
+                <span class="main">${esc(i.title || '')}</span>
+                <span class="wb-sev ${esc(i.severity || '')}">${esc(cap(i.severity || 'n/a'))}</span>
+            </div>`).join('') : '<div class="wb-none">No incidents on record</div>';
+            fit($('wb-incs'));
+        }
+
+        const safely = (fn) => fn().catch(() => { /* keep the last good values on screen */ });
+        const refresh = () => { safely(loadStats); safely(loadGeo); safely(loadIncidents); };
+        refresh();
+        // a different screen size fits a different number of rows: reload the lists
+        let resized = 0;
+        addEventListener('resize', () => { clearTimeout(resized); resized = setTimeout(() => { feedSeeded = false; refresh(); }, 300); });
+        setInterval(() => { if (!document.hidden) refresh(); }, 20000);
+
+        /* live stream: new events join the feed and flash their spike on the globe */
+        const setStream = (status) => {
+            $('wb-dot').classList.toggle('live', status === 'live');
+            $('wb-stream').textContent = { live: 'Live', connecting: 'Connecting', reconnecting: 'Reconnecting', 'signed-out': 'Signed out', idle: 'Connecting' }[status] || cap(status);
+        };
+        document.addEventListener('st-live-status', (e) => setStream(e.detail.status));
+        if (window.STLive) {
+            setStream(window.STLive.status);
+            window.STLive.on('event', (e) => {
+                const feed = $('wb-feed');
+                if (feed.querySelector('.wb-none')) feed.innerHTML = '';
+                feed.insertAdjacentHTML('afterbegin', feedRow(e, true));
+                while (feed.children.length > FEED_ROWS) feed.lastElementChild.remove();
+                fit(feed);
+                feedSeeded = true;
+                if (globe && e.source_ip) globe.pulse(e.source_ip);
+            });
+            const soon = window.STLive.debounce(() => { safely(loadStats); safely(loadIncidents); }, 1500);
+            window.STLive.on('event', soon);
+            window.STLive.on('detection', soon);
+        }
+
+        setInterval(() => { $('wb-clock').textContent = new Date().toISOString().slice(11, 19); }, 1000);
+        $('wb-clock').textContent = new Date().toISOString().slice(11, 19);
+
+        /* full screen: the button, or the F key */
+        const full = $('wb-full');
+        const toggleFull = () => {
+            if (document.fullscreenElement) document.exitFullscreen();
+            else document.documentElement.requestFullscreen?.().catch(() => { /* not allowed here */ });
+        };
+        full.addEventListener('click', toggleFull);
+        document.addEventListener('fullscreenchange', () => { full.textContent = document.fullscreenElement ? 'Leave full screen' : 'Full screen'; });
+        document.addEventListener('keydown', (e) => { if (e.key === 'f' || e.key === 'F') toggleFull(); });
+    </script>
+</body>
+
+</html>

@@ -1,549 +1,176 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-    <meta http-equiv="Pragma" content="no-cache">
-    <meta http-equiv="Expires" content="0">
-    <title>Shadow Trust — Sign In</title>
-    <link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <title>Sign in · ShadowTrust</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300..600&family=Source+Code+Pro:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-        html, body {
-            height: 100%;
-            background: var(--st-bg);
-            font-family: var(--st-font-main);
-            color: var(--st-text);
-            overflow: hidden;
-        }
-
-        .layout {
-            display: grid;
-            grid-template-columns: 1fr 440px;
-            height: 100vh;
-        }
-
-        /* ════ LEFT — image panel ════ */
-        .left {
-            position: relative;
-            overflow: hidden;
-        }
-
-        .left-img {
-            position: absolute; inset: 0;
-            background: url('https://images.unsplash.com/photo-1558494949-ef010cbdcc31?q=85&w=1600&auto=format&fit=crop') center/cover no-repeat;
-        }
-
-        /* dark gradient overlay so text is readable */
-        .left-img::after {
-            content: '';
-            position: absolute; inset: 0;
-            background: linear-gradient(
-                135deg,
-                var(--st-overlay) 0%,
-                var(--st-overlay) 50%,
-                var(--st-overlay) 100%
-            );
-        }
-
-        .left-inner {
-            position: relative; z-index: 1;
-            height: 100%;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            padding: 44px 52px;
-        }
-
-        /* brand */
-        .brand {
-            display: flex; align-items: center; gap: 12px;
-        }
-        .brand-icon {
-            width: 36px; height: 36px;
-            border: 1.5px solid color-mix(in srgb, var(--st-accent) 60%, transparent);
-            display: flex; align-items: center; justify-content: center;
-            color: var(--st-accent); font-size: 0.9rem;
-        }
-        .brand-name {
-            font-family: var(--st-font-mono);
-            font-size: 0.82rem; font-weight: 600;
-            letter-spacing: 3px; color: var(--st-text);
-            text-transform: uppercase;
-        }
-        .brand-ver {
-            font-family: var(--st-font-mono);
-            font-size: 0.58rem; color: var(--st-text-faint);
-            letter-spacing: 2px; margin-top: 2px;
-        }
-
-        /* center copy */
-        .left-copy { max-width: 440px; }
-
-        .badge {
-            display: inline-flex; align-items: center; gap: 7px;
-            padding: 5px 12px;
-            border: 1px solid color-mix(in srgb, var(--st-accent) 20%, transparent);
-            border-radius: 2px;
-            background: color-mix(in srgb, var(--st-accent) 5%, transparent);
-            font-family: var(--st-font-mono);
-            font-size: 0.62rem; color: var(--st-accent);
-            letter-spacing: 2px; text-transform: uppercase;
-            margin-bottom: 28px;
-        }
-        .badge-dot {
-            width: 5px; height: 5px; border-radius: 50%;
-            background: var(--st-accent);
-            animation: blink 2s infinite;
-        }
-        @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.3} }
-
-        .left-copy h1 {
-            font-size: clamp(2rem, 2.8vw, 3rem);
-            font-weight: 700;
-            line-height: 1.12;
-            letter-spacing: -0.5px;
-            color: var(--st-text);
-            margin-bottom: 18px;
-        }
-        .left-copy h1 span {
-            color: var(--st-accent);
-        }
-        .left-copy p {
-            font-size: 0.88rem;
-            color: var(--st-text-muted);
-            line-height: 1.8;
-            max-width: 360px;
-        }
-
-        /* bottom stats */
-        .left-stats {
-            display: flex; gap: 32px;
-        }
-        .ls-item {}
-        .ls-val {
-            font-family: var(--st-font-mono);
-            font-size: 1.3rem; font-weight: 600;
-            color: var(--st-text);
-        }
-        .ls-val.c { color: var(--st-accent); }
-        .ls-val.r { color: var(--st-danger); }
-        .ls-val.g { color: var(--st-success); }
-        .ls-lbl {
-            font-size: 0.68rem; color: var(--st-text-faint);
-            text-transform: uppercase; letter-spacing: 1px;
-            margin-top: 3px;
-            font-family: var(--st-font-mono);
-        }
-
-        /* ════ RIGHT — form panel ════ */
-        .right {
-            background: var(--st-surface-2);
-            border-left: 1px solid color-mix(in srgb, var(--st-text) 5%, transparent);
-            display: flex; flex-direction: column; justify-content: center;
-            padding: 40px 44px;
-            overflow-y: auto;
-        }
-
-        .form-logo {
-            display: flex; align-items: center; gap: 10px;
-            margin-bottom: 36px;
-        }
-        .form-logo-icon {
-            width: 30px; height: 30px;
-            border: 1px solid color-mix(in srgb, var(--st-accent) 35%, transparent);
-            display: flex; align-items: center; justify-content: center;
-            color: var(--st-accent); font-size: 0.78rem;
-        }
-        .form-logo-text {
-            font-family: var(--st-font-mono);
-            font-size: 0.72rem; font-weight: 600;
-            letter-spacing: 2.5px; color: var(--st-text-muted);
-            text-transform: uppercase;
-        }
-
-        .form-heading { margin-bottom: 28px; }
-        .form-heading h2 {
-            font-size: 1.35rem; font-weight: 600;
-            color: var(--st-text); letter-spacing: -0.3px;
-            margin-bottom: 5px;
-        }
-        .form-heading p { font-size: 0.82rem; color: var(--st-text-faint); }
-
-        /* tabs */
-        .tabs {
-            display: flex; gap: 0;
-            border-bottom: 1px solid color-mix(in srgb, var(--st-text) 6%, transparent);
-            margin-bottom: 28px;
-        }
-        .tab {
-            padding: 9px 0; margin-right: 24px;
-            background: none; border: none; border-bottom: 2px solid transparent;
-            color: var(--st-text-faint); font-family: var(--st-font-mono);
-            font-size: 0.7rem; letter-spacing: 1.5px; text-transform: uppercase;
-            cursor: pointer; transition: .18s; margin-bottom: -1px;
-        }
-        .tab.active { color: var(--st-accent); border-bottom-color: var(--st-accent); }
-        .tab:hover:not(.active) { color: var(--st-text-muted); }
-
-        /* inputs */
-        .input-group { margin-bottom: 16px; }
-        .input-group label {
-            display: block;
-            font-family: var(--st-font-mono);
-            font-size: 0.62rem; color: var(--st-text-faint);
-            text-transform: uppercase; letter-spacing: 1.5px;
-            margin-bottom: 8px;
-        }
-        .input-wrap { position: relative; }
-        .input-wrap > i.icon {
-            position: absolute; left: 14px; top: 50%; transform: translateY(-50%);
-            color: var(--st-text-faint); font-size: 0.78rem;
-            pointer-events: none; transition: .18s; z-index: 1;
-        }
-        .input-wrap input,
-        .input-wrap select {
-            width: 100%;
-            padding: 11px 16px 11px 40px;
-            background: color-mix(in srgb, var(--st-text) 3%, transparent);
-            border: 1px solid color-mix(in srgb, var(--st-text) 7%, transparent);
-            border-radius: 5px;
-            color: var(--st-text);
-            font-family: var(--st-font-main);
-            font-size: 0.88rem;
-            outline: none;
-            transition: .18s;
-            appearance: none;
-        }
-        .input-wrap input::placeholder { color: var(--st-text-faint); }
-        .input-wrap input:focus,
-        .input-wrap select:focus {
-            border-color: color-mix(in srgb, var(--st-accent) 35%, transparent);
-            background: color-mix(in srgb, var(--st-accent) 3%, transparent);
-            box-shadow: 0 0 0 3px color-mix(in srgb, var(--st-accent) 5%, transparent);
-        }
-        .input-wrap:focus-within > i.icon { color: color-mix(in srgb, var(--st-accent) 40%, transparent); }
-        .eye-btn {
-            position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
-            background: none; border: none;
-            color: var(--st-text-faint);
-            cursor: pointer; font-size: 0.78rem; padding: 4px; transition: .18s;
-        }
-        .eye-btn:hover { color: var(--st-accent); }
-
-        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-
-        .row-meta {
-            display: flex; justify-content: space-between; align-items: center;
-            margin-bottom: 20px;
-        }
-        .checkbox-label {
-            display: flex; align-items: center; gap: 8px;
-            cursor: pointer; font-size: 0.78rem;
-            color: var(--st-text-faint); user-select: none;
-        }
-        .checkbox-label input[type=checkbox] { display: none; }
-        .custom-box {
-            width: 15px; height: 15px;
-            border: 1px solid color-mix(in srgb, var(--st-text) 10%, transparent); border-radius: 3px;
-            display: flex; align-items: center; justify-content: center;
-            transition: .18s; flex-shrink: 0;
-        }
-        .checkbox-label input:checked ~ .custom-box { background: var(--st-accent); border-color: var(--st-accent); }
-        .custom-box i { font-size: 0.5rem; color: var(--st-on-solid); display: none; }
-        .checkbox-label input:checked ~ .custom-box i { display: block; }
-        .forgot-link {
-            font-size: 0.78rem; color: var(--st-text-faint);
-            text-decoration: none; transition: .18s;
-        }
-        .forgot-link:hover { color: var(--st-accent); }
-
-        /* submit button */
-        .btn-submit {
-            width: 100%; padding: 12px;
-            background: var(--st-accent); color: var(--st-on-solid);
-            border: none; border-radius: 5px;
-            font-family: var(--st-font-mono);
-            font-size: 0.78rem; font-weight: 600;
-            letter-spacing: 2px; text-transform: uppercase;
-            cursor: pointer; transition: .18s;
-            margin-bottom: 12px;
-        }
-        .btn-submit:hover { background: var(--st-accent); box-shadow: var(--st-shadow-md); }
-        .btn-submit:active { transform: scale(.99); }
-        .btn-submit:disabled { opacity: .45; pointer-events: none; }
-
-        /* dev bypass */
-        .divider {
-            display: flex; align-items: center; gap: 10px;
-            margin: 10px 0;
-        }
-        .divider::before, .divider::after {
-            content: ''; flex: 1; height: 1px;
-            background: color-mix(in srgb, var(--st-text) 5%, transparent);
-        }
-        .divider span {
-            font-family: var(--st-font-mono);
-            font-size: 0.58rem; color: var(--st-text-faint);
-            letter-spacing: 2px; text-transform: uppercase;
-        }
-        .btn-bypass {
-            width: 100%; padding: 10px;
-            background: transparent;
-            border: 1px solid color-mix(in srgb, var(--st-text) 5%, transparent);
-            border-radius: 5px;
-            color: var(--st-text-faint);
-            font-family: var(--st-font-mono);
-            font-size: 0.68rem; letter-spacing: 1px; text-transform: uppercase;
-            cursor: pointer; transition: .18s;
-        }
-        .btn-bypass:hover { border-color: color-mix(in srgb, var(--st-text) 12%, transparent); color: var(--st-text-faint); }
-
-        /* status messages */
-        .status-msg {
-            display: none; margin-top: 12px;
-            padding: 10px 14px; border-radius: 5px;
-            font-size: 0.78rem; font-family: var(--st-font-mono); line-height: 1.5;
-        }
-        .status-msg.error   { background: color-mix(in srgb, var(--st-danger) 7%, transparent); border: 1px solid color-mix(in srgb, var(--st-danger) 20%, transparent); color: var(--st-danger); display: block; }
-        .status-msg.warning { background: color-mix(in srgb, var(--st-warning) 7%, transparent); border: 1px solid color-mix(in srgb, var(--st-warning) 20%, transparent); color: var(--st-warning); display: block; }
-        .status-msg.success { background: color-mix(in srgb, var(--st-success) 5%, transparent);  border: 1px solid color-mix(in srgb, var(--st-success) 18%, transparent); color: var(--st-success); display: block; }
-
-        /* bottom link */
-        .bottom-link {
-            margin-top: 20px;
-            text-align: center;
-            font-size: 0.78rem;
-            color: var(--st-text-faint);
-        }
-        .bottom-link a { color: var(--st-accent); text-decoration: none; }
-        .bottom-link a:hover { text-decoration: underline; }
-        .bottom-link a.dim { color: var(--st-text-faint); }
-        .bottom-link a.dim:hover { color: var(--st-text-muted); }
-
-        /* token banner */
-        .token-banner {
-            background: color-mix(in srgb, var(--st-accent) 4%, transparent); border: 1px solid color-mix(in srgb, var(--st-accent) 18%, transparent);
-            border-radius: 5px; padding: 12px 14px; margin-bottom: 20px;
-        }
-        .token-banner .tb-title {
-            font-family: var(--st-font-mono); font-size: .62rem;
-            color: var(--st-accent); letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 4px;
-        }
-        .token-banner .tb-body { font-size: .82rem; color: var(--st-text-muted); }
-        .token-banner .tb-body strong { color: var(--st-text); }
-
-        @media (max-width: 860px) {
-            .left { display: none; }
-            .layout { grid-template-columns: 1fr; }
-            .right { padding: 32px 24px; }
-        }
-    </style>
     <link rel="stylesheet" href="css/tokens.css">
-    <script src="js/theme.js"></script>
+    <link rel="stylesheet" href="css/auth.css">
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 28 28'%3E%3Crect width='28' height='28' rx='6' fill='%23533afd'/%3E%3Cpath d='M4.5 14c2.5-4.3 5.7-6.4 9.5-6.4s7 2.1 9.5 6.4c-2.5 4.3-5.7 6.4-9.5 6.4S7 18.3 4.5 14Z' fill='none' stroke='%23fff' stroke-width='1.8' stroke-linejoin='round'/%3E%3Ccircle cx='14' cy='14' r='3.2' fill='%23fff'/%3E%3C/svg%3E">
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#ffffff">
 </head>
-<body>
+<body class="auth-page">
+<div class="auth">
+    <canvas class="auth-ribbon" data-ribbon="corner" aria-hidden="true"></canvas>
 
-<div class="layout">
+    <aside class="story-pane">
+        <a class="auth-brand" href="index.html" aria-label="ShadowTrust home"><svg viewBox="0 0 28 28" fill="none" aria-hidden="true"><path d="M2.5 14c3-5.3 7-8 11.5-8s8.5 2.7 11.5 8c-3 5.3-7 8-11.5 8S5.5 19.3 2.5 14Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><circle cx="14" cy="14" r="4.2" fill="var(--st-brand)"/></svg><span>ShadowTrust</span></a>
 
-    <!-- ════ LEFT ════ -->
-    <div class="left st-theme-dark">
-        <div class="left-img"></div>
-        <div class="left-inner">
-
-            <div class="brand">
-                <div class="brand-icon"><i class="fas fa-shield-halved"></i></div>
-                <div>
-                    <div class="brand-name">Shadow Trust</div>
-                    <div class="brand-ver">Cyber Range · v2.4</div>
-                </div>
+        <div class="watch" aria-hidden="true">
+                <svg viewBox="0 0 280 170" data-watch>
+                    <defs><clipPath id="lensClip"><path data-lens-clip d="M14 85 C 70 12, 210 12, 266 85 C 210 158, 70 158, 14 85 Z"/></clipPath></defs>
+                    <g clip-path="url(#lensClip)">
+                        <g data-iris>
+                            <circle class="iris" cx="140" cy="85" r="42"/>
+                            <circle class="pupil" cx="140" cy="85" r="19"/>
+                            <circle class="glint" cx="149" cy="76" r="5"/>
+                        </g>
+                    </g>
+                    <path class="lens" data-lens d="M14 85 C 70 12, 210 12, 266 85 C 210 158, 70 158, 14 85 Z"/>
+                    <g data-lashes style="opacity:0"><path class="lash" d="M70 150 l-8 14 M110 158 l-3 15 M170 158 l3 15 M210 150 l8 14"/></g>
+                </svg>
             </div>
 
-            <div class="left-copy">
-                <div class="badge"><div class="badge-dot"></div> System Online</div>
-                <h1>Threat Intelligence<br><span>Command Center</span></h1>
-                <p>Honeypot orchestration, attacker fingerprinting, and autonomous threat response across distributed sensor networks.</p>
-            </div>
-
-            <div class="left-stats">
-                <div class="ls-item">
-                    <div class="ls-val c" id="statAttacks">—</div>
-                    <div class="ls-lbl">Events Logged</div>
-                </div>
-                <div class="ls-item">
-                    <div class="ls-val r" id="statIPs">—</div>
-                    <div class="ls-lbl">Unique Attackers</div>
-                </div>
-                <div class="ls-item">
-                    <div class="ls-val g">ONLINE</div>
-                    <div class="ls-lbl">System Status</div>
-                </div>
-            </div>
-
-        </div>
-    </div>
-
-    <!-- ════ RIGHT ════ -->
-    <div class="right">
-
-        <div class="form-logo">
-            <div class="form-logo-icon"><i class="fas fa-shield-halved"></i></div>
-            <div class="form-logo-text">Shadow Trust</div>
+        <div class="story-copy">
+            <div class="eyebrow-mono">Security operations console</div>
+            <h1>Welcome back. <em>They kept trying while you were away.</em></h1>
+            <p>Honeypot sensors, detections, investigations and reports. The numbers below are read live from this deployment.</p>
         </div>
 
-        <div class="form-heading">
-            <h2 id="formTitle">Sign In</h2>
-            <p id="formSub">Enter your credentials to access the platform.</p>
+        <div class="story-stats" aria-live="polite">
+            <div class="ls-item"><div class="ls-val" id="statAttacks">n/a</div><div class="ls-lbl">Events logged</div></div>
+            <div class="ls-item"><div class="ls-val" id="statIPs">n/a</div><div class="ls-lbl">Unique attackers</div></div>
+            <div class="ls-item"><div class="ls-val g">Checking</div><div class="ls-lbl">Ingest pipeline</div></div>
         </div>
+    </aside>
 
-        <div class="tabs">
-            <button class="tab active" id="tabLogin"    onclick="switchTab('login')">Sign In</button>
-            <button class="tab"        id="tabRegister" onclick="switchTab('register')">Request Access</button>
-        </div>
-
-        <!-- token banner -->
-        <div class="token-banner" id="tokenBanner" style="display:none;">
-            <div class="tb-title"><i class="fas fa-key"></i> &nbsp; Credential Token</div>
-            <div class="tb-body">Welcome, <strong id="tokenUsername">—</strong>. Set a new password to activate your account.</div>
-        </div>
-
-        <!-- ── LOGIN FORM ── -->
-        <form id="loginForm" autocomplete="off">
-
-            <div class="input-group" id="normalLoginFields">
-                <label>Email Address</label>
-                <div class="input-wrap">
-                    <i class="icon fas fa-envelope"></i>
-                    <input type="email" id="loginEmail" placeholder="you@example.com" required>
-                </div>
+    <main class="form-pane">
+        <div class="form-top"><a href="index.html">← Back to the site</a><a href="status.html">System status</a></div>
+        <div class="form-inner">
+            <div class="form-heading">
+                <h2 id="formTitle">Sign in</h2>
+                <p id="formSub">Use the email and password your admin set up for you.</p>
             </div>
 
-            <div class="input-group">
-                <label id="passLabel">Password</label>
-                <div class="input-wrap">
-                    <i class="icon fas fa-lock"></i>
-                    <input type="password" id="loginPassword" placeholder="••••••••••••" required>
-                    <button type="button" class="eye-btn" onclick="togglePass('loginPassword',this)"><i class="fas fa-eye"></i></button>
-                </div>
+            <div class="tabs" role="tablist">
+                <button class="tab active" id="tabLogin" type="button" onclick="switchTab('login')">Sign in</button>
+                <button class="tab" id="tabRegister" type="button" onclick="switchTab('register')">Request access</button>
             </div>
 
-            <div class="input-group" id="confirmPassGroup" style="display:none;">
-                <label>Confirm Password</label>
-                <div class="input-wrap">
-                    <i class="icon fas fa-lock"></i>
-                    <input type="password" id="confirmPassword" placeholder="••••••••••••">
-                    <button type="button" class="eye-btn" onclick="togglePass('confirmPassword',this)"><i class="fas fa-eye"></i></button>
-                </div>
+            <div class="token-banner" id="tokenBanner" style="display:none;">
+                <div class="tb-title"><i class="fas fa-key"></i>&nbsp; Credential token</div>
+                <div class="tb-body">Welcome, <strong id="tokenUsername">n/a</strong>. Set a new password to activate your account.</div>
             </div>
 
-            <div class="row-meta" id="metaRow">
-                <label class="checkbox-label">
-                    <input type="checkbox" id="rememberMe">
-                    <div class="custom-box"><i class="fas fa-check"></i></div>
-                    Remember me
-                </label>
-                <a href="forgot_password.html" class="forgot-link">Forgot password?</a>
-            </div>
-
-            <button type="submit" class="btn-submit" id="loginBtn">
-                Authenticate
-            </button>
-
-            <div class="divider" id="bypassDivider"><span>or</span></div>
-
-            <button type="button" class="btn-bypass" id="devBypassBtn">
-                Developer Bypass
-            </button>
-
-            <div class="status-msg" id="loginStatus"></div>
-        </form>
-
-        <!-- ── REGISTER FORM ── -->
-        <form id="registerForm" autocomplete="off" style="display:none;">
-
-            <div class="grid-2">
-                <div class="input-group" style="margin-bottom:0;">
-                    <label>First Name</label>
+            <form id="loginForm" autocomplete="off">
+                <div class="input-group" id="normalLoginFields">
+                    <label for="loginEmail">Email address</label>
                     <div class="input-wrap">
-                        <i class="icon fas fa-user"></i>
-                        <input type="text" id="regFirstName" placeholder="John" required>
+                        <i class="icon fas fa-envelope"></i>
+                        <input type="email" id="loginEmail" placeholder="you@example.com" required>
                     </div>
                 </div>
-                <div class="input-group" style="margin-bottom:0;">
-                    <label>Last Name</label>
+
+                <div class="input-group">
+                    <label for="loginPassword" id="passLabel">Password</label>
                     <div class="input-wrap">
-                        <i class="icon fas fa-user"></i>
-                        <input type="text" id="regLastName" placeholder="Doe">
+                        <i class="icon fas fa-lock"></i>
+                        <input type="password" id="loginPassword" placeholder="Your password" required>
+                        <button type="button" class="eye-btn" aria-label="Show password" onclick="togglePass('loginPassword',this)"><i class="fas fa-eye"></i></button>
                     </div>
                 </div>
-            </div>
-            <div style="height:16px;"></div>
 
-            <div class="input-group">
-                <label>Username</label>
-                <div class="input-wrap">
-                    <i class="icon fas fa-at"></i>
-                    <input type="text" id="regUsername" placeholder="operator_x" required>
-                </div>
-            </div>
-
-            <div class="input-group">
-                <label>Email Address</label>
-                <div class="input-wrap">
-                    <i class="icon fas fa-envelope"></i>
-                    <input type="email" id="regEmail" placeholder="you@example.com" required>
-                </div>
-            </div>
-
-            <div class="input-group">
-                <label>Password <span style="color:var(--st-text-faint);font-size:.6rem;">min 12 chars</span></label>
-                <div class="input-wrap">
-                    <i class="icon fas fa-lock"></i>
-                    <input type="password" id="regPassword" placeholder="••••••••••••" required>
-                    <button type="button" class="eye-btn" onclick="togglePass('regPassword',this)"><i class="fas fa-eye"></i></button>
-                </div>
-            </div>
-
-            <div class="grid-2">
-                <div class="input-group" style="margin-bottom:0;">
-                    <label>Department</label>
+                <div class="input-group" id="confirmPassGroup" style="display:none;">
+                    <label for="confirmPassword">Confirm password</label>
                     <div class="input-wrap">
-                        <i class="icon fas fa-building"></i>
-                        <input type="text" id="regDept" placeholder="Security Ops">
+                        <i class="icon fas fa-lock"></i>
+                        <input type="password" id="confirmPassword" placeholder="Repeat the new password">
+                        <button type="button" class="eye-btn" aria-label="Show password" onclick="togglePass('confirmPassword',this)"><i class="fas fa-eye"></i></button>
                     </div>
                 </div>
-                <div class="input-group" style="margin-bottom:0;">
-                    <label>Clearance</label>
-                    <div class="input-wrap">
-                        <i class="icon fas fa-shield-alt"></i>
-                        <select id="regClearance">
-                            <option value="1">Level 1 — Operative</option>
-                            <option value="2">Level 2 — Specialist</option>
-                            <option value="3">Level 3 — Overseer</option>
-                        </select>
+
+                <div class="row-meta" id="metaRow">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="rememberMe">
+                        <span class="custom-box"><i class="fas fa-check"></i></span>
+                        Remember my email
+                    </label>
+                    <a href="forgot_password.html" class="forgot-link">Forgot password?</a>
+                </div>
+
+                <button type="submit" class="btn-submit" id="loginBtn">Sign in</button>
+
+                <div class="divider" id="bypassDivider"><span>or, on a local build</span></div>
+
+                <button type="button" class="btn-bypass" id="devBypassBtn">Developer bypass</button>
+
+                <div class="status-msg" id="loginStatus" role="status"></div>
+            </form>
+
+            <form id="registerForm" autocomplete="off" style="display:none;">
+                <div class="grid-2">
+                    <div class="input-group">
+                        <label for="regFirstName">First name</label>
+                        <div class="input-wrap"><i class="icon fas fa-user"></i><input type="text" id="regFirstName" placeholder="Asha" required></div>
+                    </div>
+                    <div class="input-group">
+                        <label for="regLastName">Last name</label>
+                        <div class="input-wrap"><i class="icon fas fa-user"></i><input type="text" id="regLastName" placeholder="Rao"></div>
                     </div>
                 </div>
+
+                <div class="input-group">
+                    <label for="regUsername">Username</label>
+                    <div class="input-wrap"><i class="icon fas fa-at"></i><input type="text" id="regUsername" placeholder="asha.rao" required></div>
+                </div>
+
+                <div class="input-group">
+                    <label for="regEmail">Email address</label>
+                    <div class="input-wrap"><i class="icon fas fa-envelope"></i><input type="email" id="regEmail" placeholder="you@example.com" required></div>
+                </div>
+
+                <div class="input-group">
+                    <label for="regPassword">Password <span class="hint">at least 12 characters</span></label>
+                    <div class="input-wrap">
+                        <i class="icon fas fa-lock"></i>
+                        <input type="password" id="regPassword" placeholder="Choose a long passphrase" required>
+                        <button type="button" class="eye-btn" aria-label="Show password" onclick="togglePass('regPassword',this)"><i class="fas fa-eye"></i></button>
+                    </div>
+                </div>
+
+                <div class="grid-2">
+                    <div class="input-group">
+                        <label for="regDept">Department</label>
+                        <div class="input-wrap"><i class="icon fas fa-building"></i><input type="text" id="regDept" placeholder="Security operations"></div>
+                    </div>
+                    <div class="input-group">
+                        <label for="regClearance">Clearance</label>
+                        <div class="input-wrap">
+                            <i class="icon fas fa-shield-alt"></i>
+                            <select id="regClearance">
+                                <option value="1">Level 1 · Operative</option>
+                                <option value="2">Level 2 · Specialist</option>
+                                <option value="3">Level 3 · Overseer</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-submit" id="registerBtn">Request access</button>
+                <div class="status-msg" id="registerStatus" role="status"></div>
+            </form>
+
+            <div class="bottom-link">
+                <span id="bottomLinkText">No account? <a href="#" onclick="switchTab('register');return false;">Request access</a> &nbsp;·&nbsp; <a href="admin_login.html" class="dim">Admin sign in</a></span>
             </div>
-            <div style="height:16px;"></div>
-
-            <button type="submit" class="btn-submit" id="registerBtn">
-                Request Access
-            </button>
-
-            <div class="status-msg" id="registerStatus"></div>
-        </form>
-
-        <div class="bottom-link">
-            <span id="bottomLinkText">
-                No account? <a href="#" onclick="switchTab('register');return false;">Request Access</a>
-                &nbsp;·&nbsp; <a href="admin_login.html" class="dim">Admin Portal</a>
-            </span>
         </div>
-
-    </div>
+    </main>
 </div>
 
 <script>
@@ -565,7 +192,7 @@ function showStatus(id, msg, type) {
     const el = document.getElementById(id);
     const icons = { error:'fa-triangle-exclamation', warning:'fa-clock', success:'fa-circle-check' };
     el.className = `status-msg ${type}`;
-    el.innerHTML = `<i class="fas ${icons[type]||icons.error}"></i> &nbsp;${msg}`;
+    el.innerHTML = `<i class="fas ${icons[type]||icons.error}"></i>&nbsp; ${msg}`;
     el.style.display = 'block';
 }
 function hideStatus(id) { const el = document.getElementById(id); el.style.display='none'; el.className='status-msg'; }
@@ -595,11 +222,11 @@ function switchTab(tab) {
     document.getElementById('tabRegister').classList.toggle('active', !isLogin);
     document.getElementById('loginForm').style.display    = isLogin ? '' : 'none';
     document.getElementById('registerForm').style.display = isLogin ? 'none' : '';
-    document.getElementById('formTitle').textContent = isLogin ? 'Sign In' : 'Request Access';
-    document.getElementById('formSub').textContent   = isLogin ? 'Enter your credentials to access the platform.' : 'Submit your details for admin approval.';
+    document.getElementById('formTitle').textContent = isLogin ? 'Sign in' : 'Request access';
+    document.getElementById('formSub').textContent   = isLogin ? 'Use the email and password your admin set up for you.' : 'Send your details. An admin approves every new account.';
     document.getElementById('bottomLinkText').innerHTML = isLogin
-        ? `No account? <a href="#" onclick="switchTab('register');return false;">Request Access</a> &nbsp;·&nbsp; <a href="admin_login.html" class="dim">Admin Portal</a>`
-        : `Have an account? <a href="#" onclick="switchTab('login');return false;">Sign In</a>`;
+        ? `No account? <a href="#" onclick="switchTab('register');return false;">Request access</a> &nbsp;·&nbsp; <a href="admin_login.html" class="dim">Admin sign in</a>`
+        : `Have an account? <a href="#" onclick="switchTab('login');return false;">Sign in</a>`;
     hideStatus('loginStatus');
     hideStatus('registerStatus');
 }
@@ -619,10 +246,10 @@ if (_credToken) {
                 document.getElementById('bypassDivider').style.display = 'none';
                 document.getElementById('devBypassBtn').style.display  = 'none';
                 document.getElementById('confirmPassGroup').style.display = '';
-                document.getElementById('passLabel').textContent = 'New Password';
+                document.getElementById('passLabel').textContent = 'New password';
                 document.getElementById('loginPassword').placeholder = 'Minimum 8 characters';
                 document.getElementById('loginPassword').removeAttribute('required');
-                setBtn('loginBtn', 'Activate Account', false);
+                setBtn('loginBtn', 'Activate account', false);
             } else {
                 showStatus('loginStatus', `Invalid or expired token: ${d.reason || ''}`, 'error');
             }
@@ -649,11 +276,11 @@ document.getElementById('loginForm').addEventListener('submit', async e => {
             const d = await r.json();
             if (!r.ok) throw new Error(d.detail || 'Activation failed');
             saveSession(d, d.user);
-            showStatus('loginStatus','Account activated! Redirecting…','success');
-            setTimeout(() => location.href = 'dashboard.html', 900);
+            showStatus('loginStatus','Account activated. Taking you in…','success');
+            setTimeout(() => (window.STEnter ? STEnter('dashboard.html') : (location.href = 'dashboard.html')), 500);
         } catch (err) {
             showStatus('loginStatus', err.message, 'error');
-            setBtn('loginBtn','Activate Account',false);
+            setBtn('loginBtn','Activate account',false);
         }
         return;
     }
@@ -671,18 +298,18 @@ document.getElementById('loginForm').addEventListener('submit', async e => {
         const d = await r.json();
         if (!r.ok) {
             showStatus('loginStatus', d.detail || 'Authentication failed', r.status === 403 ? 'warning' : 'error');
-            setBtn('loginBtn','Authenticate',false);
+            setBtn('loginBtn','Sign in',false);
             return;
         }
         let userData = d.user || {};
         try { const ur = await fetch(`${API}/users/me`, { headers:{ Authorization:`Bearer ${d.access_token}` } }); if (ur.ok) userData = await ur.json(); } catch(_){}
         saveSession(d, userData);
         if (document.getElementById('rememberMe').checked) localStorage.setItem('st_remember', email);
-        showStatus('loginStatus','Access granted. Redirecting…','success');
-        setTimeout(() => location.href = 'dashboard.html', 700);
+        showStatus('loginStatus','Signed in. Taking you in…','success');
+        setTimeout(() => (window.STEnter ? STEnter('dashboard.html') : (location.href = 'dashboard.html')), 400);
     } catch (err) {
-        showStatus('loginStatus', err.message || 'Network error — is the backend running?', 'error');
-        setBtn('loginBtn','Authenticate',false);
+        showStatus('loginStatus', err.message === 'Failed to fetch' ? 'Could not reach the backend. Is it running?' : (err.message || 'Could not reach the backend. Is it running?'), 'error');
+        setBtn('loginBtn','Sign in',false);
     }
 });
 
@@ -708,12 +335,12 @@ document.getElementById('registerForm').addEventListener('submit', async e => {
         const d = await r.json();
         if (!r.ok) throw new Error(d.detail || 'Registration failed');
         showStatus('registerStatus', d.message || 'Request submitted. Awaiting admin approval.', 'success');
-        setBtn('registerBtn','Request Access',false);
+        setBtn('registerBtn','Request access',false);
         document.getElementById('registerForm').reset();
         setTimeout(() => switchTab('login'), 3500);
     } catch (err) {
         showStatus('registerStatus', err.message, 'error');
-        setBtn('registerBtn','Request Access',false);
+        setBtn('registerBtn','Request access',false);
     }
 });
 
@@ -723,7 +350,7 @@ document.getElementById('devBypassBtn').addEventListener('click', async () => {
     hideStatus('loginStatus');
     try {
         const r = await fetch(`${API}/auth/dev-bypass`, { method:'POST', headers:{'Content-Type':'application/json'} });
-        if (!r.ok) throw new Error('Bypass failed — is the backend running?');
+        if (!r.ok) throw new Error('Developer bypass is off, or the backend is not running.');
         const d = await r.json();
         localStorage.setItem('access_token', d.access_token);
         localStorage.setItem('authToken',    d.access_token);
@@ -731,11 +358,11 @@ document.getElementById('devBypassBtn').addEventListener('click', async () => {
         localStorage.setItem('userRole',     'SUPER_ADMIN');
         localStorage.setItem('clearanceLevel','5');
         if (d.system_code) localStorage.setItem('devSystemCode', d.system_code);
-        showStatus('loginStatus','Access granted. Redirecting…','success');
-        setTimeout(() => location.href = 'dashboard.html', 700);
+        showStatus('loginStatus','Signed in with developer bypass.','success');
+        setTimeout(() => (window.STEnter ? STEnter('dashboard.html') : (location.href = 'dashboard.html')), 400);
     } catch (err) {
         showStatus('loginStatus', err.message, 'error');
-        setBtn('devBypassBtn','Developer Bypass',false);
+        setBtn('devBypassBtn','Developer bypass',false);
     }
 });
 
@@ -746,7 +373,7 @@ if (remembered) { document.getElementById('loginEmail').value = remembered; docu
 /* auto-open register tab */
 if (new URLSearchParams(location.search).get('tab') === 'register') switchTab('register');
 
-/* platform summary — public, aggregate-only; shows nothing when the backend is unreachable */
+/* platform summary: public, aggregate-only; shows nothing when the backend is unreachable */
 (async () => {
     const eA = document.getElementById('statAttacks');
     const eI = document.getElementById('statIPs');
@@ -758,13 +385,15 @@ if (new URLSearchParams(location.search).get('tab') === 'register') switchTab('r
         eA.textContent = Number(d.events_logged || 0).toLocaleString();
         eI.textContent = Number(d.unique_attackers || 0).toLocaleString();
         const running = !!(d.pipeline && d.pipeline.running);
-        eS.textContent = running ? 'ONLINE' : 'INGEST STOPPED';
+        eS.textContent = running ? 'Online' : 'Stopped';
         eS.className = 'ls-val ' + (running ? 'g' : 'r');
     } catch (_) {
-        eS.textContent = 'OFFLINE';
+        eS.textContent = 'Offline';
         eS.className = 'ls-val r';
     }
 })();
 </script>
+<script src="js/ribbon.js"></script>
+<script src="js/watch.js"></script>
 </body>
 </html>

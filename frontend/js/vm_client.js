@@ -43,7 +43,10 @@ class VMLabClient {
 
     async updateGlobalStats() {
         try {
+            const uplink = document.getElementById('global-uplink-status');
             const metrics = await apiService.get('/labs/cluster-metrics');
+            // The uplink figure follows the provider's answer instead of assuming it is up.
+            if (uplink) uplink.textContent = metrics.status === 'success' ? 'Active' : 'Unavailable';
             if (metrics.status !== 'success') return;
 
             const totalVcpu = metrics.vcpu || 0;
@@ -95,21 +98,23 @@ class VMLabClient {
                     if (specsDiv && !specsDiv.dataset.live) {
                         specsDiv.dataset.live = "true";
                         const res = lab.resources || {};
-                        const tier = res.label || lab.profile || '—';
+                        const tier = res.label || lab.profile || 'n/a';
                         const size = (res.cpu && res.memory_gb)
                             ? `${res.cpu} CPU / ${res.memory_gb} GB`
-                            : '—';
+                            : 'n/a';
                         specsDiv.innerHTML = `
-                            <div style="margin-bottom: 8px;">Host <span style="color: var(--accent-primary); font-family: var(--font-mono);">${lab.host || '—'}</span></div>
+                            <div style="margin-bottom: 8px;">Host <span style="color: var(--accent-primary); font-family: var(--font-mono);">${lab.host || 'n/a'}</span></div>
                             <div style="margin-bottom: 8px;">Profile <span>${tier}</span></div>
                             <div style="margin-bottom: 8px;">Resources <span>${size}</span></div>
-                            <div>Status <span class="text-green">RUNNING</span></div>
+                            <div>Status <span class="text-green">Running</span></div>
                         `;
                     }
                 }
             }
 
         } catch (e) {
+            const uplink = document.getElementById('global-uplink-status');
+            if (uplink) uplink.textContent = 'Unreachable';
             console.warn("[VMLab] Failed to fetch live cluster metrics:", e);
         }
     }
@@ -142,7 +147,7 @@ class VMLabClient {
                     if (btn) {
                         this.setButtonState(btn, 'LOADING', 'LAUNCHING...');
                         const orb = document.getElementById(`dot_${profileId}`);
-                        if (orb) { orb.style.background = 'var(--st-warning)'; orb.style.boxShadow = 'none'; orb.style.animation = 'pulse-red 2s infinite'; }
+                        if (orb) { orb.style.background = 'var(--st-warning-solid)'; orb.style.boxShadow = 'none'; orb.style.animation = 'pulse-red 2s infinite'; }
                     }
                     // Start polling in background — once READY it will switch to CONNECT TERMINAL
                     this._pollProvisioningStatus(profileId, labId, btn);
@@ -260,7 +265,7 @@ class VMLabClient {
                 this.setButtonState(btnElement, 'LOADING', 'BOOTING...');
 
                 const orb = document.getElementById(`dot_${profileId}`);
-                if (orb) { orb.style.background = 'var(--st-warning)'; orb.style.boxShadow = 'none'; orb.style.animation = 'pulse-red 2s infinite'; }
+                if (orb) { orb.style.background = 'var(--st-warning-solid)'; orb.style.boxShadow = 'none'; orb.style.animation = 'pulse-red 2s infinite'; }
 
                 this.showNotification(`Instance ${response.lab_id} is booting. This takes 3-10 minutes...`, 'success');
 
@@ -486,7 +491,7 @@ class VMLabClient {
                     loader.style.display = 'block';
                     loader.innerHTML = `
                         <i class="fas fa-exclamation-triangle" style="font-size:2rem;color:var(--accent-secondary);margin-bottom:10px;"></i>
-                        <div style="color:var(--accent-secondary)">INSTANCE READY — NO BROWSER SESSION</div>
+                        <div style="color:var(--accent-secondary)">Instance ready, no browser session</div>
                         <div style="font-size:0.8rem;color:var(--st-text-muted);margin-top:8px;">Guacamole session was not registered. Instance is running.</div>
                         <div style="font-size:0.85rem;color:var(--text-primary);margin-top:6px;font-family:var(--font-mono);">
                             IP: <span style="color:var(--accent-primary)">${response.host || response.private_ip || 'pending'}</span>
@@ -517,7 +522,7 @@ class VMLabClient {
                     }
                 }
                 const msg = response.status === 'ERROR'
-                    ? 'Lab launch failed — infrastructure provider error. Check the backend logs and provider configuration.'
+                    ? 'Lab launch failed: infrastructure provider error. Check the backend logs and provider configuration.'
                     : `Instance is no longer available (${response.status}). Please provision a new one.`;
                 this.showNotification(msg, 'error');
             } else {
@@ -588,7 +593,7 @@ class VMLabClient {
         notif.style.padding = '15px 25px';
         notif.style.borderRadius = '4px';
         notif.style.color = 'var(--st-text)';
-        notif.style.fontFamily = "'JetBrains Mono', monospace";
+        notif.style.fontFamily = "'Source Code Pro', monospace";
         notif.style.zIndex = '9999';
         notif.style.boxShadow = '0 4px 12px rgba(0,0,0,0.5)';
         notif.style.background = type === 'success' ? 'var(--accent-primary)' : 'var(--accent-critical)';

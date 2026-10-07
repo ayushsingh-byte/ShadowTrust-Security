@@ -4,149 +4,132 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>System Diagnostics | Shadow Trust</title>
-    <link
-        href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap"
-        rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <title>System diagnostics · ShadowTrust</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 28 28'%3E%3Crect width='28' height='28' rx='6' fill='%23533afd'/%3E%3Cpath d='M4.5 14c2.5-4.3 5.7-6.4 9.500-6.400s7 2.100 9.500 6.400c-2.500 4.300-5.700 6.400-9.500 6.400S7 18.300 4.500 14Z' fill='none' stroke='%23fff' stroke-width='1.8' stroke-linejoin='round'/%3E%3Ccircle cx='14' cy='14' r='3.2' fill='%23fff'/%3E%3C/svg%3E">
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#ffffff">
     <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/dashboard.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         .debug-terminal {
-            background-color: var(--black);
-            border: 1px solid var(--border-color);
-            border-radius: 4px;
-            padding: 20px;
             min-height: 400px;
-            position: relative;
-            overflow-y: auto;
             max-height: 60vh;
-        }
-
-        .terminal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid var(--border-color);
-            padding-bottom: 10px;
-            margin-bottom: 20px;
+            overflow-y: auto;
+            padding: 16px 18px;
+            border: 1px solid var(--st-border);
+            border-radius: var(--st-radius-md);
+            background: var(--st-surface-2);
         }
 
         .terminal-line {
-            font-family: var(--st-font-mono);
-            font-size: 0.85rem;
-            margin-bottom: 8px;
             display: flex;
             align-items: flex-start;
-            gap: 15px;
+            gap: 14px;
+            margin-bottom: 8px;
+            font-family: var(--st-font-mono);
+            font-size: 13px;
+            color: var(--st-text-secondary);
         }
 
         .ts {
+            min-width: 96px;
             color: var(--st-text-faint);
-            min-width: 80px;
+        }
+
+        .tag {
+            min-width: 50px;
         }
 
         .tag.sys {
-            color: var(--neon-cyan);
-            min-width: 50px;
+            color: var(--st-accent);
         }
 
         .tag.aws {
             color: var(--st-caution);
-            min-width: 50px;
+        }
+
+        .status {
+            font-weight: 500;
         }
 
         .status.pass {
-            color: var(--neon-green);
-            font-weight: bold;
+            color: var(--st-success);
         }
 
         .status.fail {
-            color: var(--neon-pink);
-            font-weight: bold;
+            color: var(--st-danger);
         }
 
         .status.wait {
-            color: var(--st-text-secondary);
-            font-style: italic;
+            color: var(--st-text-faint);
         }
 
         .terminal-detail {
-            color: var(--st-text-secondary);
-            margin-left: auto;
-            max-width: 60%;
-            text-align: right;
-            word-break: break-all;
+            color: var(--st-text-muted);
         }
 
         .error-dump {
-            background: color-mix(in srgb, var(--st-danger) 10%, transparent);
-            border-left: 2px solid var(--neon-pink);
-            padding: 10px;
-            margin: 10px 0;
-            color: var(--neon-pink);
+            margin: 4px 0 12px 110px;
+            padding: 10px 12px;
+            border-left: 2px solid var(--st-danger);
+            background: var(--st-danger-bg);
+            color: var(--st-danger);
             font-family: var(--st-font-mono);
-            font-size: 0.8rem;
+            font-size: 12.5px;
             white-space: pre-wrap;
+            overflow-wrap: anywhere;
         }
 
-        /* Scan Line Effect */
-        .debug-terminal::after {
-            content: " ";
-            display: block;
-            position: absolute;
-            top: 0;
-            left: 0;
-            bottom: 0;
-            right: 0;
-            background: linear-gradient(color-mix(in srgb, var(--st-bg) 0%, transparent) 50%, color-mix(in srgb, var(--st-bg) 50%, transparent) 50%), linear-gradient(90deg, color-mix(in srgb, var(--st-danger) 6%, transparent), color-mix(in srgb, var(--st-success) 2%, transparent), color-mix(in srgb, var(--st-info) 6%, transparent));
-            z-index: 2;
-            background-size: 100% 2px, 3px 100%;
-            pointer-events: none;
-            opacity: 0.5;
+        @media (max-width: 640px) {
+            .terminal-line {
+                flex-wrap: wrap;
+                gap: 4px 10px;
+            }
+
+            .error-dump {
+                margin-left: 0;
+            }
         }
     </style>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300..600&family=Source+Code+Pro:wght@400;500;600&display=swap">
     <link rel="stylesheet" href="css/tokens.css">
     <script src="js/theme.js"></script>
 </head>
 
-<body class="dashboard-body">
+<body>
 
-    <!-- Sidebar injected via JS -->
-    <nav class="sidebar" id="sidebar"></nav>
+    <div class="app-container">
 
-    <div class="main-content">
-        <header class="top-bar">
-            <h2><i class="fas fa-terminal" style="color:var(--neon-green);"></i> // SYSTEM DIAGNOSTICS</h2>
-            <div class="user-profile">
-                <span class="pulse-dot"></span>
-                <span>ROOT_ADMIN</span>
-            </div>
-        </header>
+        <aside class="sidebar" id="sidebar"></aside>
 
-        <main class="content-wrapper">
-            <div class="soc-card">
-                <div class="terminal-header">
-                    <div>
-                        <h3 style="margin:0; font-family:var(--st-font-main); color:var(--text-light);"><i
-                                class="fas fa-microchip"></i> AWS ORCHESTRATION ENGINE TEST</h3>
-                        <p class="text-muted" style="margin:5px 0 0 0; font-size: 0.85rem;">Run a deep systemic health
-                            check against the Boto3 integration before launching VMs.</p>
-                    </div>
-                    <div>
-                        <button class="soc-btn" onclick="clearTerminal()">CLEAR LOG</button>
-                        <button class="soc-btn" style="background:var(--neon-green); color:var(--st-on-solid); border:none;"
-                            id="runScanBtn" onclick="runDiagnostics()">RUN DIAGNOSTICS</button>
-                    </div>
+        <main class="main-content">
+
+            <div class="top-bar">
+                <div class="page-header">
+                    <h2>System diagnostics</h2>
+                    <p>Checks the AWS integration with the keys saved on the AWS connection page, before any lab machine is launched.</p>
                 </div>
+                <div class="filters-bar">
+                    <button class="soc-btn" onclick="clearTerminal()">Clear log</button>
+                    <button class="soc-btn soc-btn-primary" id="runScanBtn" onclick="runDiagnostics()">Run diagnostics</button>
+                </div>
+            </div>
 
+            <div class="soc-card">
+                <div class="soc-card-header">
+                    <div class="card-title"><i class="fas fa-microchip"></i> AWS orchestration test</div>
+                </div>
                 <div class="debug-terminal" id="terminalBox">
                     <div class="terminal-line">
                         <span class="ts">00:00:00</span>
                         <span class="tag sys">[SYS]</span>
-                        <span class="msg">DIAGNOSTIC CONSOLE INITIALIZED. AWAITING COMMAND...</span>
+                        <span class="msg">Diagnostic console ready. Nothing has run yet.</span>
                     </div>
                 </div>
             </div>
+
         </main>
     </div>
 
@@ -167,7 +150,9 @@
 
             const timeSpan = `<span class="ts">${ts}</span>`;
             const tagSpan = `<span class="tag ${tag.toLowerCase()}">[${tag}]</span>`;
-            const msgSpan = `<span>${message}</span>`;
+            // message and detail carry backend text (AWS error strings), so they are escaped
+            const esc = (v) => String(v).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+            const msgSpan = `<span>${esc(message)}</span>`;
 
             let statSpan = '';
             if (statusClass) {
@@ -175,7 +160,7 @@
                 statSpan = `<span class="status ${statusClass}">[${text}]</span>`;
             }
 
-            let detailSpan = detail ? `<span class="terminal-detail">${detail}</span>` : '';
+            let detailSpan = detail ? `<span class="terminal-detail">${esc(detail)}</span>` : '';
 
             line.innerHTML = `${timeSpan} ${tagSpan} ${msgSpan} ${statSpan} ${detailSpan}`;
             term.appendChild(line);
@@ -196,7 +181,7 @@
                 <div class="terminal-line">
                     <span class="ts">00:00:00</span>
                     <span class="tag sys">[SYS]</span>
-                    <span class="msg">TERMINAL CLEARED.</span>
+                    <span class="msg">Terminal cleared.</span>
                 </div>
             `;
         }
@@ -204,7 +189,7 @@
         window.runDiagnostics = async function () {
             const btn = document.getElementById('runScanBtn');
             btn.disabled = true;
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> EXECUTING...';
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Running';
 
             logToTerminal('SYS', 'Initiating full AWS infrastructure diagnostic sequence...', 'wait');
 
@@ -219,7 +204,7 @@
             if (!payload.aws_access_key) {
                 logToTerminal('SYS', 'Aborting test. No AWS Keys found in local vault.', 'fail');
                 btn.disabled = false;
-                btn.innerHTML = 'RUN DIAGNOSTICS';
+                btn.innerHTML = 'Run diagnostics';
                 return;
             }
 
@@ -241,9 +226,9 @@
                 }
 
                 if (response.status === 'success') {
-                    logToTerminal('SYS', 'ALL SYSTEMS NOMINAL. READY FOR DEPLOYMENT.', 'pass');
+                    logToTerminal('SYS', 'All checks passed. Ready to launch.', 'pass');
                 } else {
-                    logToTerminal('SYS', 'DETECTED CRITICAL ARCHITECTURE FAILURES. Fix them before launching instances.', 'fail');
+                    logToTerminal('SYS', 'Some checks failed. Fix them before launching instances.', 'fail');
                 }
 
             } catch (error) {
@@ -251,7 +236,7 @@
             }
 
             btn.disabled = false;
-            btn.innerHTML = 'RUN DIAGNOSTICS';
+            btn.innerHTML = 'Run diagnostics';
         }
     </script>
 </body>

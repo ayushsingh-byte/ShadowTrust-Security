@@ -3,7 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Reports | Shadow Trust</title>
+    <title>Reports · ShadowTrust</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 28 28'%3E%3Crect width='28' height='28' rx='6' fill='%23533afd'/%3E%3Cpath d='M4.5 14c2.5-4.3 5.7-6.4 9.500-6.400s7 2.100 9.500 6.400c-2.500 4.300-5.700 6.400-9.500 6.400S7 18.300 4.500 14Z' fill='none' stroke='%23fff' stroke-width='1.8' stroke-linejoin='round'/%3E%3Ccircle cx='14' cy='14' r='3.2' fill='%23fff'/%3E%3C/svg%3E">
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#ffffff">
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/dashboard.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -13,126 +17,126 @@
            Neutral greys + single teal accent. All motion respects
            prefers-reduced-motion (block at end).
            ========================================================= */
-        .rp-main .top-bar { margin-bottom: 1.1rem; }
-        .rp-main .page-header h2 { animation: fadeUp .4s both; }
-        .rp-main .page-header p { animation: fadeUp .4s .05s both; }
-        .rp-main .filters-bar { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; animation: fadeUp .4s .1s both; }
+        .rp-main .top-bar { margin-bottom: 20px; }
+        .rp-main .page-header h2 { animation: fadeUp var(--st-dur-3) both; }
+        .rp-main .page-header p { animation: fadeUp var(--st-dur-3) .05s both; }
+        .rp-main .filters-bar { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; animation: fadeUp var(--st-dur-3) .1s both; }
 
         .card {
             background: var(--st-surface); border: 1px solid var(--st-border);
             border-radius: var(--st-radius-md); box-shadow: var(--st-shadow-sm);
         }
 
-        .sec-head { display: flex; align-items: baseline; gap: 10px; margin: 0 0 10px; }
-        .sec-head h3 { font-size: .9rem; font-weight: 700; color: var(--st-text); margin: 0; }
-        .sec-head .hint { font-size: .72rem; color: var(--st-text-muted); }
+        .sec-head { display: flex; align-items: baseline; gap: 12px; margin: 0 0 12px; }
+        .sec-head h3 { font-size: 15px; font-weight: 600; color: var(--st-text); margin: 0; }
+        .sec-head .hint { font-size: 12px; color: var(--st-text-muted); }
 
         /* ---------- window toolbar ---------- */
         .win-bar {
-            display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
-            padding: 10px 14px; margin-bottom: 12px;
-            animation: fadeUp .4s .12s both;
+            display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+            padding: 12px 16px; margin-bottom: 12px;
+            animation: fadeUp var(--st-dur-3) .12s both;
         }
-        .win-bar label { font-size: .64rem; letter-spacing: .08em; text-transform: uppercase; color: var(--st-text-muted); font-weight: 600; }
+        .win-bar label { font-size: 12px; letter-spacing: 0; text-transform: uppercase; color: var(--st-text-muted); font-weight: 600; }
         .win-bar select {
             background: var(--st-surface); border: 1px solid var(--st-border-strong); color: var(--st-text);
-            padding: 7px 10px; border-radius: var(--st-radius-sm); font: inherit; font-size: .82rem;
+            padding: 8px 12px; border-radius: var(--st-radius-sm); font: inherit; font-size: 14px;
         }
         .win-bar select:focus { outline: none; border-color: var(--st-accent); box-shadow: var(--st-focus-ring); }
-        .win-bar .note { font-size: .72rem; color: var(--st-text-faint); }
+        .win-bar .note { font-size: 12px; color: var(--st-text-faint); }
 
         /* ---------- report-type cards ---------- */
-        .rt-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(272px, 1fr)); gap: 10px; margin-bottom: 22px; }
+        .rt-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(272px, 1fr)); gap: 12px; margin-bottom: 24px; }
         .rt-card {
             display: grid; grid-template-columns: 34px 1fr; grid-template-rows: auto auto;
-            column-gap: 12px; row-gap: 6px; padding: 14px;
+            column-gap: 12px; row-gap: 8px; padding: 16px;
             background: var(--st-surface); border: 1px solid var(--st-border);
-            border-radius: var(--st-radius-md); transition: border-color .15s, background .15s;
-            animation: fadeUp .4s both; animation-delay: calc(var(--i, 0) * 45ms + .12s);
+            border-radius: var(--st-radius-md); transition: border-color var(--st-dur-1), background var(--st-dur-1);
+            animation: fadeUp var(--st-dur-3) both; animation-delay: calc(var(--i, 0) * 45ms + .12s);
         }
         .rt-card:hover { border-color: var(--st-border-strong); }
         .rt-ic {
             grid-row: 1 / span 2; width: 34px; height: 34px; border-radius: var(--st-radius-sm);
             display: flex; align-items: center; justify-content: center;
-            background: var(--st-accent-tint); color: var(--st-accent); font-size: .95rem;
+            background: var(--st-accent-tint); color: var(--st-accent); font-size: 16px;
         }
-        .rt-name { font-size: .84rem; font-weight: 700; color: var(--st-text); display: flex; align-items: center; gap: 7px; flex-wrap: wrap; }
+        .rt-name { font-size: 14px; font-weight: 600; color: var(--st-text); display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
         .rt-adm {
-            font-size: .56rem; letter-spacing: .06em; text-transform: uppercase; font-weight: 700;
-            color: var(--st-neutral); border: 1px solid var(--st-border-strong); border-radius: 999px; padding: 1px 6px;
+            font-size: 12px; letter-spacing: 0; text-transform: uppercase; font-weight: 600;
+            color: var(--st-neutral); border: 1px solid var(--st-border-strong); border-radius: var(--st-radius-sm); padding: 1px 8px;
         }
-        .rt-desc { font-size: .74rem; color: var(--st-text-muted); line-height: 1.4; }
+        .rt-desc { font-size: 12.5px; color: var(--st-text-muted); line-height: 1.4; }
         .rt-foot { grid-column: 2; display: flex; align-items: center; gap: 8px; margin-top: 4px; }
         .rt-param {
             flex: 1; min-width: 0; background: var(--st-surface-2); border: 1px solid var(--st-border-strong);
-            color: var(--st-text); padding: 6px 9px; border-radius: var(--st-radius-sm); font: inherit; font-size: .76rem;
+            color: var(--st-text); padding: 8px 8px; border-radius: var(--st-radius-sm); font: inherit; font-size: 13px;
         }
         .rt-param:focus { outline: none; border-color: var(--st-accent); box-shadow: var(--st-focus-ring); }
         .rt-go {
-            background: var(--st-accent); border: 1px solid var(--st-accent); color: var(--st-on-solid);
-            padding: 6px 14px; border-radius: var(--st-radius-sm); font: inherit; font-size: .76rem; font-weight: 600;
-            cursor: pointer; white-space: nowrap; transition: background .15s, border-color .15s;
+            background: var(--st-surface); border: 1px solid var(--st-text); color: var(--st-text);
+            padding: 8px 16px; border-radius: var(--st-radius-sm); font: inherit; font-size: 13px; font-weight: 600;
+            cursor: pointer; white-space: nowrap; transition: background var(--st-dur-1), border-color var(--st-dur-1);
         }
-        .rt-go:hover { background: var(--st-accent-hover); border-color: var(--st-accent-hover); }
+        .rt-go:hover { background: var(--st-brand); border-color: var(--st-brand-line); color: var(--st-on-brand); }
         .rt-go:disabled { opacity: .55; cursor: not-allowed; }
-        .rt-go i { margin-right: 5px; }
+        .rt-go i { margin-right: 4px; }
 
         .sk-card { height: 96px; border-radius: var(--st-radius-md); }
 
         /* ---------- history ---------- */
-        .hist-head { display: flex; align-items: baseline; gap: 10px; margin-bottom: 10px; }
-        .hist-head h3 { font-size: .9rem; font-weight: 700; margin: 0; color: var(--st-text); }
+        .hist-head { display: flex; align-items: baseline; gap: 12px; margin-bottom: 12px; }
+        .hist-head h3 { font-size: 15px; font-weight: 600; margin: 0; color: var(--st-text); }
         .hist-count {
-            font-family: var(--st-font-mono); font-size: .72rem; color: var(--st-text-muted);
-            border: 1px solid var(--st-border); border-radius: 999px; padding: 2px 9px;
+            font-family: var(--st-font-mono); font-size: 12px; color: var(--st-text-muted);
+            border: 1px solid var(--st-border); border-radius: var(--st-radius-sm); padding: 2px 8px;
         }
 
         .rp-wrap { border: 1px solid var(--st-border); border-radius: var(--st-radius-md); overflow-x: auto; }
-        table.rp { width: 100%; border-collapse: collapse; font-size: .78rem; }
+        table.rp { width: 100%; border-collapse: collapse; font-size: 13.5px; }
         table.rp th {
-            text-align: left; padding: 9px 12px; background: var(--st-surface-2); color: var(--st-text-muted);
-            font-size: .62rem; text-transform: uppercase; letter-spacing: .06em; font-weight: 600;
+            text-align: left; padding: 8px 12px; background: var(--st-surface-2); color: var(--st-text-muted);
+            font-size: 12px; text-transform: uppercase; letter-spacing: 0; font-weight: 600;
             border-bottom: 1px solid var(--st-border); white-space: nowrap; position: sticky; top: 0;
         }
-        table.rp td { padding: 9px 12px; border-bottom: 1px solid var(--st-border); color: var(--st-text-secondary); vertical-align: middle; }
+        table.rp td { padding: 8px 12px; border-bottom: 1px solid var(--st-border); color: var(--st-text-secondary); vertical-align: middle; }
         table.rp tbody tr:last-child td { border-bottom: 0; }
-        table.rp tbody tr { animation: fadeUp .3s both; animation-delay: calc(var(--i, 0) * 22ms); }
+        table.rp tbody tr { animation: fadeUp var(--st-dur-2) both; animation-delay: calc(var(--i, 0) * 22ms); }
         table.rp tbody tr:hover td { background: var(--st-surface-hover); }
         .rp-when { white-space: nowrap; }
         .rp-when b { color: var(--st-text); font-weight: 600; }
-        .rp-when span { display: block; font-size: .64rem; color: var(--st-text-faint); font-family: var(--st-font-mono); }
+        .rp-when span { display: block; font-size: 12px; color: var(--st-text-faint); font-family: var(--st-font-mono); }
         .rp-title { color: var(--st-text); }
         .rp-sub { color: var(--st-text-muted); max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        .rp-by { font-family: var(--st-font-mono); font-size: .7rem; color: var(--st-text-muted); }
+        .rp-by { font-family: var(--st-font-mono); font-size: 12px; color: var(--st-text-muted); }
         .rp-size { font-family: var(--st-font-mono); white-space: nowrap; color: var(--st-text-secondary); }
 
         .tybadge {
-            display: inline-flex; align-items: center; gap: 5px; padding: 2px 8px; border-radius: 999px;
-            font-size: .64rem; font-weight: 700; letter-spacing: .03em; white-space: nowrap;
+            display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: var(--st-radius-sm);
+            font-size: 12px; font-weight: 600; letter-spacing: 0; white-space: nowrap;
             background: var(--st-accent-tint); color: var(--st-accent);
             border: 1px solid color-mix(in srgb, var(--st-accent) 26%, transparent);
         }
         .tybadge i { font-size: .7em; }
 
         .hash {
-            font-family: var(--st-font-mono); font-size: .7rem; color: var(--st-text-muted);
+            font-family: var(--st-font-mono); font-size: 12px; color: var(--st-text-muted);
             background: var(--st-surface-2); border: 1px solid var(--st-border); border-radius: var(--st-radius-sm);
-            padding: 2px 7px; cursor: pointer; transition: border-color .15s, color .15s; white-space: nowrap;
+            padding: 2px 8px; cursor: pointer; transition: border-color var(--st-dur-1), color var(--st-dur-1); white-space: nowrap;
         }
         .hash:hover { border-color: var(--st-accent); color: var(--st-text-secondary); }
         .hash.copied { color: var(--st-success); border-color: color-mix(in srgb, var(--st-success) 40%, transparent); }
 
         .dl {
-            display: inline-flex; align-items: center; gap: 6px;
+            display: inline-flex; align-items: center; gap: 8px;
             background: var(--st-surface); border: 1px solid var(--st-border-strong); color: var(--st-text);
-            padding: 5px 12px; border-radius: var(--st-radius-sm); font: inherit; font-size: .73rem; font-weight: 600;
-            cursor: pointer; transition: background .15s, border-color .15s;
+            padding: 4px 12px; border-radius: var(--st-radius-sm); font: inherit; font-size: 12.5px; font-weight: 600;
+            cursor: pointer; transition: background var(--st-dur-1), border-color var(--st-dur-1);
         }
         .dl:hover { background: var(--st-surface-hover); border-color: var(--st-accent); }
         .dl:disabled { opacity: .55; cursor: not-allowed; }
 
-        .rp-empty { padding: 34px 16px; text-align: center; color: var(--st-text-muted); font-size: .8rem; }
-        .rp-empty i { display: block; font-size: 1.7rem; opacity: .25; margin-bottom: 10px; }
+        .rp-empty { padding: 32px 16px; text-align: center; color: var(--st-text-muted); font-size: 13.5px; }
+        .rp-empty i { display: block; font-size: 30px; opacity: .25; margin-bottom: 12px; }
         .err { color: var(--st-danger); }
 
         .sk { border-radius: var(--st-radius-sm); background: linear-gradient(90deg, var(--st-surface-hover) 25%, var(--st-border) 37%, var(--st-surface-hover) 63%); background-size: 400% 100%; animation: shimmer 1.4s ease-in-out infinite; }
@@ -142,6 +146,8 @@
         @keyframes fadeUp { from { opacity: 0; transform: translateY(8px); } }
         .hidden { display: none !important; }
 
+
+
         @media (prefers-reduced-motion: reduce) {
             *, *::before, *::after {
                 animation-duration: .001ms !important;
@@ -150,9 +156,95 @@
                 transition-duration: .001ms !important;
             }
         }
+    
+        /* v3: enterprise system */
+        .sec-head .hint, .win-bar .note, .hist-count, .rp-when span, .rp-by, .rp-size { font-family: var(--st-font-main); }
+        .sec-head .hint { font-size: 13px; }
+        .win-bar { border-radius: var(--st-radius-lg); padding: 16px 16px; margin-bottom: 16px; }
+        .win-bar label { font-size: 12.5px; color: var(--st-text-secondary); }
+        .win-bar select { min-height: 36px; border-radius: var(--st-radius-md); font-size: 13.5px; }
+        .rt-grid { grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px; margin-bottom: 32px; }
+        .rt-card { grid-template-columns: 36px minmax(0, 1fr); padding: 20px; border-radius: var(--st-radius-lg); box-shadow: var(--st-shadow-sm); transition: border-color var(--st-dur-1) ease, box-shadow var(--st-dur-2) ease, transform var(--st-dur-2) var(--st-ease-out); }
+        .rt-card:hover { border-color: var(--st-accent-border); box-shadow: var(--st-shadow-md); transform: translateY(-2px); }
+        .rt-ic { width: 36px; height: 36px; border-radius: var(--st-radius-md); }
+        .rt-name { font-size: 15px; font-weight: 600; }
+        .rt-adm { font-size: 12px; padding: 0 8px; background: var(--st-neutral-bg); border: 0; color: var(--st-text-secondary); }
+        .rt-desc { font-size: 13px; line-height: 1.5; }
+        .rt-foot { margin-top: 8px; min-width: 0; }
+        .rt-param { min-height: 34px; background: var(--st-surface); border-radius: var(--st-radius-md); font-size: 13px; }
+        .rt-go { min-height: 34px; border-radius: var(--st-radius-md); font-size: 13px; font-weight: 500; }
+        .hist-count { font-size: 12.5px; border: 0; background: var(--st-neutral-bg); }
+        .rp-wrap { background: var(--st-surface); border-radius: var(--st-radius-lg); box-shadow: var(--st-shadow-sm); }
+        table.rp { font-size: 13.5px; }
+        table.rp th { background: var(--st-surface); font-size: 12.5px; padding: 12px 16px; }
+        table.rp td { padding: 12px 16px; }
+        .tybadge { font-size: 12px; font-weight: 600; border: 0; }
+        .hash { border-radius: var(--st-radius-sm); font-size: 12px; }
+        .dl { min-height: 32px; border-radius: var(--st-radius-md); font-size: 13px; font-weight: 500; }
+        /* ---------- report preview: a drawer with the pages and their thumbnails ---------- */
+        .rp-acts { display: flex; justify-content: flex-end; gap: 8px; white-space: nowrap; }
+        .dl, .pv {
+            display: inline-flex; align-items: center; gap: 8px; height: 30px; padding: 0 12px;
+            border: 1px solid var(--st-accent-border); border-radius: var(--st-radius-md); background: var(--st-surface);
+            font: 450 13px var(--st-font-main); color: var(--st-brand-text); cursor: pointer;
+            transition: background-color var(--st-dur-1) ease, border-color var(--st-dur-1) ease;
+        }
+        .dl:hover, .pv:hover { background: var(--st-accent-tint); border-color: var(--st-accent-border); }
+        table.rp tbody tr { cursor: pointer; }
+        table.rp tbody tr.sel td { background: var(--st-accent-tint); }
+
+        .pvw-back {
+            position: fixed; inset: 0; z-index: 300; display: none; justify-content: flex-end;
+            background: var(--st-overlay);
+        }
+        .pvw-back.open { display: flex; }
+        .pvw {
+            display: flex; flex-direction: column; width: min(1040px, 94vw); height: 100%;
+            background: var(--st-surface); box-shadow: var(--st-shadow-xl);
+            animation: pvw-in var(--st-dur-2) var(--st-ease-out);
+        }
+        @keyframes pvw-in { from { transform: translateX(40px); opacity: 0; } }
+        .pvw-head {
+            flex: none; display: flex; align-items: flex-start; justify-content: space-between; gap: 20px;
+            padding: 18px 24px 16px; border-bottom: 1px solid var(--st-border);
+        }
+        .pvw-head h3 { margin: 0; font-size: 20px; font-weight: 300; letter-spacing: -0.015em; overflow-wrap: anywhere; }
+        .pvw-meta { display: flex; flex-wrap: wrap; gap: 4px 18px; margin-top: 8px; font-size: 13px; color: var(--st-text-muted); }
+        .pvw-meta b { font-weight: 500; color: var(--st-text); }
+        .pvw-meta .mono { font: 400 12px var(--st-font-mono); color: var(--st-text-secondary); cursor: pointer; }
+        .pvw-acts { display: flex; flex: none; gap: 8px; }
+        .pvw-body { flex: 1; display: grid; grid-template-columns: 132px minmax(0, 1fr); min-height: 0; }
+        .pvw-thumbs {
+            display: flex; flex-direction: column; gap: 12px; padding: 16px 16px 24px;
+            border-right: 1px solid var(--st-border); overflow-y: auto; scrollbar-width: thin;
+        }
+        .pvw-thumb {
+            display: grid; gap: 6px; justify-items: center; padding: 0; border: 0; background: none;
+            font: 400 12px var(--st-font-main); color: var(--st-text-faint); cursor: pointer;
+        }
+        .pvw-thumb canvas, .pvw-thumb .ph {
+            display: block; width: 100px; aspect-ratio: 210 / 297; border: 1px solid var(--st-border-strong);
+            border-radius: 3px; background: #fff;
+        }
+        .pvw-thumb.on { color: var(--st-brand-text); font-weight: 500; }
+        .pvw-thumb.on canvas { border-color: var(--st-accent); box-shadow: 0 0 0 2px var(--st-accent-tint); }
+        .pvw-pages {
+            display: flex; flex-direction: column; align-items: center; gap: 20px; padding: 24px;
+            background: var(--st-surface-2); overflow-y: auto; scrollbar-width: thin;
+        }
+        .pvw-pages canvas { display: block; max-width: 100%; height: auto; background: #fff; box-shadow: var(--st-shadow-md); }
+        .pvw-pages iframe { width: 100%; height: 100%; border: 0; background: #fff; }
+        .pvw-note { margin: auto; max-width: 44ch; text-align: center; font-size: 14px; color: var(--st-text-muted); }
+        @media (max-width: 760px) {
+            .pvw-body { grid-template-columns: minmax(0, 1fr); }
+            .pvw-thumbs { display: none; }
+            .pvw-head { flex-direction: column; }
+            .pvw-pages { padding: 12px; }
+        }
+        @media (prefers-reduced-motion: reduce) { .pvw { animation: none; } }
     </style>
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600;700&amp;display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300..600&family=Source+Code+Pro:wght@400;500;600&display=swap">
     <link rel="stylesheet" href="css/tokens.css">
     <script src="js/theme.js"></script>
 </head>
@@ -162,8 +254,8 @@
         <main class="main-content rp-main">
             <div class="top-bar">
                 <div class="page-header">
-                    <h2>REPORTS</h2>
-                    <p>Generated PDF intelligence &amp; compliance reports</p>
+                    <h2>Reports</h2>
+                    <p>Intelligence and compliance reports as PDFs, generated on demand and kept with their SHA-256.</p>
                 </div>
                 <div class="filters-bar">
                     <button class="soc-btn" id="rp-refresh"><i class="fas fa-rotate"></i> Refresh</button>
@@ -211,13 +303,34 @@
         </main>
     </div>
 
+    <!-- report preview drawer -->
+    <div class="pvw-back" id="pvw" aria-hidden="true">
+        <aside class="pvw" role="dialog" aria-modal="true" aria-labelledby="pvw-title">
+            <div class="pvw-head">
+                <div style="min-width:0;">
+                    <h3 id="pvw-title">Report</h3>
+                    <div class="pvw-meta" id="pvw-meta"></div>
+                </div>
+                <div class="pvw-acts">
+                    <button class="soc-btn soc-btn-primary" id="pvw-dl"><i class="fas fa-download"></i> Download</button>
+                    <button class="soc-btn" id="pvw-close" aria-label="Close preview"><i class="fas fa-xmark"></i></button>
+                </div>
+            </div>
+            <div class="pvw-body">
+                <div class="pvw-thumbs" id="pvw-thumbs" aria-label="Pages"></div>
+                <div class="pvw-pages" id="pvw-pages"></div>
+            </div>
+        </aside>
+    </div>
+
     <script src="js/sidebar.js"></script>
     <script src="js/report-download.js"></script>
     <script>
         const B = STReports.apiBase();
         const H = () => ({ 'Authorization': `Bearer ${STReports.token()}` });
         const $ = s => document.querySelector(s);
-        const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+        // Older backend titles used an em dash as separator; show it as a middle dot.
+        const esc = s => String(s ?? '').replace(/\s+\u2014\s+/g, ' · ').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
         const REDUCE = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
         // report types whose builder needs a subject param
@@ -230,10 +343,10 @@
         // presentation metadata per known type (icon + one-liner); unknown types fall back gracefully
         const META = {
             executive_summary: { icon: 'fa-chart-line', desc: 'Board-level overview of detections, incidents and security posture.' },
-            geo_intel: { icon: 'fa-earth-americas', desc: 'Attack-origin geography — top source countries, cities and ASNs.' },
+            geo_intel: { icon: 'fa-earth-americas', desc: 'Attack-origin geography: top source countries, cities and ASNs.' },
             credentials: { icon: 'fa-key', desc: 'Credentials harvested by honeypots, broken down by service and source.' },
             incident: { icon: 'fa-triangle-exclamation', desc: 'Full timeline, evidence and response actions for one incident.' },
-            forensic_dfir: { icon: 'fa-magnifying-glass-chart', desc: 'DFIR case file — host, network and artifact analysis for a source.' },
+            forensic_dfir: { icon: 'fa-magnifying-glass-chart', desc: 'DFIR case file: host, network and artifact analysis for a source.' },
             detection_validation: { icon: 'fa-shield-halved', desc: 'Detection-rule coverage measured across attack scenarios.' },
             malware: { icon: 'fa-bug', desc: 'Static and behavioural analysis of a captured malware sample.' },
             soc2_readiness: { icon: 'fa-file-contract', desc: 'SOC 2 Trust Services Criteria self-assessment and gap list.' },
@@ -246,7 +359,7 @@
             return (n / 1048576).toFixed(2) + ' MB';
         }
         function relTime(s) {
-            if (!s) return '—';
+            if (!s) return 'n/a';
             const iso = /[Z+]/.test(s) ? s : s + 'Z';
             const t = new Date(iso).getTime();
             if (isNaN(t)) return esc(s);
@@ -312,10 +425,12 @@
 
         /* ---------------- history ---------------- */
         let firstLoad = true;
+        let REPORTS = [];
         async function loadReports() {
             try {
                 const d = await (await fetch(`${B}/reports`, { headers: H() })).json();
                 const rows = d.reports || [];
+                REPORTS = rows;
                 countUp($('#rp-count'), rows.length);
                 if (!rows.length) {
                     $('#rp-rows').innerHTML = `<tr><td colspan="8"><div class="rp-empty"><i class="fas fa-folder-open"></i>No reports generated yet. Pick a type above to create one.</div></td></tr>`;
@@ -325,15 +440,15 @@
                 $('#rp-rows').innerHTML = rows.map((x, i) => {
                     const m = META[x.report_type] || { icon: 'fa-file-pdf' };
                     const full = x.sha256 || '';
-                    return `<tr style="--i:${firstLoad ? i : 0}">
+                    return `<tr style="--i:${firstLoad ? i : 0}" data-id="${esc(x.id)}">
                         <td class="rp-when"><b>${esc(relTime(x.generated_at))}</b><span>${esc((x.generated_at || '').replace('T', ' ').slice(0, 19))}</span></td>
                         <td><span class="tybadge"><i class="fas ${m.icon}"></i>${esc(x.report_type)}</span></td>
                         <td class="rp-title">${esc(x.title)}</td>
-                        <td class="rp-sub" title="${esc(x.subject || '')}">${esc(x.subject || '—')}</td>
-                        <td class="rp-by">${esc(x.generated_by || '—')}</td>
+                        <td class="rp-sub" title="${esc(x.subject || '')}">${esc(x.subject || 'n/a')}</td>
+                        <td class="rp-by">${esc(x.generated_by || 'n/a')}</td>
                         <td class="rp-size">${humanBytes(x.size_bytes)}</td>
                         <td><span class="hash" data-hash="${esc(full)}" title="Click to copy full SHA-256">${esc(full.slice(0, 12))}…</span></td>
-                        <td><button class="dl" data-id="${esc(x.id)}" data-name="${esc(x.filename)}"><i class="fas fa-download"></i>Download</button></td>
+                        <td><div class="rp-acts"><button class="pv" data-id="${esc(x.id)}"><i class="fas fa-eye"></i>Preview</button><button class="dl" data-id="${esc(x.id)}" data-name="${esc(x.filename)}"><i class="fas fa-download"></i>Download</button></div></td>
                     </tr>`;
                 }).join('');
                 wireRowActions();
@@ -343,6 +458,137 @@
             }
         }
 
+        async function saveBlob(blob, name) {
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob); a.download = name;
+            document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(a.href);
+        }
+
+        /* ---------------- preview drawer ----------------
+           The PDF is fetched once with the session token and drawn page by page with pdf.js
+           (loaded on first use). If pdf.js cannot be loaded, the browser's own PDF viewer is used. */
+        const PDFJS = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/';
+        let pdfjsReady = null;
+        function loadPdfJs() {
+            if (!pdfjsReady) {
+                pdfjsReady = new Promise((resolve, reject) => {
+                    const sc = document.createElement('script');
+                    sc.src = PDFJS + 'pdf.min.js';
+                    sc.onload = () => { window.pdfjsLib.GlobalWorkerOptions.workerSrc = PDFJS + 'pdf.worker.min.js'; resolve(window.pdfjsLib); };
+                    sc.onerror = () => { pdfjsReady = null; reject(new Error('pdf.js did not load')); };
+                    document.head.appendChild(sc);
+                });
+            }
+            return pdfjsReady;
+        }
+
+        let previewRun = 0, previewBlob = null, previewUrl = null;
+        function closePreview() {
+            previewRun++;
+            $('#pvw').classList.remove('open');
+            $('#pvw').setAttribute('aria-hidden', 'true');
+            $('#pvw-pages').innerHTML = ''; $('#pvw-thumbs').innerHTML = '';
+            if (previewUrl) { URL.revokeObjectURL(previewUrl); previewUrl = null; }
+            previewBlob = null;
+            document.querySelectorAll('#rp-rows tr.sel').forEach(r => r.classList.remove('sel'));
+        }
+
+        async function openPreview(id) {
+            const x = REPORTS.find(r => r.id === id);
+            if (!x) return;
+            const run = ++previewRun;
+            const pages = $('#pvw-pages'), thumbs = $('#pvw-thumbs');
+            document.querySelectorAll('#rp-rows tr').forEach(r => r.classList.toggle('sel', r.dataset.id === id));
+            $('#pvw-title').textContent = String(x.title || 'Report').replace(/\s+\u2014\s+/g, ' · ');
+            $('#pvw-meta').innerHTML = `
+                <span>Type <b>${esc(x.report_type)}</b></span>
+                <span>Generated <b>${esc((x.generated_at || '').replace('T', ' ').slice(0, 19))} UTC</b></span>
+                <span>By <b>${esc(x.generated_by || 'n/a')}</b></span>
+                <span>Size <b>${humanBytes(x.size_bytes)}</b></span>
+                <span class="mono" id="pvw-hash" title="Click to copy the full SHA-256">sha256 ${esc((x.sha256 || '').slice(0, 20))}…</span>`;
+            $('#pvw-hash').onclick = () => navigator.clipboard && navigator.clipboard.writeText(x.sha256 || '').then(() => STReports.toast('SHA-256 copied', 'ok'), () => {});
+            $('#pvw-dl').onclick = () => { if (previewBlob) saveBlob(previewBlob, x.filename); };
+            pages.innerHTML = '<div class="pvw-note">Loading the report</div>';
+            thumbs.innerHTML = '';
+            $('#pvw').classList.add('open');
+            $('#pvw').setAttribute('aria-hidden', 'false');
+            $('#pvw-close').focus();
+
+            try {
+                const res = await fetch(`${B}/reports/${id}/download`, { headers: H() });
+                if (!res.ok) throw new Error(res.status === 410 ? 'The file for this report is no longer on disk.' : 'HTTP ' + res.status);
+                const buf = await res.arrayBuffer();
+                if (run !== previewRun) return;
+                previewBlob = new Blob([buf], { type: 'application/pdf' });
+
+                let lib;
+                try { lib = await loadPdfJs(); } catch (_) { lib = null; }
+                if (run !== previewRun) return;
+                if (!lib) {
+                    // no pdf.js (offline): the browser's built-in viewer shows the same file
+                    previewUrl = URL.createObjectURL(previewBlob);
+                    pages.innerHTML = `<iframe title="Report preview" src="${previewUrl}"></iframe>`;
+                    return;
+                }
+
+                const doc = await lib.getDocument({ data: buf.slice(0) }).promise;
+                if (run !== previewRun) return;
+                pages.innerHTML = '';
+                const dpr = Math.min(window.devicePixelRatio || 1, 2);
+                const width = Math.min(820, pages.clientWidth - 48);
+                for (let n = 1; n <= doc.numPages; n++) {
+                    const tb = document.createElement('button');
+                    tb.className = 'pvw-thumb' + (n === 1 ? ' on' : '');
+                    tb.dataset.page = n;
+                    tb.innerHTML = `<span class="ph"></span>${n}`;
+                    thumbs.appendChild(tb);
+                    const cv = document.createElement('canvas');
+                    cv.dataset.page = n;
+                    cv.width = 10; cv.height = 14;
+                    cv.style.width = width + 'px';
+                    cv.style.aspectRatio = '210 / 297';
+                    pages.appendChild(cv);
+                }
+                thumbs.onclick = (e) => {
+                    const tb = e.target.closest('.pvw-thumb');
+                    if (tb) pages.querySelector(`canvas[data-page="${tb.dataset.page}"]`).scrollIntoView({ behavior: 'smooth', block: 'start' });
+                };
+                // the thumbnail of the page nearest the top of the view is marked
+                pages.onscroll = () => {
+                    let best = 1, bestD = Infinity;
+                    pages.querySelectorAll('canvas').forEach(c => { const d = Math.abs(c.offsetTop - pages.scrollTop - 24); if (d < bestD) { bestD = d; best = +c.dataset.page; } });
+                    thumbs.querySelectorAll('.pvw-thumb').forEach(tb => tb.classList.toggle('on', +tb.dataset.page === best));
+                };
+                for (let n = 1; n <= doc.numPages; n++) {
+                    if (run !== previewRun) return;
+                    const page = await doc.getPage(n);
+                    const base = page.getViewport({ scale: 1 });
+                    const vp = page.getViewport({ scale: width / base.width * dpr });
+                    const cv = pages.querySelector(`canvas[data-page="${n}"]`);
+                    cv.width = vp.width; cv.height = vp.height;
+                    cv.style.aspectRatio = `${base.width} / ${base.height}`;
+                    await page.render({ canvasContext: cv.getContext('2d'), viewport: vp }).promise;
+                    const tv = page.getViewport({ scale: 200 / base.width });
+                    const tc = document.createElement('canvas');
+                    tc.width = tv.width; tc.height = tv.height;
+                    await page.render({ canvasContext: tc.getContext('2d'), viewport: tv }).promise;
+                    const ph = thumbs.querySelector(`.pvw-thumb[data-page="${n}"] .ph`);
+                    if (ph) ph.replaceWith(tc);
+                }
+            } catch (e) {
+                if (run === previewRun) pages.innerHTML = `<div class="pvw-note err">Could not open the report: ${esc(e.message)}</div>`;
+            }
+        }
+
+        $('#pvw-close').onclick = closePreview;
+        $('#pvw').addEventListener('click', (e) => { if (e.target.id === 'pvw') closePreview(); });
+        document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && $('#pvw').classList.contains('open')) closePreview(); });
+        $('#rp-rows').addEventListener('click', (e) => {
+            if (e.target.closest('.dl, .hash')) return;         // those have their own action
+            const tr = e.target.closest('tr[data-id]');
+            if (tr) openPreview(tr.dataset.id);
+        });
+
         function wireRowActions() {
             $('#rp-rows').querySelectorAll('.hash').forEach(el => el.onclick = async () => {
                 try {
@@ -350,17 +596,14 @@
                     const orig = el.textContent;
                     el.classList.add('copied'); el.textContent = 'copied ✓';
                     setTimeout(() => { el.classList.remove('copied'); el.textContent = orig; }, 1400);
-                } catch (_) { STReports.toast('Copy failed — clipboard blocked', 'err'); }
+                } catch (_) { STReports.toast('Copy failed, clipboard blocked', 'err'); }
             });
             $('#rp-rows').querySelectorAll('.dl').forEach(b => b.onclick = async () => {
                 b.disabled = true;
                 try {
                     const dl = await fetch(`${B}/reports/${b.dataset.id}/download`, { headers: H() });
                     if (!dl.ok) throw new Error('HTTP ' + dl.status);
-                    const blob = await dl.blob();
-                    const a = document.createElement('a');
-                    a.href = URL.createObjectURL(blob); a.download = b.dataset.name;
-                    document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(a.href);
+                    saveBlob(await dl.blob(), b.dataset.name);
                 } catch (e) {
                     STReports.toast('Download failed: ' + e.message, 'err');
                 } finally { b.disabled = false; }

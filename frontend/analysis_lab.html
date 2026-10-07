@@ -4,7 +4,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Analysis Lab | Shadow Trust</title>
+    <title>Analysis lab · ShadowTrust</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 28 28'%3E%3Crect width='28' height='28' rx='6' fill='%23533afd'/%3E%3Cpath d='M4.5 14c2.5-4.3 5.7-6.4 9.500-6.400s7 2.100 9.500 6.400c-2.500 4.300-5.700 6.400-9.500 6.400S7 18.300 4.500 14Z' fill='none' stroke='%23fff' stroke-width='1.8' stroke-linejoin='round'/%3E%3Ccircle cx='14' cy='14' r='3.2' fill='%23fff'/%3E%3C/svg%3E">
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#ffffff">
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/dashboard.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -13,36 +17,426 @@
     <script src="https://cdn.jsdelivr.net/npm/xterm-addon-fit@0.8.0/lib/xterm-addon-fit.js"></script>
     <script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
     <style>
-        .al-wrap { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; height: calc(100vh - 150px); }
-        @media (max-width: 1200px) { .al-wrap { grid-template-columns: 1fr; height: auto; } }
-        .al-card { border: 1px solid var(--st-border); border-radius: 8px; background: var(--st-surface-2); display: flex; flex-direction: column; overflow: hidden; }
-        .al-card .hd { padding: 10px 14px; border-bottom: 1px solid var(--st-border); display: flex; align-items: center; gap: 10px; }
-        .al-card .hd .t { font-size: .72rem; letter-spacing: 1px; text-transform: uppercase; color: var(--st-text-muted); }
-        #term { flex: 1; padding: 6px; background: var(--st-surface-2); min-height: 320px; }
-        #alGraph { flex: 1; min-height: 260px; background: var(--st-surface-2); }
-        .al-sub { display: flex; gap: 12px; flex-wrap: wrap; }
-        .al-sub .al-card { flex: 1 1 300px; }
-        .btn { background: var(--st-surface-hover); border: 1px solid var(--st-border); color: var(--st-text-secondary); font-size: .72rem; padding: 5px 12px; border-radius: 6px; cursor: pointer; }
-        .btn:hover { border-color: var(--st-info); color: var(--st-info); }
-        .btn.go { border-color: var(--st-success); color: var(--st-success); }
-        .btn.stop { border-color: var(--st-danger); color: var(--st-danger); }
-        .btn:disabled { opacity: .4; cursor: not-allowed; }
-        .pill { font-family: var(--font-mono, monospace); font-size: .68rem; color: var(--st-text-muted); }
-        .pill b { color: var(--st-text); }
-        .strm { flex: 1; overflow-y: auto; padding: 10px 12px; font-family: var(--font-mono, monospace); font-size: .72rem; }
-        .strm .row { display: flex; gap: 8px; padding: 3px 0; border-bottom: 1px solid var(--st-border); }
-        .sev-CRITICAL { color: var(--st-danger); } .sev-HIGH { color: var(--st-caution); } .sev-MEDIUM { color: var(--st-warning); } .sev-LOW { color: var(--st-text-muted); } .sev-INFO { color: var(--st-text-muted); }
-        .mstrip { display: flex; flex-wrap: wrap; gap: 4px; padding: 10px 12px; }
-        .mchip { font-family: var(--font-mono, monospace); font-size: .64rem; padding: 1px 6px; border-radius: 4px; border: 1px solid var(--st-border); color: var(--st-text-faint); }
-        .mchip.on-critical { border-color: var(--st-danger); color: var(--st-danger); }
-        .mchip.on-high { border-color: var(--st-caution); color: var(--st-caution); }
-        .mchip.on-med { border-color: var(--st-warning); color: var(--st-warning); }
-        .note { color: var(--st-text-muted); font-size: .74rem; margin: 4px 0 14px; }
-        .det { font-family: var(--font-mono, monospace); font-size: .7rem; color: var(--st-text-muted); padding: 8px 12px; }
-        .det a { color: var(--st-info); }
+        /* =========================================================
+           Analysis lab: four panels on one grid. The two columns keep the same
+           widths in both rows and every gap is 20px, so all edges line up.
+             terminal            | behavioural flow
+             commands            | detections
+           Colours, type and radii come from css/tokens.css.
+           ========================================================= */
+
+        .al-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            height: 34px;
+            padding: 0 12px;
+            border: 1px solid var(--st-border);
+            border-radius: var(--st-radius-md);
+            background: var(--st-surface);
+            font-size: 13px;
+            color: var(--st-text-muted);
+            white-space: nowrap;
+        }
+
+        .al-status::before {
+            content: '';
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: var(--st-text-faint);
+        }
+
+        body.al-live .al-status::before {
+            background: var(--st-success-solid);
+            box-shadow: 0 0 0 3px color-mix(in srgb, var(--st-success-solid) 20%, transparent);
+        }
+
+        .al-status b {
+            font: 500 12.5px var(--st-font-mono);
+            color: var(--st-text);
+        }
+
+        .al-note {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            margin-bottom: 20px;
+            padding: 11px 16px;
+            border: 1px solid var(--st-accent-border);
+            border-radius: var(--st-radius-md);
+            background: var(--st-accent-tint);
+            font-size: 13.5px;
+            line-height: 1.5;
+            color: var(--st-text-secondary);
+        }
+
+        .al-note i {
+            margin-top: 3px;
+            color: var(--st-accent);
+        }
+
+        .al-note b {
+            font-weight: 500;
+            color: var(--st-text);
+        }
+
+        /* ---------- the grid ---------- */
+        .al-grid {
+            display: grid;
+            grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+            grid-template-rows: minmax(400px, calc(100dvh - 548px)) 248px;
+            gap: 20px;
+        }
+
+        .al-card {
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+            min-height: 0;
+            border: 1px solid var(--st-border);
+            border-radius: var(--st-radius-lg);
+            background: var(--st-surface);
+            overflow: hidden;
+        }
+
+        .al-card > .hd {
+            flex: none;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            height: 48px;
+            padding: 0 20px;
+            border-bottom: 1px solid var(--st-border);
+        }
+
+        .al-card > .hd .t {
+            font-size: 15px;
+            font-weight: 500;
+            letter-spacing: -0.01em;
+            color: var(--st-text);
+        }
+
+        .al-card > .hd .aside {
+            font-size: 12.5px;
+            color: var(--st-text-faint);
+            font-variant-numeric: tabular-nums;
+        }
+
+        .al-body {
+            flex: 1;
+            min-height: 0;
+            overflow-y: auto;
+            scrollbar-width: thin;
+        }
+
+        /* ---------- terminal: a navy window, edge to edge ---------- */
+        .al-term {
+            border-color: #1f2d5f;
+            background: #0d1738;
+        }
+
+        .al-term > .hd {
+            border-bottom-color: #1f2d5f;
+            background: #121e47;
+        }
+
+        /* .main-content prefix: a shared rule colours panel titles with the page text colour */
+        .main-content .al-term > .hd .t {
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            color: #dbe3f6;
+        }
+
+        .al-term > .hd .aside {
+            color: #7d92c4;
+        }
+
+        .al-dots {
+            display: inline-flex;
+            gap: 6px;
+        }
+
+        .al-dots i {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #2c3f7c;
+        }
+
+        #term {
+            flex: 1;
+            min-height: 0;
+            padding: 12px 6px 8px 14px;
+            background: #0d1738;
+        }
+
+        #term .xterm-viewport {
+            scrollbar-width: thin;
+        }
+
+        .term-fail {
+            padding: 20px;
+            font: 400 13px var(--st-font-mono);
+            color: #ff6b9a;
+        }
+
+        /* ---------- behavioural flow ---------- */
+        #alGraph {
+            flex: 1;
+            min-height: 0;
+        }
+
+        body:not(.al-live) #alGraph {
+            display: none;
+        }
+
+        body.al-live .al-hint {
+            display: none;
+        }
+
+        .al-hint,
+        .al-empty {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 14px;
+            padding: 24px;
+            text-align: center;
+            font-size: 13.5px;
+            line-height: 1.5;
+            color: var(--st-text-muted);
+        }
+
+        .al-hint svg {
+            width: 168px;
+            color: var(--st-v200);
+        }
+
+        .al-hint p,
+        .al-empty p {
+            max-width: 40ch;
+            margin: 0;
+        }
+
+        .al-empty {
+            min-height: 100%;
+        }
+
+        .al-empty i {
+            font-size: 20px;
+            color: var(--st-v200);
+        }
+
+        .mstrip {
+            flex: none;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 6px;
+            min-height: 46px;
+            padding: 8px 20px;
+            border-top: 1px solid var(--st-border);
+            background: var(--st-surface-2);
+        }
+
+        .mstrip:empty::before {
+            content: 'ATT&CK techniques light up here as commands map to them.';
+            font-size: 12.5px;
+            color: var(--st-text-faint);
+        }
+
+        .mchip {
+            height: 24px;
+            padding: 0 8px;
+            border: 1px solid var(--st-border);
+            border-radius: var(--st-radius-sm);
+            background: var(--st-surface);
+            font: 400 12px var(--st-font-mono);
+            line-height: 22px;
+            color: var(--st-text-faint);
+        }
+
+        .mchip.on-critical {
+            border-color: transparent;
+            background: var(--st-danger-bg);
+            font-weight: 500;
+            color: var(--st-danger);
+        }
+
+        .mchip.on-high {
+            border-color: transparent;
+            background: var(--st-caution-bg);
+            font-weight: 500;
+            color: var(--st-caution);
+        }
+
+        .mchip.on-med {
+            border-color: transparent;
+            background: var(--st-warning-bg);
+            font-weight: 500;
+            color: var(--st-warning);
+        }
+
+        /* ---------- commands and connections ---------- */
+        .cmd-row {
+            display: grid;
+            grid-template-columns: 72px 148px minmax(0, 1fr);
+            align-items: baseline;
+            gap: 12px;
+            padding: 9px 20px;
+            border-bottom: 1px solid var(--st-border);
+            font-size: 13px;
+        }
+
+        .cmd-row:last-child {
+            border-bottom: 0;
+        }
+
+        .cmd-row .tm {
+            font: 400 12px var(--st-font-mono);
+            color: var(--st-text-faint);
+        }
+
+        .cmd-row .ty {
+            font-weight: 500;
+            color: var(--st-text-secondary);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .cmd-row .ty.sev-CRITICAL {
+            color: var(--st-danger);
+        }
+
+        .cmd-row .ty.sev-HIGH {
+            color: var(--st-caution);
+        }
+
+        .cmd-row .ty.sev-MEDIUM {
+            color: var(--st-warning);
+        }
+
+        .cmd-row .cm {
+            font: 400 12.5px var(--st-font-mono);
+            color: var(--st-text);
+            overflow-wrap: anywhere;
+        }
+
+        /* ---------- detections ---------- */
+        .det-row {
+            padding: 12px 20px;
+            border-bottom: 1px solid var(--st-border);
+        }
+
+        .det-row:last-child {
+            border-bottom: 0;
+        }
+
+        .det-top {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 6px 10px;
+        }
+
+        .det-top b {
+            font: 500 12.5px var(--st-font-mono);
+            color: var(--st-text);
+        }
+
+        .det-top .tq {
+            font: 400 12px var(--st-font-mono);
+            color: var(--st-text-muted);
+        }
+
+        .det-why {
+            margin-top: 4px;
+            font-size: 13px;
+            line-height: 1.45;
+            color: var(--st-text-muted);
+            overflow-wrap: anywhere;
+        }
+
+        .det-link {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 20px;
+            font-size: 13.5px;
+            font-weight: 500;
+        }
+
+        .sev {
+            display: inline-block;
+            height: 22px;
+            padding: 0 8px;
+            border-radius: var(--st-radius-sm);
+            background: var(--st-neutral-bg);
+            font-size: 12px;
+            font-weight: 500;
+            line-height: 22px;
+            color: var(--st-text-secondary);
+        }
+
+        .sev.sev-CRITICAL {
+            background: var(--st-danger-bg);
+            color: var(--st-danger);
+        }
+
+        .sev.sev-HIGH {
+            background: var(--st-caution-bg);
+            color: var(--st-caution);
+        }
+
+        .sev.sev-MEDIUM {
+            background: var(--st-warning-bg);
+            color: var(--st-warning);
+        }
+
+        .sev.sev-LOW {
+            background: var(--st-info-bg);
+            color: var(--st-info);
+        }
+
+        /* ---------- smaller screens: one column, natural heights ---------- */
+        @media (max-width: 1100px) {
+            .al-grid {
+                grid-template-columns: minmax(0, 1fr);
+                grid-template-rows: none;
+                grid-auto-rows: auto;
+            }
+
+            .al-term {
+                height: 420px;
+            }
+
+            .al-flow {
+                height: 380px;
+            }
+
+            .al-list {
+                height: 260px;
+            }
+        }
+
+        @media (max-width: 560px) {
+            .cmd-row {
+                grid-template-columns: 64px minmax(0, 1fr);
+            }
+
+            .cmd-row .cm {
+                grid-column: 1 / -1;
+            }
+        }
     </style>
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600;700&amp;display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300..600&family=Source+Code+Pro:wght@400;500;600&display=swap">
     <link rel="stylesheet" href="css/tokens.css">
     <script src="js/theme.js"></script>
 </head>
@@ -53,45 +447,55 @@
         <main class="main-content">
             <div class="top-bar">
                 <div class="page-header">
-                    <h2>ANALYSIS LAB</h2>
-                    <p>SANDBOX SHELL // drive commands, watch the behaviour profile build in real time</p>
+                    <h2>Analysis lab</h2>
+                    <p>A disposable sandbox shell. Run commands and watch the behaviour profile build in real time.</p>
                 </div>
-                <div class="filters-bar" style="gap:8px;">
-                    <span class="pill" id="al-status">no session</span>
-                    <button class="btn go" id="al-start"><i class="fas fa-play"></i> START SANDBOX</button>
-                    <button class="btn stop" id="al-stop" disabled><i class="fas fa-stop"></i> STOP</button>
+                <div class="filters-bar">
+                    <span class="al-status" id="al-status">No session</span>
+                    <button class="soc-btn soc-btn-danger" id="al-stop" disabled><i class="fas fa-stop"></i> Stop</button>
+                    <button class="soc-btn soc-btn-primary" id="al-start"><i class="fas fa-play"></i> Start sandbox</button>
                 </div>
             </div>
 
-            <div class="note">
-                The sandbox is a disposable Debian container with <b>no network egress</b> — it cannot reach the
-                internet, the honeypots, or the platform. Outbound connection <i>attempts</i> are still captured and
-                shown below. The session is time-boxed and every command is recorded and profiled.
+            <div class="al-note">
+                <i class="fas fa-circle-info"></i>
+                <span>The sandbox is a disposable Debian container with <b>no network egress</b>, so it cannot reach the
+                internet, the honeypots or the platform. Outbound connection attempts are still captured and shown
+                below. The session is time-boxed and every command is recorded and profiled.</span>
             </div>
 
-            <div class="al-wrap">
-                <div class="al-card">
-                    <div class="hd"><span class="t">Terminal</span> <span class="pill" id="al-timer"></span></div>
+            <div class="al-grid">
+                <section class="al-card al-term">
+                    <div class="hd">
+                        <span class="t"><span class="al-dots" aria-hidden="true"><i></i><i></i><i></i></span>Terminal</span>
+                        <span class="aside" id="al-timer"></span>
+                    </div>
                     <div id="term"></div>
-                </div>
+                </section>
 
-                <div style="display:flex; flex-direction:column; gap:14px; min-height:0;">
-                    <div class="al-card" style="flex:1;">
-                        <div class="hd"><span class="t">Behavioural flow (this session)</span></div>
-                        <div id="alGraph"></div>
-                        <div class="mstrip" id="al-mitre"></div>
+                <section class="al-card al-flow">
+                    <div class="hd"><span class="t">Behavioural flow</span><span class="aside">This session</span></div>
+                    <div class="al-hint">
+                        <svg viewBox="0 0 160 70" fill="none" stroke="currentColor" stroke-width="1.25" aria-hidden="true"><circle cx="18" cy="35" r="8"/><circle cx="80" cy="16" r="8"/><circle cx="80" cy="54" r="8"/><circle cx="142" cy="35" r="8"/><path d="M26 32 72 18M26 38l46 14M88 18l46 14M88 52l46-14"/></svg>
+                        <p>Start the sandbox and each command you run appears here as a node, linked to the files and connections it touches.</p>
                     </div>
-                    <div class="al-sub">
-                        <div class="al-card" style="min-height:180px;">
-                            <div class="hd"><span class="t">Command &amp; connection stream</span></div>
-                            <div class="strm" id="al-stream"><div class="pill">// start a session</div></div>
-                        </div>
-                        <div class="al-card" style="min-height:180px;">
-                            <div class="hd"><span class="t">Detections / incident</span></div>
-                            <div class="det" id="al-det">—</div>
-                        </div>
+                    <div id="alGraph"></div>
+                    <div class="mstrip" id="al-mitre"></div>
+                </section>
+
+                <section class="al-card al-list">
+                    <div class="hd"><span class="t">Commands and connections</span><span class="aside">Newest first</span></div>
+                    <div class="al-body" id="al-stream">
+                        <div class="al-empty"><i class="fas fa-terminal"></i><p>Commands and connection attempts show up here once a session is running.</p></div>
                     </div>
-                </div>
+                </section>
+
+                <section class="al-card al-list">
+                    <div class="hd"><span class="t">Detections and incident</span></div>
+                    <div class="al-body" id="al-det">
+                        <div class="al-empty"><i class="fas fa-shield-halved"></i><p>Nothing yet. Detections fire as soon as a command matches a rule.</p></div>
+                    </div>
+                </section>
             </div>
         </main>
     </div>
@@ -104,11 +508,11 @@
         const token = () => localStorage.getItem('access_token') || localStorage.getItem('authToken') || '';
 
         if (typeof Terminal === 'undefined') {
-            $('#term').innerHTML = '<div style="color:var(--st-danger);padding:16px;font-family:var(--st-font-mono)">xterm.js failed to load — check network / CDN access.</div>';
+            $('#term').innerHTML = '<div class="term-fail">The terminal library (xterm.js) did not load. Check network or CDN access.</div>';
         }
         const term = (typeof Terminal !== 'undefined') ? new Terminal({
-            cursorBlink: true, fontSize: 13, fontFamily: 'JetBrains Mono, monospace',
-            theme: { background: '#0b0d0f', foreground: '#e8eaec', cursor: '#4fc7ba', selectionBackground: 'rgba(79, 199, 186, 0.28)' },
+            cursorBlink: true, fontSize: 13, fontFamily: 'Source Code Pro, monospace',
+            theme: { background: '#0d1738', foreground: '#dbe3f6', cursor: '#9a9afe', selectionBackground: 'rgba(127, 125, 252, 0.32)' },
         }) : null;
         let fit = null;
         if (term) {
@@ -121,11 +525,23 @@
         let ws = null, session = null, poll = null, started = 0, network = null;
 
         const MITRE = ['T1059', 'T1059.001', 'T1105', 'T1027', 'T1046', 'T1078', 'T1098', 'T1071'];
+        /* severity arrives in capitals; show sentence case */
+        const cap = v => { const t = String(v ?? '').toLowerCase(); return t.charAt(0).toUpperCase() + t.slice(1); };
+        /* canvas libraries cannot read CSS variables, so token colours are resolved first */
+        const R = v => (window.stTheme && window.stTheme.resolve ? window.stTheme.resolve(v) : v);
+        const emptyState = (icon, text) => `<div class="al-empty"><i class="fas ${icon}"></i><p>${text}</p></div>`;
+        /* the profile API sends fixed node colours; draw them in the product's palette (same map as behavior.html) */
+        const NODE_TOKENS = { '#ef4444': '--st-danger-solid', '#00f3ff': '--st-sky', '#bc13fe': '--st-accent', '#ffee00': '--st-warning-solid', '#22c55e': '--st-success-solid' };
+        const themedNodes = nodes => (nodes || []).map(n => {
+            const token = NODE_TOKENS[String(n.color || '').toLowerCase()];
+            return token ? { ...n, color: R(`var(${token})`) } : n;
+        });
 
         function setStatus(txt, running) {
             $('#al-status').innerHTML = txt;
             $('#al-start').disabled = !!running;
             $('#al-stop').disabled = !running;
+            document.body.classList.toggle('al-live', !!running);
         }
 
         function apiBase() {
@@ -135,7 +551,7 @@
         }
 
         async function start() {
-            setStatus('starting…');
+            setStatus('Starting');
             let res;
             try { res = await apiService.post('/analysis-shell/start', {}); }
             catch (e) { setStatus('<span style="color:var(--st-danger)">' + esc(e.message) + '</span>'); return; }
@@ -167,7 +583,7 @@
         function cleanup() {
             if (ws) { try { ws.close(); } catch (e) {} ws = null; }
             clearInterval(poll); poll = null;
-            setStatus('no session', false);
+            setStatus('No session', false);
             $('#al-timer').textContent = '';
             session = null;
         }
@@ -176,27 +592,27 @@
             if (!session) return;
             const mins = ((Date.now() - started) / 60000);
             const left = Math.max(0, (session.ttl_minutes || 20) - mins);
-            $('#al-timer').textContent = `idle-TTL ~${left.toFixed(0)}m`;
+            $('#al-timer').textContent = `Idle timeout in about ${left.toFixed(0)} min`;
 
             try {
                 const s = await apiService.get(`/analysis-shell/${session.session_id}`);
                 if (s.status !== 'running') { cleanup(); return; }
                 $('#al-stream').innerHTML = (s.recent || []).map(e => `
-                    <div class="row">
-                        <span class="pill">${esc((e.timestamp || '').slice(11, 19))}</span>
-                        <span class="sev-${esc(e.severity)}">${esc(e.type.replace('shell.', ''))}</span>
-                        <span>${esc(e.command)}</span>
-                    </div>`).join('') || '<div class="pill">// run a command</div>';
+                    <div class="cmd-row">
+                        <span class="tm">${esc((e.timestamp || '').slice(11, 19))}</span>
+                        <span class="ty sev-${esc(e.severity)}">${esc(e.type.replace('shell.', ''))}</span>
+                        <span class="cm">${esc(e.command)}</span>
+                    </div>`).join('') || emptyState('fa-terminal', 'Run a command in the terminal to see it here.');
                 $('#al-stream').scrollTop = 0;
             } catch (e) {}
 
             try {
                 const prof = await apiService.get(`/behavior/profile?session=${session.session_id}`);
-                const data = { nodes: new vis.DataSet(prof.graph.nodes), edges: new vis.DataSet(prof.graph.edges) };
+                const data = { nodes: new vis.DataSet(themedNodes(prof.graph.nodes)), edges: new vis.DataSet(prof.graph.edges) };
                 if (!network) {
                     network = new vis.Network($('#alGraph'), data, {
-                        nodes: { font: { color: 'var(--st-text)', face: 'JetBrains Mono' }, borderWidth: 1 },
-                        edges: { color: 'var(--st-text-faint)', arrows: 'to', smooth: { type: 'cubicBezier' }, font: { color: 'var(--st-text-faint)', size: 9 } },
+                        nodes: { font: { color: R('var(--st-text)'), face: 'Source Code Pro' }, borderWidth: 1 },
+                        edges: { color: R('var(--st-text-faint)'), arrows: 'to', smooth: { type: 'cubicBezier' }, font: { color: R('var(--st-text-muted)'), size: 10, strokeWidth: 0, face: 'Inter' } },
                         physics: { stabilization: true, barnesHut: { gravitationalConstant: -4000, springLength: 90 } },
                     });
                 } else network.setData(data);
@@ -210,10 +626,16 @@
                 const d = await apiService.get(`/detections?source_ip=${encodeURIComponent(session.source_tag)}&limit=20`);
                 const dets = d.detections || [];
                 const incId = dets.find(x => x.incident_id)?.incident_id;
-                $('#al-det').innerHTML = dets.length ? dets.map(x =>
-                    `<div>${esc(x.rule_id)} · <span class="sev-${esc(x.severity)}">${esc(x.severity)}</span> · ${esc(x.attack_technique || '')}<br><span style="color:var(--st-text-faint)">${esc(x.reason || '')}</span></div>`
-                ).join('') + (incId ? `<div style="margin-top:6px"><a href="incidents.html">▶ incident opened</a></div>` : '')
-                    : '<span class="pill">no detections yet — try recon / download commands</span>';
+                $('#al-det').innerHTML = dets.length ? dets.map(x => `
+                    <div class="det-row">
+                        <div class="det-top">
+                            <b>${esc(x.rule_id)}</b>
+                            <span class="sev sev-${esc(x.severity)}">${esc(cap(x.severity))}</span>
+                            ${x.attack_technique ? `<span class="tq">${esc(x.attack_technique)}</span>` : ''}
+                        </div>
+                        ${x.reason ? `<div class="det-why">${esc(x.reason)}</div>` : ''}
+                    </div>`).join('') + (incId ? `<a class="det-link" href="incidents.html">Incident opened. View it in Investigations <i class="fas fa-arrow-right"></i></a>` : '')
+                    : emptyState('fa-shield-halved', 'No detections yet. Try a recon or download command.');
             } catch (e) {}
         }
 

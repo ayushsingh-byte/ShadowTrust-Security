@@ -3,7 +3,11 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>Geo Intelligence | Shadow Trust</title>
+    <title>Geo intelligence · ShadowTrust</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 28 28'%3E%3Crect width='28' height='28' rx='6' fill='%23533afd'/%3E%3Cpath d='M4.5 14c2.5-4.3 5.7-6.4 9.500-6.400s7 2.100 9.500 6.400c-2.500 4.300-5.700 6.400-9.500 6.400S7 18.300 4.500 14Z' fill='none' stroke='%23fff' stroke-width='1.8' stroke-linejoin='round'/%3E%3Ccircle cx='14' cy='14' r='3.2' fill='%23fff'/%3E%3C/svg%3E">
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#ffffff">
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/dashboard.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -22,6 +26,122 @@
 
         .leaflet-container {
             background: var(--st-surface-2) !important;
+        }
+
+        /* Globe view: the same dotted globe as the landing page, fed by real source locations. */
+        .geo-stage {
+            position: relative;
+            overflow: hidden;
+            margin-bottom: 2.5rem;
+            border: 1px solid var(--st-border);
+            border-radius: var(--st-radius-lg);
+        }
+
+        .geo-stage[data-view="globe"] {
+            background: linear-gradient(180deg, var(--st-surface) 0, color-mix(in srgb, var(--st-accent) 5%, var(--st-surface)) 62%, color-mix(in srgb, var(--st-magenta) 9%, var(--st-surface)) 100%);
+        }
+
+        .geo-globe {
+            position: absolute;
+            inset: 0;
+            z-index: 2;
+            width: 100%;
+            height: 100%;
+        }
+
+        .geo-stage[data-view="map"] .geo-globe,
+        .geo-stage[data-view="map"] .globe-tip,
+        .geo-stage[data-view="map"] .globe-hint {
+            display: none;
+        }
+
+        .geo-stage[data-view="globe"] #geoMap {
+            visibility: hidden;
+        }
+
+        .view-toggle {
+            position: absolute;
+            left: 16px;
+            top: 16px;
+            z-index: 500;
+            display: inline-flex;
+            padding: 3px;
+            border: 1px solid var(--st-border);
+            border-radius: var(--st-radius-lg);
+            background: var(--st-surface);
+            box-shadow: var(--st-shadow-sm);
+        }
+
+        .view-toggle button {
+            height: 28px;
+            padding: 0 12px;
+            border: 0;
+            border-radius: var(--st-radius-sm);
+            background: transparent;
+            color: var(--st-text-muted);
+            font: 450 13px var(--st-font-main);
+            cursor: pointer;
+            transition: background-color var(--st-dur-1) ease, color var(--st-dur-1) ease;
+        }
+
+        .view-toggle button[aria-pressed="true"] {
+            background: var(--st-accent-tint);
+            color: var(--st-brand-text);
+        }
+
+        .globe-tip {
+            position: absolute;
+            z-index: 4;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            padding: 9px 12px;
+            border: 1px solid var(--st-border);
+            border-radius: var(--st-radius-lg);
+            background: var(--st-surface);
+            box-shadow: var(--st-shadow-md);
+            font-size: 12.5px;
+            color: var(--st-text-muted);
+            white-space: nowrap;
+            pointer-events: none;
+            transform: translate(-50%, calc(-100% - 12px));
+        }
+
+        .globe-tip b {
+            font-family: var(--st-font-mono);
+            font-weight: 500;
+            color: var(--st-text);
+        }
+
+        .globe-hint {
+            position: absolute;
+            left: 16px;
+            bottom: 14px;
+            z-index: 3;
+            font-size: 12.5px;
+            color: var(--st-text-faint);
+            pointer-events: none;
+        }
+
+        /* phones: the stats card moves to the foot of the stage, and the globe keeps the
+           space above it */
+        @media (max-width: 700px) {
+            .geo-stage .map-overlay {
+                top: auto;
+                bottom: 12px;
+                left: 12px;
+                right: 12px;
+                width: auto;
+                padding: 12px 14px;
+            }
+
+            .geo-stage .geo-globe {
+                height: calc(100% - 150px);
+            }
+
+            .globe-hint {
+                display: none;
+            }
         }
 
         .leaflet-tile-pane {
@@ -46,14 +166,15 @@
             position: absolute;
             top: 20px;
             right: 20px;
-            background: color-mix(in srgb, var(--st-surface) 94%, transparent);
+            background: var(--st-surface);
             box-shadow: var(--st-shadow-md);
-            border: 1px solid var(--neon-cyan);
-            padding: 15px;
+            border: 1px solid var(--st-border);
+            border-radius: var(--st-radius-md);
+            padding: 16px;
             z-index: 500;
-            width: 250px;
-            
-            font-family: var(--st-font-mono);
+            width: 260px;
+            font-family: var(--st-font-main);
+            font-size: 0.85rem;
         }
 
         .overlay-row {
@@ -68,7 +189,7 @@
             width: 0%;
             height: 100%;
             background: var(--accent-primary);
-            transition: width 2.5s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: width 2.5s var(--st-ease-in-out);
         }
 
         @keyframes scanline {
@@ -114,7 +235,7 @@
         }
     </style>
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600;700&amp;display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300..600&family=Source+Code+Pro:wght@400;500;600&display=swap">
     <link rel="stylesheet" href="css/tokens.css">
     <script src="js/theme.js"></script>
 </head>
@@ -133,7 +254,7 @@
             <div class="soc-card-header"
                 style="border-bottom: 1px solid var(--st-border); padding-bottom: 10px; margin-bottom: 15px; position:relative;">
                 <span id="modal-title" class="card-title text-yellow"><i class="fas fa-exclamation-triangle"></i>
-                    AUTHORIZATION REQUIRED</span>
+                    Authorization required</span>
             </div>
 
             <div id="modal-message"
@@ -149,8 +270,8 @@
 
             <div id="modal-buttons" style="display: flex; justify-content: flex-end; gap: 10px; position:relative;">
                 <button id="modal-btn-cancel" class="soc-btn"
-                    style="background: transparent; border: 1px solid var(--st-border); color: var(--st-text-secondary);">CANCEL</button>
-                <button id="modal-btn-confirm" class="soc-btn soc-btn-primary">PROCEED</button>
+                    style="background: transparent; border: 1px solid var(--st-border); color: var(--st-text-secondary);">Cancel</button>
+                <button id="modal-btn-confirm" class="soc-btn soc-btn-primary">Proceed</button>
             </div>
         </div>
     </div>
@@ -166,39 +287,46 @@
         <main class="main-content">
             <div class="top-bar">
                 <div class="page-header">
-                    <h2>Geo Intelligence · Global Footprint</h2>
-                    <p>Most-specific resolvable location and ASN breakdown of attacker origins — a source is only listed once it resolves past country level.</p>
+                    <h2>Geo intelligence</h2>
+                    <p>Where attacks come from, at the most specific location and ASN that resolves. Sources that resolve only to a country are left out.</p>
                 </div>
                 <div class="filters-bar">
                     <span class="text-xs text-muted">Range:</span>
                     <select class="soc-select">
                         <option>Last 24 hours</option>
                     </select>
-                    <button id="btn-generate-report" class="soc-btn soc-btn-primary">Generate SOC Report</button>
+                    <button id="btn-generate-report" class="soc-btn soc-btn-primary"><i class="fas fa-file-pdf"></i> Generate SOC report</button>
                 </div>
             </div>
 
             <!-- MAP CONTAINER -->
-            <div class="soc-card" style="padding: 0; overflow: hidden; margin-bottom: 2rem; position: relative;">
+            <div class="geo-stage" id="geoStage" data-view="globe">
                 <div id="geoMap"></div>
+                <canvas class="geo-globe" id="geoGlobe" role="img" aria-label="Globe showing where attack traffic comes from. Each spike is one source location; its height follows the number of events."></canvas>
+                <div class="globe-tip" id="globeTip" hidden></div>
+                <div class="globe-hint">Drag to turn. Spike height follows event count.</div>
+                <div class="view-toggle" role="group" aria-label="Map style">
+                    <button type="button" data-geo-view="globe" aria-pressed="true">Globe</button>
+                    <button type="button" data-geo-view="map" aria-pressed="false">Map</button>
+                </div>
 
                 <!-- LIVE STATS OVERLAY -->
                 <div class="map-overlay">
                     <div style="border-bottom:1px solid var(--st-border); margin-bottom:10px; padding-bottom:5px;">
-                        <span class="text-cyan">LIVE ATTACK FEEDS</span>
+                        <span style="font-weight:600;">Live attack feed</span>
                     </div>
                     <div class="overlay-row">
-                        <span class="text-muted">ACTIVE SOURCES</span>
-                        <span class="text-green" id="activeSrc">0</span>
+                        <span class="text-muted">Active sources</span>
+                        <span class="text-mono" id="activeSrc">0</span>
                     </div>
                     <div class="overlay-row">
-                        <span class="text-muted">TARGETED ZONES</span>
-                        <span class="text-pink" id="targetedZones">0</span>
+                        <span class="text-muted">Targeted zones</span>
+                        <span class="text-mono" id="targetedZones">0</span>
                     </div>
                     <div class="overlay-row" style="margin-top:10px;">
-                        <span class="text-xs text-purple">LAST DETECTED:</span>
+                        <span class="text-xs text-muted">Last detected</span>
                     </div>
-                    <div id="lastDetect" class="text-mono text-xs text-white">—</div>
+                    <div id="lastDetect" class="text-mono text-xs text-white">n/a</div>
                 </div>
             </div>
 
@@ -206,18 +334,18 @@
 
                 <div class="soc-card">
                     <div class="soc-card-header">
-                        <span class="card-title">Top Source Locations</span>
-                        <span class="badge">GEOGRAPHIC ATTRIBUTION</span>
+                        <span class="card-title">Top source locations</span>
+                        <span class="badge">Geographic attribution</span>
                     </div>
-                    <p class="text-xs text-muted" style="margin:-4px 0 10px;">City- or region-level only — sources that resolved no finer than a bare country aren't shown here.</p>
+                    <p class="text-xs text-muted" style="margin:-4px 0 10px;">City or region level only. Sources that resolved no finer than a bare country aren't shown here.</p>
                     <table class="soc-table">
                         <thead>
                             <tr>
-                                <th>FLAG</th>
-                                <th>LOCATION</th>
-                                <th>CODE</th>
-                                <th>EVENTS</th>
-                                <th>TRAFFIC</th>
+                                <th>Flag</th>
+                                <th>Location</th>
+                                <th>Code</th>
+                                <th>Events</th>
+                                <th>Traffic</th>
                             </tr>
                         </thead>
                         <tbody id="topCountriesTbody">
@@ -230,24 +358,23 @@
 
                 <div class="soc-card">
                     <div class="soc-card-header">
-                        <span class="card-title">ASN Intelligence</span>
-                        <span class="badge badge-red">CRITICAL</span>
+                        <span class="card-title">ASN intelligence</span>
+                        <span class="badge badge-gray">By event count</span>
                     </div>
 
-                    <div
-                        style="background:color-mix(in srgb, var(--st-text) 2%, transparent); padding:1rem; border-radius:4px; margin-bottom:15px; border:1px solid var(--st-border);">
-                        <span class="text-xs text-muted">TOP OFFENDING ISP</span>
-                        <div class="text-xl text-white" id="topOffendingIspName">—</div>
-                        <div class="text-xs text-pink" id="topOffendingIspCount">—</div>
+                    <div style="padding:0 0 1rem 14px; margin-bottom:1rem; border-left:2px solid var(--st-signal);">
+                        <span class="text-xs text-muted">Top offending ISP</span>
+                        <div id="topOffendingIspName" style="font-family:var(--st-font-display);font-size:1.6rem;line-height:1.15;letter-spacing:-.015em;margin:4px 0;">n/a</div>
+                        <div class="text-xs text-muted" id="topOffendingIspCount">n/a</div>
                     </div>
 
-                    <table class="soc-table">
+                    <table class="soc-table" style="table-layout:fixed;">
                         <thead>
                             <tr>
-                                <th>ASN</th>
-                                <th>IPs</th>
-                                <th>ISP Name</th>
-                                <th>Count</th>
+                                <th style="width:22%">ASN</th>
+                                <th style="width:30%">IPs</th>
+                                <th>ISP name</th>
+                                <th style="width:14%">Count</th>
                             </tr>
                         </thead>
                         <tbody id="asnIntelligenceTbody">
@@ -263,7 +390,24 @@
         </main>
     </div>
 
+    <script src="js/ribbon.js"></script>
+    <script src="js/globe.js"></script>
     <script>
+        // Globe view (default) and the flat map share one stage; the choice is remembered.
+        const geoStage = document.getElementById('geoStage');
+        window.geoGlobe = window.STGlobe
+            ? STGlobe.create(document.getElementById('geoGlobe'), { tip: document.getElementById('globeTip') })
+            : null;
+        function setGeoView(view) {
+            if (view !== 'map' || !window.geoGlobe) view = window.geoGlobe ? view : 'map';
+            geoStage.dataset.view = view;
+            geoStage.querySelectorAll('[data-geo-view]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.geoView === view)));
+            try { localStorage.setItem('st-geo-view', view); } catch (_) { /* ignore */ }
+            if (view === 'map' && typeof map !== 'undefined') setTimeout(() => map.invalidateSize(), 0);
+            if (view === 'globe' && window.geoGlobe) window.geoGlobe.paint();
+        }
+        geoStage.querySelectorAll('[data-geo-view]').forEach((b) => b.addEventListener('click', () => setGeoView(b.dataset.geoView)));
+
         // Initialize Map with Dark Tiles
         const map = L.map('geoMap', {
             zoomControl: false,
@@ -280,6 +424,15 @@
         }).addTo(map);
 
         // Live geo events are loaded from the backend
+        let savedGeoView = 'globe';
+        try { savedGeoView = localStorage.getItem('st-geo-view') || 'globe'; } catch (_) { /* ignore */ }
+        setGeoView(savedGeoView);
+
+        // A live event from an address that is on the globe makes its spike flash.
+        (function hookLive() {
+            if (!window.STLive) { setTimeout(hookLive, 600); return; }
+            window.STLive.on('event', (ev) => { if (window.geoGlobe && ev && ev.source_ip) window.geoGlobe.pulse(ev.source_ip); });
+        })();
 
 
         // --- CUSTOM MODAL & BUTTON LOGIC ---
@@ -359,7 +512,10 @@
                 // Update Overlays
                 document.getElementById('activeSrc').textContent = data.active_sources || 0;
                 document.getElementById('targetedZones').textContent = data.targeted_zones || 0;
-                document.getElementById('lastDetect').textContent = data.last_detected || "—";
+                // The API sends "source // PT:port"; show it the way the Overview does.
+                document.getElementById('lastDetect').textContent = (data.last_detected || "n/a").replace(/\s*\/\/\s*PT:\s*/, ' · port ');
+
+                if (window.geoGlobe) window.geoGlobe.setPoints((data.markers || []).slice(0, 30));
 
                 // Update Map Markers
                 if (typeof map !== 'undefined' && data.markers && data.markers.length > 0) {
@@ -378,7 +534,6 @@
                         position: relative;
                         border-radius: 50%;
                         box-shadow: 0 0 15px var(--accent-critical);
-                        animation: pulse-ring 2s infinite;
                     `;
 
                     data.markers.slice(0, 30).forEach(m => {
@@ -442,8 +597,8 @@
                 }
 
                 if (data.top_isp) {
-                    document.getElementById('topOffendingIspName').textContent = data.top_isp.isp_name || "—";
-                    document.getElementById('topOffendingIspCount').textContent = `${data.top_isp.count || 0} EVENTS LOGGED`;
+                    document.getElementById('topOffendingIspName').textContent = data.top_isp.isp_name || "n/a";
+                    document.getElementById('topOffendingIspCount').textContent = `${data.top_isp.count || 0} events logged`;
                 }
 
             } catch (err) {

@@ -1,76 +1,145 @@
-/* ShadowTrust design tokens: the single source of color, type, radius and shadow.
-   Light values sit on :root; dark applies from the OS setting or an explicit data-theme.
-   Add class="st-theme-dark" to keep one block dark in both themes (e.g. text over a photo). */
+/* ShadowTrust design tokens: the single source of color, type, radius, elevation and motion.
+   The system follows Stripe's public site as its reference (values measured from stripe.com):
+   navy text on white, one violet for actions, hairline borders, blue-tinted soft shadows,
+   light-weight headings. The landing page's ribbon (sky, violet, magenta, orange, lemon)
+   supplies the second set of colours, and the console draws its states, charts and meters
+   from that same set so every page reads as one product. Light values sit on :root; the console also has a dark theme, taken
+   from the same reference's navy sections. Public pages are light only.
+   Add class="st-theme-dark" to keep one block dark in both themes. */
 
 :root {
     color-scheme: light;
 
-    --st-bg: #f6f7f8;
+    --st-bg: #ffffff;
     --st-surface: #ffffff;
-    --st-surface-2: #f8f9fa;
-    --st-surface-hover: #f1f3f5;
-    --st-sidebar: #fbfbfc;
-    --st-border: #e3e6ea;
-    --st-border-strong: #cfd4da;
+    --st-surface-2: #f8fafd;
+    --st-surface-hover: #f1f5fb;
+    --st-sidebar: #f8fafd;
+    --st-border: #e5edf5;
+    --st-border-strong: #d4dee9;
+    --st-frame: color-mix(in srgb, #d4dee9 55%, transparent);
 
-    --st-text: #14181c;
-    --st-text-secondary: #3d454d;
-    --st-text-muted: #5b636c;
-    --st-text-faint: #7a828b;
+    --st-text: #061b31;
+    --st-text-secondary: #273951;
+    --st-text-muted: #50617a;
+    --st-text-faint: #7d8ba4;
+    --st-text-subdued: #64748d;
 
-    --st-accent: #146b64;
-    --st-accent-hover: #0f5551;
+    /* violet: actions, links, selection */
+    --st-accent: #533afd;
+    --st-accent-hover: #4032c8;
     --st-on-solid: #ffffff;
+    --st-brand: #533afd;
+    --st-brand-hover: #4032c8;
+    --st-brand-line: #533afd;
+    --st-on-brand: #ffffff;
+    --st-brand-text: #533afd;
+    --st-link: #533afd;
 
-    --st-success: #157a45;
-    --st-warning: #9a6103;
-    --st-caution: #b4520e;
-    --st-danger: #b3261e;
-    --st-info: #33658f;
-    --st-neutral: #5b636c;
+    /* violet scale */
+    --st-v25: #f5f5ff;
+    --st-v50: #e8e9ff;
+    --st-v100: #d6d9fc;
+    --st-v200: #b9b9f9;
+    --st-v300: #9a9afe;
+    --st-v400: #7f7dfc;
+    --st-v500: #665efd;
+    --st-v800: #2e2b8c;
 
-    --st-overlay: rgba(20, 24, 28, 0.45);
-    --st-shadow-sm: 0 1px 2px rgba(20, 24, 28, 0.06);
-    --st-shadow-md: 0 6px 16px rgba(20, 24, 28, 0.08);
+    /* the ribbon's colours: used in drawings, charts, meters and states */
+    --st-ruby: #ea2261;
+    --st-magenta: #f44bcc;
+    --st-orange: #ff6118;
+    --st-lemon: #f9b900;
+    --st-sky: #4a8cff;
+    --st-signal: #ea2261;
+
+    /* states. The plain name is the text colour (readable on white); -solid is the fill. */
+    --st-success: #00804a;
+    --st-success-solid: #00b261;
+    --st-warning: #a86200;
+    --st-warning-solid: #f9b900;
+    --st-caution: #c94409;
+    --st-caution-solid: #ff6118;
+    --st-danger: #d81b56;
+    --st-danger-solid: #ea2261;
+    --st-info: #1f6feb;
+    --st-neutral: #64748d;
+
+    /* chart series, in the order they should be used */
+    --st-chart-1: #533afd;
+    --st-chart-2: #4a8cff;
+    --st-chart-3: #ff6118;
+    --st-chart-4: #f44bcc;
+    --st-chart-5: #ea2261;
+    --st-chart-6: #f9b900;
+
+    /* gradients cut from the ribbon */
+    --st-ribbon: linear-gradient(90deg, #7fb2ff 0%, #7f7dfc 18%, #533afd 36%, #f44bcc 60%, #ff6118 82%, #f9b900 100%);
+    --st-grad-brand: linear-gradient(90deg, #533afd, #4a8cff);
+    --st-grad-hot: linear-gradient(90deg, #ea2261, #ff6118);
+    --st-grad-warm: linear-gradient(90deg, #ff6118, #f9b900);
+    --st-grad-good: linear-gradient(90deg, #00b261, #4a8cff);
+    --st-pastel: linear-gradient(135deg, #ffe5da 0%, #ffd7ef 45%, #d6d9fc 100%);
+
+    --st-overlay: rgba(6, 27, 49, 0.42);
+    --st-shadow-sm: 0 2px 10px 0 rgba(0, 55, 112, 0.06), 0 1px 4px 0 rgba(0, 59, 137, 0.04);
+    --st-shadow-md: 0 6px 22px 0 rgba(0, 55, 112, 0.1), 0 4px 8px 0 rgba(0, 59, 137, 0.02);
+    --st-shadow-lg: 0 15px 40px -2px rgba(0, 55, 112, 0.1), 0 5px 20px -2px rgba(0, 59, 137, 0.04);
+    --st-shadow-xl: 0 20px 80px -16px rgba(0, 55, 112, 0.14), 0 10px 60px -16px rgba(0, 59, 137, 0.06);
 
     /* Map tiles and embedded third-party pages are light; dark theme inverts them. */
-    --st-map-filter: saturate(0.7) contrast(0.97);
+    --st-map-filter: grayscale(1) sepia(0.4) hue-rotate(196deg) saturate(1.5) brightness(1.04) contrast(0.94);
     --st-embed-filter: none;
 
-    --st-radius-sm: 6px;
-    --st-radius-md: 8px;
-    --st-radius-lg: 12px;
+    --st-radius-sm: 4px;
+    --st-radius-md: 4px;
+    --st-radius-lg: 6px;
+    --st-radius-xl: 8px;
 
-    --st-font-main: 'Public Sans', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-    --st-font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    --st-font-main: 'Inter', 'SF Pro Display', system-ui, -apple-system, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+    --st-font-display: var(--st-font-main);
+    --st-font-mono: 'Source Code Pro', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+    --st-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+    --st-ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+    --st-ease-spring: cubic-bezier(0.34, 1.4, 0.64, 1);
+
+    /* Motion: three speeds, used with the eases above. Use these, not one-off values. */
+    --st-dur-1: 150ms; /* a state change: hover, press, a colour */
+    --st-dur-2: 250ms; /* something small moving: a marker, a chip, a drawer handle */
+    --st-dur-3: 450ms; /* something arriving: a panel, a page, a card */
 }
 
 /* Derived values and legacy names. Declared on every theme scope so they
    recompute against that scope's palette instead of inheriting root values. */
 :root,
 .st-theme-dark {
-    --st-accent-tint: color-mix(in srgb, var(--st-accent) 12%, var(--st-surface));
-    --st-success-bg: color-mix(in srgb, var(--st-success) 12%, var(--st-surface));
-    --st-warning-bg: color-mix(in srgb, var(--st-warning) 12%, var(--st-surface));
-    --st-caution-bg: color-mix(in srgb, var(--st-caution) 12%, var(--st-surface));
-    --st-danger-bg: color-mix(in srgb, var(--st-danger) 12%, var(--st-surface));
-    --st-info-bg: color-mix(in srgb, var(--st-info) 12%, var(--st-surface));
-    --st-neutral-bg: color-mix(in srgb, var(--st-neutral) 12%, var(--st-surface));
-    --st-focus-ring: 0 0 0 3px color-mix(in srgb, var(--st-accent) 28%, transparent);
+    --st-accent-tint: color-mix(in srgb, var(--st-accent) 8%, var(--st-surface));
+    --st-accent-border: color-mix(in srgb, var(--st-accent) 28%, var(--st-surface));
+    --st-brand-tint: color-mix(in srgb, var(--st-brand) 10%, var(--st-surface));
+    --st-signal-tint: color-mix(in srgb, var(--st-signal) 9%, var(--st-surface));
+    --st-success-bg: color-mix(in srgb, var(--st-success-solid) 16%, var(--st-surface));
+    --st-warning-bg: color-mix(in srgb, var(--st-lemon) 20%, var(--st-surface));
+    --st-caution-bg: color-mix(in srgb, var(--st-orange) 14%, var(--st-surface));
+    --st-danger-bg: color-mix(in srgb, var(--st-danger-solid) 10%, var(--st-surface));
+    --st-info-bg: color-mix(in srgb, var(--st-info) 9%, var(--st-surface));
+    --st-neutral-bg: color-mix(in srgb, var(--st-neutral) 11%, var(--st-surface));
+    --st-focus-ring: 0 0 0 3px color-mix(in srgb, var(--st-v400) 42%, transparent);
 
     --bg-body: var(--st-bg);
     --bg-sidebar: var(--st-sidebar);
     --bg-card: var(--st-surface);
     --bg-card-hover: var(--st-surface-hover);
     --accent-primary: var(--st-accent);
-    --accent-secondary: var(--st-warning);
+    --accent-secondary: var(--st-text-secondary);
     --accent-critical: var(--st-danger);
     --accent-info: var(--st-info);
     --neon-green: var(--st-success);
     --neon-yellow: var(--st-warning);
     --neon-red: var(--st-danger);
-    --neon-cyan: var(--st-info);
-    --neon-purple: var(--st-warning);
+    --neon-cyan: var(--st-accent);
+    --neon-purple: var(--st-text-muted);
     --neon-pink: var(--st-danger);
     --border-dim: 1px solid var(--st-border);
     --border-bright: 1px solid var(--st-border-strong);
@@ -87,30 +156,52 @@
 @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) {
         color-scheme: dark;
-        --st-bg: #0b0d0f;
-        --st-surface: #14171a;
-        --st-surface-2: #0f1214;
-        --st-surface-hover: #1b1f23;
-        --st-sidebar: #101315;
-        --st-border: #262b30;
-        --st-border-strong: #353b41;
-        --st-text: #e8eaec;
-        --st-text-secondary: #b4bac1;
-        --st-text-muted: #8b929a;
-        --st-text-faint: #676e76;
-        --st-accent: #4fc7ba;
-        --st-accent-hover: #6fd5ca;
-        --st-on-solid: #0b0d0f;
-        --st-success: #4bbf82;
-        --st-warning: #e0a83f;
-        --st-caution: #e8894c;
-        --st-danger: #eb6f66;
-        --st-info: #8fb3d9;
-        --st-neutral: #8b929a;
-        --st-overlay: rgba(0, 0, 0, 0.6);
-        --st-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
-        --st-shadow-md: 0 6px 18px rgba(0, 0, 0, 0.45);
-        --st-map-filter: invert(1) hue-rotate(180deg) brightness(0.85) contrast(1.05) saturate(0.6);
+        --st-bg: #0b1330;
+        --st-surface: #0f1a3e;
+        --st-surface-2: #15214b;
+        --st-surface-hover: #1b2a5c;
+        --st-sidebar: #0d1738;
+        --st-border: #1f2d5f;
+        --st-border-strong: #2c3f7c;
+        --st-frame: rgba(120, 140, 220, 0.26);
+        --st-text: #ffffff;
+        --st-text-secondary: #dbe3f6;
+        --st-text-muted: #a3b5d6;
+        --st-text-faint: #7d92c4;
+        --st-text-subdued: #839bc8;
+        --st-accent: #8e9dff;
+        --st-accent-hover: #a8bfff;
+        --st-on-solid: #0d1738;
+        --st-brand: #533afd;
+        --st-brand-hover: #5d64fe;
+        --st-brand-line: #6a5cff;
+        --st-on-brand: #ffffff;
+        --st-brand-text: #92adff;
+        --st-link: #92adff;
+        --st-signal: #ff5c8d;
+        --st-success: #4ade91;
+        --st-success-solid: #00b261;
+        --st-warning: #ffcf5c;
+        --st-warning-solid: #f9b900;
+        --st-caution: #ff9a66;
+        --st-caution-solid: #ff6118;
+        --st-danger: #ff6b9a;
+        --st-danger-solid: #ea2261;
+        --st-info: #7fb2ff;
+        --st-neutral: #839bc8;
+        --st-chart-1: #8e9dff;
+        --st-chart-2: #6aa5ff;
+        --st-chart-3: #ff8a4c;
+        --st-chart-4: #f77fd8;
+        --st-chart-5: #ff5c8d;
+        --st-chart-6: #ffcf5c;
+        --st-pastel: linear-gradient(135deg, #3a2a6e 0%, #4a2a6a 45%, #2b3a8a 100%);
+        --st-overlay: rgba(4, 8, 24, 0.66);
+        --st-shadow-sm: 0 1px 3px rgba(2, 6, 24, 0.5);
+        --st-shadow-md: 0 6px 22px rgba(2, 6, 24, 0.55), 0 2px 6px rgba(2, 6, 24, 0.4);
+        --st-shadow-lg: 0 18px 44px -6px rgba(2, 6, 24, 0.7), 0 4px 14px rgba(2, 6, 24, 0.4);
+        --st-shadow-xl: 0 24px 80px -16px rgba(2, 6, 24, 0.8), 0 10px 40px -16px rgba(2, 6, 24, 0.5);
+        --st-map-filter: invert(1) grayscale(1) contrast(0.66) brightness(0.92) sepia(0.85) hue-rotate(186deg) saturate(2.8);
         --st-embed-filter: invert(0.92) hue-rotate(180deg) contrast(1.1) brightness(0.95);
     }
 }
@@ -118,29 +209,58 @@
 :root[data-theme="dark"],
 .st-theme-dark {
     color-scheme: dark;
-    --st-bg: #0b0d0f;
-    --st-surface: #14171a;
-    --st-surface-2: #0f1214;
-    --st-surface-hover: #1b1f23;
-    --st-sidebar: #101315;
-    --st-border: #262b30;
-    --st-border-strong: #353b41;
-    --st-text: #e8eaec;
-    --st-text-secondary: #b4bac1;
-    --st-text-muted: #8b929a;
-    --st-text-faint: #676e76;
-    --st-accent: #4fc7ba;
-    --st-accent-hover: #6fd5ca;
-    --st-on-solid: #0b0d0f;
-    --st-success: #4bbf82;
-    --st-warning: #e0a83f;
-    --st-caution: #e8894c;
-    --st-danger: #eb6f66;
-    --st-info: #8fb3d9;
-    --st-neutral: #8b929a;
-    --st-overlay: rgba(0, 0, 0, 0.6);
-    --st-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
-    --st-shadow-md: 0 6px 18px rgba(0, 0, 0, 0.45);
-    --st-map-filter: invert(1) hue-rotate(180deg) brightness(0.85) contrast(1.05) saturate(0.6);
+    --st-bg: #0b1330;
+    --st-surface: #0f1a3e;
+    --st-surface-2: #15214b;
+    --st-surface-hover: #1b2a5c;
+    --st-sidebar: #0d1738;
+    --st-border: #1f2d5f;
+    --st-border-strong: #2c3f7c;
+    --st-frame: rgba(120, 140, 220, 0.26);
+    --st-text: #ffffff;
+    --st-text-secondary: #dbe3f6;
+    --st-text-muted: #a3b5d6;
+    --st-text-faint: #7d92c4;
+    --st-text-subdued: #839bc8;
+    --st-accent: #8e9dff;
+    --st-accent-hover: #a8bfff;
+    --st-on-solid: #0d1738;
+    --st-brand: #533afd;
+    --st-brand-hover: #5d64fe;
+    --st-brand-line: #6a5cff;
+    --st-on-brand: #ffffff;
+    --st-brand-text: #92adff;
+    --st-link: #92adff;
+    --st-signal: #ff5c8d;
+    --st-success: #4ade91;
+    --st-success-solid: #00b261;
+    --st-warning: #ffcf5c;
+    --st-warning-solid: #f9b900;
+    --st-caution: #ff9a66;
+    --st-caution-solid: #ff6118;
+    --st-danger: #ff6b9a;
+    --st-danger-solid: #ea2261;
+    --st-info: #7fb2ff;
+    --st-neutral: #839bc8;
+    --st-chart-1: #8e9dff;
+    --st-chart-2: #6aa5ff;
+    --st-chart-3: #ff8a4c;
+    --st-chart-4: #f77fd8;
+    --st-chart-5: #ff5c8d;
+    --st-chart-6: #ffcf5c;
+    --st-pastel: linear-gradient(135deg, #3a2a6e 0%, #4a2a6a 45%, #2b3a8a 100%);
+    --st-overlay: rgba(4, 8, 24, 0.66);
+    --st-shadow-sm: 0 1px 3px rgba(2, 6, 24, 0.5);
+    --st-shadow-md: 0 6px 22px rgba(2, 6, 24, 0.55), 0 2px 6px rgba(2, 6, 24, 0.4);
+    --st-shadow-lg: 0 18px 44px -6px rgba(2, 6, 24, 0.7), 0 4px 14px rgba(2, 6, 24, 0.4);
+    --st-shadow-xl: 0 24px 80px -16px rgba(2, 6, 24, 0.8), 0 10px 40px -16px rgba(2, 6, 24, 0.5);
+    --st-map-filter: invert(1) grayscale(1) contrast(0.66) brightness(0.92) sepia(0.85) hue-rotate(186deg) saturate(2.8);
     --st-embed-filter: invert(0.92) hue-rotate(180deg) contrast(1.1) brightness(0.95);
+}
+
+/* the st-theme-dark band on public pages uses the reference's navy exactly */
+.st-theme-dark {
+    --st-bg: #0d1738;
+    --st-surface: #121e47;
+    --st-surface-2: #182659;
 }

@@ -1,266 +1,278 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Shadow Trust — Architecture</title>
-    <link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
-    <link rel="stylesheet" href="css/landing/landingpage.css?v=5">
-    <link rel="stylesheet" href="css/landing/architecture.css?v=4">
+    <title>Architecture · ShadowTrust</title>
+    <meta name="description" content="How ShadowTrust moves an attacker's input from a honeypot to your screen: sensors, collector, MariaDB, detection engine, API, Nginx and the browser.">
+    <!-- Link preview (LinkedIn, WhatsApp, Slack, X). Once the site has a public address, make og:image and twitter:image absolute, e.g. https://your-domain/og.png, and add og:url. -->
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="ShadowTrust">
+    <meta property="og:title" content="Architecture · ShadowTrust">
+    <meta property="og:description" content="How ShadowTrust moves an attacker's input from a honeypot to your screen: sensors, collector, MariaDB, detection engine, API, Nginx and the browser.">
+    <meta property="og:image" content="og.png">
+    <meta property="og:image:type" content="image/png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:alt" content="ShadowTrust: Let them in. Watch every move. Decoy servers, detection, investigation and reporting in one self-hosted stack.">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Architecture · ShadowTrust">
+    <meta name="twitter:description" content="How ShadowTrust moves an attacker's input from a honeypot to your screen: sensors, collector, MariaDB, detection engine, API, Nginx and the browser.">
+    <meta name="twitter:image" content="og.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300..600&family=Source+Code+Pro:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/tokens.css">
-    <script src="js/theme.js"></script>
+    <link rel="stylesheet" href="css/site.css">
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 28 28'%3E%3Crect width='28' height='28' rx='6' fill='%23533afd'/%3E%3Cpath d='M4.5 14c2.5-4.3 5.7-6.4 9.5-6.4s7 2.1 9.5 6.4c-2.5 4.3-5.7 6.4-9.5 6.4S7 18.3 4.5 14Z' fill='none' stroke='%23fff' stroke-width='1.8' stroke-linejoin='round'/%3E%3Ccircle cx='14' cy='14' r='3.2' fill='%23fff'/%3E%3C/svg%3E">
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#ffffff">
+    <script>if (!matchMedia('(prefers-reduced-motion: reduce)').matches) document.documentElement.classList.add('motion-ready');</script>
 </head>
-<body>
+<body class="site">
+<a class="skip" href="#main">Skip to content</a>
 
-<div class="container">
-
-    <!-- NAVBAR -->
-    <nav>
-        <div class="logo">Shadow Trust</div>
-        <ul>
-            <li><a href="index.html">Home</a></li>
+<header class="site-nav" data-nav>
+    <div class="wrap">
+        <a class="brand" href="index.html" aria-label="ShadowTrust home">
+            <svg viewBox="0 0 28 28" fill="none" aria-hidden="true"><path d="M2.5 14c3-5.3 7-8 11.5-8s8.5 2.7 11.5 8c-3 5.3-7 8-11.5 8S5.5 19.3 2.5 14Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><circle cx="14" cy="14" r="4.2" fill="var(--st-brand)"/></svg>
+            <span>ShadowTrust</span>
+        </a>
+        <ul class="nav-links" id="navLinks">
             <li><a href="features.html">Features</a></li>
-            <li><a href="architecture.html" class="active-link">Architecture</a></li>
+            <li><a href="architecture.html" aria-current="page">Architecture</a></li>
+            <li><a href="usecases.html">Use cases</a></li>
             <li><a href="docs.html">Docs</a></li>
             <li><a href="status.html">Status</a></li>
-            <li><a href="usecases.html">Use Cases</a></li>
+            <li class="nav-mobile-only"><a href="login.html">Sign in</a></li>
         </ul>
-        <a href="login.html" class="btn">Sign In</a>
-    </nav>
-
-    <!-- HERO -->
-    <section class="arch-hero" data-aos="fade-up">
-        <div class="arch-hero-text">
-            <span class="section-label">System Design</span>
-            <h1>Shadow Trust <span>Architecture</span></h1>
-            <p>A self-hosted pipeline: honeypot sensors write JSON logs, a local collector tails them into MariaDB, and a rule-based detection engine turns events into incidents streamed live to the dashboard. Malware, APK, Splunk and lab services run alongside. One Docker Compose command to deploy.</p>
-        </div>
-        <div class="arch-hero-widget">
-            <div class="awg-header">
-                <span class="awg-live-dot"></span>
-                Live Data Pipeline
-                <span class="awg-live-badge">ACTIVE</span>
-            </div>
-            <div class="awg-flow">
-                <div class="awg-node">
-                    <span class="awg-icon">🍯</span>
-                    <div class="awg-info">
-                        <b>Honeypot Layer</b>
-                        <span>Cowrie · Dionaea · Honeytrap</span>
-                    </div>
-                    <span class="awg-badge green">LIVE</span>
-                </div>
-                <div class="awg-connector"><span>↓ events ingested</span></div>
-                <div class="awg-node">
-                    <span class="awg-icon">⚡</span>
-                    <div class="awg-info">
-                        <b>FastAPI Backend</b>
-                        <span>Python 3.11 · Port 8000</span>
-                    </div>
-                    <span class="awg-badge green">OK</span>
-                </div>
-                <div class="awg-connector"><span>↓ detection rules</span></div>
-                <div class="awg-node">
-                    <span class="awg-icon">🧠</span>
-                    <div class="awg-info">
-                        <b>AI Classification</b>
-                        <span>SQLi · XSS · RCE · BruteForce</span>
-                    </div>
-                    <span class="awg-badge cyan">ACTIVE</span>
-                </div>
-                <div class="awg-connector"><span>↓ SSE live stream</span></div>
-                <div class="awg-node">
-                    <span class="awg-icon">📊</span>
-                    <div class="awg-info">
-                        <b>Dashboard</b>
-                        <span>MariaDB · Nginx · SSE</span>
-                    </div>
-                    <span class="awg-badge green">LIVE</span>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- DATA FLOW TIMELINE -->
-    <section class="section" data-aos="fade-up">
-        <span class="section-label">Data Flow</span>
-        <h2>How an Attack <span>Flows Through the Platform</span></h2>
-        <p class="section-sub">From first contact with a honeypot to a full threat intelligence report — every step is automated.</p>
-
-        <div class="arch-timeline">
-
-            <div class="timeline-step" data-aos="fade-right">
-                <div class="step-icon">1</div>
-                <div class="step-content">
-                    <h3>🍯 Honeypot Capture</h3>
-                    <p>Attackers interact with Cowrie (SSH/Telnet brute force + shell), Dionaea (malware upload), or Honeytrap (multi-port probing). Every keystroke, credential attempt, and uploaded file is recorded. Each sensor appends newline-delimited JSON to its own log file — the only channel out of the isolated honeynet network.</p>
-                </div>
-            </div>
-
-            <div class="timeline-step" data-aos="fade-left">
-                <div class="step-icon">2</div>
-                <div class="step-content">
-                    <h3>📡 Telemetry Ingestion</h3>
-                    <p>The FastAPI backend (Python 3.11, Uvicorn async) watches the sensor logs with inotify and tails them from stored byte offsets, so each line is read exactly once. Events are normalized, written to MariaDB and published on an internal event bus that feeds the dashboard's Server-Sent Events stream.</p>
-                </div>
-            </div>
-
-            <div class="timeline-step" data-aos="fade-right">
-                <div class="step-icon">3</div>
-                <div class="step-content">
-                    <h3>🧠 AI Classification & Enrichment</h3>
-                    <p>Each event passes through the AI classification engine — detecting SQLi, XSS, brute force, RCE, path traversal, and anomalous payloads. GeoIP enrichment adds country, ASN, and city data. Risk scoring (0–100) is computed. Events are tagged with MITRE ATT&CK techniques automatically.</p>
-                </div>
-            </div>
-
-            <div class="timeline-step" data-aos="fade-left">
-                <div class="step-icon">4</div>
-                <div class="step-content">
-                    <h3>🔗 Session Correlation</h3>
-                    <p>The background Session Engine (runs every 60s) groups raw events by attacker IP, timing, and protocol into full attacker sessions. It reconstructs timelines, tracks persistence attempts, and builds behavioral profiles. Sessions power the Behavior and Geo dashboard pages.</p>
-                </div>
-            </div>
-
-            <div class="timeline-step" data-aos="fade-right">
-                <div class="step-icon">5</div>
-                <div class="step-content">
-                    <h3>☣️ Malware Pipeline (4-Stage)</h3>
-                    <p>Uploaded files trigger the pipeline automatically: <strong>Stage 1</strong> — static analysis (hashes, strings, metadata). <strong>Stage 2</strong> — sandbox behavioral detonation. <strong>Stage 3</strong> — APK security scan via MobSF Flask proxy (Docker socket). <strong>Stage 4</strong> — credential and API key extraction from payloads. Results stored and linked to attacker session.</p>
-                </div>
-            </div>
-
-            <div class="timeline-step" data-aos="fade-left">
-                <div class="step-icon">6</div>
-                <div class="step-content">
-                    <h3>🖥️ VM Orchestration (AWS)</h3>
-                    <p>Analysts can launch isolated EC2 analysis environments on demand via <code>/api/v1/vm/launch</code>. Boto3 provisions the instance from a pre-configured AMI. AWS Systems Manager injects credentials JIT — no SSH keys. Apache Guacamole provides browser-based remote desktop. Instances auto-terminate on session end.</p>
-                </div>
-            </div>
-
-            <div class="timeline-step" data-aos="fade-right">
-                <div class="step-icon">7</div>
-                <div class="step-content">
-                    <h3>📊 Dashboard & Alerts</h3>
-                    <p>Nginx serves the 30+ page Vanilla JS dashboard on port 5500. The frontend calls the FastAPI backend on port 8000 and receives live events, detections and sensor metrics over Server-Sent Events. Incidents, evidence and PDF reports are generated from the same MariaDB data.</p>
-                </div>
-            </div>
-
-        </div>
-    </section>
-
-    <!-- TECH STACK -->
-    <section class="tech-stack-section" data-aos="fade-up">
-        <span class="section-label">Technology</span>
-        <h2>Full <span>Tech Stack</span></h2>
-        <div class="stack-grid">
-            <div class="stack-item"><span>Python 3.11</span></div>
-            <div class="stack-item"><span>FastAPI v2.0</span></div>
-            <div class="stack-item"><span>Uvicorn (Async)</span></div>
-            <div class="stack-item"><span>Flask (MobSF Proxy)</span></div>
-            <div class="stack-item"><span>MariaDB 11</span></div>
-            <div class="stack-item"><span>SQLAlchemy (async)</span></div>
-            <div class="stack-item"><span>ClamAV + YARA</span></div>
-            <div class="stack-item"><span>Splunk</span></div>
-            <div class="stack-item"><span>AWS EC2 / S3</span></div>
-            <div class="stack-item"><span>AWS IAM / SSM</span></div>
-            <div class="stack-item"><span>Boto3</span></div>
-            <div class="stack-item"><span>Docker Compose</span></div>
-            <div class="stack-item"><span>Nginx 1.25</span></div>
-            <div class="stack-item"><span>MobSF</span></div>
-            <div class="stack-item"><span>Cowrie</span></div>
-            <div class="stack-item"><span>Dionaea</span></div>
-            <div class="stack-item"><span>Honeytrap</span></div>
-            <div class="stack-item"><span>Apache Guacamole</span></div>
-            <div class="stack-item"><span>PyJWT</span></div>
-            <div class="stack-item"><span>Twilio</span></div>
-            <div class="stack-item"><span>SMTP (Gmail)</span></div>
-            <div class="stack-item"><span>GeoIP</span></div>
-            <div class="stack-item"><span>MITRE ATT&CK</span></div>
-            <div class="stack-item"><span>Server-Sent Events</span></div>
-        </div>
-    </section>
-
-    <!-- DOCKER SERVICES -->
-    <section class="section" data-aos="fade-up">
-        <span class="section-label">Deployment</span>
-        <h2>Core <span>Docker Services</span></h2>
-        <p class="section-sub">The entire platform ships as a production-ready Docker Compose stack. One command starts everything.</p>
-        <div class="features" style="margin-top:40px;">
-            <div class="card" data-aos="zoom-in" data-aos-delay="100">
-                <span class="card-icon">⚡</span>
-                <h3>FastAPI Backend</h3>
-                <p>Python 3.11, multi-stage Docker build. Handles all API calls, AI classification, session engine, and AWS orchestration. Port 8000.</p>
-            </div>
-            <div class="card" data-aos="zoom-in" data-aos-delay="200">
-                <span class="card-icon">📱</span>
-                <h3>MobSF Service</h3>
-                <p>Flask proxy with Docker socket access. Spawns MobSF analysis containers on demand for APK security scanning. Port 5055.</p>
-            </div>
-            <div class="card" data-aos="zoom-in" data-aos-delay="300">
-                <span class="card-icon">🔷</span>
-                <h3>MariaDB</h3>
-                <p>Primary datastore for normalized events, detections, incidents, evidence and reports, with phpMyAdmin for inspection. Port 3307 on the host.</p>
-            </div>
-            <div class="card" data-aos="zoom-in" data-aos-delay="400">
-                <span class="card-icon">🔄</span>
-                <h3>Honeypot Sensors</h3>
-                <p>Cowrie, Dionaea and Honeytrap on an isolated edge network. Their only output is the log files the backend collector tails.</p>
-            </div>
-            <div class="card" data-aos="zoom-in" data-aos-delay="500">
-                <span class="card-icon">🌐</span>
-                <h3>Nginx Frontend</h3>
-                <p>Nginx 1.25 Alpine serving the 30+ page static dashboard. Optimized caching for assets, no-cache for HTML. Port 5500.</p>
-            </div>
-        </div>
-    </section>
-
-    <!-- CTA -->
-    <div class="cta-banner" data-aos="zoom-in">
-        <h2>Deploy the Full Stack in Minutes</h2>
-        <p>Clone the repo, run <code style="background:color-mix(in srgb, var(--st-accent) 15%, transparent);padding:3px 10px;border-radius:6px;font-family:var(--st-font-mono);">./setup.sh</code>, and all five services start automatically — with OS detection, env setup, and health checks.</p>
-        <div class="cta-btns">
-            <a href="docs.html" class="btn btn-primary">Setup Guide</a>
-            <a href="login.html" class="btn btn-outline">Open Dashboard</a>
+        <div class="nav-end">
+            <a class="signin" href="login.html">Sign in</a>
+            <a class="btn btn-sm" href="login.html">Open console <span class="arr">→</span></a>
+            <button class="nav-burger" type="button" data-burger aria-label="Open menu" aria-controls="navLinks" aria-expanded="false">
+                <svg width="16" height="16" viewBox="0 0 16 16" stroke="currentColor" stroke-width="1.5"><path d="M2 5h12M2 11h12"/></svg>
+            </button>
         </div>
     </div>
+</header>
 
-</div>
+<main id="main">
+    <section class="page-hero">
+        <canvas class="ribbon" data-ribbon="corner" aria-hidden="true"></canvas>
+        <div class="wrap page-hero-grid">
+            <div>
+                <span class="eyebrow" data-hero-fade>Architecture</span>
+                <h1 class="display" data-split>
+                    <span class="line"><span>One stack.</span></span>
+                    <span class="line"><span><em>Every</em> hop</span></span>
+                    <span class="line"><span>accounted for.</span></span>
+                </h1>
+                <p class="lede" data-hero-fade>Honeypot sensors write JSON logs, a local collector tails them into MariaDB, and a rule-based detection engine turns events into incidents that stream live to the console. Malware, APK, Splunk and lab services run alongside. One Docker Compose command deploys all of it.</p>
+            </div>
+            <table class="spec" data-hero-fade>
+                <tr><th>Backend</th><td>Python 3.11, FastAPI, Uvicorn</td></tr>
+                <tr><th>Storage</th><td>MariaDB 11, phpMyAdmin</td></tr>
+                <tr><th>Console</th><td>Static pages behind Nginx 1.25</td></tr>
+                <tr><th>Live data</th><td>Server-Sent Events</td></tr>
+                <tr><th>Deploy</th><td>Docker Compose, 12 core containers</td></tr>
+            </table>
+        </div>
+    </section>
 
-<!-- FOOTER -->
-<footer>
-    <div class="footer-grid">
-        <div class="footer-brand">
-            <span class="logo">Shadow Trust</span>
-            <p>AI-powered Security Operations Center with honeypot deception, malware analysis, and real-time threat intelligence.</p>
+    <!-- Fig. 1: follow one event -->
+    <section class="section" id="journey">
+        <div class="wrap">
+            <div class="section-head">
+                <span class="eyebrow"><span class="n">01</span> Follow one event</span>
+                <h2 class="h2" data-reveal>From a password guess to a row on <em>your</em> screen.</h2>
+                <p class="lede" data-reveal>The red dot is one failed SSH login. Watch it cross the stack, then read what happens at each hop underneath.</p>
+            </div>
+            <figure class="arch-fig" data-journey>
+                <svg class="arch-svg" viewBox="0 0 1180 470" role="img" aria-label="An event travels from the internet to Cowrie, into the telemetry files, through the collector into MariaDB, out of the API through Nginx and into the browser.">
+                    <defs>
+                        <marker id="jah" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="8" markerHeight="8" orient="auto"><path class="arrow" d="M0 0 L8 4 L0 8 Z"/></marker>
+                    </defs>
+                    <text class="t-group" x="20" y="16">Internet</text>
+                    <g transform="translate(12 174)"><circle class="node sig" data-hop-node="0" cx="42" cy="40" r="40"/><text x="42" y="37" text-anchor="middle" class="t-strong" style="font-size:13px">probe</text><text x="42" y="53" text-anchor="middle" style="font-size:10.5px">root/123456</text></g>
+
+                    <g data-journey-layer></g>
+                    <rect class="group" x="170" y="30" width="230" height="410" rx="10"/>
+                    <text class="t-group" x="186" y="54">Sensors · honeynet_edge</text>
+                    <g transform="translate(192 78)"><rect class="node" data-hop-node="1" width="200" height="74" rx="6"/><text class="t-strong" x="16" y="30">cowrie</text><text x="16" y="52">ssh 2222 · telnet 2223</text></g>
+                    <g transform="translate(192 198)"><rect class="node" width="200" height="74" rx="6"/><text class="t-strong" x="16" y="30">dionaea</text><text x="16" y="52">445 · 2121 · 1433</text></g>
+                    <g transform="translate(192 318)"><rect class="node" width="200" height="74" rx="6"/><text class="t-strong" x="16" y="30">honeytrap</text><text x="16" y="52">8022 · 8023</text></g>
+
+                    <g transform="translate(470 196)"><rect class="node alt" data-hop-node="2" width="140" height="78" rx="6"/><text class="t-strong" x="16" y="30">telemetry/raw</text><text x="16" y="52">cowrie.json</text></g>
+                    <path class="edge" d="M392 115 C 430 115, 430 222, 468 222" marker-end="url(#jah)"/>
+                    <path class="edge" d="M392 235 L 468 235" marker-end="url(#jah)"/>
+                    <path class="edge" d="M392 355 C 430 355, 430 250, 468 248" marker-end="url(#jah)"/>
+
+                    <rect class="group" x="660" y="30" width="250" height="410" rx="10"/>
+                    <text class="t-group" x="676" y="54">Backend · honeynet_app</text>
+                    <g transform="translate(682 78)"><rect class="node" data-hop-node="3" width="206" height="62" rx="6"/><text class="t-strong" x="16" y="27">collector</text><text x="16" y="47">tail · normalise · insert</text></g>
+                    <g transform="translate(682 160)"><rect class="node" data-hop-node="5" width="206" height="62" rx="6"/><text class="t-strong" x="16" y="27">detection engine</text><text x="16" y="47">YAML rules → incidents</text></g>
+                    <g transform="translate(682 242)"><rect class="node" width="206" height="62" rx="6"/><text class="t-strong" x="16" y="27">API · event bus</text><text x="16" y="47">JWT, roles, SSE</text></g>
+                    <g transform="translate(682 324)"><rect class="node" width="206" height="62" rx="6"/><text class="t-strong" x="16" y="27">reports · GRC</text><text x="16" y="47">PDF engine, SOC 2</text></g>
+                    <path class="edge" d="M610 222 C 645 222, 645 109, 680 109" marker-end="url(#jah)"/>
+                    <path class="edge soft" d="M785 140 V 158 M785 222 V 240 M785 304 V 322"/>
+
+                    <g transform="translate(990 70)"><path class="node" data-hop-node="4" d="M0 14 V 76 A 60 14 0 0 0 120 76 V 14"/><ellipse class="node" cx="60" cy="14" rx="60" ry="14"/><text class="t-strong" x="60" y="56" text-anchor="middle">MariaDB</text><text x="60" y="74" text-anchor="middle">raw_events</text></g>
+                    <path class="edge" d="M888 109 C 940 109, 950 100, 988 100" marker-end="url(#jah)"/>
+                    <g transform="translate(990 232)"><rect class="node" data-hop-node="6" width="170" height="62" rx="6"/><text class="t-strong" x="16" y="27">nginx :5500</text><text x="16" y="47">SSE, buffering off</text></g>
+                    <path class="edge" d="M888 273 L 988 266" marker-end="url(#jah)"/>
+                    <g transform="translate(990 360)"><rect class="node" data-hop-node="7" width="170" height="62" rx="6"/><text class="t-strong" x="16" y="27">your browser</text><text x="16" y="47">Event log, Overview</text></g>
+                    <path class="edge" d="M1075 294 V 358" marker-end="url(#jah)"/>
+
+                    <text class="t-group" x="470" y="330">Analysis services</text>
+                    <g transform="translate(470 344)"><rect class="node alt" width="150" height="30" rx="5"/><text x="14" y="20">clamav · yara</text></g>
+                    <g transform="translate(470 380)"><rect class="node alt" width="150" height="30" rx="5"/><text x="14" y="20">mobsf :5055</text></g>
+                    <g transform="translate(470 416)"><rect class="node alt" width="150" height="30" rx="5"/><text x="14" y="20">guacamole · kali</text></g>
+                    <path class="edge soft" d="M620 395 H 680"/>
+
+                </svg>
+                <ol class="hops" data-hops>
+                    <li class="hop"><span class="hn">01 · probe</span>A bot tries <span class="mono">root / 123456</span> on port 2222.</li>
+                    <li class="hop"><span class="hn">02 · cowrie</span>The decoy rejects it and appends one JSON line to its log.</li>
+                    <li class="hop"><span class="hn">03 · file</span>The log is the only way out of the isolated sensor network.</li>
+                    <li class="hop"><span class="hn">04 · collector</span>Woken by inotify, reads from the stored byte offset, normalises.</li>
+                    <li class="hop"><span class="hn">05 · MariaDB</span>The row lands in <span class="mono">raw_events</span>, batched with its neighbours.</li>
+                    <li class="hop"><span class="hn">06 · rules</span>Brute-force rule counts failures per source over ten minutes.</li>
+                    <li class="hop"><span class="hn">07 · screen</span>Nginx streams it unbuffered; the Event log shows the row.</li>
+                </ol>
+            </figure>
         </div>
-        <div class="footer-col">
-            <h4>Platform</h4>
-            <ul>
-                <li><a href="features.html">Features</a></li>
-                <li><a href="architecture.html">Architecture</a></li>
-                <li><a href="usecases.html">Use Cases</a></li>
-                <li><a href="docs.html">Documentation</a></li>
-                <li><a href="status.html">System Status</a></li>
-            </ul>
+    </section>
+
+    <!-- Data flow, step by step -->
+    <section class="section" id="flow">
+        <div class="wrap split">
+            <div class="sticky-side">
+                <span class="eyebrow"><span class="n">02</span> Data flow</span>
+                <h2 class="h2" style="margin-top:22px" data-reveal>How an attack moves through the <em>platform.</em></h2>
+                <p class="body-copy" style="margin-top:20px" data-reveal>From first contact with a honeypot to a finished report. Every step below runs without anyone clicking anything.</p>
+                <div class="vtl-stage" data-vtl-stage aria-hidden="true">
+                    <div class="glow glow-violet"></div>
+                    <div class="vtl-stage-label"><b data-vtl-stage-title>Honeypot capture</b><span data-vtl-stage-step>Step 1 of 8</span></div>
+                    <div data-art="decoys"></div>
+                </div>
+            </div>
+            <div class="vtl-wrap">
+            <span class="vtl-progress" data-vtl-progress></span>
+            <ol class="vtl" data-vtl>
+                <li><span class="vn">1</span><div><h3 class="h3">Honeypot capture</h3><p>Attackers interact with Cowrie (SSH and Telnet login attempts and shell), Dionaea (malware uploads) or Honeytrap (probes on other ports). Every keystroke, credential attempt and uploaded file is recorded. Each sensor appends newline-delimited JSON to its own log file, which is the only channel out of the isolated honeynet network.</p><span class="vtag">honeynet_edge</span></div></li>
+                <li><span class="vn">2</span><div><h3 class="h3">Telemetry ingestion</h3><p>The FastAPI backend watches the sensor logs with inotify and tails them from stored byte offsets, so each line is read exactly once. Events are normalised, written to MariaDB and published on an internal event bus that feeds the Server-Sent Events stream.</p><span class="vtag">services/telemetry/collector.py</span></div></li>
+                <li><span class="vn">3</span><div><h3 class="h3">Classification and enrichment</h3><p>Each event is classified by rule-based heuristics into categories such as SQL injection, XSS, brute force, remote code execution and path traversal. GeoIP adds country, ASN and city, a risk score from 0 to 100 is computed, and MITRE ATT&amp;CK techniques are attached.</p><span class="vtag">log_categorizer · mitre.map_to_mitre</span></div></li>
+                <li><span class="vn">4</span><div><h3 class="h3">Session correlation</h3><p>A background session engine runs every 60 seconds and groups raw events by source, timing and protocol into attacker sessions. It rebuilds timelines, notes persistence attempts and builds the behavioral profiles used by the Behavior and Geo pages.</p><span class="vtag">services/session_engine.py</span></div></li>
+                <li><span class="vn">5</span><div><h3 class="h3">Detections and incidents</h3><p>Six YAML rules watch the stream. When one matches, the engine opens or updates an incident with severity, evidence and an ordered timeline. Eight validation scenarios can replay attacks to prove each rule still fires.</p><span class="vtag">backend/detections · backend/scenarios</span></div></li>
+                <li><span class="vn">6</span><div><h3 class="h3">Malware pipeline</h3><p>Captured files are hashed and statically analysed, scanned by ClamAV and YARA, optionally detonated in a CAPE sandbox, and searched for credentials and API keys. Results are stored and linked to the attacker session.</p><span class="vtag">static_analyzer · av_scanner · yara_scanner · sandbox_engine</span></div></li>
+                <li><span class="vn">7</span><div><h3 class="h3">Lab machines</h3><p>Kali and analysis desktops run as local containers and open in the browser through Apache Guacamole. With AWS configured, analysts can also launch isolated EC2 instances through <code>/api/v1/vm/launch</code>, reached through Systems Manager without SSH keys and terminated when the session ends.</p><span class="vtag">labnet · aws_orchestrator.py</span></div></li>
+                <li><span class="vn">8</span><div><h3 class="h3">Console and reports</h3><p>Nginx serves the static console on port 5500 and proxies <code>/api</code> to the backend, so browsers never make cross-origin calls. Live events arrive over SSE. Incidents, evidence and PDF reports are all generated from the same MariaDB data.</p><span class="vtag">frontend/nginx.conf</span></div></li>
+            </ol>
+            </div>
         </div>
-        <div class="footer-col">
-            <h4>Access</h4>
-            <ul>
-                <li><a href="login.html">Sign In</a></li>
-                <li><a href="register.html">Register</a></li>
-                <li><a href="dashboard.html">Dashboard</a></li>
-                <li><a href="http://localhost:8000/docs" target="_blank">API Docs</a></li>
-            </ul>
+    </section>
+
+    <!-- Tech stack -->
+    <section class="section" id="stack">
+        <div class="wrap">
+            <div class="section-head">
+                <span class="eyebrow"><span class="n">03</span> Technology</span>
+                <h2 class="h2" data-reveal>Boring, <em>proven</em> parts.</h2>
+                <p class="lede" data-reveal>Nothing exotic. Every component is open source or a standard library, so the stack is easy to audit and easy to run offline.</p>
+            </div>
+            <div class="bento" data-stagger>
+                <article class="card tile list">
+                    <div class="tile-copy"><h3>Runtime</h3></div>
+                    <div class="card-art"><div class="glow glow-violet"></div><div class="art"><div class="mock"><ul class="a-rows"><li style="--i:0"><span class="t">Python 3.11</span><span class="d r">language</span></li><li style="--i:1"><span class="t">FastAPI</span><span class="d r">web framework</span></li><li style="--i:2"><span class="t">Uvicorn</span><span class="d r">async server</span></li><li style="--i:3"><span class="t">SQLAlchemy</span><span class="d r">async ORM</span></li><li style="--i:4"><span class="t">PyJWT</span><span class="d r">session tokens</span></li></ul></div></div></div>
+                </article>
+                <article class="card tile list">
+                    <div class="tile-copy"><h3>Data</h3></div>
+                    <div class="card-art"><div class="glow glow-rose"></div><div class="art"><div class="mock"><ul class="a-rows"><li style="--i:0"><span class="t">MariaDB 11</span><span class="d r">event store</span></li><li style="--i:1"><span class="t">phpMyAdmin</span><span class="d r">database admin</span></li><li style="--i:2"><span class="t">Server-Sent Events</span><span class="d r">live stream</span></li><li style="--i:3"><span class="t">Splunk</span><span class="d r">optional</span></li></ul></div></div></div>
+                </article>
+                <article class="card tile list">
+                    <div class="tile-copy"><h3>Sensors</h3></div>
+                    <div class="card-art"><div class="glow glow-peach"></div><div class="art"><div class="mock"><ul class="a-rows"><li style="--i:0"><span class="t">Cowrie</span><span class="d r">SSH and Telnet</span></li><li style="--i:1"><span class="t">Dionaea</span><span class="d r">SMB, FTP, MSSQL</span></li><li style="--i:2"><span class="t">Honeytrap</span><span class="d r">web ports</span></li><li style="--i:3"><span class="t">GeoIP</span><span class="d r">enrichment</span></li></ul></div></div></div>
+                </article>
+                <article class="card tile list">
+                    <div class="tile-copy"><h3>Analysis</h3></div>
+                    <div class="card-art"><div class="glow glow-peach"></div><div class="art"><div class="mock"><ul class="a-rows"><li style="--i:0"><span class="t">ClamAV</span><span class="d r">signatures</span></li><li style="--i:1"><span class="t">YARA</span><span class="d r">rules</span></li><li style="--i:2"><span class="t">MobSF</span><span class="d r">APK reports, Flask proxy</span></li><li style="--i:3"><span class="t">CAPE</span><span class="d r">optional sandbox</span></li><li style="--i:4"><span class="t">MITRE ATT&amp;CK</span><span class="d r">technique mapping</span></li></ul></div></div></div>
+                </article>
+                <article class="card tile list">
+                    <div class="tile-copy"><h3>Labs and cloud</h3></div>
+                    <div class="card-art"><div class="glow glow-violet"></div><div class="art"><div class="mock"><ul class="a-rows"><li style="--i:0"><span class="t">Apache Guacamole</span><span class="d r">desktops in the browser</span></li><li style="--i:1"><span class="t">Kali Linux</span><span class="d r">lab image</span></li><li style="--i:2"><span class="t">AWS EC2, S3, SSM</span><span class="d r">optional</span></li><li style="--i:3"><span class="t">Boto3</span><span class="d r">AWS client</span></li></ul></div></div></div>
+                </article>
+                <article class="card tile list">
+                    <div class="tile-copy"><h3>Delivery</h3></div>
+                    <div class="card-art"><div class="glow glow-rose"></div><div class="art"><div class="mock"><ul class="a-rows"><li style="--i:0"><span class="t">Docker Compose</span><span class="d r">deployment</span></li><li style="--i:1"><span class="t">Nginx 1.25</span><span class="d r">console and proxy</span></li><li style="--i:2"><span class="t">SMTP</span><span class="d r">email</span></li><li style="--i:3"><span class="t">Twilio</span><span class="d r">optional WhatsApp</span></li></ul></div></div></div>
+                </article>
+            </div>
         </div>
-    </div>
-    <div class="footer-bottom">
-        <p>© 2026 Shadow Trust. All Rights Reserved.</p>
-        <div class="footer-status"><span class="dot"></span> All Systems Operational</div>
+    </section>
+
+    <!-- Services -->
+    <section class="section" id="services">
+        <div class="wrap">
+            <div class="section-head">
+                <span class="eyebrow"><span class="n">04</span> Deployment</span>
+                <h2 class="h2" data-reveal>What <span class="mono" style="font-size:.7em">docker compose up</span> <em>starts.</em></h2>
+                <p class="lede" data-reveal>Read straight from <span class="mono">docker-compose.yml</span>. Host ports are defaults and can be changed in <span class="mono">.env</span>.</p>
+            </div>
+            <div class="bento" data-stagger>
+                <article class="card tile list">
+                    <div class="tile-copy"><h3><span class="mono">honeynet_edge</span></h3><p>Attacker-facing. Sensors only. No service belongs to both this network and the application network, so nothing here can reach the backend.</p></div>
+                    <div class="card-art"><div class="glow glow-peach"></div><div class="art"><div class="mock"><ul class="a-rows"><li style="--i:0"><span class="t">cowrie</span><span class="d">cowrie/cowrie</span><span class="m r">2222, 2223</span></li><li style="--i:1"><span class="t">dionaea</span><span class="d">dinotools/dionaea</span><span class="m r">445, 2121, 1433</span></li><li style="--i:2"><span class="t">honeytrap</span><span class="d">honeytrap/honeytrap</span><span class="m r">8022, 8023</span></li></ul></div></div></div>
+                </article>
+                <article class="card tile list">
+                    <div class="tile-copy"><h3><span class="mono">honeynet_app</span></h3><p>Backend, console, database and the analysis engines. The backend reads sensor logs from disk, not over the network.</p></div>
+                    <div class="card-art"><div class="glow glow-violet"></div><div class="art"><div class="mock"><ul class="a-rows"><li style="--i:0"><span class="t">db</span><span class="d">mariadb:11</span><span class="m r">3307</span></li><li style="--i:1"><span class="t">phpmyadmin</span><span class="d">phpmyadmin:5</span><span class="m r">8081</span></li><li style="--i:2"><span class="t">backend</span><span class="d">soc/backend</span><span class="chip">also labnet</span><span class="m r">8000</span></li><li style="--i:3"><span class="t">frontend</span><span class="d">nginx:1.25-alpine</span><span class="m r">5500</span></li><li style="--i:4"><span class="t">mobsf</span><span class="d">soc/mobsf</span><span class="chip">also labnet</span><span class="m r">5055</span></li><li style="--i:5"><span class="t">clamav</span><span class="d">clamav/clamav-debian</span><span class="chip grey r">internal</span></li><li style="--i:6"><span class="t">node_api</span><span class="d">soc/node-api</span><span class="chip grey">extras</span><span class="m r">3000</span></li><li style="--i:7"><span class="t">worker</span><span class="d">soc/worker</span><span class="chip grey">extras</span><span class="chip grey r">internal</span></li></ul></div></div></div>
+                </article>
+                <article class="card tile list">
+                    <div class="tile-copy"><h3><span class="mono">labnet</span></h3><p>Guacamole and every lab container the backend starts. The backend and MobSF join it to reach them.</p></div>
+                    <div class="card-art"><div class="glow glow-rose"></div><div class="art"><div class="mock"><ul class="a-rows"><li style="--i:0"><span class="t">guacamole</span><span class="d">guacamole/guacamole</span><span class="m r">8080</span></li><li style="--i:1"><span class="t">guacd</span><span class="d">guacamole/guacd</span><span class="chip grey r">internal</span></li><li style="--i:2"><span class="t">guacamole_db</span><span class="d">postgres:15</span><span class="chip grey r">internal</span></li></ul></div></div></div>
+                </article>
+            </div>
+        </div>
+    </section>
+
+    <section class="section closer">
+        <div class="wrap closer-grid">
+            <h2 class="display" data-reveal>Deploy it in <em>minutes.</em></h2>
+            <div class="install" data-reveal>
+                <div class="install-label"><span>From a fresh clone</span><button class="copy-btn" type="button" data-copy="./setup.sh">Copy</button></div>
+<pre><span class="c"># detects your OS, writes .env files, builds and starts the stack</span>
+<span class="p">$ </span>./setup.sh</pre>
+                <div style="display:flex;gap:14px;flex-wrap:wrap">
+                    <a class="btn" href="docs.html">Setup guide <span class="arr">→</span></a>
+                    <a class="btn btn-ghost" href="login.html">Open the console</a>
+                </div>
+            </div>
+        </div>
+    </section>
+</main>
+
+<footer class="site-footer">
+    <div class="wrap">
+        <div class="foot-grid">
+            <div>
+                <a class="brand" href="index.html" aria-label="ShadowTrust home">
+                    <svg viewBox="0 0 28 28" fill="none" aria-hidden="true"><path d="M2.5 14c3-5.3 7-8 11.5-8s8.5 2.7 11.5 8c-3 5.3-7 8-11.5 8S5.5 19.3 2.5 14Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><circle cx="14" cy="14" r="4.2" fill="var(--st-brand)"/></svg>
+                    <span>ShadowTrust</span>
+                </a>
+                <p class="foot-blurb">Honeypots, detection, investigation and reporting in one self-hosted stack.</p>
+            </div>
+            <div><h4>Product</h4><ul><li><a href="features.html">Features</a></li><li><a href="architecture.html">Architecture</a></li><li><a href="usecases.html">Use cases</a></li></ul></div>
+            <div><h4>Learn</h4><ul><li><a href="docs.html">Documentation</a></li><li><a href="status.html">System status</a></li><li><a href="http://localhost:8000/docs" target="_blank" rel="noopener">API reference</a></li></ul></div>
+            <div><h4>Console</h4><ul><li><a href="login.html">Sign in</a></li><li><a href="register.html">Request access</a></li><li><a href="admin_login.html">Admin sign in</a></li></ul></div>
+        </div>
+        <div class="foot-base"><span>© 2026 ShadowTrust. Private repository.</span><a href="status.html">Check live system status <span class="arr">→</span></a></div>
     </div>
 </footer>
 
-<script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
-<script>AOS.init({ duration: 750, once: true, offset: 80 });</script>
+<script src="js/vendor/motion.js"></script>
+<script src="js/ribbon.js"></script>
+<script src="js/site.js"></script>
+<script src="js/art.js"></script>
+<script src="js/explainers.js"></script>
 </body>
 </html>

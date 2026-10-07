@@ -3,8 +3,12 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>Mock VDI Session</title>
-    <link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <title>Lab session preview · ShadowTrust</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 28 28'%3E%3Crect width='28' height='28' rx='6' fill='%23533afd'/%3E%3Cpath d='M4.5 14c2.5-4.3 5.7-6.4 9.500-6.400s7 2.100 9.500 6.400c-2.500 4.300-5.700 6.400-9.500 6.400S7 18.300 4.500 14Z' fill='none' stroke='%23fff' stroke-width='1.8' stroke-linejoin='round'/%3E%3Ccircle cx='14' cy='14' r='3.2' fill='%23fff'/%3E%3C/svg%3E">
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#ffffff">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300..600&family=Source+Code+Pro:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         body {
@@ -40,7 +44,7 @@
             margin-bottom: 25px;
             display: flex;
             justify-content: space-between;
-            font-weight: bold;
+            font-weight: 600;
             font-size: 14px;
             letter-spacing: 1px;
             color: var(--st-success);
@@ -101,7 +105,7 @@
     <div class="matrix-bg"></div>
     <div class="terminal">
         <div class="header">
-            <div><i class="fas fa-network-wired"></i> SHADOW TRUST // ISOLATED VDI TUNNEL (MOCK)</div>
+            <div><i class="fas fa-network-wired"></i> Shadow Trust // isolated vdi tunnel (mock)</div>
             <div id="timeDisp">00:00:00 UTC</div>
         </div>
         <div class="log" id="logContent">
@@ -110,11 +114,11 @@
             > Injecting telemetry agents into guest OS... <span class="green">[OK]</span><br>
             > <br>
             > <span class="yellow">WARNING: Local Apache Guacamole Gateway (localhost:5432) is offline.</span><br>
-            > Entering <span class="cyan">MOCK RENDER MODE</span> for architectural demonstration.<br>
+            > Entering <span class="cyan">Mock render mode</span> for architectural demonstration.<br>
             > <br>
             > System: <span class="green" id="targetDisp">Fetching...</span><br>
-            > Status: <span class="green">AWS EC2 INSTANCE IS LIVE AND RUNNING</span><br>
-            > Connection: <span class="green">ESTABLISHED (VIRTUAL)</span><br>
+            > Status: <span class="green">AWS EC2 instance is live and running</span><br>
+            > Connection: <span class="green">Established (virtual)</span><br>
             > <br>
             > The GUI of the target machine would stream here natively in Production via Guacamole.<br>
             > <br>

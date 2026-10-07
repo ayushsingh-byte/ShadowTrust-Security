@@ -4,7 +4,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Event Log | Shadow Trust</title>
+    <title>Event log · ShadowTrust</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 28 28'%3E%3Crect width='28' height='28' rx='6' fill='%23533afd'/%3E%3Cpath d='M4.5 14c2.5-4.3 5.7-6.4 9.500-6.400s7 2.100 9.500 6.400c-2.500 4.300-5.700 6.400-9.500 6.400S7 18.300 4.500 14Z' fill='none' stroke='%23fff' stroke-width='1.8' stroke-linejoin='round'/%3E%3Ccircle cx='14' cy='14' r='3.2' fill='%23fff'/%3E%3C/svg%3E">
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#ffffff">
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/dashboard.css">
     <link rel="stylesheet" href="css/events.css">
@@ -16,7 +20,7 @@
         .page-header .hn-conn { margin-left: 6px; vertical-align: middle; }
     </style>
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600;700&amp;display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300..600&family=Source+Code+Pro:wght@400;500;600&display=swap">
     <link rel="stylesheet" href="css/tokens.css">
     <script src="js/theme.js"></script>
     <script src="js/live.js"></script>
@@ -29,29 +33,29 @@
         <main class="main-content">
             <div class="top-bar">
                 <div class="page-header">
-                    <h2>EVENT LOG</h2>
-                    <p>LOCAL PIPELINE // sensor &rarr; collector &rarr; normalizer &rarr; dashboard &nbsp;
+                    <h2>Event log</h2>
+                    <p>Every event, as it moves from sensor to collector to normaliser to this page.
                         <span id="hn-conn" class="hn-conn"><span class="hn-dot"></span><span id="hn-conn-label">Connecting&hellip;</span></span>
                     </p>
                 </div>
                 <div class="filters-bar">
-                    <button id="ev-export" class="soc-btn soc-btn-primary"><i class="fas fa-download"></i> EXPORT CSV</button>
+                    <button id="ev-export" class="soc-btn soc-btn-primary"><i class="fas fa-download"></i> Export CSV</button>
                 </div>
             </div>
 
             <!-- Overview -->
             <div class="hn-stats">
-                <div class="hn-stat"><div class="label">Total Events</div><div class="value" id="stat-total">0</div></div>
-                <div class="hn-stat"><div class="label">Active Sessions</div><div class="value" id="stat-sessions">0</div></div>
-                <div class="hn-stat"><div class="label">Unique Source IPs</div><div class="value" id="stat-ips">0</div></div>
-                <div class="hn-stat"><div class="label">Commands Executed</div><div class="value" id="stat-commands">0</div></div>
-                <div class="hn-stat crit"><div class="label">High/Critical Events</div><div class="value" id="stat-attacks">0</div></div>
-                <div class="hn-stat"><div class="label">Sensors Online</div><div class="value" id="stat-sensors">0/0</div></div>
+                <div class="hn-stat"><div class="label">Total events</div><div class="value" id="stat-total">0</div></div>
+                <div class="hn-stat"><div class="label">Active sessions</div><div class="value" id="stat-sessions">0</div></div>
+                <div class="hn-stat"><div class="label">Unique source IPs</div><div class="value" id="stat-ips">0</div></div>
+                <div class="hn-stat"><div class="label">Commands executed</div><div class="value" id="stat-commands">0</div></div>
+                <div class="hn-stat crit"><div class="label">High and critical</div><div class="value" id="stat-attacks">0</div></div>
+                <div class="hn-stat"><div class="label">Sensors online</div><div class="value" id="stat-sensors">0/0</div></div>
             </div>
 
             <div class="hn-grid-2">
                 <div class="hn-panel">
-                    <h2>Live Activity <span class="count">newest first, SSE-driven</span></h2>
+                    <h2>Live activity <span class="count">newest first, pushed over SSE</span></h2>
                     <div class="hn-feed" id="hn-feed"><div class="hn-empty">Waiting for sensor telemetry&hellip;</div></div>
                 </div>
                 <div class="hn-panel">
@@ -61,13 +65,13 @@
             </div>
 
             <div class="hn-panel">
-                <h2>Attacker Profiles <span class="count"><span id="hn-attacker-count">0</span> source IP(s)</span></h2>
+                <h2>Attacker profiles <span class="count"><span id="hn-attacker-count">0</span> source IP(s)</span></h2>
                 <div class="hn-table-wrap">
                     <table class="hn-table" id="hn-attackers">
                         <thead>
                             <tr>
                                 <th>Source IP</th><th>Severity</th><th>Events</th><th>Sensors</th>
-                                <th>Ports</th><th>Usernames</th><th>Logins OK</th><th>Last Seen</th>
+                                <th>Ports</th><th>Usernames</th><th>Logins OK</th><th>Last seen</th>
                             </tr>
                         </thead>
                         <tbody></tbody>
@@ -77,7 +81,7 @@
 
             <div class="hn-grid-2">
                 <div class="hn-panel">
-                    <h2>Event Log <span class="count"><span id="hn-event-count">0</span> shown</span></h2>
+                    <h2>Events <span class="count"><span id="hn-event-count">0</span> shown</span></h2>
                     <div class="hn-filters">
                         <select id="filter-sensor">
                             <option value="">All sensors</option>
@@ -101,7 +105,7 @@
                         <table class="hn-table" id="hn-events">
                             <thead>
                                 <tr>
-                                    <th>Time</th><th>Sensor</th><th>Event Type</th><th>Source IP</th>
+                                    <th>Time</th><th>Sensor</th><th>Event type</th><th>Source IP</th>
                                     <th>Username</th><th>Command</th><th>Severity</th>
                                 </tr>
                             </thead>

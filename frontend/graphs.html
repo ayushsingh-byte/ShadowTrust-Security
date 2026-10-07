@@ -3,13 +3,17 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>Analytics | Shadow Trust</title>
+    <title>Attack analytics · ShadowTrust</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 28 28'%3E%3Crect width='28' height='28' rx='6' fill='%23533afd'/%3E%3Cpath d='M4.5 14c2.5-4.3 5.7-6.4 9.500-6.400s7 2.100 9.500 6.400c-2.500 4.300-5.700 6.400-9.500 6.400S7 18.300 4.500 14Z' fill='none' stroke='%23fff' stroke-width='1.8' stroke-linejoin='round'/%3E%3Ccircle cx='14' cy='14' r='3.2' fill='%23fff'/%3E%3C/svg%3E">
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#ffffff">
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/dashboard.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600;700&amp;display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300..600&family=Source+Code+Pro:wght@400;500;600&display=swap">
     <link rel="stylesheet" href="css/tokens.css">
     <script src="js/theme.js"></script>
 </head>
@@ -26,36 +30,36 @@
 
             <div class="top-bar">
                 <div class="page-header">
-                    <h2>DEEP ANALYTICS</h2>
-                    <p>DATA VISUALIZATION // <span class="text-purple">120-DAY RETENTION</span></p>
+                    <h2>Attack analytics</h2>
+                    <p>Ports, protocols, sources and volume over time, drawn from stored events.</p>
                 </div>
                 <div class="filters-bar">
-                    <button class="soc-btn" data-days="1">Past 24H</button>
-                    <button class="soc-btn soc-btn-primary" data-days="7">Past 7 Days</button>
-                    <button class="soc-btn" data-days="30">Past 30 Days</button>
+                    <button class="soc-btn" data-days="1">24 hours</button>
+                    <button class="soc-btn soc-btn-primary" data-days="7">7 days</button>
+                    <button class="soc-btn" data-days="30">30 days</button>
                 </div>
             </div>
 
             <!-- ROW 1: 4 KPI CARDS -->
             <div class="dashboard-grid" style="grid-template-columns: repeat(4, 1fr); margin-bottom: 2rem;">
                 <div class="soc-card metric-tile">
-                    <div class="metric-header"><span class="card-title">DATA PROCESSED</span></div>
-                    <div class="metric-value text-cyan">—</div>
+                    <div class="metric-header"><span class="card-title">Data processed</span></div>
+                    <div class="metric-value text-cyan">n/a</div>
                     <div class="metric-sub">Raw payload bytes (window)</div>
                 </div>
                 <div class="soc-card metric-tile">
-                    <div class="metric-header"><span class="card-title">THREAT INTEL</span></div>
-                    <div class="metric-value text-purple">—</div>
+                    <div class="metric-header"><span class="card-title">Threat intel</span></div>
+                    <div class="metric-value text-purple">n/a</div>
                     <div class="metric-sub">Distinct attacker IPs</div>
                 </div>
                 <div class="soc-card metric-tile">
-                    <div class="metric-header"><span class="card-title">FALSE POSITIVES</span></div>
-                    <div class="metric-value text-pink">—</div>
+                    <div class="metric-header"><span class="card-title">False positives</span></div>
+                    <div class="metric-value text-pink">n/a</div>
                     <div class="metric-sub">Incidents dispositioned FP</div>
                 </div>
                 <div class="soc-card metric-tile">
-                    <div class="metric-header"><span class="card-title">NORMALIZATION</span></div>
-                    <div class="metric-value text-green">—</div>
+                    <div class="metric-header"><span class="card-title">Normalization</span></div>
+                    <div class="metric-value text-green">n/a</div>
                     <div class="metric-sub">Raw events normalized</div>
                 </div>
             </div>
@@ -64,12 +68,12 @@
             <div class="dashboard-grid" style="grid-template-columns: 2fr 1fr; margin-bottom: 2rem;">
                 <!-- MAIN TRAFFIC -->
                 <div class="soc-card" style="height:400px; display:flex; flex-direction:column;">
-                    <div class="soc-card-header"><span class="card-title">CROSS-SECTOR ATTACK VOLUME</span></div>
+                    <div class="soc-card-header"><span class="card-title">Cross-sector attack volume</span></div>
                     <div style="flex: 1; position: relative; min-height: 0;"><canvas id="mainChart"></canvas></div>
                 </div>
                 <!-- ATTACK VECTORS RADAR -->
                 <div class="soc-card" style="height:400px; display:flex; flex-direction:column;">
-                    <div class="soc-card-header"><span class="card-title">ATTACK VECTOR LANDSCAPE</span></div>
+                    <div class="soc-card-header"><span class="card-title">Attack vector landscape</span></div>
                     <div style="flex: 1; position: relative; min-height: 0;"><canvas id="radarChart"></canvas></div>
                 </div>
             </div>
@@ -77,15 +81,15 @@
             <!-- ROW 3: DETAILED SPLITS -->
             <div class="dashboard-grid" style="grid-template-columns: 1fr 1fr 1fr; margin-bottom: 2rem;">
                 <div class="soc-card" style="height:360px; display:flex; flex-direction:column;">
-                    <div class="soc-card-header"><span class="card-title">PROTOCOL DISTRIBUTION</span></div>
+                    <div class="soc-card-header"><span class="card-title">Protocol distribution</span></div>
                     <div style="flex: 1; position: relative; min-height: 0;"><canvas id="pieChart"></canvas></div>
                 </div>
                 <div class="soc-card" style="height:360px; display:flex; flex-direction:column;">
-                    <div class="soc-card-header"><span class="card-title">HOURLY ANOMALIES</span></div>
+                    <div class="soc-card-header"><span class="card-title">Hourly anomalies</span></div>
                     <div style="flex: 1; position: relative; min-height: 0;"><canvas id="barChart"></canvas></div>
                 </div>
                 <div class="soc-card" style="height:360px; display:flex; flex-direction:column;">
-                    <div class="soc-card-header"><span class="card-title">GEO-ORIGIN HEATMAP</span></div>
+                    <div class="soc-card-header"><span class="card-title">Geo-origin heatmap</span></div>
                     <div style="flex: 1; position: relative; min-height: 0;"><canvas id="polarChart"></canvas></div>
                 </div>
             </div>
@@ -93,12 +97,12 @@
             <!-- ROW 4: ADVANCED CORRELATION (NEW) -->
             <div class="dashboard-grid" style="grid-template-columns: 1fr 1fr; margin-bottom: 2rem;">
                 <div class="soc-card" style="height:400px; display:flex; flex-direction:column;">
-                    <div class="soc-card-header"><span class="card-title">TTD VS TTR CORRELATION (Efficiency)</span>
+                    <div class="soc-card-header"><span class="card-title">Time to detect vs time to respond</span>
                     </div>
                     <div style="flex: 1; position: relative; min-height: 0;"><canvas id="scatterChart"></canvas></div>
                 </div>
                 <div class="soc-card" style="height:400px; display:flex; flex-direction:column;">
-                    <div class="soc-card-header"><span class="card-title">MALWARE FAMILY TRENDS (Volume vs Sev)</span>
+                    <div class="soc-card-header"><span class="card-title">Malware family trends, volume and severity</span>
                     </div>
                     <div style="flex: 1; position: relative; min-height: 0;"><canvas id="mixedChart"></canvas></div>
                 </div>
@@ -107,15 +111,15 @@
             <!-- ROW 5: MICRO ANALYTICS (NEW) -->
             <div class="dashboard-grid" style="grid-template-columns: 1fr 1fr 1fr;">
                 <div class="soc-card" style="height:360px; display:flex; flex-direction:column;">
-                    <div class="soc-card-header"><span class="card-title">TARGETED PORT USAGE</span></div>
+                    <div class="soc-card-header"><span class="card-title">Targeted port usage</span></div>
                     <div style="flex: 1; position: relative; min-height: 0;"><canvas id="portsChart"></canvas></div>
                 </div>
                 <div class="soc-card" style="height:360px; display:flex; flex-direction:column;">
-                    <div class="soc-card-header"><span class="card-title">INSIDER THREAT MATRIX</span></div>
+                    <div class="soc-card-header"><span class="card-title">Insider threat matrix</span></div>
                     <div style="flex: 1; position: relative; min-height: 0;"><canvas id="bubbleChart"></canvas></div>
                 </div>
                 <div class="soc-card" style="height:360px; display:flex; flex-direction:column;">
-                    <div class="soc-card-header"><span class="card-title">NODE LOAD AVERAGES</span></div>
+                    <div class="soc-card-header"><span class="card-title">Node load averages</span></div>
                     <div style="flex: 1; position: relative; min-height: 0;"><canvas id="systemChart"></canvas></div>
                 </div>
             </div>
@@ -127,7 +131,7 @@
         import { apiService } from './js/api.js';
 
         // Default chart colors are set (and re-applied on theme change) by js/theme.js.
-        Chart.defaults.font.family = "'JetBrains Mono', monospace";
+        Chart.defaults.font.family = "'Source Code Pro', monospace";
 
         // Chart References
         let charts = {};
@@ -136,70 +140,70 @@
             // 1. Main Line Chart
             charts.main = new Chart(document.getElementById('mainChart'), {
                 type: 'line',
-                data: { labels: [], datasets: [{ label: 'Education Sector', data: [], borderColor: 'var(--st-info)', tension: 0.4 }, { label: 'Defence Sector', data: [], borderColor: 'var(--st-danger)', tension: 0.4 }] },
+                data: { labels: [], datasets: [{ label: 'Education Sector', data: [], borderColor: 'var(--st-chart-1)', borderWidth: 2, pointRadius: 3, tension: 0.4 }, { label: 'Defence Sector', data: [], borderColor: 'var(--st-chart-2)', borderWidth: 2, pointRadius: 3, tension: 0.4 }] },
                 options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: "var(--st-text)" } } } }
             });
 
             // 2. Radar Chart
             charts.radar = new Chart(document.getElementById('radarChart'), {
                 type: 'radar',
-                data: { labels: ['Brute Force', 'Exploit', 'XSS', 'DDoS', 'Malware', 'Phishing'], datasets: [{ label: 'Risk Score', data: [], backgroundColor: 'color-mix(in srgb, var(--st-info) 20%, transparent)', borderColor: 'var(--st-info)', pointBackgroundColor: 'var(--st-text)' }] },
-                options: { responsive: true, maintainAspectRatio: false, scales: { r: { grid: { color: 'var(--st-text-faint)' } } } }
+                data: { labels: ['Brute Force', 'Exploit', 'XSS', 'DDoS', 'Malware', 'Phishing'], datasets: [{ label: 'Risk Score', data: [], backgroundColor: 'color-mix(in srgb, var(--st-chart-1) 16%, transparent)', borderColor: 'var(--st-chart-1)', borderWidth: 2, pointRadius: 3, pointBackgroundColor: 'var(--st-chart-1)' }] },
+                options: { responsive: true, maintainAspectRatio: false, scales: { r: { grid: { color: 'var(--st-border)' } } } }
             });
 
             // 3. Pie Chart
             charts.pie = new Chart(document.getElementById('pieChart'), {
                 type: 'doughnut',
-                data: { labels: ['SSH', 'HTTP', 'RDP', 'FTP', 'DNS'], datasets: [{ data: [], backgroundColor: ['var(--st-info)', 'var(--st-info)', 'var(--st-danger)', 'var(--st-warning)', 'var(--st-success)'], borderWidth: 0 }] },
+                data: { labels: ['SSH', 'HTTP', 'RDP', 'FTP', 'DNS'], datasets: [{ data: [], backgroundColor: ['var(--st-chart-1)', 'var(--st-chart-2)', 'var(--st-chart-3)', 'var(--st-chart-4)', 'var(--st-chart-5)', 'color-mix(in srgb, var(--st-chart-1) 55%, var(--st-surface))', 'color-mix(in srgb, var(--st-chart-2) 55%, var(--st-surface))', 'color-mix(in srgb, var(--st-chart-3) 55%, var(--st-surface))', 'color-mix(in srgb, var(--st-chart-4) 55%, var(--st-surface))'], borderWidth: 2, borderColor: 'var(--st-surface)' }] },
                 options: { responsive: true, maintainAspectRatio: false }
             });
 
             // 4. Bar Chart
             charts.bar = new Chart(document.getElementById('barChart'), {
                 type: 'bar',
-                data: { labels: ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00'], datasets: [{ label: 'Anomalies', data: [], backgroundColor: 'var(--st-danger)' }] },
+                data: { labels: ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00'], datasets: [{ label: 'Anomalies', data: [], backgroundColor: 'var(--st-chart-1)', borderRadius: 4, maxBarThickness: 44 }] },
                 options: { responsive: true, maintainAspectRatio: false }
             });
 
             // 5. Polar Chart
             charts.polar = new Chart(document.getElementById('polarChart'), {
                 type: 'polarArea',
-                data: { labels: [], datasets: [{ data: [], backgroundColor: ['var(--st-danger)', 'var(--st-info)', 'var(--st-info)', 'var(--st-success)', 'var(--st-warning)'] }] },
+                data: { labels: [], datasets: [{ data: [], backgroundColor: ['var(--st-chart-1)', 'var(--st-chart-2)', 'var(--st-chart-3)', 'var(--st-chart-4)', 'var(--st-chart-5)'], borderWidth: 2, borderColor: 'var(--st-surface)' }] },
                 options: { responsive: true, maintainAspectRatio: false, scales: { r: { grid: { display: false } } } }
             });
 
             // 6. Scatter Chart (TTD vs TTR)
             charts.scatter = new Chart(document.getElementById('scatterChart'), {
                 type: 'scatter',
-                data: { datasets: [{ label: 'Crit Incidents', data: [], backgroundColor: 'var(--st-danger)' }, { label: 'Minor Incidents', data: [], backgroundColor: 'var(--st-success)' }] },
+                data: { datasets: [{ label: 'Critical incidents', data: [], backgroundColor: 'var(--st-chart-5)' }, { label: 'Minor incidents', data: [], backgroundColor: 'var(--st-chart-1)' }] },
                 options: { responsive: true, maintainAspectRatio: false, scales: { x: { title: { display: true, text: 'Time To Detect (min)', color: 'var(--st-text-faint)' } }, y: { title: { display: true, text: 'Time To Respond (min)', color: 'var(--st-text-faint)' } } } }
             });
 
             // 7. Mixed Chart (Malware Trends)
             charts.mixed = new Chart(document.getElementById('mixedChart'), {
                 type: 'bar',
-                data: { labels: [], datasets: [{ label: 'Volume', data: [], backgroundColor: 'color-mix(in srgb, var(--st-info) 50%, transparent)', order: 2 }, { label: 'Avg Severity', data: [], type: 'line', borderColor: 'var(--st-warning)', tension: 0.4, yAxisID: 'y1', order: 1 }] },
+                data: { labels: [], datasets: [{ label: 'Volume', data: [], backgroundColor: 'color-mix(in srgb, var(--st-chart-1) 70%, transparent)', borderRadius: 4, maxBarThickness: 48, order: 2 }, { label: 'Avg Severity', data: [], type: 'line', borderColor: 'var(--st-chart-3)', borderWidth: 2, tension: 0.4, yAxisID: 'y1', order: 1 }] },
                 options: { responsive: true, maintainAspectRatio: false, scales: { y: { position: 'left' }, y1: { position: 'right', min: 0, max: 5, grid: { drawOnChartArea: false } } } }
             });
 
             // 8. Horizontal Bar (Ports)
             charts.ports = new Chart(document.getElementById('portsChart'), {
                 type: 'bar', indexAxis: 'y',
-                data: { labels: ['Port 445 (SMB)', 'Port 22 (SSH)', 'Port 80 (HTTP)', 'Port 3389 (RDP)'], datasets: [{ label: 'Hits', data: [], backgroundColor: 'var(--st-info)' }] },
+                data: { labels: ['Port 445 (SMB)', 'Port 22 (SSH)', 'Port 80 (HTTP)', 'Port 3389 (RDP)'], datasets: [{ label: 'Hits', data: [], backgroundColor: 'var(--st-chart-1)', borderRadius: 4, maxBarThickness: 40 }] },
                 options: { responsive: true, maintainAspectRatio: false }
             });
 
             // 9. Bubble Chart (Insider Threat)
             charts.bubble = new Chart(document.getElementById('bubbleChart'), {
                 type: 'bubble',
-                data: { datasets: [{ label: 'Internal IPs', data: [], backgroundColor: function (c) { return (c.raw && c.raw.r > 20) ? 'var(--st-danger)' : 'var(--st-info)'; } }] },
+                data: { datasets: [{ label: 'Internal IPs', data: [], backgroundColor: function (c) { return (c.raw && c.raw.r > 20) ? 'var(--st-chart-5)' : 'var(--st-chart-1)'; } }] },
                 options: { responsive: true, maintainAspectRatio: false, scales: { x: { title: { display: true, text: 'Login Ops', color: 'var(--st-text-faint)' } }, y: { title: { display: true, text: 'Data Exfil (MB)', color: 'var(--st-text-faint)' } } } }
             });
 
             // 10. System Chart (Area)
             charts.system = new Chart(document.getElementById('systemChart'), {
                 type: 'line',
-                data: { labels: ['10m', '8m', '6m', '4m', '2m', 'Now'], datasets: [{ label: 'CPU Load %', data: [], fill: true, borderColor: 'var(--st-danger)', backgroundColor: 'color-mix(in srgb, var(--st-danger) 20%, transparent)', tension: 0.4 }] },
+                data: { labels: ['10m', '8m', '6m', '4m', '2m', 'Now'], datasets: [{ label: 'CPU Load %', data: [], fill: true, borderColor: 'var(--st-chart-2)', borderWidth: 2, backgroundColor: 'color-mix(in srgb, var(--st-chart-2) 14%, transparent)', tension: 0.4 }] },
                 options: { responsive: true, maintainAspectRatio: false, scales: { y: { min: 0, max: 100 } } }
             });
         }
@@ -278,13 +282,13 @@
                 if (!banner) {
                     banner = document.createElement('div');
                     banner.id = 'graphs-error-banner';
-                    banner.style.cssText = 'position:fixed;bottom:20px;right:20px;z-index:9999;padding:12px 18px;background:var(--st-surface);border:1px solid var(--st-danger);border-left:3px solid var(--st-danger);color:var(--st-danger);font-family:"JetBrains Mono",monospace;font-size:0.8rem;border-radius:4px;max-width:340px;';
+                    banner.style.cssText = 'position:fixed;bottom:20px;right:20px;z-index:9999;padding:12px 18px;background:var(--st-surface);border:1px solid var(--st-danger);border-left:3px solid var(--st-danger);color:var(--st-danger);font-family:"Source Code Pro",monospace;font-size:0.8rem;border-radius:4px;max-width:340px;';
                     document.body.appendChild(banner);
                 }
                 const isAuth = err.message && err.message.toLowerCase().includes('unauthorized');
                 banner.innerHTML = isAuth
                     ? '<i class="fas fa-lock"></i> Session expired. <a href="login.html" style="color:var(--st-caution);">Log in again</a>.'
-                    : `<i class="fas fa-exclamation-triangle"></i> Analytics data failed to load. Backend may be starting. <button onclick="fetchAnalytics();this.parentElement.style.display='none';" style="margin-left:8px;background:transparent;border:1px solid var(--st-danger);color:var(--st-danger);padding:2px 8px;cursor:pointer;font-family:inherit;">RETRY</button>`;
+                    : `<i class="fas fa-exclamation-triangle"></i> Analytics data failed to load. Backend may be starting. <button onclick="fetchAnalytics();this.parentElement.style.display='none';" style="margin-left:8px;background:transparent;border:1px solid var(--st-danger);color:var(--st-danger);padding:2px 8px;cursor:pointer;font-family:inherit;">Retry</button>`;
                 banner.style.display = 'block';
                 setTimeout(() => { if (banner) banner.style.display = 'none'; }, 8000);
             }

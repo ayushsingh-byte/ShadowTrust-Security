@@ -1,382 +1,156 @@
 <!DOCTYPE html>
-<html lang="en">
-
+<html lang="en" data-theme="light">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-    <meta http-equiv="Pragma" content="no-cache">
-    <meta http-equiv="Expires" content="0">
-    <title>Admin Login | Shadow Trust</title>
-    <link rel="stylesheet" href="css/style.css">
+    <title>Admin sign in · ShadowTrust</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300..600&family=Source+Code+Pro:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <style>
-        body,
-        html {
-            margin: 0;
-            padding: 0;
-            height: 100vh;
-            width: 100vw;
-            display: flex;
-            background: var(--st-bg);
-            font-family: var(--st-font-main);
-            overflow: hidden;
-        }
-
-        /* LEFT SIDE: VISUAL */
-        .visual-pane {
-            flex: 1;
-            /* Red Hacking / Security Visual */
-            background: url('https://images.unsplash.com/photo-1555949963-ff9fe0c870eb?q=80&w=2670&auto=format&fit=crop');
-            background-size: cover;
-            background-position: center;
-            position: relative;
-            display: flex;
-            flex-direction: column;
-            justify-content: flex-end;
-            padding: 80px;
-        }
-
-        .visual-overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            /* Red tint for danger/admin */
-            background: linear-gradient(to top, var(--st-surface-2) 0%, color-mix(in srgb, var(--st-surface-2) 55%, transparent) 100%);
-        }
-
-        .visual-content {
-            position: relative;
-            z-index: 2;
-            color: var(--st-text);
-            max-width: 600px;
-        }
-
-        .visual-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            background: color-mix(in srgb, var(--st-danger) 15%, transparent);
-            
-            padding: 8px 16px;
-            border-radius: 4px;
-            font-size: 0.8rem;
-            margin-bottom: 20px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            border: 1px solid color-mix(in srgb, var(--st-danger) 40%, transparent);
-            color: var(--st-danger);
-            font-weight: 700;
-        }
-
-        .visual-title {
-            font-size: 3.5rem;
-            font-weight: 700;
-            margin-bottom: 20px;
-            line-height: 1.1;
-            background: linear-gradient(90deg, var(--st-text) 0%, var(--st-text) 100%);
-            -webkit-background-clip: text;
-            background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-
-        .visual-text {
-            font-size: 1.1rem;
-            line-height: 1.6;
-            color: var(--st-danger);
-            font-weight: 300;
-            border-left: 3px solid var(--st-danger);
-            padding-left: 20px;
-        }
-
-        /* RIGHT SIDE: LOGIN FORM */
-        .login-pane {
-            width: 35%;
-            min-width: 500px;
-            background: var(--st-surface-2);
-            /* Very dark red/black */
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            padding: 80px;
-            border-left: 1px solid color-mix(in srgb, var(--st-danger) 35%, var(--st-border));
-            position: relative;
-        }
-
-        .logo-area {
-            margin-bottom: 50px;
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-
-        .logo-mark {
-            width: 40px;
-            height: 40px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border: 2px solid var(--st-danger);
-            color: var(--st-danger);
-            font-size: 1.2rem;
-            font-weight: bold;
-        }
-
-        .logo-text {
-            font-size: 1.2rem;
-            font-weight: 700;
-            letter-spacing: 2px;
-            color: var(--st-text);
-        }
-
-        .login-header {
-            margin-bottom: 40px;
-        }
-
-        .login-header h1 {
-            font-size: 2rem;
-            color: var(--st-danger);
-            /* Red Header */
-            margin-bottom: 10px;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-
-        .login-header p {
-            color: var(--st-text-muted);
-            font-size: 0.9rem;
-            font-family: var(--st-font-mono);
-        }
-
-        .input-group {
-            margin-bottom: 30px;
-            position: relative;
-        }
-
-        .input-group label {
-            display: block;
-            margin-bottom: 12px;
-            color: var(--st-danger);
-            font-size: 0.8rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .clean-input {
-            width: 100%;
-            padding: 16px;
-            background: color-mix(in srgb, var(--st-danger) 5%, transparent);
-            /* Subtle red bg */
-            border: 1px solid color-mix(in srgb, var(--st-danger) 35%, var(--st-border));
-            border-radius: 0;
-            /* Sharp corners for security feel */
-            color: var(--st-text);
-            font-size: 1rem;
-            outline: none;
-            transition: 0.3s;
-            font-family: var(--st-font-mono);
-        }
-
-        .clean-input:focus {
-            border-color: var(--st-danger);
-            background: color-mix(in srgb, var(--st-danger) 10%, transparent);
-            
-        }
-
-        .btn-clean {
-            width: 100%;
-            padding: 18px;
-            background: var(--st-danger);
-            color: var(--st-on-solid);
-            border: none;
-            font-size: 0.95rem;
-            font-weight: 700;
-            letter-spacing: 2px;
-            text-transform: uppercase;
-            cursor: pointer;
-            transition: 0.3s;
-            margin-top: 10px;
-            border-radius: 0;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .btn-clean:hover {
-            background: var(--st-danger);
-            
-        }
-
-        .warning-box {
-            margin-top: 40px;
-            padding: 20px;
-            border: 1px dashed var(--st-danger);
-            color: var(--st-danger);
-            font-size: 0.75rem;
-            text-align: center;
-            background: color-mix(in srgb, var(--st-danger) 5%, transparent);
-            font-family: var(--st-font-mono);
-        }
-
-        .logout-link {
-            position: absolute;
-            top: 40px;
-            right: 40px;
-            color: var(--st-text-faint);
-            text-decoration: none;
-            font-size: 0.9rem;
-            transition: 0.3s;
-        }
-
-        .logout-link:hover {
-            color: var(--st-text);
-        }
-
-        @media (max-width: 1000px) {
-            .visual-pane {
-                display: none;
-            }
-
-            .login-pane {
-                width: 100%;
-                min-width: auto;
-            }
-        }
-    </style>
     <link rel="stylesheet" href="css/tokens.css">
-    <script src="js/theme.js"></script>
+    <link rel="stylesheet" href="css/auth.css">
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 28 28'%3E%3Crect width='28' height='28' rx='6' fill='%23533afd'/%3E%3Cpath d='M4.5 14c2.5-4.3 5.7-6.4 9.5-6.4s7 2.1 9.5 6.4c-2.5 4.3-5.7 6.4-9.5 6.4S7 18.3 4.5 14Z' fill='none' stroke='%23fff' stroke-width='1.8' stroke-linejoin='round'/%3E%3Ccircle cx='14' cy='14' r='3.2' fill='%23fff'/%3E%3C/svg%3E">
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#ffffff">
 </head>
+<body class="auth-page">
+<div class="auth">
+    <canvas class="auth-ribbon" data-ribbon="corner" aria-hidden="true"></canvas>
 
-<body>
+    <aside class="story-pane">
+        <a class="auth-brand" href="index.html" aria-label="ShadowTrust home"><svg viewBox="0 0 28 28" fill="none" aria-hidden="true"><path d="M2.5 14c3-5.3 7-8 11.5-8s8.5 2.7 11.5 8c-3 5.3-7 8-11.5 8S5.5 19.3 2.5 14Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><circle cx="14" cy="14" r="4.2" fill="var(--st-brand)"/></svg><span>ShadowTrust</span></a>
 
-    <!-- LEFT: SECURITY VISUAL -->
-    <div class="visual-pane st-theme-dark">
-        <div class="visual-overlay"></div>
-        <div class="visual-content">
-            <div class="visual-badge"><i class="fas fa-exclamation-triangle"></i> &nbsp; RESTRICTED AREA</div>
-            <div class="visual-title">Root Access<br>Control</div>
-            <div class="visual-text">
-                This interface is monitored. All login attempts are logged, geolocated, and reported to the Technical
-                Team.
-            </div>
-        </div>
-    </div>
-
-    <!-- RIGHT: LOGIN FORM -->
-    <div class="login-pane">
-
-        <div class="logout-link">
-            <a href="login.html" style="color:var(--st-text-faint); text-decoration:none; margin-right:20px; transition:0.3s;"><i
-                    class="fas fa-sign-out-alt"></i> Back to Login</a>
-            <a href="dashboard.html" style="color:var(--st-danger); text-decoration:none; font-weight:bold; transition:0.3s;"><i
-                    class="fas fa-arrow-left"></i> Back to Dashboard</a>
-        </div>
-
-        <div class="logo-area">
-            <div class="logo-mark"><i class="fas fa-user-shield"></i></div>
-            <div class="logo-text">SHADOW TRUST : : ADMIN</div>
-        </div>
-
-        <div class="login-header">
-            <h1>Identity Check</h1>
-            <p>Enter root credentials for elevated privilege escalation.</p>
-        </div>
-
-        <form id="adminLoginForm">
-            <div class="input-group">
-                <label>Email Address</label>
-                <input type="email" id="adminEmail" class="clean-input" placeholder="admin@example.com" required>
+        <div class="watch" aria-hidden="true">
+                <svg viewBox="0 0 280 170" data-watch>
+                    <defs><clipPath id="lensClip"><path data-lens-clip d="M14 85 C 70 12, 210 12, 266 85 C 210 158, 70 158, 14 85 Z"/></clipPath></defs>
+                    <g clip-path="url(#lensClip)">
+                        <g data-iris>
+                            <circle class="iris" cx="140" cy="85" r="42"/>
+                            <circle class="pupil" cx="140" cy="85" r="19"/>
+                            <circle class="glint" cx="149" cy="76" r="5"/>
+                        </g>
+                    </g>
+                    <path class="lens" data-lens d="M14 85 C 70 12, 210 12, 266 85 C 210 158, 70 158, 14 85 Z"/>
+                    <g data-lashes style="opacity:0"><path class="lash" d="M70 150 l-8 14 M110 158 l-3 15 M170 158 l3 15 M210 150 l8 14"/></g>
+                </svg>
             </div>
 
-            <div class="input-group">
-                <label>Password</label>
-                <input type="password" id="adminPassword" class="clean-input" placeholder="••••••••••••••••" required>
+        <div class="story-copy">
+            <div class="eyebrow-mono">Administration</div>
+            <h1>Three keys. <em>One door.</em></h1>
+            <p>Admin sign-in needs your email, your password and the system code a super admin issued to your account. Admin pages also check your role on the server, so a valid sign-in alone is not enough.</p>
+        </div>
+
+        <ol class="steps">
+            <li class="step-item"><span class="step-num active">01</span><span class="step-info"><strong>Email and password</strong><span>The same account you use for the console</span></span></li>
+            <li class="step-item"><span class="step-num active">02</span><span class="step-info"><strong>System code</strong><span>Per account, set by a super admin</span></span></li>
+            <li class="step-item"><span class="step-num active">03</span><span class="step-info"><strong>Role check</strong><span>SUPER_ADMIN or ADMIN, verified by the API</span></span></li>
+        </ol>
+    </aside>
+
+    <main class="form-pane">
+        <div class="form-top"><a href="login.html">← Console sign in</a><a href="dashboard.html">Back to the console</a></div>
+        <div class="form-inner">
+            <div class="form-heading">
+                <h2>Admin sign in</h2>
+                <p>For user management, access control and system settings.</p>
             </div>
 
-            <div class="input-group">
-                <label>2FA Hardware Token</label>
-                <input type="text" id="adminCode" class="clean-input" placeholder="XXX-XXX" maxlength="7"
-                    style="letter-spacing: 5px; text-align: center; text-transform: uppercase;" autocomplete="off">
-            </div>
+            <form id="adminLoginForm" style="margin-top:28px">
+                <div class="input-group">
+                    <label for="adminEmail">Email address</label>
+                    <div class="input-wrap"><i class="icon fas fa-envelope"></i><input type="email" id="adminEmail" placeholder="admin@example.com" required></div>
+                </div>
 
-            <button type="submit" class="btn-clean">
-                <i class="fas fa-fingerprint"></i> &nbsp; Authenticate Root
-            </button>
-        </form>
-    </div>
+                <div class="input-group">
+                    <label for="adminPassword">Password</label>
+                    <div class="input-wrap">
+                        <i class="icon fas fa-lock"></i>
+                        <input type="password" id="adminPassword" placeholder="Your password" required>
+                        <button type="button" class="eye-btn" aria-label="Show password" onclick="togglePass('adminPassword',this)"><i class="fas fa-eye"></i></button>
+                    </div>
+                </div>
 
-    <script>
-        const _isLocalDev = window.location.hostname === '127.0.0.1' ||
-            window.location.hostname === 'localhost' ||
-            window.location.hostname === '0.0.0.0' ||
-            window.location.protocol === 'file:';
-        const API_BASE = _isLocalDev ? 'http://127.0.0.1:8000/api/v1' : '/api/v1';
+                <div class="input-group">
+                    <label for="adminCode">System code <span class="hint">issued by a super admin</span></label>
+                    <div class="input-wrap"><i class="icon fas fa-key"></i><input type="text" id="adminCode" placeholder="XXX-XXX" maxlength="7" autocomplete="off" style="letter-spacing:0.3em;text-transform:uppercase;font-family:var(--st-font-mono)"></div>
+                </div>
 
-        function showAdminMsg(msg, type) {
-            let el = document.getElementById('adminMsg');
-            if (!el) {
-                el = document.createElement('div');
-                el.id = 'adminMsg';
-                el.style.cssText = 'margin-top:20px;padding:14px 18px;border-radius:4px;font-size:0.85rem;font-family:var(--st-font-mono);';
-                document.getElementById('adminLoginForm').after(el);
-            }
-            el.style.border = type === 'error' ? '1px solid var(--st-danger)' : '1px solid var(--st-success)';
-            el.style.background = type === 'error' ? 'color-mix(in srgb, var(--st-danger) 8%, transparent)' : 'color-mix(in srgb, var(--st-success) 8%, transparent)';
-            el.style.color = type === 'error' ? 'var(--st-danger)' : 'var(--st-success)';
-            el.textContent = msg;
+                <button type="submit" class="btn-submit" style="margin-top:8px">Sign in as admin</button>
+                <div class="status-msg" id="adminMsg" role="status"></div>
+            </form>
+
+            <div class="bottom-link">Not an admin? <a href="login.html">Use the console sign in</a></div>
+        </div>
+    </main>
+</div>
+
+<script>
+    const _isLocalDev = window.location.hostname === '127.0.0.1' ||
+        window.location.hostname === 'localhost' ||
+        window.location.hostname === '0.0.0.0' ||
+        window.location.protocol === 'file:';
+    const API_BASE = _isLocalDev ? 'http://127.0.0.1:8000/api/v1' : '/api/v1';
+
+    function togglePass(id, btn) {
+        const el = document.getElementById(id);
+        el.type = el.type === 'password' ? 'text' : 'password';
+        btn.querySelector('i').className = el.type === 'text' ? 'fas fa-eye-slash' : 'fas fa-eye';
+    }
+
+    function showAdminMsg(msg, type) {
+        const el = document.getElementById('adminMsg');
+        el.className = 'status-msg ' + (type === 'error' ? 'error' : 'success');
+        el.textContent = msg;
+    }
+
+    document.getElementById('adminLoginForm').addEventListener('submit', async function (e) {
+        e.preventDefault();
+        const email = document.getElementById('adminEmail').value.trim();
+        const password = document.getElementById('adminPassword').value;
+        const systemCode = document.getElementById('adminCode').value.trim();
+        const btn = e.target.querySelector('button[type=submit]');
+        const originalText = btn.innerHTML;
+
+        if (!email || !password || !systemCode) {
+            showAdminMsg('All three fields are required.', 'error');
+            return;
         }
 
-        document.getElementById('adminLoginForm').addEventListener('submit', async function (e) {
-            e.preventDefault();
-            const email = document.getElementById('adminEmail').value.trim();
-            const password = document.getElementById('adminPassword').value;
-            const systemCode = document.getElementById('adminCode').value.trim();
-            const btn = e.target.querySelector('button');
-            const originalText = btn.innerHTML;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>&nbsp; Checking…';
+        btn.disabled = true;
 
-            if (!email || !password || !systemCode) {
-                showAdminMsg('All fields are required.', 'error');
-                return;
+        try {
+            const res = await fetch(`${API_BASE}/auth/admin-login`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password, system_code: systemCode })
+            });
+
+            if (!res.ok) {
+                const err = await res.json();
+                throw new Error(err.detail || 'Sign in failed');
             }
 
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Authenticating...';
-            btn.style.opacity = '0.7';
+            const data = await res.json();
+            localStorage.setItem('access_token', data.access_token);
+            localStorage.setItem('authToken', data.access_token);
+            localStorage.setItem('isAdmin', 'true');
+            localStorage.setItem('userRole', data.user.role);
 
-            try {
-                const res = await fetch(`${API_BASE}/auth/admin-login`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email, password, system_code: systemCode })
-                });
+            showAdminMsg('Signed in. Opening the admin console…', 'success');
+            setTimeout(() => (window.STEnter ? STEnter('admin.html') : (window.location.href = 'admin.html')), 450);
 
-                if (!res.ok) {
-                    const err = await res.json();
-                    throw new Error(err.detail || 'Authentication failed');
-                }
-
-                const data = await res.json();
-                localStorage.setItem('access_token', data.access_token);
-                localStorage.setItem('authToken', data.access_token);
-                localStorage.setItem('isAdmin', 'true');
-                localStorage.setItem('userRole', data.user.role);
-
-                showAdminMsg('Access granted. Redirecting...', 'success');
-                setTimeout(() => window.location.href = 'admin.html', 800);
-
-            } catch (err) {
-                showAdminMsg(err.message, 'error');
-                btn.innerHTML = originalText;
-                btn.style.opacity = '1';
-            }
-        });
-    </script>
-    </div>
-
+        } catch (err) {
+            showAdminMsg(err.message === 'Failed to fetch' ? 'Could not reach the backend. Is it running?' : err.message, 'error');
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+        }
+    });
+</script>
+<script src="js/ribbon.js"></script>
+<script src="js/watch.js"></script>
 </body>
-
-
 </html>

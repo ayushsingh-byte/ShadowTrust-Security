@@ -3,7 +3,11 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>Honeynet Nodes | Shadow Trust</title>
+    <title>Honeypot nodes · ShadowTrust</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 28 28'%3E%3Crect width='28' height='28' rx='6' fill='%23533afd'/%3E%3Cpath d='M4.5 14c2.5-4.3 5.7-6.4 9.500-6.400s7 2.100 9.500 6.400c-2.500 4.300-5.700 6.400-9.500 6.400S7 18.300 4.500 14Z' fill='none' stroke='%23fff' stroke-width='1.8' stroke-linejoin='round'/%3E%3Ccircle cx='14' cy='14' r='3.2' fill='%23fff'/%3E%3C/svg%3E">
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#ffffff">
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/dashboard.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -11,15 +15,118 @@
     <style>
         /* RACK UNIT STYLES */
         .rack-unit {
-            height: 40px;
+            min-height: 44px;
             border-bottom: 1px solid var(--st-border);
-            background: var(--st-surface);
             display: flex;
             align-items: center;
-            padding: 0 10px;
+            gap: 10px;
+            padding: 6px 0;
             font-family: var(--st-font-mono);
-            font-size: 0.7rem;
+            font-size: 0.76rem;
+            color: var(--st-text-secondary);
+        }
+
+        .rack-unit:first-child {
+            border-top: 1px solid var(--st-border);
+        }
+
+        .node-table td {
+            white-space: nowrap;
+            vertical-align: middle;
+            padding-top: 14px;
+            padding-bottom: 14px;
+        }
+
+        .node-table .sub {
+            font-size: .76rem;
             color: var(--st-text-faint);
+            margin-top: 2px;
+        }
+
+        .node-table tr.off td:not(:last-child) {
+            opacity: .6;
+        }
+
+        .node-table .soc-btn {
+            min-height: 30px;
+            padding: 4px 12px;
+            font-size: .8rem;
+        }
+
+        .node-row {
+            display: grid;
+            grid-template-columns: 44px minmax(0, 1fr) auto;
+            gap: 4px 18px;
+            padding: 22px 0 22px 14px;
+            border-top: 1px solid var(--st-border);
+            position: relative;
+            cursor: pointer;
+            transition: background-color var(--st-dur-1) ease;
+        }
+
+        .node-row:first-child {
+            border-top: 1px solid var(--st-border-strong);
+        }
+
+        .node-row::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 22px;
+            bottom: 22px;
+            width: 2px;
+            border-radius: 2px;
+            background: var(--node-c, var(--st-border-strong));
+        }
+
+        .node-row:hover {
+            background: color-mix(in srgb, var(--st-surface-hover) 55%, transparent);
+        }
+
+        .node-row.off {
+            opacity: .62;
+        }
+
+        .node-row .ni {
+            font-size: 1.35rem;
+            color: var(--node-c, var(--st-text-faint));
+            padding-top: 4px;
+        }
+
+        .node-row .nn {
+            font-family: var(--st-font-mono);
+            font-size: 1rem;
+            font-weight: 500;
+            color: var(--st-text);
+        }
+
+        .node-row .nn small {
+            font-family: var(--st-font-main);
+            font-size: .82rem;
+            font-weight: 400;
+            color: var(--st-text-faint);
+            margin-left: 6px;
+        }
+
+        .node-row .nm {
+            font-family: var(--st-font-mono);
+            font-size: .78rem;
+            color: var(--st-text-muted);
+            margin-top: 4px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px 16px;
+        }
+
+        .node-row .nr {
+            text-align: right;
+            font-size: .78rem;
+            color: var(--st-text-faint);
+        }
+
+        .node-row .na {
+            grid-column: 2;
+            margin-top: 12px;
         }
 
         .rack-light {
@@ -60,7 +167,7 @@
             justify-content: center;
             align-items: center;
             opacity: 0;
-            transition: opacity 0.2s;
+            transition: opacity var(--st-dur-2);
         }
 
         .modal-overlay.active {
@@ -252,7 +359,7 @@
             min-width: 300px;
             border-left: 4px solid var(--neon-cyan);
             box-shadow: var(--st-shadow-md);
-            animation: slideIn 0.3s ease-out forwards;
+            animation: slideIn var(--st-dur-2) var(--st-ease-out) forwards;
             display: flex;
             align-items: center;
             gap: 15px;
@@ -286,7 +393,7 @@
         }
     </style>
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600;700&amp;display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300..600&family=Source+Code+Pro:wght@400;500;600&display=swap">
     <link rel="stylesheet" href="css/tokens.css">
     <script src="js/theme.js"></script>
     <script src="js/live.js"></script>
@@ -307,50 +414,51 @@
 
             <div class="top-bar">
                 <div class="page-header">
-                    <h2>HONEYNET NODES</h2>
-                    <p>HONEYPOT DEPLOYMENT // <span id="gridStatus" class="text-muted">CHECKING SENSORS…</span></p>
+                    <h2>Honeypot nodes</h2>
+                    <p>Every sensor in the deployment and what it is doing. <span id="gridStatus" class="text-muted">Checking sensors…</span></p>
                 </div>
                 <div class="filters-bar" style="display: flex; gap: 10px; align-items: center;">
-                    <div style="color: var(--st-text-muted); font-size: 0.8rem; letter-spacing: 1px;">CLEARANCE LEVEL:</div>
-                    <span id="clearanceBadge" class="badge badge-gray" title="Assigned by an administrator">—</span>
-                    <button class="soc-btn soc-btn-primary" style="margin-left: 10px;" onclick="window.deployNode()">+ DEPLOY VM</button>
+                    <div style="color: var(--st-text-muted); font-size: 0.85rem;">Your clearance</div>
+                    <span id="clearanceBadge" class="badge badge-gray" title="Assigned by an administrator">n/a</span>
+                    <button class="soc-btn soc-btn-primary" style="margin-left: 10px;" onclick="window.deployNode()"><i class="fas fa-plus"></i> Deploy VM</button>
                 </div>
             </div>
 
-            <div class="dashboard-grid" style="grid-template-columns: 3fr 1fr; gap:20px;">
-
-                <!-- LEFT COL: DYNAMIC NODE LIST -->
-                <div id="nodeListContainer">
-                    <!-- JS Injected Nodes will go here -->
-                </div>
-
-                <!-- RIGHT COL: RACK VIEW -->
-                <div>
-                    <div class="soc-card" style="padding:0; height:100%; min-height: 500px;">
-                        <div class="soc-card-header" style="padding:15px;">
-                            <span class="card-title">SENSOR RACK</span>
-                        </div>
-                        <div style="background:var(--st-surface-2); height:100%; border-top:1px solid var(--st-border); padding-bottom: 20px;">
-                            <div id="rackUnits"><div class="rack-unit">Loading…</div></div>
-                        </div>
-                    </div>
-                </div>
-
+            <div class="kpis" id="nodeKpis">
+                <div class="kpi"><div class="kpi-label">Sensors online</div><div class="kpi-value" id="kOnline">n/a</div><div class="kpi-sub" id="kOnlineSub">of registered sensors</div></div>
+                <div class="kpi"><div class="kpi-label">Average CPU</div><div class="kpi-value" id="kCpu">n/a</div><div class="kpi-sub">across running containers</div></div>
+                <div class="kpi"><div class="kpi-label">Memory in use</div><div class="kpi-value" id="kMem">n/a</div><div class="kpi-sub">sum of container memory</div></div>
+                <div class="kpi"><div class="kpi-label">Network</div><div class="kpi-value" id="kNet">n/a</div><div class="kpi-sub">receive plus transmit</div></div>
+                <div class="kpi"><div class="kpi-label">Unverified records</div><div class="kpi-value" id="kUnverified">n/a</div><div class="kpi-sub">no container behind them</div></div>
             </div>
 
-            <!-- FOOTER SYSTEM STATUS -->
-            <div
-                style="margin-top:20px; border-top:1px solid var(--st-border); padding-top:10px; display:flex; justify-content:space-between; color:var(--st-text-faint); font-size:0.7rem; font-family:var(--st-font-mono);">
-                <div>SHADOW TRUST NODE CLUSTER // v4.2.0-STABLE</div>
-                <div>
-                    <span style="margin-right:15px;"><i class="fas fa-circle text-green" style="font-size:0.5rem;"></i>
-                        API: ONLINE</span>
-                    <span style="margin-right:15px;"><i class="fas fa-circle text-green" style="font-size:0.5rem;"></i>
-                        DB: ONLINE</span>
-                    <span><i class="fas fa-circle text-green" style="font-size:0.5rem;"></i> WORKERS: 12/12</span>
+            <section class="soc-card">
+                <div class="soc-card-header">
+                    <span class="card-title">Sensors</span>
+                    <span class="sec-link" style="cursor:default;">resource figures refresh every few seconds</span>
                 </div>
-                <div>LATENCY: 12ms</div>
-            </div>
+                <div style="overflow-x:auto;">
+                    <table class="terminal-table node-table">
+                        <thead>
+                            <tr>
+                                <th style="width:36px;">#</th>
+                                <th>Sensor</th>
+                                <th>Runs as</th>
+                                <th style="width:150px;">CPU</th>
+                                <th style="width:190px;">Memory</th>
+                                <th>Network</th>
+                                <th>Activity, 15 min</th>
+                                <th>Uptime</th>
+                                <th>Status</th>
+                                <th style="text-align:right;">Service</th>
+                            </tr>
+                        </thead>
+                        <tbody id="nodeListContainer">
+                            <tr><td colspan="10" class="text-muted">Loading nodes…</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
 
         </main>
     </div>
@@ -384,7 +492,7 @@
             const badge = document.getElementById('clearanceBadge');
             if (!badge || !me) return;
             const tier = me.clearance_level != null ? `TIER ${me.clearance_level}` : 'UNASSIGNED';
-            badge.textContent = `${tier} — ${(me.role || 'USER').replace(/_/g, ' ')}`;
+            badge.textContent = `${tier} · ${(me.role || 'user').replace(/_/g, ' ').toLowerCase()}`;
         }).catch(() => {});
 
         // RENDER NODES — every figure comes from the API: Docker state and resource samples for
@@ -411,16 +519,16 @@
             }
             if (m.running === false) return '<span>Container stopped</span>';
             const net = (typeof m.net_rx_kbps === 'number' && typeof m.net_tx_kbps === 'number') ? m.net_rx_kbps + m.net_tx_kbps : null;
-            return `<span><i class="fas fa-microchip text-cyan"></i> CPU: ${num(m.cpu_percent)}%</span>`
-                + `<span><i class="fas fa-memory text-purple"></i> RAM: ${num(m.memory_percent)}% (${num(m.memory_used_mb, 0)} MB)</span>`
-                + `<span><i class="fas fa-network-wired text-green"></i> NET: ${net == null ? 'measuring…' : num(net, 2) + ' KB/s'}</span>`;
+            return `<span>cpu ${num(m.cpu_percent)}%</span>`
+                + `<span>ram ${num(m.memory_percent)}% (${num(m.memory_used_mb, 0)} MB)</span>`
+                + `<span>net ${net == null ? 'measuring…' : num(net, 2) + ' KB/s'}</span>`;
         }
 
         function statusBadge(node) {
             if (node.verified === false) {
-                return '<div class="badge badge-yellow" title="Stored record, not verified against a running service">UNVERIFIED</div>';
+                return '<div class="badge badge-yellow" title="Stored record, not verified against a running service">Unverified</div>';
             }
-            return node.status === 'OFFLINE' ? '<div class="badge badge-gray">OFFLINE</div>' : '<div class="badge badge-green">ONLINE</div>';
+            return node.status === 'OFFLINE' ? '<div class="badge badge-gray">Offline</div>' : '<div class="badge badge-green">Online</div>';
         }
 
         function paintGridStatus(nodes) {
@@ -428,7 +536,7 @@
             if (!el) return;
             const sensors = nodes.filter((n) => n.verified !== false);
             const online = sensors.filter((n) => n.status !== 'OFFLINE').length;
-            el.textContent = sensors.length ? `${online}/${sensors.length} SENSORS ONLINE` : 'NO SENSORS REPORTING';
+            el.textContent = sensors.length ? `${online} of ${sensors.length} sensors online` : 'No sensors reporting';
             el.className = !sensors.length ? 'text-red' : online === sensors.length ? 'text-green' : online ? 'text-yellow' : 'text-red';
         }
 
@@ -442,63 +550,77 @@
             rack.innerHTML = nodes.map((node, i) => {
                 const state = node.verified === false ? 'UNVERIFIED' : node.status;
                 const color = node.verified === false ? 'var(--st-warning)' : node.status === 'OFFLINE' ? 'var(--st-text-faint)' : 'var(--st-success)';
-                return `<div class="rack-unit"><span class="text-mono" style="width:30px;">${String(i + 1).padStart(2, '0')}</span>`
-                    + `<span style="flex:1;">${esc(node.name)} (${esc(node.type)})</span>`
+                return `<div class="rack-unit"><span style="width:24px;color:var(--st-text-faint);">${String(i + 1).padStart(2, '0')}</span>`
+                    + `<span style="flex:1;">${esc(node.name)} <span style="color:var(--st-text-faint)">${esc(node.type)}</span></span>`
                     + `<span class="rack-light" style="background:${color};" title="${esc(state)}"></span></div>`;
             }).join('');
+        }
+
+        function meter(pct) {
+            const v = Math.max(0, Math.min(100, Number(pct) || 0));
+            return `<div class="bar-cell" style="justify-content:flex-start;"><span class="text-mono" style="min-width:46px;">${num(v)}%</span><span class="bar" style="max-width:none;"><i style="width:${v}%"></i></span></div>`;
+        }
+
+        function paintKpis(nodes) {
+            const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+            const real = nodes.filter((n) => n.verified !== false);
+            const live = real.filter((n) => n.metrics && n.metrics.available !== false && n.metrics.running !== false);
+            const online = real.filter((n) => n.status !== 'OFFLINE').length;
+            set('kOnline', real.length ? `${online} / ${real.length}` : 'n/a');
+            set('kCpu', live.length ? `${num(live.reduce((a, n) => a + (n.metrics.cpu_percent || 0), 0) / live.length)}%` : 'n/a');
+            set('kMem', live.length ? `${num(live.reduce((a, n) => a + (n.metrics.memory_used_mb || 0), 0), 0)} MB` : 'n/a');
+            const nets = live.filter((n) => typeof n.metrics.net_rx_kbps === 'number' && typeof n.metrics.net_tx_kbps === 'number');
+            set('kNet', nets.length ? `${num(nets.reduce((a, n) => a + n.metrics.net_rx_kbps + n.metrics.net_tx_kbps, 0), 1)} KB/s` : 'n/a');
+            set('kUnverified', String(nodes.length - real.length));
         }
 
         function paint(nodes) {
             const container = document.getElementById('nodeListContainer');
             if (!nodes.length) {
-                container.innerHTML = '<div style="color:var(--st-text-faint); padding:20px;">No Nodes Deployed.</div>';
+                container.innerHTML = '<tr><td colspan="10" class="text-muted">No nodes deployed yet.</td></tr>';
             } else {
-                container.innerHTML = nodes.map((node) => {
+                container.innerHTML = nodes.map((node, i) => {
                     const isOffline = node.status === 'OFFLINE';
-                    let color = 'var(--st-text-faint)';
-                    let icon = 'fa-server';
-                    if (node.type === 'honeypot') { color = 'var(--st-warning)'; icon = 'fa-graduation-cap'; }
-                    if ((node.name || '').includes('DEF')) { color = 'var(--st-danger)'; icon = 'fa-shield-alt'; }
-                    const cardStyle = `margin-bottom: 20px; border-left: 4px solid ${color}; position: relative; cursor: pointer; opacity: ${isOffline ? 0.6 : 1}`;
+                    const m = node.metrics;
+                    const live = node.verified !== false && m && m.available !== false && m.running !== false;
+                    const net = live && typeof m.net_rx_kbps === 'number' && typeof m.net_tx_kbps === 'number' ? `${num(m.net_rx_kbps + m.net_tx_kbps, 2)} KB/s` : (live ? 'measuring…' : 'n/a');
+                    const why = node.verified === false ? 'No live telemetry for this record'
+                        : (!m || m.available === false) ? 'Resource metrics unavailable'
+                        : (m.running === false ? 'Container stopped' : '');
                     const action = isOffline
-                        ? `<button class="soc-btn" onclick="window.startNode('${esc(node.node_id)}')" style="border-color:var(--neon-green); color:var(--neon-green);">START SERVICE</button>`
-                        : `<button class="soc-btn" onclick="window.stopNode('${esc(node.node_id)}')" style="border-color:var(--neon-pink); color:var(--neon-pink);">STOP SERVICE</button>`;
+                        ? `<button class="soc-btn" onclick="window.startNode('${esc(node.node_id)}')"><i class="fas fa-play"></i> Start</button>`
+                        : `<button class="soc-btn soc-btn-danger" onclick="window.stopNode('${esc(node.node_id)}')"><i class="fas fa-stop"></i> Stop</button>`;
+                    const mark = node.verified === false ? 'warn' : (isOffline ? '' : 'ok');
+                    const label = node.verified === false ? 'unverified' : (isOffline ? 'offline' : 'online');
                     return `
-                        <div class="soc-card" style="${cardStyle}">
-                            <div style="display:flex; justify-content:space-between; margin-bottom:15px;">
-                                <div style="display:flex; gap:15px; align-items:center;">
-                                    <i class="fas ${icon}" style="font-size:2rem; color:${color};"></i>
-                                    <div>
-                                        <div style="font-size:1.2rem; font-weight:700; color:var(--st-text);">${esc(node.name)} <span style="font-size:0.8rem; font-weight:400; color:var(--st-text-faint);">(${esc(node.type)})</span></div>
-                                        <div class="text-mono" style="font-size:0.8rem; color:var(--st-text-muted);">${node.source === 'docker' ? 'Container' : 'IP'}: ${esc(node.ip_address)} | Region: ${esc(node.region || 'Local')}</div>
-                                        <div class="text-mono" style="font-size:0.7rem; color:var(--st-text-secondary); margin-top:5px; display:flex; flex-wrap:wrap; gap:15px;">${metricsHtml(node)}</div>
-                                        <div class="text-mono" style="font-size:0.7rem; color:var(--st-text-muted); margin-top:4px;">Attack activity (15 min): ${typeof node.activity_load === 'number' ? node.activity_load + '%' : 'n/a'}</div>
-                                    </div>
-                                </div>
-                                <div style="text-align:right;">
-                                    ${statusBadge(node)}
-                                    <div style="margin-top:5px; font-size:0.7rem; color:var(--st-text-faint);">Uptime: ${node.verified === false ? '—' : formatUptime(node.uptime_seconds)}</div>
-                                </div>
-                            </div>
-                            <div style="display:flex; gap:10px; margin-top:10px;">${action}</div>
-                        </div>`;
+                        <tr${isOffline ? ' class="off"' : ''}>
+                            <td class="text-mono" style="color:var(--st-text-faint);">${String(i + 1).padStart(2, '0')}</td>
+                            <td><div class="text-mono" style="font-weight:500;">${/^(cowrie|dionaea|honeytrap)$/i.test(node.type || '') ? `<a href="node_details.html?sensor=${encodeURIComponent(String(node.type).toLowerCase())}" title="Investigate this sensor">${esc(node.name)}</a>` : esc(node.name)}</div><div class="sub">${esc(String(node.type || '').toLowerCase())}</div></td>
+                            <td><div class="text-mono" style="font-size:.8rem;">${esc(node.ip_address)}</div><div class="sub">${node.source === 'docker' ? 'container' : 'address'} · ${esc(String(node.region || 'local').toLowerCase())}</div></td>
+                            ${live ? `<td>${meter(m.cpu_percent)}</td><td>${meter(m.memory_percent)}<div class="sub">${num(m.memory_used_mb, 0)} MB</div></td>` : `<td colspan="2" class="sub" title="${esc(why)}">${esc(why)}</td>`}
+                            <td class="text-mono" style="font-size:.8rem;">${net}</td>
+                            <td class="text-mono" style="font-size:.8rem;">${typeof node.activity_load === 'number' ? node.activity_load + '%' : 'n/a'}</td>
+                            <td class="text-mono" style="font-size:.8rem;">${node.verified === false ? 'n/a' : formatUptime(node.uptime_seconds)}</td>
+                            <td><span class="mark ${mark}" title="${node.verified === false ? 'Stored record, not verified against a running service' : ''}">${label}</span></td>
+                            <td style="text-align:right;">${action}</td>
+                        </tr>`;
                 }).join('');
             }
             paintGridStatus(nodes);
-            paintRack(nodes);
+            paintKpis(nodes);
         }
 
         async function renderNodes() {
             const container = document.getElementById('nodeListContainer');
             if (!lastNodes.length) {
-                container.innerHTML = '<div style="color:var(--st-text-faint); padding:20px;">Loading Nodes...</div>';
+                container.innerHTML = '<tr><td colspan="10" class="text-muted">Loading nodes…</td></tr>';
             }
             try {
                 lastNodes = await apiService.get('/nodes/');
                 paint(lastNodes);
             } catch (error) {
                 console.error("Failed to load nodes:", error);
-                container.innerHTML = '<div style="color:var(--neon-red); padding:20px;">Failed to load nodes. Backend might be offline.</div>';
+                container.innerHTML = '<tr><td colspan="10" style="color:var(--st-danger);">Could not load nodes. The backend may be offline.</td></tr>';
                 paintGridStatus([]);
             }
         }

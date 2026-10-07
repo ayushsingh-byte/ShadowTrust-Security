@@ -3,7 +3,11 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>AWS Infrastructure | Shadow Trust</title>
+    <title>AWS connection · ShadowTrust</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 28 28'%3E%3Crect width='28' height='28' rx='6' fill='%23533afd'/%3E%3Cpath d='M4.5 14c2.5-4.3 5.7-6.4 9.500-6.400s7 2.100 9.500 6.400c-2.500 4.300-5.700 6.400-9.500 6.400S7 18.300 4.500 14Z' fill='none' stroke='%23fff' stroke-width='1.8' stroke-linejoin='round'/%3E%3Ccircle cx='14' cy='14' r='3.2' fill='%23fff'/%3E%3C/svg%3E">
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#ffffff">
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/dashboard.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -16,9 +20,9 @@
             display: block;
             margin-bottom: 8px;
             color: var(--st-text-secondary);
-            font-size: 0.9rem;
+            font-size: 15px;
             text-transform: uppercase;
-            letter-spacing: 1px;
+            letter-spacing: 0;
         }
 
         .form-input {
@@ -27,20 +31,20 @@
             background: var(--st-surface);
             border: 1px solid var(--st-border);
             color: var(--st-text);
-            border-radius: 4px;
+            border-radius: var(--st-radius-sm);
             font-family: var(--st-font-mono);
-            transition: 0.3s;
+            transition: var(--st-dur-2);
         }
 
         .form-input:focus {
             outline: none;
-            border-color: var(--st-caution);
-            /* AWS Orange */
-            
+            border-color: var(--st-accent);
+            box-shadow: var(--st-focus-ring);
         }
 
+        /* four equal cards; no coloured edge */
         .aws-card {
-            border-top: 3px solid var(--st-caution);
+            border-top: 1px solid var(--st-border);
         }
 
         .status-indicator {
@@ -53,12 +57,18 @@
         }
 
         .status-indicator.connected {
-            background: var(--st-success);
-            
+            background: var(--st-success-solid);
         }
+    
+    
+        /* v3: enterprise system */
+        .form-label { font-family: var(--st-font-main); font-size: 13px; font-weight: 500; color: var(--st-text-secondary); margin-bottom: 8px; }
+        .form-input { min-height: 36px; background: var(--st-surface); border: 1px solid var(--st-border-strong); border-radius: var(--st-radius-md); font-size: 13px; padding: 0 12px; }
+        .form-input:focus { outline: none; border-color: var(--st-accent); box-shadow: var(--st-focus-ring); }
+        .status-indicator { border-radius: var(--st-radius-sm); }
     </style>
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600;700&amp;display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300..600&family=Source+Code+Pro:wght@400;500;600&display=swap">
     <link rel="stylesheet" href="css/tokens.css">
     <script src="js/theme.js"></script>
 </head>
@@ -74,15 +84,15 @@
 
             <div class="top-bar">
                 <div class="page-header">
-                    <h2>AWS INFRASTRUCTURE LINK</h2>
-                    <p>Configure backend connectivity for EC2 Virtual Labs and S3 Log Ingestion.</p>
+                    <h2>AWS connection</h2>
+                    <p>Connect the backend to AWS for EC2 lab machines and S3 log ingestion.</p>
                 </div>
                 <div class="filters-bar">
                     <div
-                        style="display:flex; align-items:center; background:var(--st-surface); padding:10px 20px; border-radius:4px; border:1px solid var(--st-border);">
+                        style="display:flex; align-items:center; background:var(--st-surface); padding:12px 20px; border-radius:var(--st-radius-sm); border:1px solid var(--st-border);">
                         <span class="status-indicator"></span>
-                        <span style="color:var(--st-text-muted); font-family:var(--st-font-mono); font-size:0.9rem;"
-                            id="connStatusText">DISCONNECTED</span>
+                        <span style="color:var(--st-text-muted); font-family:var(--st-font-mono); font-size:15px;"
+                            id="connStatusText">Disconnected</span>
                     </div>
                 </div>
             </div>
@@ -92,12 +102,11 @@
                 <!-- AWS Credential Card -->
                 <div class="soc-card aws-card">
                     <div class="soc-card-header">
-                        <span class="card-title"><i class="fas fa-key" style="color:var(--st-caution);"></i> IAM
-                            CREDENTIALS</span>
+                        <span class="card-title"><i class="fas fa-key" style="color:var(--st-caution);"></i> IAM credentials</span>
                     </div>
 
-                    <div style="padding: 10px 0;">
-                        <p class="text-muted" style="margin-bottom: 20px; font-size: 0.9rem;">Provide an IAM user with
+                    <div style="padding: 12px 0;">
+                        <p class="text-muted" style="margin-bottom: 20px; font-size: 15px;">Provide an IAM user with
                             programmatic access, EC2 provisioning rights, and S3 read capabilities.</p>
 
                         <div class="form-group">
@@ -123,12 +132,11 @@
                 <div class="soc-card aws-card">
                     <div class="soc-card-header"
                         style="display:flex; justify-content:space-between; align-items:center;">
-                        <span class="card-title"><i class="fas fa-database" style="color:var(--st-caution);"></i> HONEYPOT
-                            TELEMETRY</span>
+                        <span class="card-title"><i class="fas fa-database" style="color:var(--st-caution);"></i> Honeypot telemetry</span>
                     </div>
 
-                    <div style="padding: 10px 0;">
-                        <p class="text-muted" style="margin-bottom: 20px; font-size: 0.9rem;">Configure the S3 bucket
+                    <div style="padding: 12px 0;">
+                        <p class="text-muted" style="margin-bottom: 20px; font-size: 15px;">Configure the S3 bucket
                             where Cowrie and Dionaea logs are synchronized via bash script.</p>
 
                         <div class="form-group">
@@ -143,12 +151,11 @@
                 <div class="soc-card aws-card">
                     <div class="soc-card-header"
                         style="display:flex; justify-content:space-between; align-items:center;">
-                        <span class="card-title"><i class="fas fa-network-wired" style="color:var(--st-caution);"></i> PHYSICAL
-                            INFRASTRUCTURE</span>
+                        <span class="card-title"><i class="fas fa-network-wired" style="color:var(--st-caution);"></i> Physical infrastructure</span>
                     </div>
 
-                    <div style="padding: 10px 0;">
-                        <p class="text-muted" style="margin-bottom: 20px; font-size: 0.9rem;">Define the target VPC
+                    <div style="padding: 12px 0;">
+                        <p class="text-muted" style="margin-bottom: 20px; font-size: 15px;">Define the target VPC
                             subnet and the STS IAM Profile role applied to launched honeypots.</p>
 
                         <div class="form-group">
@@ -174,12 +181,11 @@
                 <div class="soc-card aws-card">
                     <div class="soc-card-header"
                         style="display:flex; justify-content:space-between; align-items:center;">
-                        <span class="card-title"><i class="fas fa-compact-disc" style="color:var(--st-caution);"></i> AMI PROFILE
-                            MAPPING</span>
+                        <span class="card-title"><i class="fas fa-compact-disc" style="color:var(--st-caution);"></i> AMI profile mapping</span>
                     </div>
 
-                    <div style="padding: 10px 0;">
-                        <p class="text-muted" style="margin-bottom: 20px; font-size: 0.9rem;">Map the specific Amazon
+                    <div style="padding: 12px 0;">
+                        <p class="text-muted" style="margin-bottom: 20px; font-size: 15px;">Map the specific Amazon
                             Machine Image IDs that correspond to the Virtual Lab deployment buttons.</p>
 
                         <div class="form-group">
@@ -204,16 +210,13 @@
             </div>
 
             <div class="soc-card" style="margin-top:20px; text-align:right;">
-                <div style="display:flex; justify-content:flex-end; gap:15px; align-items:center;">
+                <div style="display:flex; justify-content:flex-end; flex-wrap:wrap; gap:8px; align-items:center;">
                     <div id="validationResult"
-                        style="color:var(--st-text-secondary); font-family:var(--st-font-mono); font-size:0.9rem; margin-right:20px;"></div>
-                    <button class="soc-btn" onclick="testConnection(event)">VALIDATE KEYS</button>
-                    <button class="soc-btn" style="background:var(--st-info); color:black; border:none;"
-                        onclick="pullS3Logs(event)">PULL S3 LOGS</button>
-                    <button class="soc-btn" style="background:var(--st-caution); color:black; border:none;"
-                        onclick="forceRepullS3(event)" title="Re-process ALL files including already-pulled ones">FORCE RE-PULL</button>
-                    <button class="soc-btn soc-btn-primary" style="background:var(--st-caution); color:black; border:none;"
-                        onclick="saveAwsConfig(event)">SAVE HUB CONFIGURATION</button>
+                        style="color:var(--st-text-secondary); font-size:13.5px; margin-right:auto; text-align:left;"></div>
+                    <button class="soc-btn" onclick="testConnection(event)">Validate keys</button>
+                    <button class="soc-btn" onclick="pullS3Logs(event)">Pull S3 logs</button>
+                    <button class="soc-btn soc-btn-danger" onclick="forceRepullS3(event)" title="Processes every file again, including ones already pulled">Force re-pull</button>
+                    <button class="soc-btn soc-btn-primary" onclick="saveAwsConfig(event)">Save configuration</button>
                 </div>
             </div>
 
@@ -244,7 +247,7 @@
             const resDiv = document.getElementById('validationResult');
 
             btn.disabled = true;
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> VALIDATING VIA STS...';
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Validating via sts...';
             resDiv.innerHTML = '';
 
             const accessKey = document.getElementById('awsAccessKey').value;
@@ -268,7 +271,7 @@
                     resDiv.innerHTML = `<span style="color:var(--st-success);"><i class="fas fa-check"></i> Active! STS ID: ${response.account}</span>`;
 
                     document.querySelector('.status-indicator').classList.add('connected');
-                    document.getElementById('connStatusText').innerText = 'AWS STS LINK VERIFIED';
+                    document.getElementById('connStatusText').innerText = 'AWS credentials verified';
                     document.getElementById('connStatusText').style.color = 'var(--st-success)';
                 }
             } catch (error) {
@@ -285,7 +288,7 @@
             if (!toast) {
                 toast = document.createElement('div');
                 toast.id = '_cfg_toast';
-                toast.style.cssText = 'position:fixed;bottom:24px;right:24px;z-index:99999;padding:12px 20px;border-radius:4px;font-family:"JetBrains Mono",monospace;font-size:0.85rem;max-width:420px;transition:opacity 0.4s;';
+                toast.style.cssText = 'position:fixed;bottom:24px;right:24px;z-index:99999;padding:12px 20px;border-radius:var(--st-radius-sm);font-family:"Source Code Pro",monospace;font-size:14px;max-width:420px;transition:opacity 0.4s;';
                 document.body.appendChild(toast);
             }
             toast.style.background   = isError ? 'color-mix(in srgb, var(--st-danger) 15%, transparent)' : 'color-mix(in srgb, var(--st-accent) 12%, transparent)';
@@ -300,7 +303,7 @@
         window.saveAwsConfig = async function (event) {
             const btn = event.target;
             const originalText = btn.innerText;
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> SAVING TO VAULT...';
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving to vault...';
             btn.disabled = true;
 
             const map = {
@@ -341,7 +344,7 @@
                     ami_win_mal: document.getElementById('amiWinMal').value
                 });
 
-                btn.innerHTML = '<i class="fas fa-check"></i> SAVED';
+                btn.innerHTML = '<i class="fas fa-check"></i> Saved';
                 showToast('Configuration saved. S3 workers and Virtual Lab will use these credentials.');
                 setTimeout(() => { btn.innerHTML = originalText; btn.disabled = false; }, 2500);
             } catch (err) {

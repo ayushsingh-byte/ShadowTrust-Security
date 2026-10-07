@@ -7,9 +7,9 @@ let accessLogs = [];
 
 // Level label mapping
 const LEVEL_LABELS = {
-    1: 'LEVEL 1 — Basic',
-    2: 'LEVEL 2 — Intermediate',
-    3: 'LEVEL 3 — Full Access'
+    1: 'Level 1 · basic',
+    2: 'Level 2 · intermediate',
+    3: 'Level 3 · full access'
 };
 
 const LEVEL_BADGE_COLORS = {
@@ -90,22 +90,22 @@ function renderPendingUsers() {
     }
 
     tbody.innerHTML = pendingUsers.map(user => {
-        const reqLevel = user.requested_clearance_level || user.clearance_level || '—';
+        const reqLevel = user.requested_clearance_level || user.clearance_level || 'n/a';
         const levelLabel = LEVEL_LABELS[reqLevel] || `Level ${reqLevel}`;
         const levelColor = LEVEL_BADGE_COLORS[reqLevel] || 'var(--st-text-muted)';
 
         return `
         <tr>
             <td class="text-mono text-muted">#${String(user.id).substring(0, 8)}...</td>
-            <td class="text-white font-weight-bold">${user.username || '—'}</td>
+            <td class="text-white font-weight-bold">${user.username || 'n/a'}</td>
             <td class="text-white">${user.email}</td>
-            <td>${user.first_name || '—'} ${user.last_name || ''}</td>
-            <td class="text-muted">${user.department || '—'}</td>
+            <td>${user.first_name || 'n/a'} ${user.last_name || ''}</td>
+            <td class="text-muted">${user.department || 'n/a'}</td>
             <td><span class="badge" style="background:${levelColor}20; color:${levelColor}; border:1px solid ${levelColor}40; padding:3px 8px; border-radius:4px; font-size:0.75rem;">${levelLabel}</span></td>
-            <td><span class="badge badge-yellow">PENDING</span></td>
+            <td><span class="badge badge-yellow">Pending</span></td>
             <td>
-                <button class="soc-btn" style="padding:4px 8px; border-color:var(--st-success); color:var(--st-success);" onclick="openApproveModal('${user.id}', ${reqLevel})"><i class="fas fa-check"></i> APPROVE</button>
-                <button class="soc-btn" style="padding:4px 8px; border-color:var(--st-danger); color:var(--st-danger);" onclick="openDenyModal('${user.id}')"><i class="fas fa-times"></i> DENY</button>
+                <button class="soc-btn" style="padding:4px 8px; border-color:var(--st-success); color:var(--st-success);" onclick="openApproveModal('${user.id}', ${reqLevel})"><i class="fas fa-check"></i> Approve</button>
+                <button class="soc-btn" style="padding:4px 8px; border-color:var(--st-danger); color:var(--st-danger);" onclick="openDenyModal('${user.id}')"><i class="fas fa-times"></i> Deny</button>
             </td>
         </tr>
     `}).join('');
@@ -216,7 +216,7 @@ function renderLogs() {
             <td class="text-white">${adminEmail}</td>
             <td class="text-white">${targetEmail}</td>
             <td><span class="badge ${badgeColor}">${log.action}</span></td>
-            <td class="text-mono text-xs">${log.details || '—'}</td>
+            <td class="text-mono text-xs">${log.details || 'n/a'}</td>
         </tr>
     `}).join('');
 }

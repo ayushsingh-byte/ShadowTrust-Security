@@ -3,7 +3,11 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>Global Admin Control | Shadow Trust</title>
+    <title>Administration · ShadowTrust</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 28 28'%3E%3Crect width='28' height='28' rx='6' fill='%23533afd'/%3E%3Cpath d='M4.5 14c2.5-4.3 5.7-6.4 9.500-6.400s7 2.100 9.500 6.400c-2.500 4.300-5.700 6.400-9.500 6.400S7 18.300 4.500 14Z' fill='none' stroke='%23fff' stroke-width='1.8' stroke-linejoin='round'/%3E%3Ccircle cx='14' cy='14' r='3.2' fill='%23fff'/%3E%3C/svg%3E">
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#ffffff">
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/dashboard.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -13,21 +17,23 @@
         .admin-badge {
             background: var(--st-danger);
             color: white;
-            padding: 2px 6px;
-            border-radius: 4px;
-            font-size: 0.6rem;
-            margin-left: 10px;
+            padding: 2px 8px;
+            border-radius: var(--st-radius-sm);
+            font-size: 12px;
+            margin-left: 12px;
             vertical-align: middle;
         }
 
         .metric-tile.admin-metric {
-            border-top: 3px solid var(--neon-red);
+            border-top: 1px solid var(--st-border-strong);
         }
 
-        .micro-metric {
-            background: var(--st-surface-2);
-            border: 1px solid var(--st-border);
-            padding: 10px;
+        .admin-posture {
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+
+        .admin-posture .micro-metric:nth-child(-n+3) {
+            display: none;
         }
 
         /* Modal Styles */
@@ -52,13 +58,13 @@
             width: 50%;
             max-width: 500px;
             
-            border-radius: 8px;
+            border-radius: var(--st-radius-xl);
             position: relative;
         }
 
         .modal-header {
             border-bottom: 1px solid var(--st-border);
-            padding-bottom: 15px;
+            padding-bottom: 16px;
             margin-bottom: 20px;
             display: flex;
             justify-content: space-between;
@@ -66,15 +72,15 @@
         }
 
         .modal-title {
-            font-size: 1.2rem;
+            font-size: 20px;
             color: var(--st-text);
-            font-weight: bold;
+            font-weight: 600;
         }
 
         .close-modal {
             color: var(--st-text-secondary);
-            font-size: 28px;
-            font-weight: bold;
+            font-size: 30px;
+            font-weight: 600;
             cursor: pointer;
         }
 
@@ -86,38 +92,38 @@
         }
 
         .form-group {
-            margin-bottom: 15px;
+            margin-bottom: 16px;
         }
 
         .form-label {
             display: block;
-            margin-bottom: 5px;
+            margin-bottom: 4px;
             color: var(--st-text-muted);
-            font-size: 0.9rem;
+            font-size: 15px;
         }
 
         .form-input {
             width: 100%;
-            padding: 10px;
+            padding: 12px;
             background: var(--st-surface);
             border: 1px solid var(--st-border);
             color: var(--st-text);
-            border-radius: 4px;
+            border-radius: var(--st-radius-sm);
             font-family: var(--st-font-mono);
         }
 
         .form-input:focus {
             outline: none;
-            border-color: var(--neon-cyan);
+            border-color: var(--st-accent);
         }
 
         .form-select {
             width: 100%;
-            padding: 10px;
+            padding: 12px;
             background: var(--st-surface);
             border: 1px solid var(--st-border);
             color: var(--st-text);
-            border-radius: 4px;
+            border-radius: var(--st-radius-sm);
             font-family: var(--st-font-mono);
         }
 
@@ -144,7 +150,7 @@
             bottom: 0;
             background-color: var(--st-border);
             -webkit-transition: .4s;
-            transition: .4s;
+            transition: var(--st-dur-3);
             border-radius: 34px;
         }
 
@@ -157,12 +163,12 @@
             bottom: 3px;
             background-color: white;
             -webkit-transition: .4s;
-            transition: .4s;
+            transition: var(--st-dur-3);
             border-radius: 50%;
         }
 
         input:checked+.slider {
-            background-color: var(--neon-cyan);
+            background-color: var(--st-accent);
         }
 
         input:focus+.slider {
@@ -187,9 +193,9 @@
             height: 16px;
             width: 16px;
             border-radius: 50%;
-            background: var(--neon-purple);
+            background: var(--st-text-faint);
             cursor: pointer;
-            margin-top: -6px;
+            margin-top: -8px;
             
         }
 
@@ -200,9 +206,16 @@
             background: var(--st-border);
             border-radius: 2px;
         }
+    
+        /* v3: enterprise system */
+        .admin-posture { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+        .admin-posture .micro-metric:nth-child(-n+3) { display: none; }
+        .form-input, .form-select { min-height: 36px; background: var(--st-surface); border: 1px solid var(--st-border-strong); border-radius: var(--st-radius-md); font-family: var(--st-font-main); font-size: 13.5px; }
+        .form-input:focus, .form-select:focus { outline: none; border-color: var(--st-accent); box-shadow: var(--st-focus-ring); }
+        .modal-content { background: var(--st-surface); border: 1px solid var(--st-border); border-radius: var(--st-radius-lg); box-shadow: var(--st-shadow-lg); }
     </style>
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600;700&amp;display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300..600&family=Source+Code+Pro:wght@400;500;600&display=swap">
     <link rel="stylesheet" href="css/tokens.css">
     <script src="js/theme.js"></script>
 </head>
@@ -218,139 +231,84 @@
 
             <div class="top-bar">
                 <div class="page-header">
-                    <h2>SYSTEM ADMINISTRATION</h2>
-                    <p>ACCESS CONTROL CENTER // <span class="text-pink">ROOT PRIVILEGES ACTIVE</span></p>
+                    <h2>System administration</h2>
+                    <p>Users, services, sensors and settings for this deployment.</p>
                 </div>
                 <div class="filters-bar">
-                    <button id="btn-admin-alerts" class="soc-btn" style="border-color:var(--st-border);"><i class="fas fa-bell"></i> Alerts (0)</button>
-                    <button id="btn-system-backup" class="soc-btn soc-btn-primary"
-                        style="background:var(--neon-cyan); border:none; color:black;"><i class="fas fa-save"></i>
-                        SYSTEM BACKUP</button>
+                    <button id="btn-admin-alerts" class="soc-btn" ><i class="fas fa-bell"></i> Alerts (0)</button>
+                    <button id="btn-system-backup" class="soc-btn soc-btn-primary"><i class="fas fa-save"></i>
+                        System backup</button>
                 </div>
             </div>
 
             <!-- SECTION: GLOBAL OVERVIEW -->
             <div id="section-overview">
 
-                <!-- ROW 1: METRICS (From User Request Image) -->
-                <!-- System Monitoring moved from Dashboard -->
-                <div class="dashboard-grid grid-6" style="margin-bottom: 20px;">
-                    <div class="micro-metric">
-                        <div id="micro-label-1" class="text-xs text-muted">CPU LOAD</div>
-                        <div id="micro-value-1" class="text-mono text-cyan">—</div>
-                        <div style="height:2px; background:var(--st-surface-hover); margin-top:5px;">
-                            <div id="micro-bar-1" style="width:0%; height:100%; background:var(--st-info);"></div>
-                        </div>
+                <!-- headline figures: one strip of four equal cells -->
+                <div class="kpis">
+                    <div class="kpi">
+                        <div class="kpi-label">Stored requests</div>
+                        <div id="admin-metric-total-requests" class="kpi-value">n/a</div>
+                        <div id="admin-metric-total-requests-sub" class="kpi-sub">&nbsp;</div>
                     </div>
-                    <div class="micro-metric">
-                        <div id="micro-label-2" class="text-xs text-muted">RAM HEAP</div>
-                        <div id="micro-value-2" class="text-mono text-purple">—</div>
-                        <div style="height:2px; background:var(--st-surface-hover); margin-top:5px;">
-                            <div id="micro-bar-2" style="width:0%; height:100%; background:var(--st-info);"></div>
-                        </div>
+                    <div class="kpi">
+                        <div class="kpi-label">Distinct source IPs</div>
+                        <div id="admin-metric-unique-ips" class="kpi-value">n/a</div>
+                        <div id="admin-metric-unique-ips-sub" class="kpi-sub">&nbsp;</div>
                     </div>
-                    <div class="micro-metric">
-                        <div id="micro-label-3" class="text-xs text-muted">DISK I/O</div>
-                        <div id="micro-value-3" class="text-mono text-pink">—</div>
-                        <div style="height:2px; background:var(--st-surface-hover); margin-top:5px;">
-                            <div id="micro-bar-3" style="width:0%; height:100%; background:var(--st-danger);"></div>
-                        </div>
+                    <div class="kpi">
+                        <div class="kpi-label"><span class="kpi-flag bad"></span>Critical events</div>
+                        <div id="admin-metric-critical" class="kpi-value">n/a</div>
+                        <div id="admin-metric-critical-sub" class="kpi-sub">&nbsp;</div>
                     </div>
-                    <div class="micro-metric">
-                        <div id="micro-label-4" class="text-xs text-muted">THREADS</div>
-                        <div id="micro-value-4" class="text-mono text-green">—</div>
-                        <div style="height:2px; background:var(--st-surface-hover); margin-top:5px;">
-                            <div id="micro-bar-4" style="width:0%; height:100%; background:var(--st-success);"></div>
-                        </div>
-                    </div>
-                    <div class="micro-metric">
-                        <div id="micro-label-5" class="text-xs text-muted">DB CONNS</div>
-                        <div id="micro-value-5" class="text-mono text-yellow">—</div>
-                        <div style="height:2px; background:var(--st-surface-hover); margin-top:5px;">
-                            <div id="micro-bar-5" style="width:0%; height:100%; background:var(--st-warning);"></div>
-                        </div>
-                    </div>
-                    <div class="micro-metric">
-                        <div id="micro-label-6" class="text-xs text-muted">API LATENCY</div>
-                        <div id="micro-value-6" class="text-mono text-cyan">—</div>
-                        <div style="height:2px; background:var(--st-surface-hover); margin-top:5px;">
-                            <div id="micro-bar-6" style="width:0%; height:100%; background:var(--st-info);"></div>
-                        </div>
+                    <div class="kpi">
+                        <div class="kpi-label">System status</div>
+                        <div id="admin-metric-health" class="kpi-value">n/a</div>
+                        <div id="admin-metric-health-sub" class="kpi-sub">&nbsp;</div>
                     </div>
                 </div>
 
-                <!-- Stored Requests, Distinct IPs, WP Pwd Guesses, System Status -->
-                <div class="dashboard-grid grid-4" style="margin-bottom:2rem;">
-
-                    <div class="metric-tile admin-metric">
-                        <div class="metric-header">
-                            <div class="metric-icon"><i class="fas fa-database text-cyan"></i></div>
-                            <span class="badge">TOTAL VOL</span>
-                        </div>
-                        <div id="admin-metric-total-requests" class="metric-value">—</div>
-                        <div id="admin-metric-total-requests-sub" class="metric-sub">Stored Requests</div>
+                <!-- Secondary readings (the first three repeat the headline figures, so they are folded away) -->
+                <div class="posture admin-posture">
+                    <div class="micro-metric">
+                        <div id="micro-label-1" class="label">CPU load</div>
+                        <div id="micro-value-1" class="value">n/a</div>
+                        <div class="meter"><div id="micro-bar-1" style="width:0%;"></div></div>
                     </div>
-
-                    <div class="metric-tile admin-metric" style="border-top-color: var(--neon-purple);">
-                        <div class="metric-header">
-                            <div class="metric-icon"><i class="fas fa-globe text-purple"></i></div>
-                            <span class="badge">UNIQUE</span>
-                        </div>
-                        <div id="admin-metric-unique-ips" class="metric-value">—</div>
-                        <div id="admin-metric-unique-ips-sub" class="metric-sub">Distinct IPs</div>
-                        <div class="metric-mini-chart">
-                            <div style="display:flex; align-items:flex-end; height:100%; gap:2px;">
-                                <div style="width:10%; height:30%; background:var(--st-border);"></div>
-                                <div style="width:10%; height:50%; background:var(--st-border);"></div>
-                                <div style="width:10%; height:40%; background:var(--st-border);"></div>
-                                <div style="width:10%; height:90%; background:var(--neon-purple);"></div>
-                                <div style="width:10%; height:60%; background:var(--st-border);"></div>
-                            </div>
-                        </div>
+                    <div class="micro-metric">
+                        <div id="micro-label-2" class="label">RAM heap</div>
+                        <div id="micro-value-2" class="value">n/a</div>
+                        <div class="meter"><div id="micro-bar-2" style="width:0%;"></div></div>
                     </div>
-
-                    <div class="metric-tile admin-metric" style="border-top-color: var(--neon-pink);">
-                        <div class="metric-header">
-                            <div class="metric-icon"><i class="fas fa-fingerprint text-pink"></i></div>
-                            <span class="badge badge-red">CRITICAL</span>
-                        </div>
-                        <div id="admin-metric-critical" class="metric-value">—</div>
-                        <div id="admin-metric-critical-sub" class="metric-sub">Critical Events</div>
-                        <div class="metric-mini-chart">
-                            <div style="display:flex; align-items:flex-end; height:100%; gap:2px;">
-                                <div style="width:10%; height:20%; background:var(--st-border);"></div>
-                                <div style="width:10%; height:90%; background:var(--neon-pink);"></div>
-                                <div style="width:10%; height:40%; background:var(--st-border);"></div>
-                                <div style="width:10%; height:50%; background:var(--st-border);"></div>
-                                <div style="width:10%; height:80%; background:var(--neon-pink);"></div>
-                            </div>
-                        </div>
+                    <div class="micro-metric">
+                        <div id="micro-label-3" class="label">Disk I/O</div>
+                        <div id="micro-value-3" class="value">n/a</div>
+                        <div class="meter"><div id="micro-bar-3" style="width:0%;"></div></div>
                     </div>
-
-                    <div class="metric-tile admin-metric" style="border-top-color: var(--neon-green);">
-                        <div class="metric-header">
-                            <div class="metric-icon"><i class="fas fa-server text-green"></i></div>
-                            <span class="badge">STATUS</span>
-                        </div>
-                        <div id="admin-metric-health" class="metric-value text-green">—</div>
-                        <div id="admin-metric-health-sub" class="metric-sub">System Status</div>
-                        <div class="metric-mini-chart">
-                            <div style="width:100%; height:50%; border-bottom:1px solid var(--st-border); position:relative;">
-                                <div
-                                    style="position:absolute; bottom:0; left:0; width:100%; height:2px; background:var(--neon-green); ">
-                                </div>
-                            </div>
-                        </div>
+                    <div class="micro-metric">
+                        <div id="micro-label-4" class="label">Threads</div>
+                        <div id="micro-value-4" class="value">n/a</div>
+                        <div class="meter"><div id="micro-bar-4" style="width:0%;"></div></div>
                     </div>
-
+                    <div class="micro-metric">
+                        <div id="micro-label-5" class="label">DB conns</div>
+                        <div id="micro-value-5" class="value">n/a</div>
+                        <div class="meter"><div id="micro-bar-5" style="width:0%;"></div></div>
+                    </div>
+                    <div class="micro-metric">
+                        <div id="micro-label-6" class="label">API latency</div>
+                        <div id="micro-value-6" class="value">n/a</div>
+                        <div class="meter"><div id="micro-bar-6" style="width:0%;"></div></div>
+                    </div>
                 </div>
+
 
                 <!-- ROW 2: CHARTS (Requests 24h & 7 Days) -->
-                <div class="dashboard-grid grid-2-1" style="margin-bottom:2rem; height: 350px;">
+                <div class="dashboard-grid grid-2-1" style="margin-bottom:32px; height: 350px;">
                     <div class="soc-card">
                         <div class="soc-card-header">
-                            <span class="card-title">REQUEST VOLUME (24 HOURS)</span>
-                            <div style="display:flex; gap:10px;">
+                            <span class="card-title">Request volume (24 hours)</span>
+                            <div style="display:flex; gap:12px;">
                                 <span class="badge">HTTP</span>
                                 <span class="badge">SSH</span>
                                 <span class="badge">SMB</span>
@@ -362,7 +320,7 @@
                     </div>
 
                     <div class="soc-card">
-                        <div class="soc-card-header"><span class="card-title">WEEKLY TREND (7 DAYS)</span></div>
+                        <div class="soc-card-header"><span class="card-title">Weekly trend (7 days)</span></div>
                         <div style="position: relative; height: 85%; width:100%;">
                             <canvas id="requests7dChart"></canvas>
                         </div>
@@ -374,12 +332,12 @@
 
                     <!-- Most Accessed Paths -->
                     <div class="soc-card">
-                        <div class="soc-card-header"><span class="card-title">MOST ACCESSED PATHS</span></div>
+                        <div class="soc-card-header"><span class="card-title">Most accessed paths</span></div>
                         <table class="terminal-table">
                             <thead>
                                 <tr>
-                                    <th>PATH</th>
-                                    <th>REQUESTS</th>
+                                    <th>Path</th>
+                                    <th>Requests</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -390,12 +348,12 @@
 
                     <!-- Accessed Endpoints -->
                     <div class="soc-card">
-                        <div class="soc-card-header"><span class="card-title">TOP TARGET ENDPOINTS</span></div>
+                        <div class="soc-card-header"><span class="card-title">Top target endpoints</span></div>
                         <table class="terminal-table">
                             <thead>
                                 <tr>
-                                    <th>ENDPOINT</th>
-                                    <th>HITS</th>
+                                    <th>Endpoint</th>
+                                    <th>Hits</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -406,12 +364,12 @@
 
                     <!-- Top IPs -->
                     <div class="soc-card">
-                        <div class="soc-card-header"><span class="card-title">TOP SOURCE IPs</span></div>
+                        <div class="soc-card-header"><span class="card-title">Top source IPs</span></div>
                         <table class="terminal-table">
                             <thead>
                                 <tr>
-                                    <th>IP ADDRESS</th>
-                                    <th>REQS</th>
+                                    <th>IP address</th>
+                                    <th>Reqs</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -426,28 +384,28 @@
 
             <!-- SECTION: USER MANAGEMENT -->
             <div id="section-users" style="display:none;">
-                <div class="dashboard-grid grid-1" style="margin-bottom: 2rem;">
+                <div class="dashboard-grid grid-1" style="margin-bottom: 32px;">
                     <div class="soc-card">
                         <div class="soc-card-header">
-                            <span class="card-title">USER MANAGEMENT</span>
+                            <span class="card-title">User management</span>
                             <button class="soc-btn soc-btn-primary" onclick="openModal('createUserModal')"><i
-                                    class="fas fa-plus"></i> CREATE USER</button>
+                                    class="fas fa-plus"></i> Create user</button>
                         </div>
-                        <div style="margin-bottom: 15px;">
+                        <div style="margin-bottom: 16px;">
                             <input type="text"
-                                style="background:var(--st-surface-2); border:1px solid var(--st-border); padding:8px 15px; color:var(--st-text); width:100%; font-family:var(--st-font-mono);"
+                                style="background:var(--st-surface-2); border:1px solid var(--st-border); padding:8px 16px; color:var(--st-text); width:100%; font-family:var(--st-font-mono);"
                                 placeholder="Search users...">
                         </div>
                         <table class="terminal-table">
                             <thead>
                                 <tr>
                                     <th>ID</th>
-                                    <th>USERNAME</th>
-                                    <th>EMAIL</th>
-                                    <th>ROLE</th>
-                                    <th>STATUS</th>
-                                    <th>CREATED</th>
-                                    <th>ACTIONS</th>
+                                    <th>Username</th>
+                                    <th>Email</th>
+                                    <th>Role</th>
+                                    <th>Status</th>
+                                    <th>Created</th>
+                                    <th>Actions</th>
                                 </tr>
                             </thead>
                             <tbody id="usersTableBody">
@@ -460,28 +418,28 @@
 
             <!-- SECTION: SYSTEM SETTINGS -->
             <div id="section-settings" style="display:none;">
-                <div class="dashboard-grid grid-1" style="margin-bottom: 2rem;">
+                <div class="dashboard-grid grid-1" style="margin-bottom: 32px;">
 
                     <!-- General Settings -->
                     <div class="soc-card" style="margin-bottom: 20px;">
                         <div class="soc-card-header">
-                            <span class="card-title">GENERAL CONFIGURATION</span>
+                            <span class="card-title">General configuration</span>
                             <span class="text-muted text-xs">Global System Parameters</span>
                         </div>
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
                             <div class="form-group">
-                                <label class="form-label">SYSTEM INSTANCE NAME</label>
+                                <label class="form-label">System instance name</label>
                                 <input type="text" id="sysName" class="form-input" value="">
                             </div>
                             <div class="form-group">
-                                <label class="form-label">ADMIN CONTACT EMAIL</label>
+                                <label class="form-label">Admin contact email</label>
                                 <input type="email" id="sysEmail" class="form-input" value="">
                             </div>
                         </div>
                         <div
-                            style="margin-top: 15px; display: flex; align-items: center; justify-content: space-between; background: var(--st-surface); padding: 10px; border-radius: 4px;">
+                            style="margin-top: 16px; display: flex; align-items: center; justify-content: space-between; background: var(--st-surface); padding: 12px; border-radius: var(--st-radius-sm);">
                             <div>
-                                <b class="text-white">MAINTENANCE MODE</b>
+                                <b class="text-white">Maintenance mode</b>
                                 <div class="text-xs text-muted">Disable user access for maintenance</div>
                             </div>
                             <label class="switch">
@@ -492,51 +450,50 @@
                     </div>
 
                     <!-- Security Policies -->
-                    <div class="soc-card" style="margin-bottom: 20px; border-top: 3px solid var(--neon-red);">
+                    <div class="soc-card" style="margin-bottom: 20px;">
                         <div class="soc-card-header">
-                            <span class="card-title"><i class="fas fa-shield-alt text-red"></i> SECURITY POLICIES</span>
+                            <span class="card-title"><i class="fas fa-shield-alt text-red"></i> Security policies</span>
                         </div>
                         <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px;">
                             <div class="form-group">
-                                <label class="form-label">SESSION TIMEOUT (MINS)</label>
+                                <label class="form-label">Session timeout (mins)</label>
                                 <input type="number" id="secTimeout" class="form-input" value="30">
                             </div>
                             <div class="form-group">
-                                <label class="form-label">MAX LOGIN ATTEMPTS</label>
+                                <label class="form-label">Max login attempts</label>
                                 <input type="number" id="secMaxLogin" class="form-input" value="5">
                             </div>
                             <div style="display: flex; flex-direction: column; justify-content: center;">
                                 <div style="display: flex; align-items: center; justify-content: space-between;">
-                                    <span class="text-white">STRICT IP FILTERING</span>
+                                    <span class="text-white">Strict IP filtering</span>
                                     <label class="switch">
                                         <input type="checkbox" id="secStrictIp" checked>
                                         <span class="slider"></span>
                                     </label>
                                 </div>
-                                <div class="text-xs text-muted" style="margin-top: 5px;">Auto-ban IPs with >3 failed
+                                <div class="text-xs text-muted" style="margin-top: 4px;">Auto-ban IPs with >3 failed
                                     auths</div>
                             </div>
                         </div>
                     </div>
 
                     <!-- Honeynet Engine -->
-                    <div class="soc-card" style="margin-bottom: 20px; border-top: 3px solid var(--neon-purple);">
+                    <div class="soc-card" style="margin-bottom: 20px;">
                         <div class="soc-card-header">
-                            <span class="card-title"><i class="fas fa-network-wired text-purple"></i> HONEYNET
-                                ENGINE</span>
+                            <span class="card-title"><i class="fas fa-network-wired text-purple"></i> Honeynet engine</span>
                         </div>
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 15px;">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 16px;">
                             <div class="form-group">
-                                <label class="form-label">SIMULATION LEVEL</label>
+                                <label class="form-label">Simulation level</label>
                                 <select id="engLevel" class="form-select">
                                     <option value="low">LOW (Service Emulation)</option>
                                     <option value="high">HIGH (Full OS Simulation)</option>
                                 </select>
                             </div>
                             <div
-                                style="display: flex; align-items: center; justify-content: space-between; background: var(--st-surface); padding: 0 15px; border-radius: 4px; border: 1px solid var(--st-border);">
+                                style="display: flex; align-items: center; justify-content: space-between; background: var(--st-surface); padding: 0 16px; border-radius: var(--st-radius-sm); border: 1px solid var(--st-border);">
                                 <div>
-                                    <b class="text-white">HONEY PORT ROTATION</b>
+                                    <b class="text-white">Honey port rotation</b>
                                     <div class="text-xs text-muted">Randomize open ports every 24h</div>
                                 </div>
                                 <label class="switch">
@@ -546,12 +503,12 @@
                             </div>
                         </div>
                         <div class="form-group">
-                            <label class="form-label">RESPONSE LATENCY: <span id="latencyVal"
+                            <label class="form-label">Response latency: <span id="latencyVal"
                                     class="text-mono text-cyan">50ms</span></label>
                             <input type="range" id="engLatency" min="0" max="1000" step="10" value="50"
                                 oninput="document.getElementById('latencyVal').innerText = this.value + 'ms'">
                             <div
-                                style="display:flex; justify-content:space-between; font-size:0.7rem; color:var(--st-text-faint); margin-top:5px;">
+                                style="display:flex; justify-content:space-between; font-size:12px; color:var(--st-text-faint); margin-top:4px;">
                                 <span>0ms (Instant)</span>
                                 <span>1000ms (Slow)</span>
                             </div>
@@ -559,51 +516,50 @@
                     </div>
 
                     <!-- Sector Access Control -->
-                    <div class="soc-card" style="margin-bottom: 20px; border-top: 3px solid var(--neon-cyan);">
+                    <div class="soc-card" style="margin-bottom: 20px;">
                         <div class="soc-card-header">
-                            <span class="card-title"><i class="fas fa-building text-cyan"></i> SECTOR ACCESS
-                                CONTROL</span>
+                            <span class="card-title"><i class="fas fa-building text-cyan"></i> Sector access control</span>
                         </div>
-                        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px;">
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 20px;">
                             <!-- Education -->
-                            <div style="background: var(--st-surface); padding: 15px; border-radius: 4px; border: 1px solid var(--st-border);">
-                                <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
-                                    <b class="text-white">EDUCATION</b>
+                            <div style="background: var(--st-surface); padding: 16px; border-radius: var(--st-radius-sm); border: 1px solid var(--st-border);">
+                                <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
+                                    <b class="text-white">Education</b>
                                     <label class="switch">
                                         <input type="checkbox" id="eduEnabled">
                                         <span class="slider"></span>
                                     </label>
                                 </div>
                                 <div class="form-group" style="margin-bottom:0;">
-                                    <label class="form-label">CLEARANCE LEVEL</label>
+                                    <label class="form-label">Clearance level</label>
                                     <input type="number" id="eduLevel" class="form-input" min="1" max="5" value="1">
                                 </div>
                             </div>
                             <!-- Government -->
-                            <div style="background: var(--st-surface); padding: 15px; border-radius: 4px; border: 1px solid var(--st-border);">
-                                <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
-                                    <b class="text-white">GOVERNMENT</b>
+                            <div style="background: var(--st-surface); padding: 16px; border-radius: var(--st-radius-sm); border: 1px solid var(--st-border);">
+                                <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
+                                    <b class="text-white">Government</b>
                                     <label class="switch">
                                         <input type="checkbox" id="govEnabled">
                                         <span class="slider"></span>
                                     </label>
                                 </div>
                                 <div class="form-group" style="margin-bottom:0;">
-                                    <label class="form-label">CLEARANCE LEVEL</label>
+                                    <label class="form-label">Clearance level</label>
                                     <input type="number" id="govLevel" class="form-input" min="1" max="5" value="1">
                                 </div>
                             </div>
                             <!-- Financial -->
-                            <div style="background: var(--st-surface); padding: 15px; border-radius: 4px; border: 1px solid var(--st-border);">
-                                <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
-                                    <b class="text-white">FINANCIAL</b>
+                            <div style="background: var(--st-surface); padding: 16px; border-radius: var(--st-radius-sm); border: 1px solid var(--st-border);">
+                                <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
+                                    <b class="text-white">Financial</b>
                                     <label class="switch">
                                         <input type="checkbox" id="finEnabled">
                                         <span class="slider"></span>
                                     </label>
                                 </div>
                                 <div class="form-group" style="margin-bottom:0;">
-                                    <label class="form-label">CLEARANCE LEVEL</label>
+                                    <label class="form-label">Clearance level</label>
                                     <input type="number" id="finLevel" class="form-input" min="1" max="5" value="1">
                                 </div>
                             </div>
@@ -614,9 +570,8 @@
 
                 <!-- Action Bar (Specific to Settings) -->
                 <div style="text-align: right; margin-top: 20px;">
-                    <button class="soc-btn" onclick="loadSettings()"><i class="fas fa-undo"></i> RESET</button>
-                    <button class="soc-btn soc-btn-primary" onclick="saveSettings()"><i class="fas fa-save"></i> SAVE
-                        CHANGES</button>
+                    <button class="soc-btn" onclick="loadSettings()"><i class="fas fa-undo"></i> Reset</button>
+                    <button class="soc-btn soc-btn-primary" onclick="saveSettings()"><i class="fas fa-save"></i> Save changes</button>
                 </div>
 
             </div> <!-- End section-settings -->
@@ -626,26 +581,26 @@
                 <div class="dashboard-grid grid-1">
                     <div class="soc-card">
                         <div class="soc-card-header">
-                            <span class="card-title">SYSTEM DIAGNOSTICS & HEALTH</span>
+                            <span class="card-title">System diagnostics & health</span>
                             <button class="soc-btn" onclick="checkHealth()"><i class="fas fa-stethoscope"></i>
-                                RUN DIAGNOSTICS</button>
+                                Run diagnostics</button>
                         </div>
                         <p class="text-muted">Real-time status check of all API services, database connectivity,
                             and integrations.</p>
 
                         <div id="debugHealthResult"
-                            style="min-height:100px; display:flex; align-items:center; justify-content:center; border:1px dashed var(--st-border); margin-top:20px; border-radius:5px;">
+                            style="min-height:100px; display:flex; align-items:center; justify-content:center; border:1px dashed var(--st-border); margin-top:20px; border-radius:var(--st-radius-sm);">
                             <span class="text-muted">Click "RUN DIAGNOSTICS" to start.</span>
                         </div>
                     </div>
 
                     <div class="soc-card">
                         <div class="soc-card-header">
-                            <span class="card-title">FULL DIAGNOSTICS <span class="admin-badge">ADMIN</span></span>
+                            <span class="card-title">Full diagnostics <span class="admin-badge">Admin</span></span>
                             <button class="soc-btn" onclick="window.loadFullDiagnostics()"><i class="fas fa-sync"></i>
-                                REFRESH</button>
+                                Refresh</button>
                         </div>
-                        <p class="text-muted">Services, containers, DB row counts and lab credentials — pulled live
+                        <p class="text-muted">Services, containers, DB row counts and lab credentials, pulled live
                             from <code>/api/v1/admin/diagnostics</code>.</p>
                         <div id="fullDiagResult" class="text-xs" style="margin-top:12px;">
                             <span class="text-muted">Loading...</span>
@@ -654,10 +609,10 @@
 
                     <div class="soc-card">
                         <div class="soc-card-header">
-                            <span class="card-title">HONEYPOT TRIGGER COMMANDS <span class="admin-badge">LIVE</span></span>
+                            <span class="card-title">Honeypot trigger commands <span class="admin-badge">Live</span></span>
                         </div>
                         <p class="text-muted">Copy-paste these from your own shell, or hit EXECUTE to have the
-                            backend fire the same action at your lab right now — real traffic, real telemetry,
+                            backend fire the same action at your lab right now: real traffic, real telemetry,
                             same as running the command yourself.</p>
                         <div id="diagGenerators" style="margin-top:12px;">
                             <span class="text-muted">Loading...</span>
@@ -674,35 +629,35 @@
     <div id="createUserModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
-                <span class="modal-title">CREATE NEW USER</span>
+                <span class="modal-title">Create new user</span>
                 <span class="close-modal" onclick="closeModal('createUserModal')">&times;</span>
             </div>
             <div class="modal-body">
                 <form id="createUserForm">
                     <div class="form-group">
-                        <label class="form-label">USERNAME</label>
+                        <label class="form-label">Username</label>
                         <input type="text" id="newUsername" class="form-input" required>
                     </div>
                     <div class="form-group">
-                        <label class="form-label">EMAIL ADDRESS</label>
+                        <label class="form-label">Email address</label>
                         <input type="email" id="newEmail" class="form-input" required>
                     </div>
                     <div class="form-group">
-                        <label class="form-label">PASSWORD</label>
+                        <label class="form-label">Password</label>
                         <input type="password" id="newPassword" class="form-input" required placeholder="••••••••">
                     </div>
                     <div class="form-group">
-                        <label class="form-label">ROLE</label>
+                        <label class="form-label">Role</label>
                         <select id="newRole" class="form-select">
-                            <option value="ANALYST">ANALYST</option>
-                            <option value="AUDITOR">AUDITOR</option>
-                            <option value="ADMIN">ADMIN</option>
+                            <option value="ANALYST">Analyst</option>
+                            <option value="AUDITOR">Auditor</option>
+                            <option value="ADMIN">Admin</option>
                         </select>
                     </div>
                     <div style="text-align: right; margin-top: 20px;">
                         <button type="button" class="soc-btn" onclick="closeModal('createUserModal')"
-                            style="margin-right: 10px;">CANCEL</button>
-                        <button type="submit" class="soc-btn soc-btn-primary">CREATE USER</button>
+                            style="margin-right: 12px;">Cancel</button>
+                        <button type="submit" class="soc-btn soc-btn-primary">Create user</button>
                     </div>
                 </form>
             </div>

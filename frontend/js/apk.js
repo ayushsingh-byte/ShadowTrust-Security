@@ -16,7 +16,7 @@ const MAX_CERT_CHARS = 6000;
 const MAX_NESTED_KEYS_PER_ROW = 14;
 
 function formatTimestamp(isoString) {
-    if (!isoString || isoString === 'N/A') return 'N/A';
+    if (!isoString || String(isoString).toLowerCase() === 'n/a') return 'n/a';
     const parsed = new Date(isoString);
     if (Number.isNaN(parsed.getTime())) return isoString;
     return parsed.toLocaleString();
@@ -37,6 +37,12 @@ function escapeHtml(value) {
         .replace(/'/g, '&#039;');
 }
 
+// severity words arrive in mixed case from MobSF ("high", "WARNING"); the page shows sentence case
+function sentence(value) {
+    const t = String(value ?? '').replace(/_/g, ' ').toLowerCase();
+    return t.charAt(0).toUpperCase() + t.slice(1);
+}
+
 function setStatus(message, tone = 'muted') {
     const status = document.getElementById('mobsfStatus');
     if (!status) return;
@@ -44,7 +50,7 @@ function setStatus(message, tone = 'muted') {
     status.className = `text-${tone}`;
 }
 
-function firstValue(obj, keys, fallback = 'N/A') {
+function firstValue(obj, keys, fallback = 'n/a') {
     if (!obj || typeof obj !== 'object') return fallback;
     for (const key of keys) {
         const value = obj[key];
@@ -102,16 +108,16 @@ function renderLatestScan(report) {
     if (latestAnalysisDetailsEl) {
         latestAnalysisDetailsEl.innerHTML = `
             <div>
-                <div class="resource-row"><span>Package Name</span> <span class="text-mono text-cyan">${escapeHtml(report.package_name || 'N/A')}</span></div>
-                <div class="resource-row"><span>Version</span> <span class="text-mono">${escapeHtml(report.version_name || 'N/A')}</span></div>
-                <div class="resource-row"><span>SHA256</span> <span class="text-mono text-xs">${escapeHtml(report.file_hash_sha256 || 'N/A')}</span></div>
-                <div class="resource-row"><span>Scan Time</span> <span class="text-mono">${escapeHtml(formatTimestamp(report.scan_time))}</span></div>
+                <div class="resource-row"><span>Package name</span> <span>${escapeHtml(report.package_name || 'n/a')}</span></div>
+                <div class="resource-row"><span>Version</span> <span>${escapeHtml(report.version_name || 'n/a')}</span></div>
+                <div class="resource-row"><span>SHA-256</span> <span>${escapeHtml(report.file_hash_sha256 || 'n/a')}</span></div>
+                <div class="resource-row"><span>Scan time</span> <span>${escapeHtml(formatTimestamp(report.scan_time))}</span></div>
             </div>
             <div>
-                <div class="resource-row"><span>Vulnerabilities</span> <span class="text-mono text-pink">${(report.findings || []).length} Detected</span></div>
-                <div class="resource-row"><span>Permissions</span> <span class="text-mono text-purple">${(report.permissions || []).length} Requested</span></div>
-                <div class="resource-row"><span>Dangerous</span> <span class="text-mono">${dangerousPermissions.length}</span></div>
-                <div class="resource-row"><span>Threat Score</span> <span class="text-mono">${report.threat_score || 0}/100</span></div>
+                <div class="resource-row"><span>Vulnerabilities</span> <span>${(report.findings || []).length} found</span></div>
+                <div class="resource-row"><span>Permissions</span> <span>${(report.permissions || []).length} requested</span></div>
+                <div class="resource-row"><span>Dangerous</span> <span>${dangerousPermissions.length}</span></div>
+                <div class="resource-row"><span>Threat score</span> <span>${report.threat_score || 0}/100</span></div>
             </div>
         `;
     }
@@ -144,17 +150,17 @@ function renderDangerousPermissions(permissions) {
     const items = Array.isArray(permissions) ? permissions : [];
 
     if (items.length === 0) {
-        container.innerHTML = '<div class="text-xs" style="color:var(--st-success); font-weight:700;">SAFE: No dangerous permissions detected</div>';
+        container.innerHTML = '<div class="perm-ok"><i class="fas fa-circle-check"></i> No dangerous permissions requested</div>';
         return;
     }
 
-    container.innerHTML = items.slice(0, 10).map((permission, index) => {
-        const width = Math.max(25, 100 - (index * 12));
-        return `
-            <div class="text-xs" style="color:var(--st-danger); font-weight:700;">${escapeHtml(permission.short_name || permission.name)}${permission.status ? ` (${escapeHtml(permission.status)})` : ''}</div>
-            <div class="progress-bar"><div class="progress-fill" style="width:${width}%; background:${index === 0 ? 'var(--st-danger)' : 'var(--st-danger)'};"></div></div>
-        `;
-    }).join('');
+    const shown = items.slice(0, 10);
+    container.innerHTML = shown.map((permission) => `
+        <div class="perm-row">
+            <span>${escapeHtml(permission.short_name || permission.name)}</span>
+            ${permission.status ? `<small>${escapeHtml(permission.status)}</small>` : ''}
+        </div>`).join('')
+        + (items.length > shown.length ? `<div class="perm-more">${items.length - shown.length} more in the full MobSF sections below</div>` : '');
 }
 
 function renderManifest(manifest, raw = {}) {
@@ -199,9 +205,9 @@ function renderFindings(findings) {
 
     tbody.innerHTML = rows.map((finding) => `
         <tr>
-            <td style="color:var(--st-text); padding:12px; vertical-align:top;">${escapeHtml(finding.title)}</td>
-            <td style="padding:12px;"><span class="sev-chip ${sevClass(finding.severity)}">${escapeHtml(finding.severity)}</span></td>
-            <td class="text-muted" style="padding:12px; line-height:1.5;">${escapeHtml(finding.description || finding.source)}</td>
+            <td style="color:var(--st-text);">${escapeHtml(finding.title)}</td>
+            <td><span class="sev-chip ${sevClass(finding.severity)}">${escapeHtml(sentence(finding.severity))}</span></td>
+            <td class="text-muted">${escapeHtml(finding.description || finding.source)}</td>
         </tr>
     `).join('');
 }
@@ -393,51 +399,51 @@ function renderMobSFBlocks(raw) {
 function renderDeepMobSF(report) {
     const raw = report?.raw_report || {};
 
-    const appScore = firstValue(raw, ['security_score', 'securityScore', 'score'], 'N/A');
-    const trackers = firstValue(raw, ['trackers_detection', 'trackers', 'trackers_count'], 'N/A');
+    const appScore = firstValue(raw, ['security_score', 'securityScore', 'score'], 'n/a');
+    const trackers = firstValue(raw, ['trackers_detection', 'trackers', 'trackers_count'], 'n/a');
 
-    const fileName = firstValue(raw, ['file_name', 'fileName'], report?.app_name || 'N/A');
-    const fileSize = firstValue(raw, ['size', 'file_size', 'apk_size'], 'N/A');
-    const md5 = firstValue(raw, ['md5', 'file_hash', 'md5_hash'], 'N/A');
-    const sha1 = firstValue(raw, ['sha1', 'sha1_hash'], 'N/A');
-    const sha256 = firstValue(raw, ['sha256', 'file_hash_sha256'], report?.file_hash_sha256 || 'N/A');
+    const fileName = firstValue(raw, ['file_name', 'fileName'], report?.app_name || 'n/a');
+    const fileSize = firstValue(raw, ['size', 'file_size', 'apk_size'], 'n/a');
+    const md5 = firstValue(raw, ['md5', 'file_hash', 'md5_hash'], 'n/a');
+    const sha1 = firstValue(raw, ['sha1', 'sha1_hash'], 'n/a');
+    const sha256 = firstValue(raw, ['sha256', 'file_hash_sha256'], report?.file_hash_sha256 || 'n/a');
 
-    const appName = firstValue(raw, ['app_name', 'appName'], report?.app_name || 'N/A');
-    const packageName = firstValue(raw, ['package_name', 'package', 'packageName'], report?.package_name || 'N/A');
-    const mainActivity = firstValue(raw, ['main_activity', 'launcher_activity', 'mainActivity'], 'N/A');
-    const targetSdk = firstValue(raw, ['target_sdk', 'targetSdkVersion', 'target_sdk_version'], 'N/A');
-    const minSdk = firstValue(raw, ['min_sdk', 'minSdkVersion', 'min_sdk_version'], 'N/A');
-    const maxSdk = firstValue(raw, ['max_sdk', 'maxSdkVersion', 'max_sdk_version'], 'N/A');
-    const androidVersionName = firstValue(raw, ['version_name', 'android_version_name', 'versionName'], report?.version_name || 'N/A');
-    const androidVersionCode = firstValue(raw, ['version_code', 'android_version_code', 'versionCode'], 'N/A');
+    const appName = firstValue(raw, ['app_name', 'appName'], report?.app_name || 'n/a');
+    const packageName = firstValue(raw, ['package_name', 'package', 'packageName'], report?.package_name || 'n/a');
+    const mainActivity = firstValue(raw, ['main_activity', 'launcher_activity', 'mainActivity'], 'n/a');
+    const targetSdk = firstValue(raw, ['target_sdk', 'targetSdkVersion', 'target_sdk_version'], 'n/a');
+    const minSdk = firstValue(raw, ['min_sdk', 'minSdkVersion', 'min_sdk_version'], 'n/a');
+    const maxSdk = firstValue(raw, ['max_sdk', 'maxSdkVersion', 'max_sdk_version'], 'n/a');
+    const androidVersionName = firstValue(raw, ['version_name', 'android_version_name', 'versionName'], report?.version_name || 'n/a');
+    const androidVersionCode = firstValue(raw, ['version_code', 'android_version_code', 'versionCode'], 'n/a');
 
     const infoGrid = document.getElementById('mobsfInfoGrid');
     if (infoGrid) {
         infoGrid.innerHTML = `
             <div class="mobsf-kv-card">
-                <h4>APP SCORES</h4>
-                <div class="mobsf-kv-row"><span>Security Score</span><span>${escapeHtml(String(appScore))}</span></div>
-                <div class="mobsf-kv-row"><span>Trackers Detection</span><span>${escapeHtml(String(trackers))}</span></div>
-                <div class="mobsf-kv-row"><span>Threat Score</span><span>${escapeHtml(String(report?.threat_score ?? 'N/A'))}/100</span></div>
+                <h4>App scores</h4>
+                <div class="mobsf-kv-row"><span>Security score</span><span>${escapeHtml(String(appScore))}</span></div>
+                <div class="mobsf-kv-row"><span>Trackers detected</span><span>${escapeHtml(String(trackers))}</span></div>
+                <div class="mobsf-kv-row"><span>Threat score</span><span>${escapeHtml(String(report?.threat_score ?? 'n/a'))}/100</span></div>
             </div>
             <div class="mobsf-kv-card">
-                <h4>FILE INFORMATION</h4>
-                <div class="mobsf-kv-row"><span>File Name</span><span>${escapeHtml(String(fileName))}</span></div>
+                <h4>File information</h4>
+                <div class="mobsf-kv-row"><span>File name</span><span>${escapeHtml(String(fileName))}</span></div>
                 <div class="mobsf-kv-row"><span>Size</span><span>${escapeHtml(String(fileSize))}</span></div>
                 <div class="mobsf-kv-row"><span>MD5</span><span>${escapeHtml(String(md5))}</span></div>
                 <div class="mobsf-kv-row"><span>SHA1</span><span>${escapeHtml(String(sha1))}</span></div>
                 <div class="mobsf-kv-row"><span>SHA256</span><span>${escapeHtml(String(sha256))}</span></div>
             </div>
             <div class="mobsf-kv-card">
-                <h4>APP INFORMATION</h4>
-                <div class="mobsf-kv-row"><span>App Name</span><span>${escapeHtml(String(appName))}</span></div>
-                <div class="mobsf-kv-row"><span>Package Name</span><span>${escapeHtml(String(packageName))}</span></div>
-                <div class="mobsf-kv-row"><span>Main Activity</span><span>${escapeHtml(String(mainActivity))}</span></div>
+                <h4>App information</h4>
+                <div class="mobsf-kv-row"><span>App name</span><span>${escapeHtml(String(appName))}</span></div>
+                <div class="mobsf-kv-row"><span>Package name</span><span>${escapeHtml(String(packageName))}</span></div>
+                <div class="mobsf-kv-row"><span>Main activity</span><span>${escapeHtml(String(mainActivity))}</span></div>
                 <div class="mobsf-kv-row"><span>Target SDK</span><span>${escapeHtml(String(targetSdk))}</span></div>
                 <div class="mobsf-kv-row"><span>Min SDK</span><span>${escapeHtml(String(minSdk))}</span></div>
                 <div class="mobsf-kv-row"><span>Max SDK</span><span>${escapeHtml(String(maxSdk))}</span></div>
-                <div class="mobsf-kv-row"><span>Android Ver Name</span><span>${escapeHtml(String(androidVersionName))}</span></div>
-                <div class="mobsf-kv-row"><span>Android Ver Code</span><span>${escapeHtml(String(androidVersionCode))}</span></div>
+                <div class="mobsf-kv-row"><span>Android version name</span><span>${escapeHtml(String(androidVersionName))}</span></div>
+                <div class="mobsf-kv-row"><span>Android version code</span><span>${escapeHtml(String(androidVersionCode))}</span></div>
             </div>
         `;
     }
@@ -460,17 +466,17 @@ function renderDeepMobSF(report) {
     const componentGrid = document.getElementById('componentCounts');
     if (componentGrid) {
         componentGrid.innerHTML = `
-            <div class="component-tile"><span class="num">${exportedActivities} / ${totalActivities}</span><span class="lbl">Exported Activities</span></div>
-            <div class="component-tile"><span class="num">${exportedServices} / ${totalServices}</span><span class="lbl">Exported Services</span></div>
-            <div class="component-tile"><span class="num">${exportedReceivers} / ${totalReceivers}</span><span class="lbl">Exported Receivers</span></div>
-            <div class="component-tile"><span class="num">${exportedProviders} / ${totalProviders}</span><span class="lbl">Exported Providers</span></div>
+            <div class="component-tile"><span class="num">${exportedActivities} / ${totalActivities}</span><span class="lbl">Exported activities</span></div>
+            <div class="component-tile"><span class="num">${exportedServices} / ${totalServices}</span><span class="lbl">Exported services</span></div>
+            <div class="component-tile"><span class="num">${exportedReceivers} / ${totalReceivers}</span><span class="lbl">Exported receivers</span></div>
+            <div class="component-tile"><span class="num">${exportedProviders} / ${totalProviders}</span><span class="lbl">Exported providers</span></div>
         `;
     }
 
     const certBlock = document.getElementById('signerCertBlock');
     if (certBlock) {
         const certData = firstValue(raw, ['certificate_analysis', 'certificate', 'signer_certificate'], null);
-        const certText = certData && certData !== 'N/A'
+        const certText = certData && String(certData).toLowerCase() !== 'n/a'
             ? (typeof certData === 'string' ? certData : JSON.stringify(certData, null, 2))
             : 'No certificate data returned by MobSF for this APK.';
         certBlock.textContent = clampText(certText, MAX_CERT_CHARS);
@@ -498,9 +504,9 @@ function renderHistory(history) {
                 <td style="color:var(--st-text);">No scans yet</td>
                 <td class="text-mono" style="color:var(--st-text-faint);">-</td>
                 <td class="text-mono">-</td>
-                <td style="font-weight:bold; color:var(--st-text);">-</td>
-                <td class="text-muted">Upload an APK to start MobSF analysis</td>
-                <td><span class="badge">N/A</span></td>
+                <td>-</td>
+                <td class="text-muted">Upload an APK to start a MobSF analysis</td>
+                <td><span class="badge">n/a</span></td>
             </tr>
         `;
     } else {
@@ -508,12 +514,12 @@ function renderHistory(history) {
             const score = Number(item.score || 0);
             const row = `
                 <tr>
-                    <td style="color:var(--st-text);">${escapeHtml(item.app_name || item.original_filename || 'Unknown App')}</td>
+                    <td>${escapeHtml(item.app_name || item.original_filename || 'Unknown app')}</td>
                     <td class="text-mono" style="color:var(--st-text-faint);">${escapeHtml(item.package_name || 'unknown')}</td>
-                    <td class="text-mono">${escapeHtml(item.version_name || 'N/A')}</td>
-                    <td style="font-weight:bold; color:var(--st-text);">${score}/100</td>
-                    <td class="text-muted">Scanned ${escapeHtml(formatTimestamp(item.timestamp))}</td>
-                    <td><span class="badge ${badgeForThreatLevel(score)}">${score >= 70 ? 'HIGH' : score >= 35 ? 'MEDIUM' : 'LOW'}</span></td>
+                    <td class="text-mono">${escapeHtml(item.version_name || 'n/a')}</td>
+                    <td>${score}/100</td>
+                    <td>${escapeHtml(formatTimestamp(item.timestamp))}</td>
+                    <td><span class="badge ${badgeForThreatLevel(score)}">${score >= 70 ? 'High' : score >= 35 ? 'Medium' : 'Low'}</span></td>
                 </tr>
             `;
             tbody.insertAdjacentHTML('beforeend', row);

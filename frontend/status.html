@@ -1,135 +1,176 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Shadow Trust — System Status</title>
-    <link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
-    <link rel="stylesheet" href="css/landing/landingpage.css?v=5">
-    <link rel="stylesheet" href="css/landing/status.css?v=4">
+    <title>Status · ShadowTrust</title>
+    <meta name="description" content="Live state of this ShadowTrust deployment: services, honeypot sensors, telemetry pipeline and measured API response time.">
+    <!-- Link preview (LinkedIn, WhatsApp, Slack, X). Once the site has a public address, make og:image and twitter:image absolute, e.g. https://your-domain/og.png, and add og:url. -->
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="ShadowTrust">
+    <meta property="og:title" content="Status · ShadowTrust">
+    <meta property="og:description" content="Live state of this ShadowTrust deployment: services, honeypot sensors, telemetry pipeline and measured API response time.">
+    <meta property="og:image" content="og.png">
+    <meta property="og:image:type" content="image/png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:alt" content="ShadowTrust: Let them in. Watch every move. Decoy servers, detection, investigation and reporting in one self-hosted stack.">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Status · ShadowTrust">
+    <meta name="twitter:description" content="Live state of this ShadowTrust deployment: services, honeypot sensors, telemetry pipeline and measured API response time.">
+    <meta name="twitter:image" content="og.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300..600&family=Source+Code+Pro:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/tokens.css">
-    <script src="js/theme.js"></script>
+    <link rel="stylesheet" href="css/site.css">
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 28 28'%3E%3Crect width='28' height='28' rx='6' fill='%23533afd'/%3E%3Cpath d='M4.5 14c2.5-4.3 5.7-6.4 9.5-6.4s7 2.1 9.5 6.4c-2.5 4.3-5.7 6.4-9.5 6.4S7 18.3 4.5 14Z' fill='none' stroke='%23fff' stroke-width='1.8' stroke-linejoin='round'/%3E%3Ccircle cx='14' cy='14' r='3.2' fill='%23fff'/%3E%3C/svg%3E">
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#ffffff">
+    <script>if (!matchMedia('(prefers-reduced-motion: reduce)').matches) document.documentElement.classList.add('motion-ready');</script>
 </head>
-<body>
+<body class="site">
+<a class="skip" href="#main">Skip to content</a>
 
-<div class="container">
-
-    <!-- NAVBAR -->
-    <nav>
-        <div class="logo">Shadow Trust</div>
-        <ul>
-            <li><a href="index.html">Home</a></li>
+<header class="site-nav" data-nav>
+    <div class="wrap">
+        <a class="brand" href="index.html" aria-label="ShadowTrust home">
+            <svg viewBox="0 0 28 28" fill="none" aria-hidden="true"><path d="M2.5 14c3-5.3 7-8 11.5-8s8.5 2.7 11.5 8c-3 5.3-7 8-11.5 8S5.5 19.3 2.5 14Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><circle cx="14" cy="14" r="4.2" fill="var(--st-brand)"/></svg>
+            <span>ShadowTrust</span>
+        </a>
+        <ul class="nav-links" id="navLinks">
             <li><a href="features.html">Features</a></li>
             <li><a href="architecture.html">Architecture</a></li>
+            <li><a href="usecases.html">Use cases</a></li>
             <li><a href="docs.html">Docs</a></li>
-            <li><a href="status.html" class="active-link">Status</a></li>
-            <li><a href="usecases.html">Use Cases</a></li>
+            <li><a href="status.html" aria-current="page">Status</a></li>
+            <li class="nav-mobile-only"><a href="login.html">Sign in</a></li>
         </ul>
-        <a href="login.html" class="btn">Sign In</a>
-    </nav>
-
-    <!-- HERO -->
-    <section class="status-hero" data-aos="fade-up">
-        <div class="status-hero-text">
-            <span class="section-label">Live Monitoring</span>
-            <h1>Shadow Trust <span>System Status</span></h1>
-            <p>Live state of this deployment's services, honeypot sensors and telemetry pipeline, read from the backend every 30 seconds. No historical uptime is claimed — only what is measured right now.</p>
-            <div id="overall" class="overall-status">
-                <span class="pulse-dot"></span>
-                <span id="overallText">Checking services…</span>
-            </div>
+        <div class="nav-end">
+            <a class="signin" href="login.html">Sign in</a>
+            <a class="btn btn-sm" href="login.html">Open console <span class="arr">→</span></a>
+            <button class="nav-burger" type="button" data-burger aria-label="Open menu" aria-controls="navLinks" aria-expanded="false">
+                <svg width="16" height="16" viewBox="0 0 16 16" stroke="currentColor" stroke-width="1.5"><path d="M2 5h12M2 11h12"/></svg>
+            </button>
         </div>
+    </div>
+</header>
 
-        <div class="status-hero-widget">
-            <div class="shw-header">
-                <span class="shw-title">Sensors</span>
-                <span class="shw-badge" id="sensorBadge">—</span>
+<main id="main">
+    <section class="page-hero">
+        <canvas class="ribbon" data-ribbon="corner" aria-hidden="true"></canvas>
+        <div class="wrap page-hero-grid">
+            <div>
+                <span class="eyebrow" data-hero-fade>System status · live</span>
+                <h1 class="display" style="max-width:15ch" data-hero-fade><span id="verdictHead">Checking the <em>stack</em>…</span></h1>
+                <p class="lede" data-hero-fade>The live state of this deployment's services, honeypot sensors and telemetry pipeline, read from the backend every 30 seconds. No historical uptime is claimed, only what is measured right now.</p>
+                <div class="verdict" data-hero-fade>
+                    <span class="beacon" id="beacon"></span>
+                    <span id="overallText">Contacting the backend</span>
+                    <button class="replay-btn" type="button" id="checkNow" style="margin-left:auto">Check now</button>
+                </div>
             </div>
-            <div class="shw-services" id="sensorRows"></div>
-            <div class="shw-footer">
-                <span>Last checked: <span id="checkedAt">—</span></span>
-                <span class="shw-live"><span class="shw-live-dot"></span> Live</span>
+            <table class="spec" data-hero-fade>
+                <tr><th>Last check</th><td class="mono" id="checkedAt">not yet</td></tr>
+                <tr><th>Next check</th><td class="mono" id="nextAt">in 30 s</td></tr>
+                <tr><th>Source</th><td class="mono">/api/v1/public/status</td></tr>
+                <tr><th>Scope</th><td>This deployment only</td></tr>
+            </table>
+        </div>
+    </section>
+
+    <section class="section">
+        <div class="wrap">
+            <div class="readings">
+                <div class="reading"><div class="fig" id="mServices">n/a</div><div class="cap">Services up</div></div>
+                <div class="reading"><div class="fig" id="mEvents">n/a</div><div class="cap">Events logged</div></div>
+                <div class="reading"><div class="fig" id="mLatency">n/a</div><div class="cap">API response, measured in this browser</div></div>
+                <div class="reading"><div class="fig" id="mPipeline">n/a</div><div class="cap">Telemetry pipeline</div></div>
             </div>
         </div>
     </section>
 
-    <!-- METRICS STRIP (all measured) -->
-    <div class="metrics-strip" data-aos="fade-up">
-        <div class="metric-item">
-            <div class="metric-value green" id="mServices">—</div>
-            <div class="metric-label">Services Up</div>
+    <section class="section">
+        <div class="wrap status-cols">
+            <div>
+                <span class="eyebrow"><span class="n">01</span> Sensors</span>
+                <h2 class="h2" style="margin:14px 0 22px" data-reveal>Who is <em>reporting.</em></h2>
+                <ul class="rows" id="sensorRows"><li class="empty">Waiting for the first check.</li></ul>
+            </div>
+            <div>
+                <span class="eyebrow"><span class="n">02</span> Services</span>
+                <h2 class="h2" style="margin:14px 0 22px" data-reveal>What the backend <em>probes.</em></h2>
+                <ul class="rows" id="serviceRows"><li class="empty">Waiting for the first check.</li></ul>
+            </div>
         </div>
-        <div class="metric-item">
-            <div class="metric-value cyan" id="mEvents">—</div>
-            <div class="metric-label">Events Logged</div>
-        </div>
-        <div class="metric-item">
-            <div class="metric-value white" id="mLatency">—</div>
-            <div class="metric-label">API Response (measured)</div>
-        </div>
-        <div class="metric-item">
-            <div class="metric-value white" id="mPipeline">—</div>
-            <div class="metric-label">Telemetry Pipeline</div>
-        </div>
-    </div>
-
-    <section class="section" data-aos="fade-up">
-        <span class="section-label">Services</span>
-        <h2>Service <span>Health</span></h2>
-        <p class="section-sub">Every service the backend probes, as of the last check.</p>
-        <div class="status-grid" id="serviceGrid"></div>
     </section>
 
-</div>
-
-<!-- FOOTER -->
-<footer>
-    <div class="footer-grid">
-        <div class="footer-brand">
-            <span class="logo">Shadow Trust</span>
-            <p>AI-powered Security Operations Center with honeypot deception, malware analysis, and real-time threat intelligence.</p>
+    <section class="section">
+        <div class="wrap">
+            <div class="section-head">
+                <span class="eyebrow"><span class="n">03</span> Response time</span>
+                <h2 class="h2" data-reveal>Measured, <em>not</em> promised.</h2>
+                <p class="lede" data-reveal>Each point is one check made by this page since you opened it. Nothing here is stored or averaged on a server.</p>
+            </div>
+            <div class="spark-card" data-reveal>
+                <svg class="spark" id="spark" viewBox="0 0 600 120" preserveAspectRatio="none" aria-label="API response time per check">
+                    <path class="area" id="sparkArea" d=""/>
+                    <path class="ln" id="sparkLine" d=""/>
+                    <g id="sparkPts"></g>
+                </svg>
+                <div class="fig-caption"><span id="sparkCap">No checks yet.</span><span class="mono">ms per check</span></div>
+            </div>
         </div>
-        <div class="footer-col">
-            <h4>Platform</h4>
-            <ul>
-                <li><a href="features.html">Features</a></li>
-                <li><a href="architecture.html">Architecture</a></li>
-                <li><a href="usecases.html">Use Cases</a></li>
-                <li><a href="docs.html">Documentation</a></li>
-                <li><a href="status.html">System Status</a></li>
-            </ul>
-        </div>
-        <div class="footer-col">
-            <h4>Access</h4>
-            <ul>
-                <li><a href="login.html">Sign In</a></li>
-                <li><a href="register.html">Register</a></li>
-                <li><a href="dashboard.html">Dashboard</a></li>
-                <li><a href="http://localhost:8000/docs" target="_blank" rel="noopener">API Docs</a></li>
-            </ul>
-        </div>
-    </div>
-    <div class="footer-bottom">
-        <p>© 2026 Shadow Trust. All Rights Reserved.</p>
-        <div class="footer-status"><span class="dot"></span> <span id="footStatus">Checking…</span></div>
-    </div>
-</footer>
-
+    </section>
 
 <script>
-(() => {
+document.addEventListener('DOMContentLoaded', () => {
     const local = ['127.0.0.1', 'localhost'].includes(location.hostname);
     const API = local ? 'http://127.0.0.1:8000/api/v1' : '/api/v1';
     const $ = (id) => document.getElementById(id);
+    const M = window.Motion;
+    const anim = M && !matchMedia('(prefers-reduced-motion: reduce)').matches;
     const esc = (v) => String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
     const ago = (ts) => {
         if (!ts) return 'no events yet';
         const s = Math.max(0, (Date.now() - Date.parse(String(ts).replace(' ', 'T') + (/[zZ]|[+-]\d\d:?\d\d$/.test(ts) ? '' : 'Z'))) / 1000);
         return s < 60 ? `${Math.round(s)}s ago` : s < 3600 ? `${Math.round(s / 60)}m ago` : s < 86400 ? `${Math.round(s / 3600)}h ago` : `${Math.round(s / 86400)}d ago`;
     };
+    const samples = [];
+    let next = Date.now() + 30000;
+    let lastEvents = 0;
+
+    function setVerdict(state, head, text) {
+        $('beacon').className = 'beacon ' + state;
+        $('verdictHead').innerHTML = head;
+        $('overallText').textContent = text;
+    }
+
+    function countTo(el, value) {
+        if (!anim) { el.textContent = value.toLocaleString(); return; }
+        const from = lastEvents;
+        M.animate(from, value, { duration: 1.2, ease: [0.22, 1, 0.36, 1], onUpdate: v => { el.textContent = Math.round(v).toLocaleString(); } });
+    }
+
+    function drawSpark() {
+        const n = samples.length;
+        if (!n) return;
+        const max = Math.max(...samples, 50) * 1.15;
+        const x = (i) => n === 1 ? 300 : (i / (n - 1)) * 600;
+        const y = (v) => 120 - (v / max) * 110;
+        const pts = samples.map((v, i) => `${x(i).toFixed(1)},${y(v).toFixed(1)}`);
+        $('sparkLine').setAttribute('d', 'M' + pts.join(' L'));
+        $('sparkArea').setAttribute('d', 'M' + pts.join(' L') + ` L${x(n - 1)},120 L${x(0)},120 Z`);
+        $('sparkPts').innerHTML = samples.map((v, i) => `<circle class="pt" cx="${x(i)}" cy="${y(v)}" r="3"/>`).join('');
+        const last = $('sparkPts').lastElementChild;
+        if (anim && last) M.animate(last, { scale: [0, 1] }, { type: 'spring', stiffness: 500, damping: 20 });
+        const avg = Math.round(samples.reduce((a, b) => a + b, 0) / n);
+        $('sparkCap').textContent = `${n} check${n === 1 ? '' : 's'} · last ${samples[n - 1]} ms · mean ${avg} ms · max ${Math.max(...samples)} ms`;
+    }
 
     async function refresh() {
+        next = Date.now() + 30000;
         try {
             const t0 = performance.now();
             const [st, sum] = await Promise.all([
@@ -140,45 +181,73 @@
             const up = services.filter(s => s.status === 'up').length;
             const allUp = up === services.length && st.database?.status === 'up' && st.collector?.running;
 
-            $('overall').className = 'overall-status' + (allUp ? ' operational' : '');
-            $('overallText').textContent = allUp ? 'All services operational' : `${services.length - up} service(s) degraded`;
-            $('footStatus').textContent = allUp ? 'All Systems Operational' : 'Partial degradation';
+            if (allUp) setVerdict('up', 'All systems <em>operational.</em>', 'Every probed service answered');
+            else setVerdict('warn', `${services.length - up || 'Some'} service${services.length - up === 1 ? '' : 's'} <em>degraded.</em>`, 'At least one dependency is not healthy');
+
             $('mServices').textContent = `${up}/${services.length}`;
-            $('mServices').className = 'metric-value ' + (allUp ? 'green' : 'white');
-            $('mEvents').textContent = Number(sum.events_logged || 0).toLocaleString();
-            $('mLatency').textContent = `${Math.round(sum._ms)}ms`;
+            const ev = Number(sum.events_logged || 0);
+            countTo($('mEvents'), ev);
+            lastEvents = ev;
+            const ms = Math.round(sum._ms);
+            $('mLatency').textContent = `${ms} ms`;
             $('mPipeline').textContent = sum.pipeline?.running ? 'Running' : 'Stopped';
             $('checkedAt').textContent = new Date().toLocaleTimeString();
+            samples.push(ms);
+            if (samples.length > 40) samples.shift();
+            drawSpark();
 
             const sensors = st.sensors || [];
-            const active = sensors.filter(s => s.status === 'up').length;
-            $('sensorBadge').textContent = `● ${active}/${sensors.length} reporting`;
-            $('sensorRows').innerHTML = sensors.map(s => `
-                <div class="shw-row">
-                    <span class="shw-dot ${s.status === 'up' ? 'green' : 'yellow'}"></span>
-                    <span class="shw-name">${esc(s.name)}</span>
-                    <span class="shw-latency">${esc(ago(s.last_event))}</span>
-                    <span class="shw-pct">${esc(s.status)}</span>
-                </div>`).join('');
-
-            $('serviceGrid').innerHTML = services.map(s => `
-                <div class="status-card">
-                    <div class="status-header">
-                        <div class="status-header-left"><div class="service-info"><h3>${esc(s.name)}</h3></div></div>
-                        <span class="status-badge ${s.status === 'up' ? 'success' : 'warning'}">${s.status === 'up' ? 'Operational' : esc(s.status)}</span>
-                    </div>
-                </div>`).join('');
+            $('sensorRows').innerHTML = sensors.length ? sensors.map(s => `
+                <li><span class="dot ${s.status === 'up' ? 'up' : 'warn'}"></span>
+                    <span class="nm">${esc(s.name)}</span>
+                    <span class="aux">${esc(ago(s.last_event))}</span>
+                    <span class="stt">${esc(s.status)}</span></li>`).join('') : '<li class="empty">No sensors registered.</li>';
+            $('serviceRows').innerHTML = services.length ? services.map(s => `
+                <li><span class="dot ${s.status === 'up' ? 'up' : 'warn'}"></span>
+                    <span class="nm">${esc(s.name)}</span>
+                    <span class="aux"></span>
+                    <span class="stt">${s.status === 'up' ? 'operational' : esc(s.status)}</span></li>`).join('') : '<li class="empty">No services reported.</li>';
+            if (anim) M.animate(document.querySelectorAll('.rows li'), { opacity: [0, 1], x: [-8, 0] }, { duration: 0.4, delay: M.stagger(0.04) });
         } catch (e) {
-            $('overallText').textContent = 'Backend unreachable';
-            $('overall').className = 'overall-status';
-            $('footStatus').textContent = 'Status unavailable';
+            setVerdict('down', 'Backend <em>unreachable.</em>', 'The status endpoint did not answer');
+            ['mServices', 'mEvents', 'mLatency', 'mPipeline'].forEach(id => { $(id).textContent = 'n/a'; });
+            $('checkedAt').textContent = new Date().toLocaleTimeString();
+            $('sensorRows').innerHTML = '<li class="empty">Unavailable while the backend is down.</li>';
+            $('serviceRows').innerHTML = '<li class="empty">Unavailable while the backend is down.</li>';
         }
     }
+
+    setInterval(() => {
+        const s = Math.max(0, Math.round((next - Date.now()) / 1000));
+        $('nextAt').textContent = `in ${s} s`;
+    }, 1000);
+    $('checkNow').addEventListener('click', refresh);
     refresh();
     setInterval(refresh, 30000);
-})();
+});
 </script>
-<script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
-<script>AOS.init({ duration: 750, once: true, offset: 80 });</script>
+</main>
+
+<footer class="site-footer">
+    <div class="wrap">
+        <div class="foot-grid">
+            <div>
+                <a class="brand" href="index.html" aria-label="ShadowTrust home">
+                    <svg viewBox="0 0 28 28" fill="none" aria-hidden="true"><path d="M2.5 14c3-5.3 7-8 11.5-8s8.5 2.7 11.5 8c-3 5.3-7 8-11.5 8S5.5 19.3 2.5 14Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><circle cx="14" cy="14" r="4.2" fill="var(--st-brand)"/></svg>
+                    <span>ShadowTrust</span>
+                </a>
+                <p class="foot-blurb">Honeypots, detection, investigation and reporting in one self-hosted stack.</p>
+            </div>
+            <div><h4>Product</h4><ul><li><a href="features.html">Features</a></li><li><a href="architecture.html">Architecture</a></li><li><a href="usecases.html">Use cases</a></li></ul></div>
+            <div><h4>Learn</h4><ul><li><a href="docs.html">Documentation</a></li><li><a href="status.html">System status</a></li><li><a href="http://localhost:8000/docs" target="_blank" rel="noopener">API reference</a></li></ul></div>
+            <div><h4>Console</h4><ul><li><a href="login.html">Sign in</a></li><li><a href="register.html">Request access</a></li><li><a href="admin_login.html">Admin sign in</a></li></ul></div>
+        </div>
+        <div class="foot-base"><span>© 2026 ShadowTrust. Private repository.</span><a href="status.html">Check live system status <span class="arr">→</span></a></div>
+    </div>
+</footer>
+
+<script src="js/vendor/motion.js"></script>
+<script src="js/ribbon.js"></script>
+<script src="js/site.js"></script>
 </body>
 </html>
