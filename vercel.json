@@ -1,0 +1,7 @@
+{
+  "buildCommand": "SITE_URL=https://shadowtrust.vercel.app python3 scripts/build_site.py",
+  "outputDirectory": "dist-site",
+  "installCommand": "",
+  "framework": null,
+  "cleanUrls": true
+}
