@@ -415,8 +415,8 @@ def _title_for(ip: str, detections: List[Detection], max_event_risk: float) -> s
     if detections:
         names = sorted({d.rule_name for d in detections})
         head = names[0] if len(names) == 1 else f"{names[0]} (+{len(names) - 1} more)"
-        return f"{head} — {ip}"
-    return f"High-risk activity — {ip}"
+        return f"{head} · {ip}"
+    return f"High-risk activity · {ip}"
 
 
 def _merge_techniques(incident: Incident, new_objs: List[Dict[str, Any]]) -> None:

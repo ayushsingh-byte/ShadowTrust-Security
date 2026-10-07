@@ -567,3 +567,126 @@ async def get_geo_stats(db: AsyncSession = Depends(get_db)):
         "top_isp": top_isp,
         "markers": markers
     }
+
+
+# ── Attack flow (Overview diagram) ──────────────────────────────────────────
+FLOW_CACHE = {"ts": 0.0, "data": None}
+FLOW_CACHE_TTL_SECONDS = 20
+FLOW_TOP_SOURCES = 5
+FLOW_MAX_DETECTIONS = 5000
+
+
+def build_flow(source_rows, detection_rows, event_sensor, incident_status, status_counts):
+    """Pure aggregation for /dashboard/flow, kept apart from the queries so it can be checked.
+
+    source_rows:      [(source_ip, sensor, events)]
+    detection_rows:   [(attack_technique, attack_tactic, matched_event_ids, incident_id)]
+    event_sensor:     {event_id: sensor} for the first matched event of each detection
+    incident_status:  {incident_id: status}
+    status_counts:    [(status, cases)]
+    """
+    from collections import Counter
+
+    per_source, per_sensor = Counter(), Counter()
+    for ip, sensor, n in source_rows:
+        per_source[ip] += n
+        per_sensor[sensor] += n
+    top = [ip for ip, _ in per_source.most_common(FLOW_TOP_SOURCES)]
+    top_set = set(top)
+    others = len(per_source) - len(top)
+
+    source_sensor = Counter()
+    for ip, sensor, n in source_rows:
+        source_sensor[(ip if ip in top_set else "others", sensor)] += n
+
+    sensor_technique, technique_case = Counter(), Counter()
+    per_technique, tactic = Counter(), {}
+    for technique, tac, matched, incident_id in detection_rows:
+        if not technique:
+            continue
+        per_technique[technique] += 1
+        tactic.setdefault(technique, tac)
+        first = matched[0] if isinstance(matched, list) and matched else None
+        sensor = event_sensor.get(first)
+        if sensor:  # a detection whose first event is no longer stored is counted but not linked
+            sensor_technique[(sensor, technique)] += 1
+        status = incident_status.get(incident_id)
+        if status:
+            technique_case[(technique, status)] += 1
+
+    sources = [{"id": ip, "label": ip, "events": per_source[ip]} for ip in top]
+    if others > 0:
+        sources.append({
+            "id": "others",
+            "label": f"{others} other address{'es' if others != 1 else ''}",
+            "events": sum(n for ip, n in per_source.items() if ip not in top_set),
+        })
+    links = lambda c: [{"from": a, "to": b, "value": n} for (a, b), n in c.most_common()]
+    return {
+        "sources": sources,
+        "sensors": [{"id": s, "events": n} for s, n in per_sensor.most_common()],
+        "techniques": [{"id": t, "tactic": tactic.get(t), "detections": n} for t, n in per_technique.most_common()],
+        "cases": [{"id": s, "cases": n} for s, n in status_counts if s],
+        "links": {
+            "source_sensor": links(source_sensor),
+            "sensor_technique": links(sensor_technique),
+            "technique_case": links(technique_case),
+        },
+    }
+
+
+def _flow_selfcheck():
+    """python -m app.api.v1.endpoints.dashboard is not practical (imports the app), so this is
+    called from the endpoint's module by hand:  python -c "...; _flow_selfcheck()"."""
+    out = build_flow(
+        [("a", "cowrie", 5), ("b", "cowrie", 2), ("b", "dionaea", 4)] + [(f"x{i}", "cowrie", 1) for i in range(6)],
+        [("T1110", "Credential Access", ["e1", "e2"], "i1"), ("T1110", "Credential Access", ["e9"], "i2"),
+         ("T1059", "Execution", [], None), (None, None, ["e1"], "i1")],
+        {"e1": "cowrie"}, {"i1": "NEW", "i2": "RESOLVED"}, [("NEW", 1), ("RESOLVED", 1)],
+    )
+    assert [s["id"] for s in out["sources"]][:2] == ["b", "a"] and out["sources"][-1]["id"] == "others"
+    assert out["sources"][-1]["events"] == 3 and out["sources"][-1]["label"] == "3 other addresses"
+    assert {s["id"]: s["events"] for s in out["sensors"]} == {"cowrie": 13, "dionaea": 4}
+    assert sum(l["value"] for l in out["links"]["source_sensor"]) == 17
+    assert {t["id"]: t["detections"] for t in out["techniques"]} == {"T1110": 2, "T1059": 1}
+    assert out["links"]["sensor_technique"] == [{"from": "cowrie", "to": "T1110", "value": 1}]
+    assert sorted((l["to"], l["value"]) for l in out["links"]["technique_case"]) == [("NEW", 1), ("RESOLVED", 1)]
+    return "flow self-check ok"
+
+
+@router.get("/flow")
+async def get_attack_flow(db: AsyncSession = Depends(get_db)):
+    """Counts for the Overview flow diagram, all read straight from the database:
+    events per source address and sensor, which sensor's events matched which ATT&CK
+    technique (by each detection's first matched event), and the status of the cases
+    those detections were filed under."""
+    from app.models.all_models import NormalizedEventModel as E, Detection as D, Incident as I
+
+    now = time.time()
+    if FLOW_CACHE["data"] and now - FLOW_CACHE["ts"] < FLOW_CACHE_TTL_SECONDS:
+        return FLOW_CACHE["data"]
+
+    source_rows = (await db.execute(
+        select(E.source_ip, E.sensor, func.count()).group_by(E.source_ip, E.sensor)
+    )).all()
+    detection_rows = (await db.execute(
+        select(D.attack_technique, D.attack_tactic, D.matched_event_ids, D.incident_id)
+        .order_by(desc(D.created_at)).limit(FLOW_MAX_DETECTIONS)
+    )).all()
+
+    first_ids = list({m[0] for _, _, m, _ in detection_rows if isinstance(m, list) and m})
+    event_sensor = {}
+    for i in range(0, len(first_ids), 500):
+        rows = (await db.execute(select(E.event_id, E.sensor).where(E.event_id.in_(first_ids[i:i + 500])))).all()
+        event_sensor.update({eid: sensor for eid, sensor in rows})
+
+    incident_status = {iid: status for iid, status in (await db.execute(select(I.id, I.status))).all()}
+    status_counts = (await db.execute(select(I.status, func.count()).group_by(I.status))).all()
+
+    data = build_flow(
+        [tuple(r) for r in source_rows], [tuple(r) for r in detection_rows],
+        event_sensor, incident_status, [tuple(r) for r in status_counts],
+    )
+    data["generated_at"] = datetime.utcnow().isoformat() + "Z"
+    FLOW_CACHE.update(ts=now, data=data)
+    return data

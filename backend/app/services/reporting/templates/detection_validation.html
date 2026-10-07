@@ -1,68 +1,56 @@
 {% extends "report_base.html" %}
-{% from "_macros.html" import data_table, kpi_band as kpi_band_macro, bars %}
+{% from "_macros.html" import t, section, data_table, kpi_band as kpi_cards, bars %}
 
-{% block cover_kicker %}Control Testing{% endblock %}
-
-{% block accent %}
-:root { --accent:#0b6e8f; --accent-soft:#e6f3f7; --accent-ink:#08475c;
-        --cover-a:#051c24; --cover-b:#0a3a4b; --cover-c:#0b6e8f; }
-{% endblock %}
+{% block cover_kicker %}Control testing{% endblock %}
 
 {% block body %}
-<p class="lead">How well the detection engine catches the platform's own controlled attack scenarios, and the
-live inventory of detection rules actually firing in production.</p>
+<p class="lead">How well the detection engine catches the platform's own controlled attack scenarios, with the live
+inventory of detection rules that are firing in production.</p>
 
-{{ kpi_band_macro(kpi_band) }}
+{{ kpi_cards(kpi_band) }}
 
-<div class="h-bar"><section class="block loose">
-  <h2><span class="section-num">01</span>Scenario results</h2>
-  {{ data_table(["Scenario", "Result", "Detection rate", "ATT&CK coverage", "Expected sev.", "Actual sev.",
-       "Last run"], scen_rows, empty="No scenarios are defined.") }}
-</section></div>
+{% call section("01", "Scenario results", loose=true) %}
+  {{ data_table(["Scenario", "Result", "Detection rate", "ATT&CK coverage", "Expected severity", "Actual severity",
+       "Last run"], scen_rows, mono=[0], widths=[23, 12, 12, 13, 13, 12, 15], empty="No scenarios are defined.") }}
+{% endcall %}
 
-<div class="h-bar"><section class="block">
-  <h2><span class="section-num">02</span>Detection rate by scenario</h2>
+{% call section("02", "Detection rate by scenario") %}
   {{ bars(detect_bars, unit="") }}
-</section></div>
+{% endcall %}
 
-<div class="h-bar"><section class="block loose">
-  <h2><span class="section-num">03</span>Expected vs. actual detections</h2>
-  {{ data_table(["Scenario", "Expected detections", "Matched", "Missing"], exp_act_rows,
-       empty="No scenario runs to compare yet.") }}
-</section></div>
+{% call section("03", "Expected and actual detections", loose=true) %}
+  {{ data_table(["Scenario", "Expected detections", "Matched", "Missing"], exp_act_rows, mono=[0],
+       widths=[22, 34, 22, 22], empty="No scenario runs to compare yet.") }}
+{% endcall %}
 
-<div class="h-bar"><section class="block loose">
-  <h2><span class="section-num">04</span>ATT&amp;CK technique coverage</h2>
-  {{ data_table(["Technique", "Exercised by scenarios", "Coverage", "Passing scenario count"], tech_rows,
-       numcols=[3], empty="No ATT&CK techniques are mapped to scenarios.") }}
-</section></div>
+{% call section("04", "ATT&CK technique coverage", loose=true) %}
+  {{ data_table(["Technique", "Exercised by scenarios", "Coverage", "Passing scenarios"], tech_rows,
+       numcols=[3], mono=[0], widths=[14, 48, 16, 22], empty="No ATT&CK techniques are mapped to scenarios.") }}
+{% endcall %}
 
-<div class="h-bar"><section class="block loose">
-  <h2><span class="section-num">05</span>Live detection rule inventory</h2>
+{% call section("05", "Live detection rule inventory", loose=true) %}
   {{ data_table(["Rule ID", "Rule name", "Severity", "Technique", "Tactic", "Fires", "Last fired",
-       "Distinct IPs"], inv_rows, numcols=[5,7], empty="No detection rule has fired yet.",
-       note="Source: detections table, grouped by rule.") }}
-</section></div>
+       "Distinct IPs"], inv_rows, numcols=[5,7], mono=[0,3], widths=[12, 27, 10, 10, 15, 7, 12, 7],
+       empty="No detection rule has fired yet.", note="Source: detections table, grouped by rule.") }}
+{% endcall %}
 
-<div class="h-bar"><section class="block loose">
-  <h2><span class="section-num">06</span>Recent scenario runs</h2>
-  {{ data_table(["Scenario", "Mode", "Status", "Result", "Started", "Duration", "Severity seen"], run_rows,
-       empty="No scenario has been run yet.") }}
-</section></div>
+{% call section("06", "Recent scenario runs", loose=true) %}
+  {{ data_table(["Scenario", "Mode", "Status", "Result", "Started", "Duration", "Severity seen"], run_rows, mono=[0],
+       widths=[22, 11, 12, 12, 17, 11, 15], empty="No scenario has been run yet.") }}
+{% endcall %}
 
-<div class="h-bar"><section class="block">
-  <h2><span class="section-num">07</span>Gaps to close</h2>
+{% call section("07", "Gaps to close") %}
   <div class="split">
     <div>
-      <h4>Failing / partial scenarios</h4>
-      {% if failed_scenarios %}<ul class="tight">{% for s in failed_scenarios %}<li>{{ s }}</li>{% endfor %}</ul>
+      <h4>Failing or partial scenarios</h4>
+      {% if failed_scenarios %}<ul class="tight">{% for s in failed_scenarios %}<li>{{ t(s) }}</li>{% endfor %}</ul>
       {% else %}<div class="empty">No scenario is failing or partial.</div>{% endif %}
     </div>
     <div>
-      <h4>Never-run scenarios</h4>
-      {% if untested_scenarios %}<ul class="tight">{% for s in untested_scenarios %}<li>{{ s }}</li>{% endfor %}</ul>
+      <h4>Scenarios never run</h4>
+      {% if untested_scenarios %}<ul class="tight">{% for s in untested_scenarios %}<li>{{ t(s) }}</li>{% endfor %}</ul>
       {% else %}<div class="empty">Every defined scenario has been run at least once.</div>{% endif %}
     </div>
   </div>
-</section></div>
+{% endcall %}
 {% endblock %}

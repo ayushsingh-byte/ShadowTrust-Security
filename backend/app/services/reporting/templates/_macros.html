@@ -1,89 +1,255 @@
+{# Shared building blocks for every report template. #}
+
+{# Text as it should read in print: a lone dash placeholder becomes "n/a", a spaced dash
+   between two phrases becomes a middle dot. Data values are otherwise left untouched. #}
+{% macro t(v) -%}
+{%- if v is none or v == "" -%}n/a
+{%- else -%}
+  {%- set s = v|string -%}
+  {%- if s == "—" or s == "-" -%}n/a{%- else -%}{{ s|replace(" — ", " · ")|replace("—", "-") }}{%- endif -%}
+{%- endif -%}
+{%- endmacro %}
+
+{# The eye mark. #}
+{% macro mark() -%}
+<svg viewBox="0 0 28 28" fill="none"><path d="M2.5 14c3-5.3 7-8 11.5-8s8.5 2.7 11.5 8c-3 5.3-7 8-11.5 8S5.5 19.3 2.5 14Z" stroke="#061b31" stroke-width="2.2" stroke-linejoin="round"/><circle cx="14" cy="14" r="4.2" fill="#533afd"/></svg>
+{%- endmacro %}
+
 {% macro sev_pill(s) %}
-{%- set s = (s or "")|upper -%}
-{%- if s in ("CRITICAL","CRIT") %}<span class="pill crit">{{ s }}</span>
-{%- elif s == "HIGH" %}<span class="pill high">{{ s }}</span>
-{%- elif s in ("MEDIUM","MED") %}<span class="pill med">{{ s }}</span>
-{%- elif s in ("LOW","INFO") %}<span class="pill low">{{ s }}</span>
-{%- else %}<span class="pill low">{{ s or "—" }}</span>{%- endif %}
+{%- set u = (s or "")|string|upper -%}
+{%- if u in ("CRITICAL","CRIT") %}<span class="pill crit">Critical</span>
+{%- elif u == "HIGH" %}<span class="pill high">High</span>
+{%- elif u in ("MEDIUM","MED") %}<span class="pill med">Medium</span>
+{%- elif u == "LOW" %}<span class="pill low">Low</span>
+{%- elif u == "INFO" %}<span class="pill plain">Info</span>
+{%- elif u in ("", "—", "-") %}<span class="pill plain">n/a</span>
+{%- else %}<span class="pill plain">{{ u|replace("_", " ")|capitalize }}</span>{%- endif %}
 {% endmacro %}
 
 {% macro status_pill(s) %}
-{%- set s = (s or "")|lower -%}
-{%- if s == "met" %}<span class="pill ok">MET</span>
-{%- elif s == "partial" %}<span class="pill partial">PARTIAL</span>
-{%- elif s == "gap" %}<span class="pill gap">GAP</span>
-{%- elif s == "pass" %}<span class="pill pass">PASS</span>
-{%- elif s in ("fail","partial-fail") %}<span class="pill fail">{{ s|upper }}</span>
-{%- elif s in ("none","never") %}<span class="pill none">NEVER RUN</span>
-{%- else %}<span class="pill manual">{{ (s or "manual")|upper }}</span>{%- endif %}
+{%- set l = (s or "")|string|lower -%}
+{%- if l == "met" %}<span class="pill ok">Met</span>
+{%- elif l == "partial" %}<span class="pill partial">Partial</span>
+{%- elif l == "gap" %}<span class="pill gap">Gap</span>
+{%- elif l == "pass" %}<span class="pill pass">Pass</span>
+{%- elif l in ("fail","partial-fail") %}<span class="pill fail">{{ l|replace("-", " ")|capitalize }}</span>
+{%- elif l in ("none","never") %}<span class="pill none">Never run</span>
+{%- elif l in ("", "—", "-") %}<span class="pill manual">Manual</span>
+{%- else %}<span class="pill manual">{{ l|replace("_", " ")|capitalize }}</span>{%- endif %}
 {% endmacro %}
 
-{% macro cell(c) %}
+{% macro cell(c, num=false) %}
 {%- if c is mapping and c.pill == "sev" %}{{ sev_pill(c.text) }}
 {%- elif c is mapping and c.pill == "status" %}{{ status_pill(c.text) }}
-{%- elif c is mapping %}{{ c.text }}
-{%- else %}{{ c }}{% endif -%}
+{%- elif c is mapping %}{{ t(c.text) }}
+{%- elif c is string and c in ("CRITICAL", "HIGH", "MEDIUM", "LOW") %}{{ sev_pill(c) }}
+{%- elif num and c is number and c is not boolean %}{{ "{:,}".format(c) }}
+{%- else %}{{ t(c) }}{% endif -%}
 {% endmacro %}
 
-{# generic data table with an honest empty-state #}
-{% macro data_table(columns, rows, empty="No records in the selected window.", cls="data", caption=None, note=None, numcols=[]) %}
+{# A numbered section. Short sections stay on one page; pass loose=true for long tables. #}
+{% macro section(num, title, loose=false, intro=None, tight=false) %}
+<section class="sec{{ ' tight' if tight else '' }}">
+  <div class="sec-head"><h2><span class="num">{{ num }}</span>{{ title }}</h2></div>
+  {% if intro %}<p class="sec-intro">{{ intro }}</p>{% endif %}
+  {{ caller() }}
+</section>
+{% endmacro %}
+
+{# Data table with an honest empty state.
+   widths  : column widths in percent (turns on fixed layout, so nothing overflows the page)
+   numcols : right-aligned numeric columns     mono : columns set in the code face
+   skip    : columns present in the data but not printed #}
+{% macro data_table(columns, rows, empty="No records in the selected window.", cls="", caption=None, note=None, numcols=[], widths=None, mono=[], skip=[]) %}
   {% if caption %}<h4>{{ caption }}</h4>{% endif %}
   {% if rows and rows|length %}
-  <table class="{{ cls }}">
-    <thead><tr>{% for c in columns %}<th class="{{ 'num' if loop.index0 in numcols else '' }}">{{ c }}</th>{% endfor %}</tr></thead>
+  <table class="data{{ ' fixed' if widths else '' }} {{ cls }}">
+    {% if widths %}<colgroup>{% for w in widths %}<col style="width:{{ w }}%">{% endfor %}</colgroup>{% endif %}
+    <thead><tr>{% for c in columns %}{% if loop.index0 not in skip %}<th class="{{ 'num' if loop.index0 in numcols else '' }}">{{ c }}</th>{% endif %}{% endfor %}</tr></thead>
     <tbody>
     {% for row in rows %}
-      <tr>{% for cval in row %}<td class="{{ 'num' if loop.index0 in numcols else '' }}">{{ cell(cval) }}</td>{% endfor %}</tr>
+      <tr>{% for cval in row %}{% if loop.index0 not in skip %}<td class="{{ 'num' if loop.index0 in numcols else '' }}{{ ' mono' if loop.index0 in mono else '' }}">{{ cell(cval, num=(loop.index0 in numcols)) }}</td>{% endif %}{% endfor %}</tr>
     {% endfor %}
     </tbody>
   </table>
-  {% if note %}<p class="evidence-src">{{ note }}</p>{% endif %}
+  {% if note %}<p class="tbl-note">{{ t(note) }}</p>{% endif %}
   {% else %}
   <div class="empty">{{ empty }}</div>
   {% endif %}
 {% endmacro %}
 
-{% macro kpi_grid(items) %}
-<div class="kpis">
-{% for it in items %}<div class="kpi"><div class="v">{{ it.value }}</div><div class="l">{{ it.label }}</div>{% if it.sub %}<div class="s">{{ it.sub }}</div>{% endif %}</div>{% endfor %}
-</div>
-{% endmacro %}
+{# Words the data layer sends in capitals read better in sentence case on a card. #}
+{% macro kpi_value(v) -%}
+{%- set s = v|string -%}
+{%- if s in ("CRITICAL","HIGH","MEDIUM","LOW","INFO","NEW","OPEN","RESOLVED","CLOSED","TRIAGING","INVESTIGATING","CONTAINED","FALSE_POSITIVE","ACTIVE","PASS","FAIL","NONE","UNKNOWN","CLEAN","MALICIOUS","SUSPICIOUS","INFECTED","BLOCKED","LOGGED") -%}
+{{ s|replace("_", " ")|capitalize }}
+{%- elif v is number and v is not boolean -%}{{ "{:,}".format(v) }}
+{%- else -%}{{ t(v) }}{%- endif -%}
+{%- endmacro %}
 
-{% macro kpi_band(items) %}
-<div class="kpi-band">
-{% for it in items %}<div class="cell"><div class="v">{{ it.value }}</div><div class="l">{{ it.label }}</div>{% if it.sub %}<div class="s">{{ it.sub }}</div>{% endif %}</div>{% endfor %}
-</div>
-{% endmacro %}
-
-{# horizontal CSS bar chart. items = list of {label,value,pct}  #}
-{% macro bars(items, unit="") %}
-{% if items and items|length %}
-<div class="bars">
-{% for it in items %}
-  <div class="row">
-    <div class="lab">{{ it.label }}</div>
-    <div class="track"><div class="fill" style="width:{{ it.pct if it.pct is not none else 0 }}%"></div></div>
-    <div class="val">{{ it.value }}{{ unit }}</div>
+{# Equal cards on one grid. Five or fewer sit on one row; more wrap to rows of three or four. #}
+{% macro kpi_band(items, cols=None) %}
+{% set n = items|length %}
+{% if n %}
+{% set c = cols or (n if n <= 5 else (3 if n in (6, 9) else 4)) %}
+{% set blanks = (c - (n % c)) % c %}
+<div class="kpi-card">
+  <div class="rb-line"></div>
+  <div class="kpis" style="grid-template-columns: repeat({{ c }}, 1fr)">
+  {% for it in items %}
+    {% set s = it.value|string %}
+    {% set size = '' if s|length <= 9 else ('md' if s|length <= 16 else 'sm') %}
+    {% set tone = 'sev-crit' if s == 'CRITICAL' else ('sev-high' if s == 'HIGH' else ('sev-med' if s == 'MEDIUM' else '')) %}
+    <div class="kpi"><div class="l">{{ t(it.label) }}</div><div class="v {{ size }} {{ tone }}">{{ kpi_value(it.value) }}</div>{% if it.sub %}<div class="s">{{ t(it.sub) }}</div>{% endif %}</div>
+  {% endfor %}
+  {% for _ in range(blanks) %}<div class="kpi"></div>{% endfor %}
   </div>
-{% endfor %}
 </div>
+{% endif %}
+{% endmacro %}
+
+{# Horizontal bars. items = list of {label, value, pct}; tone picks the fill. #}
+{% macro bars(items, unit="", tone="", cls="") %}
+{% if items and items|length %}
+<table class="bars {{ cls }}">
+{% for it in items %}
+  <tr>
+    <td class="lab">{{ t(it.label) }}</td>
+    <td><div class="track"><div class="fill {{ it.tone or tone }}" style="width:{{ it.pct if it.pct is not none else 0 }}%"></div></div></td>
+    <td class="val">{{ "{:,}".format(it.value) if it.value is number else it.value }}{{ unit }}{% if it.share is defined %} · {{ it.share }}%{% endif %}</td>
+  </tr>
+{% endfor %}
+</table>
 {% else %}<div class="empty">No data to chart for this window.</div>{% endif %}
 {% endmacro %}
 
+{# This window against the previous one. More activity is shown as a rise, in the alert colour. #}
 {% macro trend_row(items) %}
-<div class="trend">
+<div class="trend" style="grid-template-columns: repeat({{ items|length if items|length <= 4 else 4 }}, 1fr)">
 {% for it in items %}
+  {% set cur = it.current or 0 %}
+  {% set prev = it.previous or 0 %}
+  {% set diff = cur - prev %}
   <div class="t">
-    <div class="l">{{ it.label }}</div>
-    <div class="v">{{ it.current }}</div>
-    <div class="d {{ it.dir }}">{{ it.delta }} vs prev ({{ it.previous }})</div>
+    <div class="l">{{ t(it.label) }}</div>
+    <div class="v">{{ "{:,}".format(cur) if cur is number else cur }}</div>
+    <div class="d {{ it.dir }}">
+      {%- if diff > 0 %}Up {{ "{:,}".format(diff) }}{% elif diff < 0 %}Down {{ "{:,}".format(-diff) }}{% else %}No change{% endif %}
+      {%- if prev and diff %} ({{ "%+.0f"|format(100 * diff / prev) }}%){% endif -%}
+    </div>
+    <div class="p">Previous window: {{ "{:,}".format(prev) if prev is number else prev }}</div>
   </div>
 {% endfor %}
 </div>
 {% endmacro %}
 
 {% macro kv(pairs) %}
-<dl class="kv">
-{% for k, v in pairs %}<div><dt>{{ k }}</dt><dd>{{ v }}</dd></div>{% endfor %}
-</dl>
+{% if pairs and pairs|length %}
+<table class="kv">
+{% for k, v in pairs %}
+  {# a long unbroken value is a hash or an identifier: set it in the code face so it fits on one line #}
+  {% set vs = v|string %}
+  <tr><td class="k">{{ t(k) }}</td><td class="v{{ ' mono' if (vs|length >= 32 and ' ' not in vs) else '' }}">{{ t(v) }}</td></tr>
+{% endfor %}
+</table>
+{% else %}<div class="empty">Nothing recorded.</div>{% endif %}
 {% endmacro %}
+
+{# Readiness ring. pct is 0 to 100. #}
+{% macro ring(pct, caption="Readiness", foot=None) %}
+{% set p = [[pct|float, 0]|max, 100]|min %}
+{% set c = 301.59 %}
+{% set colour = "#00b261" if p >= 80 else ("#f9b900" if p >= 55 else "#ea2261") %}
+<div class="ring-card">
+  <div class="ring">
+    <svg viewBox="0 0 120 120">
+      <circle cx="60" cy="60" r="48" fill="none" stroke="#edf0fb" stroke-width="9"/>
+      <circle cx="60" cy="60" r="48" fill="none" stroke="{{ colour }}" stroke-width="9" stroke-linecap="round"
+              stroke-dasharray="{{ '%.1f'|format(p * c / 100) }} {{ c }}" transform="rotate(-90 60 60)"/>
+    </svg>
+    <div class="pct">{{ '%.1f'|format(p) }}%</div>
+    <div class="cap">{{ caption }}</div>
+  </div>
+  {% if foot %}<div class="foot">{{ foot }}</div>{% endif %}
+</div>
+{% endmacro %}
+
+{# ---- charts. Geometry comes from charts.py (chart_donut, chart_line, chart_bubbles). ---- #}
+
+{# Ring of shares with its legend. d = chart_donut([(label, value, colour), ...]) #}
+{% macro donut_chart(d, caption="") %}
+{% if d and d.segments %}
+<table class="donut-wrap"><tr>
+  <td class="donut-cell">
+    <div class="donut">
+      <svg viewBox="0 0 100 100">
+        <circle cx="50" cy="50" r="{{ d.radius }}" fill="none" stroke="#edf0fb" stroke-width="10"/>
+        {% for sg in d.segments %}
+        <circle cx="50" cy="50" r="{{ d.radius }}" fill="none" stroke="{{ sg.colour }}" stroke-width="10"
+                stroke-dasharray="{{ sg.dash }}" stroke-dashoffset="{{ sg.offset }}" transform="rotate(-90 50 50)"/>
+        {% endfor %}
+      </svg>
+      <div class="donut-num">{{ "{:,}".format(d.total) }}</div>
+      <div class="donut-cap">{{ caption }}</div>
+    </div>
+  </td>
+  <td>
+    <table class="legend">
+      {% for sg in d.segments %}
+      <tr><td class="sw"><i style="background:{{ sg.colour }}"></i></td><td>{{ t(sg.label) }}</td>
+          <td class="n">{{ "{:,}".format(sg.value) }}</td><td class="n pc">{{ sg.pct }}%</td></tr>
+      {% endfor %}
+    </table>
+  </td>
+</tr></table>
+{% else %}<div class="empty">No data to chart for this window.</div>{% endif %}
+{% endmacro %}
+
+{# Line over time. c = chart_line([(label, value), ...]); nothing is drawn for fewer than two points. #}
+{% macro line_chart(c, note=None) %}
+{% if c %}
+<div class="linechart">
+  <svg viewBox="0 0 {{ c.width }} {{ c.height }}">
+    <defs><linearGradient id="lcfill" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#533afd" stop-opacity="0.2"/><stop offset="1" stop-color="#533afd" stop-opacity="0"/>
+    </linearGradient></defs>
+    {% for tk in c.ticks %}
+    <line x1="{{ c.left }}" x2="{{ c.right }}" y1="{{ tk.y }}" y2="{{ tk.y }}" stroke="#e5edf5" stroke-width="0.6"/>
+    <text x="{{ c.left - 5 }}" y="{{ tk.y + 2.4 }}" text-anchor="end" font-family="Inter" font-size="6.6" fill="#7d8ba4">{{ tk.label }}</text>
+    {% endfor %}
+    <path d="{{ c.area }}" fill="url(#lcfill)"/>
+    <path d="{{ c.path }}" fill="none" stroke="#533afd" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+    <circle cx="{{ c.last.x }}" cy="{{ c.last.y }}" r="2.3" fill="#533afd" stroke="#ffffff" stroke-width="1"/>
+    {% for lb in c.labels %}
+    <text x="{{ lb.x }}" y="{{ c.height - 5 }}" text-anchor="middle" font-family="Inter" font-size="6.6" fill="#7d8ba4">{{ lb.text }}</text>
+    {% endfor %}
+  </svg>
+  {% if note %}<p class="tbl-note">{{ note }}</p>{% endif %}
+</div>
+{% endif %}
+{% endmacro %}
+
+{# Dotted world map with one bubble per source area. points = [{lat, lon, events}] #}
+{% macro world_map(points, note=None) %}
+{% set bs = chart_bubbles(points) %}
+{% if bs %}
+<div class="worldmap">
+  <svg viewBox="0 4 360 148">
+    {% include "_world.svg" %}
+    {% for b in bs %}
+    <circle cx="{{ b.x }}" cy="{{ b.y }}" r="{{ b.r }}" fill="#ea2261" fill-opacity="0.26" stroke="#ea2261" stroke-width="0.5"/>
+    <circle cx="{{ b.x }}" cy="{{ b.y }}" r="0.9" fill="#ea2261"/>
+    {% endfor %}
+  </svg>
+  <p class="tbl-note">{{ bs|length }} source {{ "area" if bs|length == 1 else "areas" }} plotted. Bubble area follows event count.{% if note %} {{ note }}{% endif %}</p>
+</div>
+{% endif %}
+{% endmacro %}
+
+{# One bar split into parts. parts = [(css class, value), ...] #}
+{% macro stack_bar(parts) %}
+{% set ns = namespace(total=0) %}
+{% for cls, v in parts %}{% set ns.total = ns.total + (v|float) %}{% endfor %}
+<div class="track seg">{% for cls, v in parts %}{% if ns.total and v|float > 0 %}<div class="s {{ cls }}" style="width:{{ "%.2f"|format(100 * (v|float) / ns.total) }}%"></div>{% endif %}{% endfor %}</div>
+{% endmacro %}
+

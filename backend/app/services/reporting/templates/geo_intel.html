@@ -1,53 +1,46 @@
 {% extends "report_base.html" %}
-{% from "_macros.html" import data_table, kpi_band as kpi_band_macro, bars %}
+{% from "_macros.html" import t, section, data_table, kpi_band as kpi_cards, bars, world_map %}
 
-{% block cover_kicker %}Threat Intelligence{% endblock %}
-
-{% block accent %}
-:root { --accent:#0f6e63; --accent-soft:#e5f3f0; --accent-ink:#0a4842;
-        --cover-a:#08201c; --cover-b:#0d3a32; --cover-c:#0f6e63; }
-{% endblock %}
+{% block cover_kicker %}Threat intelligence{% endblock %}
 
 {% block body %}
-<p class="lead">Where honeypot traffic is coming from — resolved by country and network operator — for the
-window on the cover. Geolocation is queried live from ip-api.com per unique source address.</p>
+<p class="lead">Where honeypot traffic comes from, by country and network operator, for the period on the cover.
+Geolocation is looked up live from ip-api.com for each unique source address.</p>
 
-{{ kpi_band_macro(kpi_band) }}
+{{ kpi_cards(kpi_band) }}
 
 {% if not geo_resolved %}
-<div class="note">Geolocation lookups did not resolve for this window (offline, rate-limited, or no external
-sources present) — country / ASN breakdowns below may be empty even though raw source rows are listed.</div>
+<div class="note">Geolocation lookups did not resolve for this window (offline, rate limited, or no external sources).
+Country and ASN breakdowns below may be empty even though raw source rows are listed.</div>
 {% endif %}
 
-<div class="h-bar"><section class="block">
-  <h2><span class="section-num">01</span>Top countries by events</h2>
+{% call section("01", "Where the traffic comes from") %}
+  {{ world_map(map_points or []) }}
+  <h4>Top countries by events</h4>
   {{ bars(country_bars) }}
-  {{ data_table(["", "Country", "Code", "Events", "IPs", "Data transferred"], country_rows,
-       numcols=[3,4], empty="No external source resolved to a country in this window.") }}
-</section></div>
+  {# the first data column is a flag emoji, which print fonts cannot draw, so it is not printed #}
+  {{ data_table(["", "Country", "Code", "Events", "IPs", "Data transferred"], country_rows, skip=[0],
+       numcols=[3,4,5], mono=[2], widths=[38, 12, 16, 12, 22], empty="No external source resolved to a country in this window.") }}
+{% endcall %}
 
-<div class="h-bar"><section class="block">
-  <h2><span class="section-num">02</span>Networks / ISPs</h2>
-  {{ data_table(["ASN", "ISP / Organisation", "Events", "IPs", "Source IPs"], asn_rows,
-       numcols=[2,3], empty="No ASN/ISP data resolved for this window.") }}
-</section></div>
+{% call section("02", "Networks and ISPs", loose=true) %}
+  {{ data_table(["ASN", "ISP or organisation", "Events", "IPs", "Source IPs"], asn_rows,
+       numcols=[2,3], mono=[0,4], widths=[12, 32, 10, 7, 39], empty="No ASN or ISP data resolved for this window.") }}
+{% endcall %}
 
-<div class="h-bar"><section class="block loose">
-  <h2><span class="section-num">03</span>External source IPs</h2>
+{% call section("03", "External source IPs", loose=true) %}
   {{ data_table(["IP", "Country", "ISP", "Events", "Sessions", "Ports", "First seen", "Last seen"], ip_rows,
-       numcols=[3,4,5], empty="No external source activity in this window.",
-       note="Source: raw_events grouped by attacker_ip; geolocation via ip-api.com.") }}
-</section></div>
+       numcols=[3,4,5], mono=[0], widths=[17, 13, 19, 8, 9, 6, 14, 14], empty="No external source activity in this window.",
+       note="Source: raw_events grouped by attacker_ip; geolocation from ip-api.com.") }}
+{% endcall %}
 
-<div class="h-bar"><section class="block">
-  <h2><span class="section-num">04</span>Internal / private source addresses</h2>
+{% call section("04", "Internal and private source addresses") %}
   {{ data_table(["IP (internal)", "Events", "Sessions", "Ports", "Sensors", "First seen", "Last seen"], internal_rows,
-       numcols=[1,2,3,4], empty="No internal-range source addresses observed in this window.") }}
-</section></div>
+       numcols=[1,2,3,4], mono=[0], widths=[19, 10, 11, 9, 11, 20, 20], empty="No internal-range source addresses observed in this window.") }}
+{% endcall %}
 
-<div class="h-bar"><section class="block">
-  <h2><span class="section-num">05</span>Non-IP identifiers</h2>
+{% call section("05", "Non-IP identifiers") %}
   {{ data_table(["Identifier", "Events", "Sessions", "Ports", "First seen", "Last seen"], other_rows,
-       numcols=[1,2,3], empty="No non-IP source identifiers in this window.") }}
-</section></div>
+       numcols=[1,2,3], mono=[0], widths=[32, 10, 11, 9, 19, 19], empty="No non-IP source identifiers in this window.") }}
+{% endcall %}
 {% endblock %}

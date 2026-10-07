@@ -1,83 +1,70 @@
 {% extends "report_base.html" %}
-{% from "_macros.html" import data_table, kpi_band as kpi_band_macro, bars, trend_row %}
+{% from "_macros.html" import t, section, data_table, kpi_band as kpi_cards, bars, trend_row, donut_chart, line_chart %}
 
-{% block cover_kicker %}Leadership Briefing{% endblock %}
-
-{% block accent %}
-:root { --accent:#1f4e8c; --accent-soft:#e8eef7; --accent-ink:#12365f;
-        --cover-a:#0a1a2e; --cover-b:#123259; --cover-c:#1f4e8c; }
-.rt-executive_summary .kpi-band { border-radius:0; }
-.rt-executive_summary section.block { margin-bottom:12pt; }
-{% endblock %}
+{% block cover_kicker %}Leadership briefing{% endblock %}
 
 {% block body %}
-<p class="lead">A window-scoped snapshot of honeypot activity, detection output and sensor health for
-platform leadership. Every figure is queried live from the SOC datastore for the period on the cover.</p>
+<p class="lead">A snapshot of honeypot activity, detection output and sensor health for the period on the cover.
+Every figure is queried live from the SOC datastore.</p>
 
-{{ kpi_band_macro(kpi_band) }}
+{{ kpi_cards(kpi_band) }}
 
-<div class="h-bar"><section class="block loose">
-  <h2><span class="section-num">01</span>Situation narrative</h2>
-  {% for p in narrative %}<p>{{ p }}</p>{% endfor %}
-</section></div>
+{% call section("01", "Situation narrative", loose=true) %}
+  <div class="prose">{% for p in narrative %}<p>{{ t(p) }}</p>{% endfor %}</div>
+{% endcall %}
 
-{% if trend %}
-<div class="h-bar"><section class="block">
-  <h2><span class="section-num">02</span>This window vs. previous</h2>
-  {{ trend_row(trend) }}
-</section></div>
+{% set per_day = chart_line(daily_events) if daily_events else {} %}
+{% if trend or per_day %}
+{% call section("02", "This window against the previous one", tight=true) %}
+  {% if trend %}{{ trend_row(trend) }}{% endif %}
+  {% if per_day %}
+  <h4>Sensor events per day</h4>
+  {{ line_chart(per_day, note="Busiest day: " ~ per_day.peak[0] ~ " with " ~ "{:,}".format(per_day.peak[1]|int) ~ " events. Days without events count as zero.") }}
+  {% endif %}
+{% endcall %}
 {% endif %}
 
-<div class="h-bar"><section class="block">
-  <h2><span class="section-num">03</span>Severity &amp; tactic breakdown</h2>
+{% call section("03", "Severity and tactic breakdown") %}
   <div class="split">
     <div>
       <h4>Events by severity</h4>
-      {{ bars(severity_breakdown|map('dictsort')|list and severity_breakdown|selectattr('count')|list) if false }}
       {% if severity_breakdown %}
-      <div class="bars">
-        {% for s in severity_breakdown %}
-        <div class="row"><div class="lab">{{ s.label }}</div>
-          <div class="track"><div class="fill" style="width:{{ s.pct }}%"></div></div>
-          <div class="val">{{ s.count }} ({{ s.pct }}%)</div></div>
-        {% endfor %}
-      </div>
+      {% set tone = {"CRITICAL": "#ea2261", "HIGH": "#ff6118", "MEDIUM": "#f9b900", "LOW": "#4a8cff", "INFO": "#95a4ba"} %}
+      {% set ring = namespace(items=[]) %}
+      {% for sv in severity_breakdown %}{% set ring.items = ring.items + [(sv.label|capitalize, sv.count, tone.get(sv.label|upper, "#95a4ba"))] %}{% endfor %}
+      {{ donut_chart(chart_donut(ring.items), "events") }}
       {% else %}<div class="empty">No classified events in this window.</div>{% endif %}
     </div>
     <div>
       <h4>Detections by tactic</h4>
-      {{ bars(tactic_bars) }}
+      {{ bars(tactic_bars, cls="wide-lab") }}
     </div>
   </div>
-  {{ data_table(["Severity","Detections"], detection_sev_rows, caption="Detection engine output by severity",
-       empty="No detections fired in this window.") }}
-</section></div>
+  {{ data_table(["Severity", "Detections"], detection_sev_rows, caption="Detection engine output by severity",
+       numcols=[1], widths=[70, 30], empty="No detections fired in this window.") }}
+{% endcall %}
 
-<div class="h-bar"><section class="block loose">
-  <h2><span class="section-num">04</span>Top threat sources</h2>
+{% call section("04", "Top threat sources", loose=true) %}
   {{ data_table(
-       ["Source IP","Events","Sensors","Ports","Detections","Auth OK","First seen","Last seen"],
-       top_threats_rows, numcols=[1,2,3,4,5],
+       ["Source IP", "Events", "Sensors", "Ports", "Detections", "Auth OK", "First seen", "Last seen"],
+       top_threats_rows, numcols=[1,2,3,4,5], mono=[0], widths=[21, 10, 9, 8, 11, 9, 16, 16],
        empty="No source activity in this window.",
        note="Source: normalized_events grouped by source_ip; detections joined from the detections table.") }}
-</section></div>
+{% endcall %}
 
-<div class="h-bar"><section class="block">
-  <h2><span class="section-num">05</span>Targeted services</h2>
-  {{ data_table(["Port","Service","Events"], port_rows, numcols=[2],
+{% call section("05", "Targeted services") %}
+  {{ data_table(["Port", "Service", "Events"], port_rows, numcols=[2], mono=[0], widths=[18, 52, 30],
        empty="No port telemetry in this window.") }}
-</section></div>
+{% endcall %}
 
-<div class="h-bar"><section class="block">
-  <h2><span class="section-num">06</span>Sensor health</h2>
-  {{ data_table(["Sensor","Events","Last event","State"], sensor_health_rows, numcols=[1],
+{% call section("06", "Sensor health") %}
+  {{ data_table(["Sensor", "Events", "Last event", "State"], sensor_health_rows, numcols=[1], widths=[30, 18, 32, 20],
        empty="No sensor reported telemetry in this window.",
-       note="State = PARTIAL when a sensor has been silent for >1h relative to the newest event.") }}
-</section></div>
+       note="State is Partial when a sensor has been silent for more than one hour relative to the newest event.") }}
+{% endcall %}
 
-<div class="h-bar"><section class="block loose">
-  <h2><span class="section-num">07</span>Open &amp; highest-risk incidents</h2>
-  {{ data_table(["Key","Title","Severity","Status","Risk","First seen"], incident_rows, numcols=[4],
-       empty="No incidents on record.") }}
-</section></div>
+{% call section("07", "Open and highest-risk incidents", loose=true) %}
+  {{ data_table(["Key", "Title", "Severity", "Status", "Risk", "First seen"], incident_rows, numcols=[4], mono=[0],
+       widths=[13, 40, 11, 14, 7, 15], empty="No incidents on record.") }}
+{% endcall %}
 {% endblock %}

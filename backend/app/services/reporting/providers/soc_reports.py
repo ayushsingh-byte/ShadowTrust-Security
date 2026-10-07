@@ -171,6 +171,22 @@ async def executive_summary(db, params, user) -> Dict[str, Any]:
         narrative.append(f"Busiest sensor: {busiest[0]} ({busiest[1]:,} events). "
                          f"{len(sh)} sensor(s) reported telemetry in the window.")
 
+    # events per calendar day in the window, for the trend line (days with no events count as zero)
+    day_rows = (await db.execute(
+        select(func.date(NE.timestamp), func.count(NE.event_id))
+        .where(_win(NE.timestamp, start, end)).group_by(func.date(NE.timestamp))
+    )).all()
+    per_day = {str(d)[:10]: int(c) for d, c in day_rows if d}
+    daily_events: List[list] = []
+    if per_day:
+        from datetime import date, timedelta
+        first = (start.date() if start else date.fromisoformat(min(per_day)))
+        last = end.date()
+        span = (last - first).days
+        if 0 < span <= 400:
+            daily_events = [[(first + timedelta(days=i)).strftime("%m-%d"),
+                             per_day.get((first + timedelta(days=i)).isoformat(), 0)] for i in range(span + 1)]
+
     return {
         "title": "SOC Executive Summary",
         "subject": "Global — all sensors",
@@ -186,6 +202,7 @@ async def executive_summary(db, params, user) -> Dict[str, Any]:
         ],
         "narrative": narrative,
         "severity_breakdown": severity_breakdown,
+        "daily_events": daily_events,
         "detection_sev_rows": detection_sev,
         "tactic_bars": tactic_bars,
         "trend": [
@@ -234,6 +251,7 @@ async def geo_intel(db, params, user) -> Dict[str, Any]:
     countries: Dict[str, dict] = defaultdict(lambda: {"events": 0, "ips": set(), "bytes": 0, "code": "UN"})
     asns: Dict[str, dict] = defaultdict(lambda: {"events": 0, "ips": set(), "asn": "N/A"})
     ip_rows: List[list] = []
+    map_points: List[dict] = []
     for r in ext:
         base = r.attacker_ip.split(":")[0]
         g = geo_map.get(base, {})
@@ -250,6 +268,8 @@ async def geo_intel(db, params, user) -> Dict[str, Any]:
             base, g.get("code", "—"), g.get("isp", "—"), r.hits, r.sessions, r.ports,
             fmt_ts(r.first), fmt_ts(r.last),
         ])
+        if g.get("lat") or g.get("lon"):          # 0.0 / 0.0 and None mean "not resolved"
+            map_points.append({"lat": g.get("lat"), "lon": g.get("lon"), "events": r.hits})
 
     country_rows = sorted(
         [[get_flag_emoji(d["code"]), c, d["code"], d["events"], len(d["ips"]),
@@ -281,6 +301,7 @@ async def geo_intel(db, params, user) -> Dict[str, Any]:
             kpi("Non-IP identifiers", len(other)),
         ],
         "geo_resolved": bool(geo_map),
+        "map_points": map_points,
         "country_rows": country_rows,
         "asn_rows": asn_rows,
         "country_bars": country_bars,
@@ -515,7 +536,8 @@ async def incident_report(db, params, user) -> Dict[str, Any]:
         fmt_ts(d.first_event_at), f"{(d.confidence or 0) * 100:.0f}%", clip(d.reason, 70),
     ] for d in dets]
     timeline_rows = [[
-        e.get("ts", "—"), e.get("source", "—"), e.get("event_type", "—"),
+        # build_timeline() emits "timestamp"; reading "ts" left this column empty in every report
+        fmt_ts(e.get("timestamp") or e.get("ts"), "%Y-%m-%d %H:%M:%S"), e.get("source", "—"), e.get("event_type", "—"),
         sev(e.get("severity", "")), clip(e.get("reason", ""), 66),
     ] for e in timeline[:70]]
     ev_rows = [[

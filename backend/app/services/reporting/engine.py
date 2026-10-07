@@ -20,6 +20,8 @@ from typing import Any, Dict
 
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
+from . import charts
+
 _BASE = Path(__file__).parent
 _TEMPLATES = _BASE / "templates"
 
@@ -60,6 +62,10 @@ def _fmt_bytes(n: Any) -> str:
 
 _env.filters["dt"] = _fmt_dt
 _env.filters["bytes"] = _fmt_bytes
+# chart geometry (charts.py): templates call these and draw the result as inline SVG
+_env.globals["chart_donut"] = charts.donut
+_env.globals["chart_line"] = charts.line
+_env.globals["chart_bubbles"] = charts.bubbles
 
 
 def slugify(text: str) -> str:

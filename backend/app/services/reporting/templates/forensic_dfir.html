@@ -1,84 +1,70 @@
 {% extends "report_base.html" %}
-{% from "_macros.html" import data_table, kpi_band as kpi_band_macro, kv %}
+{% from "_macros.html" import t, section, data_table, kpi_band as kpi_cards, kv %}
 
-{% block cover_kicker %}Digital Forensics{% endblock %}
-
-{% block accent %}
-:root { --accent:#5b21a6; --accent-soft:#f0eafb; --accent-ink:#3b1470;
-        --cover-a:#150a26; --cover-b:#2e1152; --cover-c:#5b21a6; }
-{% endblock %}
+{% block cover_kicker %}Digital forensics{% endblock %}
 
 {% block body %}
 {% if auto_selected %}
-<div class="note">No specific source IP was requested — this report profiles the highest-activity attacker
-session on record. Pass <code>source_ip</code> to target a specific subject.</div>
+<div class="note">No specific source IP was requested. This report profiles the highest-activity attacker session on
+record. Pass <code>source_ip</code> to target a specific subject.</div>
 {% endif %}
 
-{{ kpi_band_macro(kpi_band) }}
+{{ kpi_cards(kpi_band) }}
 
-<div class="h-bar"><section class="block loose">
-  <h2><span class="section-num">01</span>Behavioural assessment</h2>
-  {% for p in assessment %}<p>{{ p }}</p>{% endfor %}
-</section></div>
+{% call section("01", "Behavioural assessment", loose=true) %}
+  <div class="prose">{% for p in assessment %}<p>{{ t(p) }}</p>{% endfor %}</div>
+{% endcall %}
 
-<div class="h-bar"><section class="block">
-  <h2><span class="section-num">02</span>Subject profile</h2>
+{% call section("02", "Subject profile") %}
   <div class="split">
     <div>{{ kv(subj_kv) }}</div>
-    <div>{{ data_table(["Trait", "Value"], traits_rows, empty="No behavioural traits recorded.") }}</div>
+    <div>{{ data_table(["Trait", "Value"], traits_rows, widths=[50, 50], empty="No behavioural traits recorded.") }}</div>
   </div>
-</section></div>
+{% endcall %}
 
-<div class="h-bar"><section class="block loose">
-  <h2><span class="section-num">03</span>Attacker sessions</h2>
+{% call section("03", "Attacker sessions", loose=true) %}
   {{ data_table(["First seen", "Last seen", "Attacker IP", "Country", "Events", "Risk"], session_rows,
-       numcols=[4], empty="No recorded sessions for this subject.") }}
-</section></div>
+       numcols=[4], mono=[2], widths=[19, 19, 20, 18, 12, 12], empty="No recorded sessions for this subject.") }}
+{% endcall %}
 
-<div class="h-bar"><section class="block">
-  <h2><span class="section-num">04</span>Sensors &amp; ports touched</h2>
+{% call section("04", "Sensors and ports touched") %}
   <div class="split">
-    <div>{{ data_table(["Sensor", "Events", "Last event"], sensor_rows, numcols=[1],
+    <div>{{ data_table(["Sensor", "Events", "Last event"], sensor_rows, numcols=[1], widths=[34, 22, 44],
          empty="No sensor breakdown for this subject.") }}</div>
-    <div>{{ data_table(["Port", "Service", "Events"], port_rows, numcols=[2],
+    <div>{{ data_table(["Port", "Service", "Events"], port_rows, numcols=[2], mono=[0], widths=[24, 46, 30],
          empty="No port breakdown for this subject.") }}</div>
   </div>
-  {{ data_table(["Event type", "Events"], etype_rows, numcols=[1],
+  {{ data_table(["Event type", "Events"], etype_rows, numcols=[1], mono=[0], widths=[72, 28],
        empty="No event-type breakdown for this subject.") }}
-</section></div>
+{% endcall %}
 
-<div class="h-bar"><section class="block loose">
-  <h2><span class="section-num">05</span>Authentication attempts</h2>
-  {{ data_table(["Time", "Username", "Password", "Result", "Port"], auth_rows,
-       empty="No authentication attempts recorded for this subject.") }}
-</section></div>
+{% call section("05", "Authentication attempts", loose=true) %}
+  {{ data_table(["Time", "Username", "Password", "Result", "Port"], auth_rows, mono=[1,2,4],
+       widths=[24, 24, 26, 14, 12], empty="No authentication attempts recorded for this subject.") }}
+{% endcall %}
 
-<div class="h-bar"><section class="block loose">
-  <h2><span class="section-num">06</span>Commands executed</h2>
-  {{ data_table(["Time", "Attacker IP", "Sensor", "Command"], cmd_rows,
+{% call section("06", "Commands executed", loose=true) %}
+  {{ data_table(["Time", "Attacker IP", "Sensor", "Command"], cmd_rows, mono=[1,3], widths=[19, 16, 10, 55],
        empty="No shell commands captured for this subject.",
        note="Source: raw_events.commands (Cowrie session log).") }}
-</section></div>
+{% endcall %}
 
-<div class="h-bar"><section class="block">
-  <h2><span class="section-num">07</span>File uploads &amp; port scans observed</h2>
-  {{ data_table(["Time", "Attacker IP", "Uploaded files"], file_rows,
+{% call section("07", "File uploads and port scans observed") %}
+  {{ data_table(["Time", "Attacker IP", "Uploaded files"], file_rows, mono=[1], widths=[22, 20, 58],
        empty="No file uploads captured for this subject.") }}
-  {{ data_table(["Time", "Attacker IP", "Ports scanned"], scan_rows,
+  {{ data_table(["Time", "Attacker IP", "Ports scanned"], scan_rows, mono=[1], widths=[22, 20, 58],
        empty="No port-scan activity captured for this subject.") }}
-</section></div>
+{% endcall %}
 
-<div class="h-bar"><section class="block loose">
-  <h2><span class="section-num">08</span>Detections &amp; indicators</h2>
-  {{ data_table(["Rule", "Technique", "Severity", "First event", "Reason"], det_rows,
-       empty="No detections fired for this subject.") }}
-  {{ data_table(["Type", "Value", "Hits", "Source", "First seen", "Last seen"], ioc_rows,
-       empty="No IOCs observed for this subject.") }}
-</section></div>
+{% call section("08", "Detections and indicators", loose=true) %}
+  {{ data_table(["Rule", "Technique", "Severity", "First event", "Reason"], det_rows, mono=[1],
+       widths=[28, 12, 11, 17, 32], empty="No detections fired for this subject.") }}
+  {{ data_table(["Type", "Value", "Hits", "Source", "First seen", "Last seen"], ioc_rows, numcols=[2], mono=[1],
+       widths=[11, 27, 8, 16, 19, 19], empty="No IOCs observed for this subject.") }}
+{% endcall %}
 
-<div class="h-bar"><section class="block">
-  <h2><span class="section-num">09</span>MITRE ATT&amp;CK techniques observed</h2>
-  {{ data_table(["Technique", "Tactic", "Name"], mitre_rows,
+{% call section("09", "MITRE ATT&CK techniques observed") %}
+  {{ data_table(["Technique", "Tactic", "Name"], mitre_rows, mono=[0], widths=[16, 30, 54],
        empty="No ATT&CK techniques classified for this subject.") }}
-</section></div>
+{% endcall %}
 {% endblock %}

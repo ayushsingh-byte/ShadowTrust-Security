@@ -1,64 +1,63 @@
 {% extends "report_base.html" %}
-{% from "_macros.html" import data_table, kpi_band as kpi_band_macro, bars %}
+{% from "_macros.html" import t, section, data_table, kpi_band as kpi_cards, bars, ring, stack_bar %}
 
-{% block cover_kicker %}Compliance &amp; Governance{% endblock %}
-
-{% block accent %}
-:root { --accent:#312e81; --accent-soft:#eceafb; --accent-ink:#201d5e;
-        --cover-a:#0c0b22; --cover-b:#201d5e; --cover-c:#312e81; }
-{% endblock %}
+{% block cover_kicker %}Compliance and governance{% endblock %}
 
 {% block body %}
-<p class="lead">Self-assessed readiness against {{ framework }} ({{ assessment_type }}), generated from live
-system evidence — user roles, detection/incident activity, scenario test results, access logs and container
+<p class="lead">Self-assessed readiness against {{ t(framework) }} ({{ t(assessment_type) }}), generated from live
+system evidence: user roles, detection and incident activity, scenario test results, access logs and container
 configuration. This is a gap-finding tool, not an attestation.</p>
 
-<div class="gauge">
-  <div class="track"><div class="fill" style="width:{{ readiness_pct }}%"></div><div class="pct">{{ readiness_pct }}% READY</div></div>
-</div>
+<table class="hero"><tr>
+  <td class="ring-cell">{{ ring(readiness_pct, caption="Readiness", foot="Share of automatable controls that are met") }}</td>
+  <td>{{ kpi_cards(kpi_band, cols=3) }}</td>
+</tr></table>
 
-{{ kpi_band_macro(kpi_band) }}
-
-<div class="h-bar"><section class="block loose">
-  <h2><span class="section-num">01</span>Readiness by category</h2>
+{% call section("01", "Readiness by category", loose=true) %}
+  {% if cat_rows %}
+  <p class="key"><i class="s met"></i>Met<i class="s partial"></i>Partial<i class="s gap"></i>Gap<i class="s manual"></i>Manual</p>
+  <table class="bars">
+    {% for r in cat_rows %}
+    <tr>
+      <td class="lab">{{ t(r[0]) }}</td>
+      <td>{{ stack_bar([("met", r[1]), ("partial", r[2]), ("gap", r[3]), ("manual", r[4])]) }}</td>
+      <td class="val">{{ r[1] }} of {{ r[5] }} met</td>
+    </tr>
+    {% endfor %}
+  </table>
+  {% endif %}
   {{ data_table(["Category", "Met", "Partial", "Gap", "Manual", "Total", "Readiness"], cat_rows,
-       numcols=[1,2,3,4,5,6], empty="No control categories evaluated.") }}
-</section></div>
+       numcols=[1,2,3,4,5,6], widths=[32, 10, 11, 10, 11, 10, 16], empty="No control categories evaluated.") }}
+{% endcall %}
 
-<div class="h-bar"><section class="block loose">
-  <h2><span class="section-num">02</span>Full control inventory</h2>
+{% call section("02", "Full control inventory", loose=true) %}
   {{ data_table(["Control", "Category", "Title", "Status", "Evidence", "Collector", "Metrics"], control_rows,
-       empty="No controls evaluated.") }}
-</section></div>
+       mono=[0], widths=[8, 15, 21, 9, 16, 13, 18], empty="No controls evaluated.") }}
+{% endcall %}
 
-<div class="h-bar"><section class="block loose">
-  <h2><span class="section-num">03</span>Open gaps</h2>
-  {{ data_table(["Control", "Title", "Category", "Note"], gap_rows,
-       empty="No open gaps — every automatable control is met or partial.") }}
-</section></div>
+{% call section("03", "Open gaps", loose=true) %}
+  {{ data_table(["Control", "Title", "Category", "Note"], gap_rows, mono=[0], widths=[9, 27, 18, 46],
+       empty="No open gaps. Every automatable control is met or partial.") }}
+{% endcall %}
 
-<div class="h-bar"><section class="block loose">
-  <h2><span class="section-num">04</span>Partial controls</h2>
-  {{ data_table(["Control", "Title", "Category", "Note"], partial_rows,
+{% call section("04", "Partial controls", loose=true) %}
+  {{ data_table(["Control", "Title", "Category", "Note"], partial_rows, mono=[0], widths=[9, 27, 18, 46],
        empty="No controls are in a partial state.") }}
-</section></div>
+{% endcall %}
 
-<div class="h-bar"><section class="block loose">
-  <h2><span class="section-num">05</span>Controls requiring manual attestation</h2>
-  {{ data_table(["Control", "Category", "Title", "Intent"], manual_rows,
+{% call section("05", "Controls requiring manual attestation", loose=true) %}
+  {{ data_table(["Control", "Category", "Title", "Intent"], manual_rows, mono=[0], widths=[9, 18, 27, 46],
        empty="No controls require manual attestation.") }}
-</section></div>
+{% endcall %}
 
-<div class="h-bar"><section class="block loose">
-  <h2><span class="section-num">06</span>Risk register</h2>
+{% call section("06", "Risk register", loose=true) %}
   {{ bars(rating_bars) }}
   {{ data_table(["Risk", "Title", "Category", "Likelihood", "Impact", "Score", "Rating", "Status"], risk_rows,
-       numcols=[5], empty="No open risks on the register.") }}
-</section></div>
+       numcols=[5], mono=[0], widths=[18, 28, 14, 10, 8, 7, 7, 8], empty="No open risks on the register.") }}
+{% endcall %}
 
-<div class="h-bar"><section class="block">
-  <h2><span class="section-num">07</span>Evidence collector coverage</h2>
+{% call section("07", "Evidence collector coverage") %}
   {{ data_table(["Collector", "Controls", "Met", "Met %"], collector_rows,
-       numcols=[1,2], empty="No collector coverage data available.") }}
-</section></div>
+       numcols=[1,2,3], mono=[0], widths=[40, 20, 20, 20], empty="No collector coverage data available.") }}
+{% endcall %}
 {% endblock %}

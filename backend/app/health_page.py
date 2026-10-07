@@ -520,39 +520,39 @@ _PAGE = r"""<!doctype html>
   body {
     margin: 0; padding: 24px;
     font: 14px/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-    background: #0a0e14; color: #c9d1d9;
+    background: #12110f; color: #d2ccc0;
   }
-  h1 { font-size: 18px; margin: 0 0 4px; color: #58e1c1; letter-spacing: .5px; }
+  h1 { font-size: 18px; margin: 0 0 4px; color: #8e9cff; letter-spacing: .5px; }
   h2 { font-size: 13px; text-transform: uppercase; letter-spacing: 1px;
-       color: #7d8590; margin: 28px 0 10px; border-bottom: 1px solid #1c2128; padding-bottom: 6px; }
-  a { color: #58a6ff; text-decoration: none; }
+       color: #868073; margin: 28px 0 10px; border-bottom: 1px solid #2c2a25; padding-bottom: 6px; }
+  a { color: #8e9cff; text-decoration: none; }
   a:hover { text-decoration: underline; }
-  .sub { color: #7d8590; margin-bottom: 8px; }
+  .sub { color: #868073; margin-bottom: 8px; }
   table { border-collapse: collapse; width: 100%; max-width: 900px; }
   td, th { text-align: left; padding: 6px 12px 6px 0; vertical-align: top; }
-  th { color: #7d8590; font-weight: 600; font-size: 12px; }
+  th { color: #868073; font-weight: 600; font-size: 12px; }
   .dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 7px; }
-  .up { background: #3fb950; } .down { background: #f85149; }
-  .unknown { background: #d29922; } .pill-up { color: #3fb950; }
-  .pill-down { color: #f85149; } .pill-unknown { color: #d29922; }
-  code { background: #161b22; padding: 2px 6px; border-radius: 4px; color: #e6edf3; }
+  .up { background: #5bbf86; } .down { background: #f07468; }
+  .unknown { background: #e2ac4a; } .pill-up { color: #5bbf86; }
+  .pill-down { color: #f07468; } .pill-unknown { color: #e2ac4a; }
+  code { background: #1a1916; padding: 2px 6px; border-radius: 4px; color: #f3f0e9; }
   .grid { display: grid; grid-template-columns: 180px 1fr; gap: 4px 16px; max-width: 760px; }
-  .grid div:nth-child(odd) { color: #7d8590; }
-  .note { color: #7d8590; font-size: 12px; }
-  .card { background: #0d1117; border: 1px solid #1c2128; border-radius: 8px; padding: 14px 16px; margin-bottom: 12px; max-width: 760px; }
-  .warn { color: #d29922; }
-  #err { color: #f85149; }
+  .grid div:nth-child(odd) { color: #868073; }
+  .note { color: #868073; font-size: 12px; }
+  .card { background: #161512; border: 1px solid #2c2a25; border-radius: 8px; padding: 14px 16px; margin-bottom: 12px; max-width: 760px; }
+  .warn { color: #e2ac4a; }
+  #err { color: #f07468; }
   .muted { opacity: .55; }
-  .gen { background: #0d1117; border: 1px solid #1c2128; border-radius: 8px;
+  .gen { background: #161512; border: 1px solid #2c2a25; border-radius: 8px;
          padding: 10px 12px; margin-bottom: 8px; max-width: 900px; }
-  .gen .t { color: #58e1c1; font-size: 12px; margin-bottom: 6px; }
-  .gen pre { margin: 0; white-space: pre-wrap; word-break: break-word; color: #e6edf3; font-size: 13px; }
-  .cp { float: right; background: #21262d; color: #c9d1d9; border: 1px solid #30363d;
+  .gen .t { color: #8e9cff; font-size: 12px; margin-bottom: 6px; }
+  .gen pre { margin: 0; white-space: pre-wrap; word-break: break-word; color: #f3f0e9; font-size: 13px; }
+  .cp { float: right; background: #23221e; color: #d2ccc0; border: 1px solid #3e3b34;
         border-radius: 5px; padding: 2px 10px; font: inherit; font-size: 12px; cursor: pointer; }
-  .cp:hover { background: #30363d; }
-  .cp.ok { color: #3fb950; border-color: #238636; }
-  #counter { font-size: 22px; color: #58e1c1; }
-  #delta { color: #3fb950; }
+  .cp:hover { background: #3e3b34; }
+  .cp.ok { color: #5bbf86; border-color: #1d7448; }
+  #counter { font-size: 22px; color: #8e9cff; }
+  #delta { color: #5bbf86; }
 </style>
 </head>
 <body>
@@ -563,10 +563,10 @@ _PAGE = r"""<!doctype html>
   <h2>Services</h2>
   <table id="services"><tbody></tbody></table>
 
-  <h2>Honeypot sensors <span class="note">(via last captured event — edge network is isolated)</span></h2>
+  <h2>Honeypot sensors <span class="note">(via last captured event; the edge network is isolated)</span></h2>
   <table id="sensors"><tbody></tbody></table>
 
-  <h2>Telemetry <span class="note">(edge network is isolated — count is the online signal)</span></h2>
+  <h2>Telemetry <span class="note">(the edge network is isolated, so the count is the online signal)</span></h2>
   <div class="card">
     normalized_events: <span id="counter">…</span> <span id="delta"></span>
     <div class="note">opened this page at <span id="baseline">…</span></div>
@@ -637,13 +637,13 @@ function renderSensors(list) {
     (list||[]).map(s => {
       const k = s.status==='up'?'up':(s.status==='idle'||s.status==='no data')?'unknown':'down';
       return `<tr><td>${esc(s.name)}</td><td>${dot(k, s.status)}</td>`
-        + `<td${s.events?'':' class="muted"'}>${esc(s.events)}</td><td class="note">${esc(s.last_event||'—')}</td></tr>`;
+        + `<td${s.events?'':' class="muted"'}>${esc(s.events)}</td><td class="note">${esc(s.last_event||'n/a')}</td></tr>`;
     }).join('');
 }
 
 function renderContainers(c) {
   if (!c || !c.available) {
-    $('#containers').innerHTML = `<span class="muted">docker socket unavailable — run <code>docker compose ps</code>.</span>`;
+    $('#containers').innerHTML = `<span class="muted">docker socket unavailable. Run <code>docker compose ps</code>.</span>`;
     return;
   }
   $('#containers').innerHTML =
@@ -685,7 +685,7 @@ async function tick() {
     renderDb(d.database);
     renderCollector(d.collector);
   } catch (e) {
-    $('#err').textContent = 'could not load /health/data — is the backend up? ' + e;
+    $('#err').textContent = 'could not load /health/data. Is the backend up? ' + e;
   }
 }
 tick();
