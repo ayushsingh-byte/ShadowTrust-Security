@@ -98,3 +98,25 @@ backend/mobsf_service/data/uploads/
 
 # Analysis Lab seed filesystem — fake scenario content, must be tracked
 !docker/analysis-seed/**
+
+# --- Local-only artefacts ---
+# UI backups taken before each redesign pass
+.backup/
+# Full database dump: holds accounts and captured data, and is over GitHub's 100 MB file limit
+database/dump.sql
+# Rotated honeypot logs (the live logs and the seed corpus are tracked, see telemetry/README.md)
+telemetry/raw/*/*.json.*
+# Finished video files (large; share them as a release asset instead)
+deliverables/
+
+# --- Launch video project (videos/) ---
+# The brief, storyboard, compositions and recording tools are tracked.
+# Footage, staged assets, renders, snapshots and tool caches are generated and large.
+videos/*/capture/
+videos/*/assets/
+videos/*/renders/
+videos/*/snapshots/
+videos/*/.hyperframes/
+videos/*/.thumbnails/
+videos/*/.waveform-cache/
+videos/*/.media/
