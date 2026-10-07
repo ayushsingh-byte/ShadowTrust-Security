@@ -128,3 +128,7 @@ videos/*/.media/
 
 # Legacy copy of the first landing page
 Honeynet 2/
+
+# Hosted copy of the public site, built by scripts/build_site.py
+dist-site/
+.vercel/
