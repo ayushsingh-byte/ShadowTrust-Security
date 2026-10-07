@@ -132,3 +132,7 @@ Honeynet 2/
 # Hosted copy of the public site, built by scripts/build_site.py
 dist-site/
 .vercel/
+
+# Presentation material and editor state, kept locally
+assets/presentation/
+.claude/

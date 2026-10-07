@@ -100,7 +100,7 @@ def selfcheck():
 
 def main():
     root = sys.argv[1]; apply = '--apply' in sys.argv
-    skip = {'index_old.html', 'mock_vdi.html'}
+    skip = set()
     total = 0
     for path in sorted(glob.glob(os.path.join(root, 'css', '*.css')) + glob.glob(os.path.join(root, '*.html'))):
         name = os.path.basename(path)
