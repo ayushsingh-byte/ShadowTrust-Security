@@ -68,7 +68,7 @@
             <div class="dashboard-grid" style="grid-template-columns: 2fr 1fr; margin-bottom: 2rem;">
                 <!-- MAIN TRAFFIC -->
                 <div class="soc-card" style="height:400px; display:flex; flex-direction:column;">
-                    <div class="soc-card-header"><span class="card-title">Cross-sector attack volume</span></div>
+                    <div class="soc-card-header"><span class="card-title">Attack volume by sensor</span></div>
                     <div style="flex: 1; position: relative; min-height: 0;"><canvas id="mainChart"></canvas></div>
                 </div>
                 <!-- ATTACK VECTORS RADAR -->
@@ -140,7 +140,7 @@
             // 1. Main Line Chart
             charts.main = new Chart(document.getElementById('mainChart'), {
                 type: 'line',
-                data: { labels: [], datasets: [{ label: 'Education Sector', data: [], borderColor: 'var(--st-chart-1)', borderWidth: 2, pointRadius: 3, tension: 0.4 }, { label: 'Defence Sector', data: [], borderColor: 'var(--st-chart-2)', borderWidth: 2, pointRadius: 3, tension: 0.4 }] },
+                data: { labels: [], datasets: [['Cowrie', 'SSH / Telnet', 1], ['Dionaea', 'SMB / FTP / SQL', 2], ['Honeytrap', 'HTTP', 3]].map(([s, what, n]) => ({ sensor: s, label: `${s} (${what})`, data: [], borderColor: `var(--st-chart-${n})`, borderWidth: 2, pointRadius: 3, tension: 0.4 })) },
                 options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: "var(--st-text)" } } } }
             });
 
@@ -225,8 +225,7 @@
 
                 // 1. Main
                 charts.main.data.labels = c.main.labels;
-                charts.main.data.datasets[0].data = c.main.education;
-                charts.main.data.datasets[1].data = c.main.defence;
+                charts.main.data.datasets.forEach(d => { d.data = (c.main.sensors || {})[d.sensor] || []; });
                 charts.main.update();
 
                 // 2. Radar

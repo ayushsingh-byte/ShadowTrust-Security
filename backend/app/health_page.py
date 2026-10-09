@@ -513,171 +513,270 @@ _PAGE = r"""<!doctype html>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Shadow Trust · Status</title>
+<title>Test bench · ShadowTrust</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300..600&family=Source+Code+Pro:wght@400;500;600&display=swap">
 <style>
-  :root { color-scheme: dark; }
-  * { box-sizing: border-box; }
-  body {
-    margin: 0; padding: 24px;
-    font: 14px/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-    background: #12110f; color: #d2ccc0;
+  /* Same values as frontend/css/tokens.css. Copied, not linked: this page is
+     served from the backend origin and must render with the frontend down. */
+  :root {
+    color-scheme: light;
+    --bg: #ffffff; --surface-2: #f8fafd; --border: #e5edf5; --border-strong: #d4dee9;
+    --text: #061b31; --text-2: #273951; --muted: #50617a; --faint: #7d8ba4;
+    --accent: #533afd; --accent-hover: #4032c8; --lavender: #d6d9fc; --navy: #0d1738;
+    --success: #00804a; --success-solid: #00b261; --warning: #a86200; --warning-solid: #f9b900;
+    --danger: #d81b56; --danger-solid: #ea2261;
+    --ribbon: linear-gradient(90deg, #7fb2ff 0%, #7f7dfc 18%, #533afd 36%, #f44bcc 60%, #ff6118 82%, #f9b900 100%);
+    --shadow: 0 6px 22px 0 rgba(0, 55, 112, 0.1), 0 4px 8px 0 rgba(0, 59, 137, 0.02);
+    --font: 'Inter', 'SF Pro Display', system-ui, -apple-system, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+    --mono: 'Source Code Pro', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    --ease: cubic-bezier(0.16, 1, 0.3, 1);
   }
-  h1 { font-size: 18px; margin: 0 0 4px; color: #8e9cff; letter-spacing: .5px; }
-  h2 { font-size: 13px; text-transform: uppercase; letter-spacing: 1px;
-       color: #868073; margin: 28px 0 10px; border-bottom: 1px solid #2c2a25; padding-bottom: 6px; }
-  a { color: #8e9cff; text-decoration: none; }
-  a:hover { text-decoration: underline; }
-  .sub { color: #868073; margin-bottom: 8px; }
-  table { border-collapse: collapse; width: 100%; max-width: 900px; }
-  td, th { text-align: left; padding: 6px 12px 6px 0; vertical-align: top; }
-  th { color: #868073; font-weight: 600; font-size: 12px; }
-  .dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 7px; }
-  .up { background: #5bbf86; } .down { background: #f07468; }
-  .unknown { background: #e2ac4a; } .pill-up { color: #5bbf86; }
-  .pill-down { color: #f07468; } .pill-unknown { color: #e2ac4a; }
-  code { background: #1a1916; padding: 2px 6px; border-radius: 4px; color: #f3f0e9; }
-  .grid { display: grid; grid-template-columns: 180px 1fr; gap: 4px 16px; max-width: 760px; }
-  .grid div:nth-child(odd) { color: #868073; }
-  .note { color: #868073; font-size: 12px; }
-  .card { background: #161512; border: 1px solid #2c2a25; border-radius: 8px; padding: 14px 16px; margin-bottom: 12px; max-width: 760px; }
-  .warn { color: #e2ac4a; }
-  #err { color: #f07468; }
-  .muted { opacity: .55; }
-  .gen { background: #161512; border: 1px solid #2c2a25; border-radius: 8px;
-         padding: 10px 12px; margin-bottom: 8px; max-width: 900px; }
-  .gen .t { color: #8e9cff; font-size: 12px; margin-bottom: 6px; }
-  .gen pre { margin: 0; white-space: pre-wrap; word-break: break-word; color: #f3f0e9; font-size: 13px; }
-  .cp { float: right; background: #23221e; color: #d2ccc0; border: 1px solid #3e3b34;
-        border-radius: 5px; padding: 2px 10px; font: inherit; font-size: 12px; cursor: pointer; }
-  .cp:hover { background: #3e3b34; }
-  .cp.ok { color: #5bbf86; border-color: #1d7448; }
-  #counter { font-size: 22px; color: #8e9cff; }
-  #delta { color: #5bbf86; }
+  * { box-sizing: border-box; }
+  body { margin: 0; font: 400 14px/1.5 var(--font); color: var(--text); background: var(--bg);
+         -webkit-font-smoothing: antialiased; }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { color: var(--accent-hover); }
+  p { margin: 0; }
+  code, pre { font-family: var(--mono); }
+  code { font-size: 12.5px; background: var(--surface-2); border: 1px solid var(--border);
+         border-radius: 4px; padding: 1px 5px; color: var(--text-2); }
+
+  /* top bar */
+  .top { position: sticky; top: 0; z-index: 10; background: var(--bg); border-bottom: 1px solid var(--border); }
+  .top::before { content: ""; display: block; height: 2px; background: var(--ribbon); }
+  .top-in { max-width: 1264px; margin: 0 auto; padding: 0 24px; min-height: 56px;
+            display: flex; align-items: center; gap: 24px; }
+  .brand { font-size: 16px; font-weight: 500; white-space: nowrap; color: var(--text); }
+  .brand span { color: var(--faint); font-weight: 400; }
+  .tabs { display: flex; gap: 4px; align-self: stretch; flex: 1; overflow-x: auto; }
+  .tabs a { display: flex; align-items: center; padding: 0 12px; white-space: nowrap; font-weight: 500;
+            color: var(--muted); border-bottom: 2px solid transparent; margin-bottom: -1px;
+            transition: color 150ms var(--ease), border-color 150ms var(--ease); }
+  .tabs a:hover { color: var(--text); }
+  .tabs a[aria-current] { color: var(--text); border-bottom-color: var(--accent); }
+
+  /* controls: one height everywhere */
+  .btn { height: 34px; padding: 0 14px; border-radius: 4px; border: 1px solid var(--lavender); background: var(--bg);
+         color: var(--accent); font: 500 13px var(--font); cursor: pointer; white-space: nowrap;
+         transition: background 150ms var(--ease), border-color 150ms var(--ease), color 150ms var(--ease); }
+  .btn:hover:not(:disabled) { border-color: var(--accent); }
+  .btn:disabled { opacity: .5; cursor: progress; }
+  .btn-primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .btn-primary:hover:not(:disabled) { background: var(--accent-hover); border-color: var(--accent-hover); }
+  .btn-danger { color: var(--danger); border-color: color-mix(in srgb, var(--danger-solid) 35%, #fff); }
+  .btn-danger:hover:not(:disabled) { border-color: var(--danger-solid); }
+  input, select { height: 34px; padding: 0 10px; border: 1px solid var(--border-strong); border-radius: 4px;
+                  background: var(--bg); color: var(--text); font: 400 13px var(--font); min-width: 0; }
+  input:focus, select:focus, .btn:focus-visible, summary:focus-visible {
+    outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px color-mix(in srgb, #7f7dfc 42%, transparent); }
+
+  /* sign-in */
+  .auth { display: flex; align-items: center; gap: 12px; position: relative; }
+  .who { color: var(--muted); font-size: 13px; white-space: nowrap; }
+  .who b { color: var(--text); font-weight: 500; }
+  .signin summary { list-style: none; display: flex; align-items: center; }
+  .signin summary::-webkit-details-marker { display: none; }
+  .pop { position: absolute; right: 0; top: calc(100% + 12px); width: 280px; padding: 20px; background: var(--bg);
+         border: 1px solid var(--border); border-radius: 6px; box-shadow: var(--shadow);
+         display: grid; gap: 12px; animation: rise 250ms var(--ease); }
+  .pop label { display: grid; gap: 4px; font-size: 12px; font-weight: 500; color: var(--muted); }
+  .pop .err { color: var(--danger); font-size: 12px; }
+  .pop .err:empty { display: none; }
+  body.signed-in .signin, body:not(.signed-in) #tbLogout, body.signed-in .need-auth { display: none; }
+
+  /* page */
+  .tab { display: none; max-width: 1264px; margin: 0 auto; padding: 40px 24px 80px; }
+  .tab.on { display: block; animation: rise 450ms var(--ease); }
+  @keyframes rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+  h1 { margin: 0 0 8px; font-size: 32px; line-height: 1.2; font-weight: 300; letter-spacing: -0.01em; }
+  h1 span { color: var(--faint); }
+  .lede { color: var(--muted); font-size: 15px; max-width: 760px; margin-bottom: 24px; }
+  .note { color: var(--muted); font-size: 13px; }
+  .alert, .need-auth { padding: 12px 16px; margin-bottom: 20px; border: 1px solid var(--border);
+                       border-left: 2px solid var(--accent); border-radius: 4px; background: var(--surface-2); color: var(--text-2); }
+  .alert { border-left-color: var(--danger-solid); }
+
+  /* figures: equal cells on one hairline grid */
+  .kpis { position: relative; display: grid; grid-template-columns: repeat(var(--n, 4), minmax(0, 1fr));
+          border: 1px solid var(--border); border-radius: 6px; overflow: hidden; margin-bottom: 20px; }
+  .kpis::before { content: ""; position: absolute; inset: 0 0 auto; height: 2px; background: var(--ribbon); }
+  .kpis > div { padding: 20px; border-left: 1px solid var(--border); min-width: 0; }
+  .kpis > div:first-child { border-left: 0; }
+  .kpis .k { display: block; font-size: 13px; color: var(--muted); }
+  .kpis .v { display: block; font-size: 28px; line-height: 1.3; font-weight: 300; font-variant-numeric: tabular-nums;
+             white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .kpis .s { display: block; font-size: 12px; color: var(--faint); min-height: 18px; }
+  .kpis .s.up { color: var(--success); }
+
+  /* panels and rows */
+  .grid2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; margin-bottom: 20px; }
+  .panel { border: 1px solid var(--border); border-radius: 6px; background: var(--bg); overflow: hidden; margin-bottom: 20px; }
+  .grid2 > .panel { margin-bottom: 0; }
+  .panel-h { padding: 16px 20px; font-size: 16px; font-weight: 500; display: flex; flex-wrap: wrap;
+             align-items: baseline; gap: 4px 12px; }
+  .panel-h span { font-size: 13px; font-weight: 400; color: var(--faint); }
+  .band, .r { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px; align-items: center;
+              padding: 0 20px; border-top: 1px solid var(--border); }
+  .r { min-height: 44px; }
+  .band { min-height: 32px; background: var(--surface-2); font-size: 12px; font-weight: 500; color: var(--faint); }
+  .cols4 { grid-template-columns: minmax(0, 1fr) 96px 72px 176px; }
+  .cols4 > :nth-child(3) { text-align: right; font-variant-numeric: tabular-nums; }
+  .r .kv { color: var(--muted); }
+  .r .val { color: var(--text-2); text-align: right; overflow-wrap: anywhere; }
+  .dim { color: var(--faint); }
+  .stat { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; white-space: nowrap; }
+  .stat::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--border-strong); }
+  .stat.good { color: var(--success); } .stat.good::before { background: var(--success-solid); }
+  .stat.bad { color: var(--danger); } .stat.bad::before { background: var(--danger-solid); }
+  .stat.warn { color: var(--warning); } .stat.warn::before { background: var(--warning-solid); }
+  .stat.off { color: var(--faint); }
+
+  @media (max-width: 900px) {
+    .top-in { flex-wrap: wrap; gap: 0 16px; padding-top: 8px; }
+    .tabs { order: 3; flex-basis: 100%; min-height: 44px; }
+    .grid2 { grid-template-columns: 1fr; }
+    .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .kpis > div { border-top: 1px solid var(--border); }
+    .cols4 { grid-template-columns: minmax(0, 1fr) 88px 56px; }
+    .cols4 > :nth-child(4) { display: none; }
+  }
+  @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
 </style>
 </head>
 <body>
-  <h1>SHADOW TRUST · LOCAL STATUS</h1>
-  <div class="sub">auto-refresh 10s · <span id="ts">…</span> · <a href="/health/data">raw json</a></div>
-  <div id="err"></div>
+  <header class="top">
+    <div class="top-in">
+      <div class="brand">ShadowTrust <span>Test bench</span></div>
+      <nav class="tabs">
+        <a href="#status">Status</a>
+        <a href="#commands">Attack commands</a>
+        <a href="#tests">Page tests</a>
+        <a href="#data">Project data</a>
+      </nav>
+      <div class="auth">
+        <span id="tbWho" class="who"></span>
+        <button id="tbLogout" class="btn">Sign out</button>
+        <details class="signin" id="tbSignin">
+          <summary class="btn btn-primary">Sign in</summary>
+          <form class="pop" id="tbForm">
+            <label>Email<input id="tbEmail" autocomplete="username"></label>
+            <label>Password<input id="tbPass" type="password" autocomplete="current-password"></label>
+            <button id="tbLogin" class="btn btn-primary">Sign in</button>
+            <button id="tbBypass" type="button" class="btn">Use dev bypass</button>
+            <p id="tbErr" class="err"></p>
+          </form>
+        </details>
+      </div>
+    </div>
+  </header>
 
-  <h2>Services</h2>
-  <table id="services"><tbody></tbody></table>
+  <section class="tab" id="tab-status">
+    <h1>Stack status <span>live from the backend.</span></h1>
+    <p class="lede"><span id="ts">Loading</span> · <a href="/health/data">Raw JSON</a></p>
+    <p id="err" class="alert" hidden></p>
 
-  <h2>Honeypot sensors <span class="note">(via last captured event; the edge network is isolated)</span></h2>
-  <table id="sensors"><tbody></tbody></table>
+    <div class="kpis">
+      <div><span class="k">Events captured</span><span class="v" id="counter">n/a</span><span class="s" id="delta"></span></div>
+      <div><span class="k">Services up</span><span class="v" id="kSvc">n/a</span><span class="s" id="kSvcSub"></span></div>
+      <div><span class="k">Sensors reporting</span><span class="v" id="kSen">n/a</span><span class="s">An event in the last 10 minutes</span></div>
+      <div><span class="k">Collector</span><span class="v" id="kCol">n/a</span><span class="s" id="kColSub"></span></div>
+    </div>
 
-  <h2>Telemetry <span class="note">(the edge network is isolated, so the count is the online signal)</span></h2>
-  <div class="card">
-    normalized_events: <span id="counter">…</span> <span id="delta"></span>
-    <div class="note">opened this page at <span id="baseline">…</span></div>
-  </div>
+    <div class="grid2">
+      <div class="panel">
+        <div class="panel-h">Services</div>
+        <div id="services"></div>
+        <div id="containers"></div>
+      </div>
+      <div class="panel">
+        <div class="panel-h">Pipeline <span>The edge network is isolated, so the last captured event is the online signal.</span></div>
+        <div class="band cols4"><span>Sensor</span><span>Status</span><span>Events</span><span>Last event</span></div>
+        <div id="sensors"></div>
+        <div class="band"><span>Collector</span></div>
+        <div id="collector"></div>
+        <div class="band"><span>Database</span></div>
+        <div id="db"></div>
+      </div>
+    </div>
 
-  <h2>Containers</h2>
-  <div id="containers" class="note">…</div>
-
-  <h2>Database</h2>
-  <div id="db"></div>
-
-  <h2>Telemetry collector</h2>
-  <div id="collector" class="grid"></div>
-
-  <div class="note" style="margin-top:28px">
-    Credentials, DB details and attack commands live in the authenticated
-    <code>/api/v1/admin/diagnostics</code> endpoint (admin role required).
-  </div>
+    <p class="note">Credentials, database details and per-container detail are served by the authenticated
+      <code>/api/v1/admin/diagnostics</code> endpoint (admin role required), never by this page.</p>
+  </section>
 
 <script>
 const $ = (s) => document.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-const dot = (s, label) => { const k = s==='up'?'up':s==='down'?'down':'unknown';
-  return `<span class="dot ${k}"></span><span class="pill-${k}">${esc(label||s)}</span>`; };
+const KIND = { up: 'good', down: 'bad', stopped: 'off' };  // anything else (idle, no data, unknown) is a warning
+const stat = (s) => `<span class="stat ${KIND[s] || 'warn'}">${esc(String(s).replace(/^./, c => c.toUpperCase()))}</span>`;
+const kv = (k, v) => `<div class="r"><span class="kv">${esc(k)}</span><span class="val">${v}</span></div>`;
+const upFor = (s) => s < 60 ? s + 's' : s < 3600 ? `${Math.floor(s / 60)}m ${s % 60}s` : `${Math.floor(s / 3600)}h ${Math.floor(s % 3600 / 60)}m`;
+
+// ── Tabs: one section visible at a time, chosen by the URL hash ──────────
+function showTab() {
+  const want = location.hash.slice(1);
+  const tab = document.getElementById('tab-' + want) ? want : 'status';
+  document.querySelectorAll('.tab').forEach(s => s.classList.toggle('on', s.id === 'tab-' + tab));
+  document.querySelectorAll('.tabs a').forEach(a => a.toggleAttribute('aria-current', a.hash === '#' + tab));
+  scrollTo(0, 0);
+}
+addEventListener('hashchange', showTab);
+addEventListener('DOMContentLoaded', showTab);  // the test bench sections are appended after this script
+document.addEventListener('click', e => { const d = $('#tbSignin'); if (d.open && !d.contains(e.target)) d.open = false; });
 
 function renderServices(list) {
-  $('#services').innerHTML =
-    '<tr><th>service</th><th>status</th></tr>' +
-    (list||[]).map(s =>
-      `<tr><td>${esc(s.name)}</td><td>${dot(s.status)}</td></tr>`
-    ).join('');
+  list = list || [];
+  $('#services').innerHTML = list.map(s =>
+    `<div class="r"><span>${esc(s.name)}</span>${stat(s.status)}</div>`).join('');
+  const needed = list.filter(s => s.status !== 'stopped');  // "stopped" is the optional service nothing uses
+  $('#kSvc').textContent = `${needed.filter(s => s.status === 'up').length} of ${needed.length}`;
+  const down = needed.filter(s => s.status !== 'up').map(s => s.name);
+  $('#kSvcSub').textContent = down.length ? 'Not up: ' + down.join(', ') : 'All required services answer';
 }
 
 let _baseline = null;
-
-function renderGenerators(list) {
-  if (document.querySelector('#generators').dataset.done) return;
-  document.querySelector('#generators').dataset.done = '1';
-  document.querySelector('#generators').innerHTML = (list||[]).map((g, i) => `
-    <div class="gen">
-      <button class="cp" data-i="${i}">copy</button>
-      <div class="t">${esc(g.target)}</div>
-      <pre id="gen${i}">${esc(g.cmd)}</pre>
-    </div>`).join('');
-  document.querySelectorAll('#generators .cp').forEach(btn => {
-    btn.onclick = async () => {
-      const txt = document.querySelector('#gen' + btn.dataset.i).textContent;
-      try { await navigator.clipboard.writeText(txt); } catch (e) {}
-      btn.textContent = 'copied'; btn.classList.add('ok');
-      setTimeout(() => { btn.textContent = 'copy'; btn.classList.remove('ok'); }, 1500);
-    };
-  });
-}
-
 function renderCounter(total) {
-  if (_baseline === null) {
-    _baseline = total;
-    document.querySelector('#baseline').textContent = total + ' events';
-  }
-  document.querySelector('#counter').textContent = total;
-  const d = total - _baseline;
-  document.querySelector('#delta').textContent = d > 0 ? `(+${d} since you opened this page)` : '';
+  if (_baseline === null) _baseline = total;
+  $('#counter').textContent = Number(total).toLocaleString();
+  const d = total - _baseline, el = $('#delta');
+  el.textContent = d > 0 ? `+${d.toLocaleString()} since you opened this page` : `${Number(_baseline).toLocaleString()} when you opened this page`;
+  el.classList.toggle('up', d > 0);
 }
 
 function renderSensors(list) {
-  $('#sensors').innerHTML =
-    '<tr><th>sensor</th><th>status</th><th>events</th><th>last event</th></tr>' +
-    (list||[]).map(s => {
-      const k = s.status==='up'?'up':(s.status==='idle'||s.status==='no data')?'unknown':'down';
-      return `<tr><td>${esc(s.name)}</td><td>${dot(k, s.status)}</td>`
-        + `<td${s.events?'':' class="muted"'}>${esc(s.events)}</td><td class="note">${esc(s.last_event||'n/a')}</td></tr>`;
-    }).join('');
+  list = list || [];
+  $('#sensors').innerHTML = list.map(s =>
+    `<div class="r cols4"><span>${esc(s.name)}</span>${stat(s.status)}`
+    + `<span${s.events ? '' : ' class="dim"'}>${esc(Number(s.events).toLocaleString())}</span>`
+    + `<span class="dim">${esc(s.last_event || 'n/a')}</span></div>`).join('');
+  $('#kSen').textContent = `${list.filter(s => s.status === 'up').length} of ${list.length}`;
 }
 
 function renderContainers(c) {
-  if (!c || !c.available) {
-    $('#containers').innerHTML = `<span class="muted">docker socket unavailable. Run <code>docker compose ps</code>.</span>`;
-    return;
-  }
-  $('#containers').innerHTML =
-    `<span class="pill-up">${esc(c.count)} managed / stack containers seen</span>` +
-    `<div class="note">full per-container detail is in <code>/api/v1/admin/diagnostics</code></div>`;
+  $('#containers').innerHTML = (c && c.available)
+    ? kv('Containers', `${esc(c.count)} stack containers seen`)
+    : kv('Containers', 'Docker socket unavailable. Run <code>docker compose ps</code>.');
 }
 
 function renderDb(db) {
-  let h = `<div class="card"><div class="grid">
-    <div>status</div><div>${dot(db.status)}</div>
-    <div>server</div><div>${esc(db.server_version||'?')}</div>
-    <div>schemas</div><div>${esc((db.schemas||[]).join(', '))}</div>
-  </div>`;
-  if (db.error) h += `<div class="warn">${esc(db.error)}</div>`;
-  h += '</div>';
-  $('#db').innerHTML = h;
+  $('#db').innerHTML = kv('Server', esc(db.server_version || 'n/a'))
+    + kv('Schemas', esc((db.schemas || []).join(', ') || 'n/a'))
+    + (db.error ? kv('Error', esc(db.error)) : '');
 }
 
 function renderCollector(c) {
-  const rows = {
-    running: c.running, cycles: c.cycles,
-    last_run_at: c.last_run_at, last_cycle_at: c.last_cycle_at
-  };
-  $('#collector').innerHTML = Object.entries(rows)
-    .map(([k,v]) => `<div>${esc(k)}</div><div>${esc(v)}</div>`).join('');
+  $('#collector').innerHTML = kv('Last run', esc(c.last_run_at || 'n/a')) + kv('Last cycle', esc(c.last_cycle_at || 'n/a'));
+  $('#kCol').textContent = c.running ? 'Running' : 'Stopped';
+  $('#kColSub').textContent = `Cycle ${Number(c.cycles || 0).toLocaleString()} since the backend started`;
 }
 
 async function tick() {
   try {
     const r = await fetch('/health/data', {cache: 'no-store'});
     const d = await r.json();
-    $('#err').textContent = '';
-    $('#ts').textContent = new Date(d.generated_at).toLocaleTimeString() +
-      '  ·  backend up ' + d.backend.uptime_seconds + 's  ·  provider ' + d.backend.infra_provider;
+    $('#err').hidden = true;
+    $('#ts').textContent = `Updated ${new Date(d.generated_at).toLocaleTimeString()} · backend up ${upFor(d.backend.uptime_seconds)}`
+      + ` · provider ${d.backend.infra_provider} · refreshes every 10 seconds`;
     renderServices(d.services);
     renderSensors(d.sensors);
     renderCounter(d.event_total);
@@ -685,7 +784,8 @@ async function tick() {
     renderDb(d.database);
     renderCollector(d.collector);
   } catch (e) {
-    $('#err').textContent = 'could not load /health/data. Is the backend up? ' + e;
+    $('#err').hidden = false;
+    $('#err').textContent = 'Could not load /health/data. Is the backend up? ' + e;
   }
 }
 tick();

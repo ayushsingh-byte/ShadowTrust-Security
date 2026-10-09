@@ -15,6 +15,7 @@ Env:
 
 from __future__ import annotations
 
+import asyncio
 import json
 import os
 from typing import Any, Dict, List, Optional
@@ -187,6 +188,122 @@ class SearchRequest(BaseModel):
 @router.post("/search")
 async def splunk_search(body: SearchRequest, _: User = Depends(get_current_active_user)) -> Dict[str, Any]:
     return await _run_search(body.spl, body.earliest or "-24h", body.latest or "now")
+
+
+# ── Quick searches built from the data that is actually indexed ──────────────
+#
+# Uploaded JSON logs get no search-time field extraction, and Windows data
+# arrives under two naming schemes (raw event JSON: EventID / Computer; the
+# Splunk add-on: EventCode / ComputerName). Every quick search therefore runs
+# `spath` and coalesces both, so the same button works whichever log is loaded.
+_QUICK_BASE = (
+    '| spath | eval EventID=coalesce(EventID, EventCode), Computer=coalesce(Computer, ComputerName, host), '
+    'time=coalesce(UtcTime, TimeCreated, strftime(_time, "%F %T")) '
+)
+_SUSPICIOUS_CMD = (
+    r'(?i)(-enc\b|encodedcommand|downloadstring|invoke-expression|\biex\b|certutil|bitsadmin|mshta|regsvr32'
+    r'|rundll32|vssadmin|wevtutil|schtasks|\bnet1?\s+(user|localgroup|group)\b|whoami|nltest|mimikatz|psexec|procdump)'
+)
+
+
+def _ids(ids: List[int], tail: str, sysmon: bool = False) -> str:
+    """SPL for one set of event ids. The bare id terms let Splunk's index skip
+    everything else before the (slower) spath runs."""
+    terms = "sysmon " if sysmon else ""
+    terms += "(" + " OR ".join(str(i) for i in ids) + ")"
+    return f'search index=* {terms} {_QUICK_BASE}| search EventID IN ({", ".join(str(i) for i in ids)}) {tail}'
+
+
+# (label, event ids, is-sysmon, SPL). A chip is offered only when its ids are present.
+_QUICK: List[tuple] = [
+    ("failed logons 4625", [4625], False, _ids(
+        [4625], '| stats count, latest(time) as last by Computer, TargetUserName, IpAddress, FailureReason | sort - count')),
+    ("Kerberos pre-auth failed 4771", [4771], False, _ids(
+        [4771], '| stats count, latest(time) as last by TargetUserName, IpAddress, Status | sort - count')),
+    ("account + group changes", [4720, 4722, 4724, 4726, 4728, 4732, 4740, 4756], False, _ids(
+        [4720, 4722, 4724, 4726, 4728, 4732, 4740, 4756],
+        '| table time Computer EventID SubjectUserName TargetUserName MemberName | sort - time')),
+    ("new task / service 4698 4697", [4697, 4698, 7045], False, _ids(
+        [4697, 4698, 7045],
+        '| table time Computer EventID SubjectUserName TaskName ServiceName ServiceFileName | sort - time')),
+    ("explicit credential logon 4648", [4648], False, _ids(
+        [4648], '| table time Computer SubjectUserName TargetUserName TargetServerName ProcessName IpAddress | sort - time')),
+    ("logons by type 4624", [4624], False, _ids(
+        [4624], '| stats count by LogonType, TargetUserName | sort - count | head 50')),
+    ("privileged logons 4672", [4672], False, _ids(
+        [4672], '| stats count, dc(Computer) as hosts by SubjectUserName | sort - count')),
+    ("Kerberos tickets 4768 4769", [4768, 4769], False, _ids(
+        [4768, 4769], '| stats count by EventID, TicketEncryptionType, ServiceName | sort - count | head 50')),
+    ("share access 5140 5145", [5140, 5145], False, _ids(
+        [5140, 5145], '| stats count by ShareName, SubjectUserName, IpAddress | sort - count | head 50')),
+    ("process create 4688", [4688], False, _ids(
+        [4688], '| table time Computer SubjectUserName NewProcessName CommandLine ParentProcessName | sort - time | head 100')),
+    ("sysmon proc-create", [1], True, _ids(
+        [1], '| table time Computer User Image CommandLine ParentImage | sort - time | head 100', sysmon=True)),
+    ("sysmon network 3", [3], True, _ids(
+        [3], '| stats count by Image, DestinationIp, DestinationPort | sort - count | head 50', sysmon=True)),
+    ("sysmon DNS 22", [22], True, _ids(
+        [22], '| stats count, dc(Computer) as hosts by QueryName | sort - count | head 50', sysmon=True)),
+    ("sysmon file create 11", [11], True, _ids(
+        [11], '| table time Computer Image TargetFilename | sort - time | head 100', sysmon=True)),
+    ("sysmon registry 13", [13], True, _ids(
+        [13], '| table time Computer Image TargetObject Details | sort - time | head 100', sysmon=True)),
+    ("sysmon process access 10", [10], True, _ids(
+        [10], '| table time Computer SourceImage TargetImage GrantedAccess | sort - time | head 100', sysmon=True)),
+]
+_SUSPICIOUS_SPL = (
+    f'search index=* (CommandLine OR "Process Command Line") {_QUICK_BASE}'
+    f'| regex CommandLine="{_SUSPICIOUS_CMD}" '
+)
+_BLOCKED_SPL = 'search index=* (action=blocked OR action=denied OR "Access Denied") '
+
+
+@router.get("/quick")
+async def splunk_quick(_: User = Depends(get_current_active_user)) -> Dict[str, Any]:
+    """
+    Quick-search buttons for the data that is indexed right now. Three probes
+    count what is there; a button is returned only when its search has hits, so
+    the row follows the logs: upload different logs and the buttons change.
+    """
+    probe, susp, blocked = await asyncio.gather(
+        _run_search(
+            'search index=* | spath | eval EventID=coalesce(EventID, EventCode), '
+            'sys=if(searchmatch("sysmon"), 1, 0) | stats count by EventID, sys', earliest="0"),
+        _run_search(_SUSPICIOUS_SPL + '| stats count', earliest="0"),
+        _run_search(_BLOCKED_SPL + '| stats count', earliest="0"),
+    )
+    if not probe["reachable"]:
+        return {"reachable": False, "error": probe["error"], "chips": []}
+
+    seen: Dict[tuple, int] = {}
+    for r in probe["rows"]:
+        eid = _int(r.get("EventID"))
+        if eid:
+            seen[(eid, _int(r.get("sys")) == 1)] = _int(r.get("count"))
+
+    chips: List[Dict[str, Any]] = [{
+        "label": "events by source", "count": None,
+        "spl": '| tstats count where index=* by index, source, sourcetype | sort - count',
+    }]
+    if seen:
+        chips.append({
+            "label": "top event IDs", "count": sum(seen.values()),
+            "spl": f'search index=* {_QUICK_BASE}| eval log=coalesce(Channel, ProviderName, sourcetype) '
+                   '| stats count by EventID, log | sort - count | head 50',
+        })
+    for label, ids, sysmon, spl in _QUICK:
+        n = sum(seen.get((i, sysmon), 0) for i in ids)
+        if n:
+            chips.append({"label": label, "count": n, "spl": spl})
+    n = _int((susp["rows"] or [{}])[0].get("count"))
+    if n:
+        chips.insert(2, {"label": "suspicious command lines", "count": n,
+                         "spl": _SUSPICIOUS_SPL + '| table time Computer EventID CommandLine | sort - time | head 100'})
+    n = _int((blocked["rows"] or [{}])[0].get("count"))
+    if n:
+        chips.append({"label": "blocked / denied", "count": n,
+                      "spl": _BLOCKED_SPL + '| table _time host action src dest | head 100'})
+    return {"reachable": True, "error": probe["error"], "chips": chips}
 
 
 # ── Add / remove logs ───────────────────────────────────────────────────────

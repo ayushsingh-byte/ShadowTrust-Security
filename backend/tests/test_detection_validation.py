@@ -3,15 +3,22 @@
 from app.services import detection_validation as dv
 
 
+# The validation runner targets the local lab host only, and the target is
+# hard-coded (never analyst-supplied). The concrete value became
+# "host.docker.internal" when execution moved into the attacker container
+# (2026-09-17) — still the local host, just addressed from inside Docker.
+_LOCAL_TARGETS = ("127.0.0.1", "localhost", "host.docker.internal")
+
+
 def test_scenarios_load_and_are_local_only():
     scenarios = dv.load_scenarios("scenarios")
     assert "ssh-brute-force" in scenarios
     for s in scenarios.values():
-        assert s.get("target", "127.0.0.1") in ("127.0.0.1", "localhost")
+        assert s.get("target", "127.0.0.1") in _LOCAL_TARGETS
 
 
 def test_local_target_is_hardcoded():
-    assert dv.LOCAL_TARGET == "127.0.0.1"
+    assert dv.LOCAL_TARGET in _LOCAL_TARGETS
 
 
 def test_grade_pass():

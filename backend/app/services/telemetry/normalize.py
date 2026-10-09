@@ -28,6 +28,7 @@ import hashlib
 import json
 import os
 import re
+from urllib.parse import unquote
 from dataclasses import dataclass, field, asdict
 from datetime import datetime, timezone
 from typing import Any, Dict, Optional
@@ -93,6 +94,15 @@ PORT_PROTOCOL = {
     8080: "http",
     2222: "ssh",
     2223: "ssh",
+}
+
+# Dionaea names each service after the daemon it imitates ("ftpd", "smbd").
+# Stored under the plain protocol name so every sensor's events read alike.
+DIONAEA_PROTOCOLS = {
+    "ftpd": "ftp", "smbd": "smb", "mssqld": "mssql", "mysqld": "mysql",
+    "httpd": "http", "epmapper": "msrpc", "sipsession": "sip", "mongod": "mongodb",
+    "mqttd": "mqtt", "memcache": "memcached", "printerd": "printer", "pptpd": "pptp",
+    "mirrord": "mirror",
 }
 
 # Placeholder addresses that carry no information.
@@ -314,7 +324,7 @@ def derive_severity(
         return SEVERITY_MEDIUM
     if any(k in event_type for k in ("login", "auth", "credential")):
         return SEVERITY_MEDIUM
-    if any(k in event_type for k in ("connect", "session", "connection")):
+    if any(k in event_type for k in ("connect", "session", "connection", "request")):
         return SEVERITY_LOW
     return SEVERITY_INFO
 
@@ -425,6 +435,7 @@ def parse_dionaea(event: Dict[str, Any]) -> Dict[str, Any]:
         or connection.get("protocol")
         or connection.get("transport")
     )
+    protocol_hint = DIONAEA_PROTOCOLS.get(str(protocol_hint or "").lower(), protocol_hint)
 
     # log_json.py's _append_credentials() collects every login attempt on a
     # connection into a "credentials" list rather than flat username/password
@@ -437,8 +448,23 @@ def parse_dionaea(event: Dict[str, Any]) -> Dict[str, Any]:
         credentials[0] if isinstance(credentials, list) and credentials
         and isinstance(credentials[0], dict) else {}
     )
+    if first_credential and protocol_hint:
+        # log_json writes one record per connection, so a login is a field on
+        # the connection record, not an event of its own. Name it as one, or a
+        # captured FTP / MSSQL / MySQL logon is indistinguishable from a bare
+        # connect everywhere downstream. Dionaea does not report whether it
+        # accepted the login, so authentication_result stays unset.
+        event_type = f"dionaea.{protocol_hint}.login"
+
+    # FTP verbs the client sent, in order ("USER admin | PASS x | RETR /etc/passwd").
+    ftp = event.get("ftp") if isinstance(event.get("ftp"), dict) else {}
+    ftp_commands = [
+        " ".join([str(c.get("command") or "")] + [str(a) for a in (c.get("arguments") or [])]).strip()
+        for c in (ftp.get("commands") or []) if isinstance(c, dict)
+    ]
 
     return {
+        "payload": " | ".join(ftp_commands)[:2000] or None,
         "sensor_event_type": event_type,
         "source_ip": source_ip,
         "source_port": source_port,
@@ -496,17 +522,35 @@ def parse_honeytrap(event: Dict[str, Any]) -> Dict[str, Any]:
         or _nested(event, ("destination", "dst", "local"), ("port",))
     )
 
+    # The ssh-simulator service reports what was run as a list under "ssh.exec".
+    ssh_exec = event.get("ssh.exec")
+    if isinstance(ssh_exec, list):
+        ssh_exec = "; ".join(str(x) for x in ssh_exec)
+
+    # HTTP: the request line and user agent are where web attacks live (SQLi in
+    # the query string, Log4Shell / Shellshock in the agent), so keep them
+    # together, URL-decoded, where the detection rules can read them.
+    payload = None
+    if event.get("http.method") and event.get("http.url"):
+        agent = event.get("http.header.user-agent")
+        agent = agent[0] if isinstance(agent, list) and agent else agent
+        payload = f"{event['http.method']} {unquote(str(event['http.url']))}"
+        if agent:
+            payload += f" | UA: {agent}"
+
     return {
+        "payload": payload[:2000] if payload else None,
         "sensor_event_type": event_type,
         "source_ip": source_ip,
         "source_port": source_port,
         "destination_ip": destination_ip,
         "destination_port": destination_port,
-        "username": _first(event, "username", "user"),
-        "password": _first(event, "password"),
+        "username": _first(event, "username", "user", "ssh.username"),
+        "password": _first(event, "password", "ssh.password"),
         "authentication_result": AUTH_NONE,
-        "command": _first(event, "command", "payload-command"),
-        "session_id": _first(event, "session", "token", "id"),
+        "command": _first(event, "command", "payload-command") or ssh_exec or None,
+        # Not "token": that is the sensor instance's id, identical on every event.
+        "session_id": _first(event, "session", "ssh.sessionid", "http.sessionid", "id"),
         "protocol_hint": _first(event, "protocol", "transport", "category"),
         "metadata": {
             key: event[key]

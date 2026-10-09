@@ -63,6 +63,7 @@
         .sp-note { font-size: 13px; }
         .sp-chip { border-radius: var(--st-radius-sm); padding: 4px 12px; background: var(--st-surface); border-color: var(--st-border-strong); color: var(--st-text-secondary); font-size: 12.5px; }
         .sp-chip:hover { border-color: var(--st-accent); color: var(--st-accent); }
+        .sp-chip b { font-weight: 600; color: var(--st-text-muted); font-size: 11.5px; }
         .sp-drop { border: 1.5px dashed var(--st-border-strong); border-radius: var(--st-radius-lg); padding: 28px; font-size: 13.5px; }
         .sp-drop.drag { border-color: var(--st-accent); background: var(--st-accent-tint); }
         #sp-offline { background: var(--st-danger-bg); border-color: color-mix(in srgb, var(--st-danger) 30%, var(--st-surface)) !important; box-shadow: none; }
@@ -122,13 +123,7 @@
                     <button class="soc-btn" id="spl-csv"><i class="fas fa-download"></i> CSV</button>
                     <button class="soc-btn" id="spl-del" style="border-color:var(--st-danger); color:var(--st-danger);" title="Delete the events matching this search"><i class="fas fa-trash"></i> Delete matches</button>
                 </div>
-                <div class="sp-chips">
-                    <span class="sp-chip" data-spl='search index=* | stats count by sourcetype | sort - count'>count by sourcetype</span>
-                    <span class="sp-chip" data-spl='search index=* EventCode=4625 | stats count by host, Account_Name | sort - count'>failed logons 4625</span>
-                    <span class="sp-chip" data-spl='search index=* sourcetype=*sysmon* EventCode=1 | table _time host Image CommandLine | head 50'>sysmon proc-create</span>
-                    <span class="sp-chip" data-spl='search index=* (action=blocked OR action=denied) | table _time host action src dest | head 50'>blocked/denied</span>
-                    <span class="sp-chip" data-spl='| tstats count where index=* by index, sourcetype | sort - count'>tstats index/sourcetype</span>
-                </div>
+                <div class="sp-chips" id="spl-chips"></div>
                 <div id="spl-status" class="sp-note" style="margin-top:10px;"></div>
                 <div class="sp-table-wrap" style="margin-top:10px;"><table class="sp-table" id="spl-table"></table></div>
             </div>
@@ -274,7 +269,7 @@
             } catch (e) { $('#spl-status').innerHTML = `<span class="sp-err">${esc(e.message)}</span>`; return; }
             if (!res.ok) { $('#spl-status').innerHTML = `<span class="sp-err">${esc(res.error || 'delete failed')}</span>`; return; }
             $('#spl-status').innerHTML = `<span style="color:var(--st-success)">deleted ${res.deleted} event(s)</span>`;
-            loadKpis(); loadNotable();
+            loadKpis(); loadNotable(); loadQuick();
         };
 
         $('#ing-run').onclick = async () => {
@@ -292,7 +287,7 @@
             if (!res.ok) { $('#ing-status').innerHTML = `<span class="sp-err">${esc(res.error || 'ingest failed')}</span>`; return; }
             $('#ing-status').innerHTML = `<span style="color:var(--st-success)">ingested ${res.events} event(s) into ${esc(res.index)} (${esc(res.sourcetype)})</span>`;
             $('#ing-data').value = '';
-            setTimeout(() => { loadKpis(); loadNotable(); loadSources(); }, 1500);
+            setTimeout(() => { loadKpis(); loadNotable(); loadQuick(); loadSources(); }, 1500);
         };
 
         // ── file upload ──────────────────────────────────────────────────────
@@ -317,7 +312,7 @@
                      : `<span class="sp-err">✗ ${esc(r.name)}: ${esc(r.error || 'failed')}</span>`);
             $('#up-status').innerHTML = `total ${res.total_events} event(s)<br>` + lines.join('<br>');
             fileInput.value = '';
-            setTimeout(() => { loadKpis(); loadNotable(); loadSources(); }, 2000);
+            setTimeout(() => { loadKpis(); loadNotable(); loadQuick(); loadSources(); }, 2000);
         }
 
         // ── purge ────────────────────────────────────────────────────────────
@@ -348,7 +343,7 @@
             } catch (e) { $('#purge-status').innerHTML = `<span class="sp-err">${esc(e.message)}</span>`; return; }
             if (!res.ok) { $('#purge-status').innerHTML = `<span class="sp-err">${esc(res.error)}</span>`; return; }
             $('#purge-status').innerHTML = `<span style="color:var(--st-success)">purged ${res.deleted} event(s)</span>`;
-            setTimeout(() => { loadKpis(); loadNotable(); loadSources(); }, 1500);
+            setTimeout(() => { loadKpis(); loadNotable(); loadQuick(); loadSources(); }, 1500);
         };
         loadSources();
         $('#spl-csv').onclick = () => {
@@ -363,7 +358,35 @@
             a.download = `splunk-results-${new Date().toISOString().replace(/[:.]/g, '-')}.csv`;
             a.click(); URL.revokeObjectURL(a.href);
         };
-        document.querySelectorAll('.sp-chip').forEach(c => c.onclick = () => { $('#spl').value = c.dataset.spl; runSearch(); });
+        // Quick searches come from the backend, which probes what is indexed and
+        // returns only the searches that have hits. Different logs, different buttons.
+        const FALLBACK_CHIPS = [
+            { label: 'count by sourcetype', spl: 'search index=* | stats count by sourcetype | sort - count' },
+            { label: 'tstats index/sourcetype', spl: '| tstats count where index=* by index, sourcetype | sort - count' },
+        ];
+        async function loadQuick() {
+            let q;
+            try { q = await apiService.get('/splunk/quick'); } catch (e) { q = { chips: [] }; }
+            const chips = (q.chips && q.chips.length) ? q.chips : FALLBACK_CHIPS;
+            const box = $('#spl-chips');
+            box.innerHTML = '';
+            chips.forEach(c => {
+                const el = document.createElement('span');
+                el.className = 'sp-chip';
+                el.textContent = c.label;
+                if (c.count != null) {
+                    const n = document.createElement('b');
+                    n.textContent = Number(c.count).toLocaleString();
+                    el.append(' ', n);
+                }
+                el.title = c.spl;
+                // Uploaded logs are stamped with the upload time, not the event time, so a
+                // quick search always looks at all time or it would go empty a week later.
+                el.onclick = () => { $('#spl').value = c.spl; $('#spl-time').value = '0'; runSearch(); };
+                box.append(el);
+            });
+        }
+        loadQuick();
 
         loadHealth();
         loadKpis();

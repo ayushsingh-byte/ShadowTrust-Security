@@ -1,20 +1,24 @@
 id: st-recon-006
 name: Port / service scan
 description: >
-  A single source touches many distinct destination ports in a short window,
-  or a sensor emits an explicit scan/reject event — pre-attack reconnaissance.
+  A single source touches many distinct destination ports in a short window —
+  a port sweep across the honeynet's emulated services, or an explicit
+  scan / reject burst. Pre-attack reconnaissance.
 severity: MEDIUM
 confidence: 0.6
 source: honeypot
 attack:
-  technique: T1595
-  tactic: Reconnaissance
+  technique: T1046
+  tactic: Discovery
 type: threshold
 selection:
   sensor_event_type|contains:
+    - connection
     - scan
-    - connection.reject
-    - connection.rejected
-timeframe: 5m
+    - reject
+    - request
+# Count distinct destination ports, not raw packets: a scan is "many ports".
+distinct: destination_port
+timeframe: 10m
 group_by: source_ip
-threshold: 8
+threshold: 6

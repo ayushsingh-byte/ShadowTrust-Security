@@ -2,8 +2,8 @@
 Detection rule loader + matcher (task 4 — the "Sigma-style" layer).
 
 Rules are YAML files under ``backend/detections/`` — **read-only** at runtime
-(the directory is bind-mounted ``:ro``). Adding a rule is dropping a file; the
-engine never needs a code change.
+(the directory is bind-mounted ``:ro``). Adding a rule is dropping a file (or
+appending a ``---`` document to one); the engine never needs a code change.
 
 Rule shape
 ----------
@@ -24,6 +24,7 @@ selection:                          # field -> match. field|op syntax:
 timeframe: 10m                      # 30s / 10m / 2h / 1d
 group_by: source_ip                 # source_ip (default) | session_id | username
 threshold: 5                        # threshold rules: N matching events in the window
+distinct: destination_port          # optional: count distinct values of this field instead of events
 # sequence rules instead use:
 # steps:
 #   - { selection: {authentication_result: FAILURE}, min_count: 3 }
@@ -127,6 +128,7 @@ class DetectionRule:
     description: str = ""
     source: str = ""
     raw_selection: Dict[str, Any] = field(default_factory=dict)
+    distinct: Optional[str] = None       # threshold counts distinct values of this field
 
     def event_field(self, event, name: str) -> Any:
         if name in _EVENT_COLUMNS and hasattr(event, name):
@@ -158,7 +160,8 @@ class DetectionRule:
         if self.rule_type == "sequence":
             return (f"rule {self.id} ({self.name}): matched the ordered step sequence "
                     f"for {self.group_by}={group} within {window}")
-        return (f"rule {self.id} ({self.name}): {n} events matched "
+        what = f"{n} distinct {self.distinct} values" if self.distinct else f"{n} events"
+        return (f"rule {self.id} ({self.name}): {what} matched "
                 f"{self.raw_selection} for {self.group_by}={group} within {window} "
                 f"(threshold {self.threshold})")
 
@@ -214,6 +217,7 @@ def _parse_rule(doc: Dict[str, Any]) -> DetectionRule:
         description=str(doc.get("description", "")),
         source=str(doc.get("source", "")),
         raw_selection=doc.get("selection", {}) if rule_type != "sequence" else {"steps": doc.get("steps", [])},
+        distinct=(str(doc["distinct"]) if doc.get("distinct") else None),
     )
 
 
@@ -245,9 +249,9 @@ def load_rules(directory: Optional[str] = None, force: bool = False) -> List[Det
             continue
         try:
             with open(os.path.join(path, fname)) as fh:
-                doc = yaml.safe_load(fh)
-            if isinstance(doc, dict) and doc.get("id"):
-                rules.append(_parse_rule(doc))
+                docs = list(yaml.safe_load_all(fh))
+            # A file may hold several rules as separate YAML documents.
+            rules.extend(_parse_rule(d) for d in docs if isinstance(d, dict) and d.get("id"))
         except Exception:
             # A malformed rule file must not take the whole engine down.
             continue

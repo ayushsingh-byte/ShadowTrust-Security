@@ -14,6 +14,7 @@ def _fmt_bytes(n: float) -> str:
 
 from app.db.database import get_db
 from app.models.all_models import RawEventModel, NormalizedEventModel, Detection, Incident
+from app.services.telemetry.collector import SEVERITY_RISK_SCORE
 
 # We can import fetch_geoip_batch from dashboard to reuse the cache
 from app.api.v1.endpoints.dashboard import fetch_geoip_batch
@@ -50,7 +51,7 @@ async def get_analytics_graphs(
     
     total_in_7_days = len(all_recent_events)
 
-    # --- 1. Cross-Sector Attack Volume (Main Line Chart) ---
+    # --- 1. Attack volume by sensor (Main Line Chart) ---
     # Seven buckets spanning the selected window (bucket span scales with the
     # range button: 1d -> ~3.4h, 7d -> daily, 30d -> ~4.3d).
     N_MAIN = 7
@@ -60,8 +61,9 @@ async def get_analytics_graphs(
         (now - timedelta(seconds=main_span_s * (N_MAIN - 1 - i))).strftime(_fmt_main)
         for i in range(N_MAIN)
     ]
-    education_counts = [0] * N_MAIN
-    defence_counts = [0] * N_MAIN
+    # One line per honeypot that actually recorded the event.
+    _SENSORS = ("Cowrie", "Dionaea", "Honeytrap")
+    sensor_counts = {s: [0] * N_MAIN for s in _SENSORS}
     
     # --- 3. Protocol Distribution (Pie Chart) ---
     # The lab remaps services off their well-known ports (Cowrie SSH 2222 / Telnet
@@ -73,8 +75,6 @@ async def get_analytics_graphs(
         "RDP": {3389}, "FTP": {20, 21, 2121}, "SMB": {445, 139}, "SQL": {1433, 3306, 5432},
         "DNS": {53}, "SIP": {5060},
     }
-    _WEB_PORTS = {80, 443, 8080, 8443, 8022, 8023, 9200, 5060}
-    _SHELL_PORTS = {22, 23, 445, 3389, 2222, 2223, 2121, 1433, 3306, 139}
     
     # --- 4. Hourly Anomalies (Bar Chart) ---
     # Bucket into 4-hour intervals for today
@@ -104,12 +104,10 @@ async def get_analytics_graphs(
 
         _port = evt.target_port or 0
 
-        # Sector split (web/app ports vs shell/auth ports) for the line chart
-        if 0 <= main_idx < N_MAIN:
-            if _port in _WEB_PORTS:
-                education_counts[main_idx] += 1
-            elif _port in _SHELL_PORTS:
-                defence_counts[main_idx] += 1
+        # Per-sensor volume for the line chart
+        _sensor = (evt.honeypot_type or "").capitalize()
+        if 0 <= main_idx < N_MAIN and _sensor in sensor_counts:
+            sensor_counts[_sensor][main_idx] += 1
 
         # Pie Chart — first matching protocol bucket
         for _proto, _ports in _PROTO_PORTS.items():
@@ -280,8 +278,7 @@ async def get_analytics_graphs(
         "charts": {
             "main": {
                 "labels": main_labels,
-                "education": education_counts,
-                "defence": defence_counts
+                "sensors": sensor_counts
             },
             "radar": {
                 "data": radar_data
@@ -333,70 +330,64 @@ async def get_credentials_vault(
     db: AsyncSession = Depends(get_db),
 ):
     """
-    Extracts credentials (usernames and passwords) captured by honeypots from the raw payload logs.
-    Also computes KPIs explicitly for the Credentials Vault dashboard.
+    Every username/password pair the honeypots captured, across all sensors.
+
+    Reads the normalized columns rather than re-parsing raw JSON, so credentials
+    the sensor nested (Dionaea puts FTP/MSSQL/MySQL logins in a ``credentials``
+    list; Honeytrap's SSH simulator uses ``ssh.password``) are all included —
+    not just Cowrie's flat username/password fields.
     """
     now = datetime.utcnow()
     one_hour_ago = now - timedelta(hours=1)
-    
-    # Query for all events that might contain password in raw_payload
+
     result = await db.execute(
-        select(RawEventModel)
+        select(NormalizedEventModel)
         .where(
-            and_(
-                RawEventModel.raw_payload.isnot(None),
-                RawEventModel.raw_payload.like('%"password"%')
-            )
+            NormalizedEventModel.username.isnot(None),
+            NormalizedEventModel.password.isnot(None),
         )
-        .order_by(desc(RawEventModel.timestamp))
-        .limit(1000) # Limit to avoid massive payload
+        .order_by(desc(NormalizedEventModel.timestamp))
+        .limit(1000)
     )
     events = result.scalars().all()
-    
+
     credentials_list = []
     root_attempts = 0
     weak_passwords_count = 0
     unique_fingerprints = set()
     events_last_hour = 0
-    
-    for evt in events:
-        try:
-            payload = json.loads(evt.raw_payload)
-            username = payload.get("username")
-            password = payload.get("password")
-            
-            # Additional validation to ensure it's a login attempt log
-            if username and password:
-                ts_str = evt.timestamp.strftime("%Y-%m-%d %H:%M:%S") if evt.timestamp else now.strftime("%Y-%m-%d %H:%M:%S")
-                ip = evt.attacker_ip or payload.get("src_ip") or "Unknown"
-                protocol = evt.protocol or payload.get("protocol") or "tcp"
-                risk = getattr(evt, 'risk_score', None)
 
-                credentials_list.append({
-                    "timestamp": ts_str,
-                    "target_protocol": protocol.upper(),
-                    "username": username,
-                    "password": password,
-                    "source_ip": ip,
-                    "risk_score": round(risk, 1) if risk is not None else None,
-                })
-                
-                # KPIs math
-                if username.lower() == "root":
-                    root_attempts += 1
-                    
-                if len(password) < 6 or password.lower() in ["123456", "admin", "password", "root", "kali", "test"]:
-                    weak_passwords_count += 1
-                    
-                fingerprint = f"{ip}-{username}-{password}"
-                unique_fingerprints.add(fingerprint)
-                
-                if evt.timestamp and evt.timestamp >= one_hour_ago:
-                    events_last_hour += 1
-                    
-        except json.JSONDecodeError:
+    for evt in events:
+        username = evt.username
+        password = evt.password
+        if not (username and password):
             continue
-            
+        ts_str = evt.timestamp.strftime("%Y-%m-%d %H:%M:%S") if evt.timestamp else now.strftime("%Y-%m-%d %H:%M:%S")
+        ip = evt.source_ip or "Unknown"
+        protocol = evt.protocol or "tcp"
+        # Only Cowrie reports pass/fail; a captured credential on a service
+        # honeypot (Dionaea/Honeytrap) is recorded without a verdict.
+        outcome = evt.authentication_result or "CAPTURED"
+
+        credentials_list.append({
+            "timestamp": ts_str,
+            "target_protocol": protocol.upper(),
+            "username": username,
+            "password": password,
+            "source_ip": ip,
+            "sensor": evt.sensor,
+            "result": outcome,
+            "risk_score": SEVERITY_RISK_SCORE.get(evt.severity),
+        })
+
+        if username.lower() == "root":
+            root_attempts += 1
+        if len(password) < 6 or password.lower() in ["123456", "admin", "password", "root", "kali", "test"]:
+            weak_passwords_count += 1
+        unique_fingerprints.add(f"{ip}-{username}-{password}")
+        if evt.timestamp and evt.timestamp >= one_hour_ago:
+            events_last_hour += 1
+
     geo = await fetch_geoip_batch(list({c["source_ip"] for c in credentials_list}))
     for c in credentials_list:
         g = geo.get(c["source_ip"]) or {}

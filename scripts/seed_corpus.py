@@ -126,7 +126,7 @@ def cowrie_session(rng, now, days):
     t = _rand_time(rng, now, days)
     telnet = rng.random() < 0.18
     dport, proto = (2223, "telnet") if telnet else (2222, "ssh")
-    succeed = rng.random() < 0.30
+    succeed = rng.random() < 0.22
     c2 = rng.choice(C2_HOSTS)
     out, uname = [], rng.choice(USERNAMES)
 
@@ -145,7 +145,7 @@ def cowrie_session(rng, now, days):
         out.append(e("cowrie.login.success", username=uname, password=rng.choice(PASSWORDS),
                      message="login attempt succeeded"))
         seq = rng.sample(RECON, rng.randint(3, 8))
-        if rng.random() < 0.55:
+        if rng.random() < 0.38:
             seq.append(rng.choice(DOWNLOAD).format(c2=c2))
         if rng.random() < 0.35:
             seq.append(rng.choice(PERSIST).format(c2=c2))
@@ -164,33 +164,59 @@ def cowrie_session(rng, now, days):
     return out
 
 
+# Dionaea's log_json ihandler writes one record per connection, with the daemon
+# name as the protocol and any captured logins in a "credentials" list — the
+# exact shape the normalizer parses. (service port, daemon name).
+_DIONAEA_SVC = [(445, "smbd"), (1433, "mssqld"), (21, "ftpd"), (3306, "mysqld"), (80, "httpd"), (5060, "sipd")]
+_FTP_USERS = ["anonymous", "ftp", "admin", "root", "test", "user", "www"]
+_DB_USERS = ["sa", "root", "admin", "mssql", "mysql", "dbadmin"]
+
+
+def _dionaea_conn(rng, src_ip, port, proto, kind, t, **extra):
+    return {
+        "connection": {"protocol": proto, "transport": "tcp", "type": kind},
+        "dst_ip": "10.0.0.5", "dst_port": port, "src_hostname": "",
+        "src_ip": src_ip, "src_port": rng.randint(30000, 65000),
+        "timestamp": _iso(t), "sensor": "dionaea", **extra,
+    }
+
+
 def dionaea_events(rng, now, days):
-    src_ip, country = _rand_ip(rng)
-    port = rng.choice([445, 445, 1433, 2121, 3306, 5060])
-    proto = {445: "smbd", 1433: "mssqld", 2121: "ftpd", 3306: "mysqld", 5060: "sipd"}[port]
+    src_ip, _country = _rand_ip(rng)
     t = _rand_time(rng, now, days)
-    n = rng.randint(1, 4)
     evs = []
-    for _ in range(n):
-        t += timedelta(milliseconds=rng.randint(50, 800))
-        evs.append({
-            "timestamp": _iso(t), "eventid": "dionaea.connection.tcp.accept", "sensor": "dionaea",
-            "connection": {"protocol": proto, "transport": "tcp", "type": "accept",
-                           "remote": {"host": src_ip, "port": rng.randint(30000, 65000), "country": country},
-                           "local": {"host": "10.0.0.5", "port": port}},
-        })
-    if rng.random() < 0.30:  # a scan burst — many rejected ports from one host
-        for sp2 in rng.sample([21, 22, 23, 25, 80, 139, 143, 443, 445, 993, 1433, 3306, 3389, 5060, 8080], rng.randint(8, 14)):
+
+    # A credential attempt against one service (FTP / MSSQL / MySQL): captured
+    # with a username+password, feeds the Credentials Vault and the service
+    # credential detection. ~45% of batches.
+    if rng.random() < 0.45:
+        port, proto = rng.choice([(21, "ftpd"), (1433, "mssqld"), (3306, "mysqld")])
+        user = rng.choice(_FTP_USERS if port == 21 else _DB_USERS)
+        creds = [{"username": user, "password": rng.choice(PASSWORDS)}]
+        if rng.random() < 0.4:  # a couple of attempts on the same connection
+            creds.append({"username": user, "password": rng.choice(PASSWORDS)})
+        extra = {"credentials": creds}
+        if port == 21:
+            extra["ftp"] = {"commands": [{"command": c, "arguments": a} for c, a in
+                                         [("USER", [user]), ("PASS", ["***"]), ("SYST", []),
+                                          ("LIST", []), ("RETR", ["/etc/passwd"])][:rng.randint(2, 5)]]}
+        evs.append(_dionaea_conn(rng, src_ip, port, proto, "accept", t, **extra))
+
+    # A scan burst — one host touching many services in seconds (recon). ~35%.
+    if rng.random() < 0.35:
+        for port, proto in rng.sample(_DIONAEA_SVC, rng.randint(5, len(_DIONAEA_SVC))):
             t += timedelta(milliseconds=rng.randint(20, 120))
-            evs.append({"timestamp": _iso(t), "eventid": "dionaea.connection.tcp.reject", "sensor": "dionaea",
-                        "connection": {"protocol": "pcap", "transport": "tcp", "type": "reject",
-                                       "remote": {"host": src_ip, "port": rng.randint(30000, 65000), "country": country},
-                                       "local": {"host": "10.0.0.5", "port": sp2}}})
-    if port == 2121:
-        evs.append({"timestamp": _iso(t + timedelta(seconds=1)), "eventid": "dionaea.login",
-                    "sensor": "dionaea", "username": "anonymous", "password": rng.choice(PASSWORDS),
-                    "connection": {"protocol": "ftpd", "transport": "tcp",
-                                   "remote": {"host": src_ip, "port": 0}, "local": {"host": "10.0.0.5", "port": 2121}}})
+            evs.append(_dionaea_conn(rng, src_ip, port, proto, "accept", t))
+        for p2 in rng.sample([23, 25, 135, 139, 143, 443, 993, 3389, 8080, 27017, 11211], rng.randint(4, 9)):
+            t += timedelta(milliseconds=rng.randint(20, 120))
+            evs.append(_dionaea_conn(rng, src_ip, p2, "pcap", "reject", t))
+
+    # Otherwise a plain probe or two at one service.
+    if not evs:
+        port, proto = rng.choice(_DIONAEA_SVC)
+        for _ in range(rng.randint(1, 3)):
+            t += timedelta(milliseconds=rng.randint(50, 800))
+            evs.append(_dionaea_conn(rng, src_ip, port, proto, "accept", t))
     return evs
 
 

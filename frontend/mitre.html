@@ -294,6 +294,41 @@
         #tp-search { min-height: 36px; background: var(--st-surface); border-color: var(--st-border-strong); border-radius: var(--st-radius-md); padding: 0 12px; }
         .tp-item { font-size: 13.5px; padding: 9px 10px; border-radius: var(--st-radius-sm); }
         .tp-item:hover { background: var(--st-accent-tint); color: var(--st-accent); }
+
+        /* triggered state: a technique is "triggered" when a detection rule fired for it */
+        .trig-strip { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+        .trig-chip { display: flex; align-items: center; gap: 10px; padding: 8px 12px; cursor: pointer; text-align: left;
+            font: inherit; font-size: 13px; font-weight: 500; color: var(--st-text); background: var(--st-danger-bg);
+            border: 1px solid color-mix(in srgb, var(--st-danger) 35%, transparent); border-radius: var(--st-radius-md);
+            transition: border-color var(--st-dur-1), transform var(--st-dur-1); }
+        .trig-chip:hover { border-color: var(--st-danger); transform: translateY(-1px); }
+        .trig-chip b { font-family: var(--st-font-mono); font-weight: 600; color: var(--st-danger); }
+        .trig-chip small { font-size: 12px; font-weight: 400; color: var(--st-text-muted); }
+        .trig-empty { font-size: 13px; color: var(--st-text-muted); padding: 4px 0; }
+        .tc-new { background: var(--st-danger-solid); color: var(--st-on-solid); font-size: 10.5px; font-weight: 600;
+            padding: 0 6px; border-radius: var(--st-radius-sm); text-transform: uppercase; letter-spacing: .04em; }
+
+        .tactic-column { transition: opacity var(--st-dur-2); }
+        .tactic-column:not(.hit) { opacity: .5; }
+        .tactic-column:not(.hit):hover, .tactic-column:not(.hit):focus-within { opacity: 1; }
+        .tactic-column.hit { border-color: color-mix(in srgb, var(--st-danger) 45%, var(--st-border)); }
+        .tactic-column.hit .tactic-header { display: flex; justify-content: space-between; align-items: center; gap: 8px;
+            color: var(--st-danger); border-bottom-color: color-mix(in srgb, var(--st-danger) 45%, var(--st-border)); }
+        .tac-n { background: var(--st-danger-solid); color: var(--st-on-solid); border-radius: 999px; font-size: 11px; padding: 1px 8px; }
+
+        .technique-card.active { background: var(--st-danger-bg); border-color: color-mix(in srgb, var(--st-danger) 35%, transparent);
+            border-left: 4px solid var(--st-danger-solid); }
+        .technique-card.seen .count-badge { background: var(--st-neutral-bg); color: var(--st-text-secondary); }
+        .tc-trig { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 2px 0 6px; font-size: 11.5px;
+            font-weight: 600; color: var(--st-danger); text-transform: uppercase; letter-spacing: .04em; }
+        .tc-trig span:not(.tc-new) { color: var(--st-text-muted); font-weight: 500; text-transform: none; letter-spacing: 0; }
+        .technique-card.fresh { animation: trig-pulse 1.4s var(--st-ease-out) 3; }
+        .technique-card.jump { outline: 2px solid var(--st-accent); outline-offset: 2px; }
+        @keyframes trig-pulse {
+            0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--st-danger-solid) 55%, transparent); }
+            100% { box-shadow: 0 0 0 12px transparent; }
+        }
+        @media (prefers-reduced-motion: reduce) { .technique-card.fresh { animation: none; } }
     </style>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300..600&family=Source+Code+Pro:wght@400;500;600&display=swap">
@@ -377,7 +412,7 @@
             <div class="top-bar">
                 <div class="page-header">
                     <h2>MITRE ATT&CK matrix</h2>
-                    <p>Techniques seen in your data, mapped to tactics as events arrive. <span class="text-red" id="activeThreatsCount">0 observed techniques</span></p>
+                    <p>Techniques your detection rules have fired on, placed under their tactic. <span class="text-red" id="activeThreatsCount">0 techniques triggered</span></p>
                 </div>
                 <div class="filters-bar">
                     <button id="btn-live-matrix" class="soc-btn">Live matrix</button>
@@ -392,9 +427,11 @@
 
                 <div class="soc-card" style="margin-bottom: 20px;">
                     <div class="soc-card-header">
-                        <span class="card-title">Active tactics (live)</span>
+                        <span class="card-title">Triggered techniques (live)</span>
                         <span class="badge badge-green">Updated: just now</span>
                     </div>
+
+                    <div class="trig-strip" id="trigStrip"></div>
 
                     <div class="mitre-grid" id="matrixContainer">
                         <!-- Matrix columns injected here -->
@@ -448,6 +485,18 @@
         const STATUS = ["observed","investigating","mitigated","false-positive"];
         const statusColor = { observed:"var(--st-text-muted)", investigating:"var(--st-warning)", mitigated:"var(--st-success)", "false-positive":"var(--st-text-muted)" };
 
+        // API times are naive UTC: without the Z the browser would read them as local time
+        const ts = s => s ? new Date(/Z|[+-]\d\d:?\d\d$/.test(s) ? s : s + 'Z') : null;
+        const age = s => s ? (Date.now() - ts(s)) / 1000 : Infinity;
+        const ago = s => {
+            const d = Math.max(0, age(s));
+            return d < 60 ? `${Math.round(d)}s ago` : d < 3600 ? `${Math.round(d / 60)} min ago`
+                : d < 86400 ? `${Math.round(d / 3600)} h ago` : `${Math.round(d / 86400)} d ago`;
+        };
+        const FRESH_S = 120;           // a detection this recent is tagged "new"
+        const lastShown = {};          // { techId: last_seen } so a card pulses once per new detection, not every poll
+        const plural = (n, w) => `${n} ${w}${n === 1 ? '' : 's'}`;
+
         function saveSoon() {
             dirty = true;
             clearTimeout(saveTimer);
@@ -483,11 +532,15 @@
                 (an.techniques || []).forEach(t => { analyticsById[t.technique_id] = t; });
                 // don't clobber unsaved local edits
                 if (!dirty) annotations = ann.annotations || {};
+                // a poll must not wipe a note or status the analyst is in the middle of editing
+                if (document.activeElement && document.activeElement.closest('.technique-card')) return;
                 render();
             } catch (e) { console.error(e); }
         }
 
-        // observed techniques from the live feed, keyed by id
+        // observed techniques, keyed by id. Two sources: the raw-event feed (a port /
+        // event-type guess over the latest events) and the detection layer. `det` is
+        // set only by the second, and it is what marks a technique as triggered.
         function observed() {
             const out = {};
             for (const [tactic, evs] of Object.entries(liveMatrix)) {
@@ -496,6 +549,15 @@
                     out[e.id].count++;
                     if (e.timestamp > (out[e.id].last || '')) out[e.id].last = e.timestamp;
                 }
+            }
+            for (const t of Object.values(analyticsById)) {
+                const known = TACTICS.includes(t.tactic);
+                const o = out[t.technique_id] || (out[t.technique_id] = { id: t.technique_id, name: t.name,
+                    tactic: known ? t.tactic : 'Execution', count: 0, severity: null, last: null });
+                if (known) o.tactic = t.tactic;      // the rule's own tactic beats the port guess
+                o.det = t.detection_count;
+                o.count = o.count || t.detection_count;
+                if ((t.last_seen || '') > (o.last || '')) o.last = t.last_seen;
             }
             return out;
         }
@@ -524,10 +586,10 @@
                 const list = Object.values(cards)
                     .filter(c => (c.tactic || 'Execution') === tactic)
                     .sort((a, b) => (a.pinned === b.pinned ? (a.order || 0) - (b.order || 0) : (b.pinned ? 1 : -1)));
-                total += list.filter(c => c.count > 0).length;
-                const active = list.some(c => c.count > 0);
-                return `<div class="tactic-column">
-                    <div class="tactic-header" style="${active ? 'color:var(--neon-red);border-bottom-color:var(--neon-red);' : ''}">${tactic}</div>
+                const hits = list.filter(c => c.det > 0).length;
+                total += hits;
+                return `<div class="tactic-column ${hits ? 'hit' : ''}">
+                    <div class="tactic-header">${tactic}${hits ? `<span class="tac-n">${hits}</span>` : ''}</div>
                     <div class="tcol-list" data-tactic="${tactic}">
                         ${list.map(c => cardHtml(c)).join('') || '<div class="tcol-empty">drop here</div>'}
                     </div>
@@ -535,7 +597,23 @@
                 </div>`;
             }).join('');
 
-            document.getElementById('activeThreatsCount').innerText = `${total} observed technique${total === 1 ? '' : 's'}`;
+            document.getElementById('activeThreatsCount').innerText = `${plural(total, 'technique')} triggered`;
+
+            // the answer to "what fired?" in one row, newest first; click to jump to the card
+            const fired = Object.values(cards).filter(c => c.det > 0).sort((a, b) => (b.last || '').localeCompare(a.last || ''));
+            const strip = document.getElementById('trigStrip');
+            strip.innerHTML = fired.map(c => `<button class="trig-chip" data-jump="${c.id}">
+                <b>${c.id}</b>${c.name || ''}
+                <small>${c.tactic} · ${plural(c.det, 'detection')} · ${ago(c.last)}</small>
+                ${age(c.last) < FRESH_S ? '<span class="tc-new">new</span>' : ''}</button>`).join('')
+                || '<div class="trig-empty">No detection rule has fired yet. A technique shows up here the moment one does.</div>';
+            strip.querySelectorAll('.trig-chip').forEach(b => b.onclick = () => {
+                const card = container.querySelector(`.technique-card[data-id="${b.dataset.jump}"]`);
+                if (!card) return;
+                card.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
+                card.classList.add('jump'); setTimeout(() => card.classList.remove('jump'), 1600);
+            });
+            fired.forEach(c => { lastShown[c.id] = c.last; });
             const badge = document.querySelector('.badge-green');
             if (badge) badge.innerText = `UPDATED: ${new Date().toLocaleTimeString()}`;
 
@@ -547,7 +625,7 @@
                     rows.push({ tactic, ...e });
             rows.sort((a, b) => (b.timestamp || '').localeCompare(a.timestamp || ''));
             tb.innerHTML = rows.slice(0, 40).map(e => `<tr>
-                <td class="text-mono text-muted">${e.timestamp ? new Date(e.timestamp).toLocaleTimeString() : 'n/a'}</td>
+                <td class="text-mono text-muted">${e.timestamp ? ts(e.timestamp).toLocaleTimeString() : 'n/a'}</td>
                 <td class="text-cyan">${e.tactic}</td><td class="text-mono">${e.id}</td>
                 <td class="${e.severity === 'CRITICAL' ? 'text-red' : 'text-yellow'}">${e.severity || ''}</td></tr>`).join('')
                 || '<tr><td colspan="4" class="text-muted">No mapped events yet</td></tr>';
@@ -558,15 +636,22 @@
         function cardHtml(c) {
             const a = annotations[c.id] || {};
             const st = a.status || 'observed';
-            return `<div class="technique-card ${c.count ? 'active' : 'manual'}" data-id="${c.id}" data-tactic="${c.tactic}" style="border-left-color:${statusColor[st]}">
+            const isNew = c.det > 0 && age(c.last) < FRESH_S;
+            const cls = c.det > 0 ? 'active' : c.count ? 'seen' : 'manual';
+            // the status colour only takes over the edge once an analyst has set one
+            const edge = st !== 'observed' ? `border-left-color:${statusColor[st]}` : '';
+            return `<div class="technique-card ${cls} ${isNew && lastShown[c.id] !== c.last ? 'fresh' : ''}" data-id="${c.id}" data-tactic="${c.tactic}" style="${edge}">
                 <div class="tc-top">
                     <span class="tc-id">${c.id}</span>
-                    ${c.count ? `<span class="count-badge">${c.count}</span>` : '<span class="tc-manual">manual</span>'}
+                    ${c.det > 0 ? `<span class="count-badge">${plural(c.det, 'detection')}</span>`
+                        : c.count ? `<span class="count-badge" title="seen in raw events, no rule fired">${plural(c.count, 'event')}</span>`
+                        : '<span class="tc-manual">manual</span>'}
                     <button class="tc-pin ${a.pinned ? 'on' : ''}" title="pin">📌</button>
                     <a class="tc-doc" href="#" data-doc="${c.id}" title="ATT&CK docs"><i class="fas fa-arrow-up-right-from-square"></i></a>
                     ${c.count ? '' : '<button class="tc-del" title="remove">✕</button>'}
                 </div>
                 <div class="tc-name">${c.name || ''}</div>
+                ${c.det > 0 ? `<div class="tc-trig">${isNew ? '<span class="tc-new">new</span>' : ''}Triggered <span>${ago(c.last)}</span></div>` : ''}
                 <div class="tc-row">
                     <select class="tc-status" style="color:${statusColor[st]}">
                         ${STATUS.map(s => `<option ${s === st ? 'selected' : ''}>${s}</option>`).join('')}
@@ -598,7 +683,7 @@
         function wireCards() {
             document.querySelectorAll('.technique-card').forEach(card => {
                 const id = card.dataset.id;
-                card.querySelector('.tc-status').onchange = e => { ensureAnn(id, { tactic: card.dataset.tactic }).status = e.target.value; e.target.style.color = statusColor[e.target.value]; card.style.borderLeftColor = statusColor[e.target.value]; saveSoon(); };
+                card.querySelector('.tc-status').onchange = e => { ensureAnn(id, { tactic: card.dataset.tactic }).status = e.target.value; e.target.style.color = statusColor[e.target.value]; card.style.borderLeftColor = e.target.value === 'observed' ? '' : statusColor[e.target.value]; saveSoon(); };
                 card.querySelector('.tc-note').oninput = e => { ensureAnn(id, { tactic: card.dataset.tactic }).note = e.target.value; saveSoon(); };
                 card.querySelector('.tc-pin').onclick = e => { const A = ensureAnn(id, { tactic: card.dataset.tactic }); A.pinned = !A.pinned; e.target.classList.toggle('on', A.pinned); saveSoon(); render(); };
                 const doc = card.querySelector('.tc-doc'); if (doc) doc.onclick = e => { e.preventDefault(); openTechnique(doc.dataset.doc); };
@@ -659,7 +744,7 @@
 
         window.addEventListener('beforeunload', () => { if (dirty) navigator.sendBeacon && saveAnnotations(); });
         loadMatrix();
-        setInterval(loadMatrix, 15000);
+        setInterval(loadMatrix, 5000);
 
         // View Toggle Logic
         window.toggleView = function (view) {

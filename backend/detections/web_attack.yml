@@ -1,0 +1,30 @@
+id: st-web-002
+name: Web application attack
+description: >
+  An HTTP request to the web honeypot carrying an injection, traversal or
+  remote-exploit payload — SQL injection, cross-site scripting, path traversal,
+  Log4Shell (JNDI) or Shellshock. The request line and user agent are inspected.
+severity: HIGH
+confidence: 0.7
+source: honeypot
+attack:
+  technique: T1190
+  tactic: Initial Access
+type: threshold
+selection:
+  # HTTP requests only: Dionaea also fills `payload` (the FTP verb transcript),
+  # and "RETR /etc/passwd" there is file theft, not a web attack.
+  sensor_event_type|contains: http
+  payload|regex:
+    - "union\\s+select"
+    - "or\\s+'?1'?\\s*=\\s*'?1"
+    - "/etc/passwd"
+    - "<script"
+    - "\\.\\./\\.\\./"
+    - "jndi:(ldap|rmi|dns)"
+    - "\\$\\{jndi"
+    - "\\(\\)\\s*\\{\\s*:;\\s*\\}"
+    - "/bin/(ba)?sh"
+timeframe: 30m
+group_by: source_ip
+threshold: 1
